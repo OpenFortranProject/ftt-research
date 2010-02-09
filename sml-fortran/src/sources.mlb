@@ -1,0 +1,18 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+in
+  Tokens.sml
+  SymbolTable.sml
+  ActionParse.sml
+  ActionParse.sml
+  AbstractSyntax.sml
+  ActionHandlers.sml
+  TypeKind.sml
+  GraphViz.sml
+  Unparse.sml
+  TypeCon.sml
+  Visit.sml
+  Driver.sml
+  call-main.sml
+end

@@ -1,0 +1,44 @@
+* directories
+src* --- Contains source files for the transformations.
+|-- cell* --- Contains the source files for the SPU and PPU translator.
+    |-- ppu* --- Contains the source file for the PPU
+        |-- map_alf.c --- Source file which contains common PPU functions using ALF.
+
+    |-- FTT_SPU.h --- Header file which contains implementation of integer multiplication, division and modulo functions which are not implemented in the Cell SIMD library.
+    |-- SPUAnalyzer.cpp --- Source file which contains analysis at the expression and statement levels in the input file.
+    |-- SPUAnalyzer.h --- Header file for SPUAnalyzer.cpp
+    |-- SPUBuilder.cpp --- Source file which calls functions in the SPUAnalyzer to build statements in the generated code.
+    |-- SPUBuilder.h --- Header file for SPUBuilder.cpp
+    |-- SPUProgramAnalyzer.cpp --- Source file which contains the program analysis functions such as finding comments or annotations, checking for fortran shifts, etc.
+    |-- SPUProgramAnalyzer.h --- Header file for the program analysis functions. 
+    |-- SPUProgramTranslator.cpp --- Source file which contains the translator functions which adds the statements to the new SPU file.
+    |-- SPUProgramTranslator.h --- Header file for the above.
+    |-- double_simd_table.txt --- Contains the SPU equivalent function names for the double type fortran intrinsics. 
+    |-- float_simd_table.txt --- Contains the SPU equivalent function names for the float type fortran intrinsics.
+    |-- integer_simd_table.txt  --- Contains the SPU equivalent function names for the integer type fortran intrinsics.
+    |-- table.c --- Source file to create and access the table.
+  
+|-- gpu* --- Contains the source files for the GPU translator.
+    |-- GPUProgramTranslator.cpp --- Source file which contains the translator functions which adds the statements to the generated GPU code. [Incomplete Program]  
+    |-- GPUProgramTranslator.h --- Header file for GPUProgramTranslator.cpp
+    |-- GPUProgramAnalyzer.cpp --- To be implemented. [Incomplete Program] 
+    |-- GPUProgramAnalyzer.h --- Header file for GPUProgramAnalyzer.cpp
+    |-- GPU_code_gen.cpp --- Main application file which generates GPU code.
+
+|-- map* --- Contains the template files for the mapping on to CELL or GPU. 
+    |-- MapALF.f90 --- Contains the wrappers for mapping on to the CELL using ALF.
+    |-- mapdemo.f90 --- Example fortran file which calls the wrappers.
+
+|-- tests* --- Contains the example input files. 
+    |-- fortran* --- Contains example fortran input files.
+        |-- elementals.f90 --- Example input file for SPU_app_gen; contains elemental functions in fortran with annotations.
+        |-- halve.h --- Example input file with no annotations.
+        |-- heat.f90 --- Example input file with no annotations.
+        |-- heatEquation.f90 --- Example input file for SPU_app_gen; contains the 1D heat flow equation with annotations.
+
+|-- BuildFactory.h --- Top level class file.
+|-- FTTBuilder.cpp --- Top level class file.
+|-- FTTBuilder.h --- Top level class file.
+|-- SPU_app_gen.cpp --- Main application file which calls the SPU program translator.
+|-- sampleMakefile --- Example makefile; use to compile the SPU program translator.
+
