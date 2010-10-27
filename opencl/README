@@ -1,0 +1,19 @@
+These files are part of the ForOpenCL toolset.  ForOpenCL is a set
+tools and Fortran bindings for OpenCL that enable the parallel
+acceleration of Fortran codes for GPUs and multi-core CPUs.
+ForOpenCL uses ROSE (http://rosecompiler.org/) to transform
+Fortran elemental functions to OpenCL kernels.  ForOpenCL also
+defines Fortran interfaces to the OpenCL runtime.
+
+directories:
+    c  - C utilities
+  f90  - Fortran code implementing the OpenCL bindings
+
+files:
+  f90/forcl.f90         - a file demonstrating the OpenCL bindings
+  f90/elemental_add.cl  - the OpenCL kernel called from forcl.f90
+
+There is a makefile in the f90 directory for building forcl.
+Currently it has only been tested on Mac OS X using the Intel
+fortran compiler (v11.1 release 089).
+
