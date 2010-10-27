@@ -1,8 +1,9 @@
 FC = ifort
 CC = gcc
 
-FCFLAGS = -g
+FCFLAGS = -g -m64
 CFLAGS = -g -arch i386
+CFLAGS = -g
 
 OBJS = OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
        OpenCL.o opencl_utils.o opencl_test.o
@@ -16,10 +17,10 @@ LIBS = -framework OpenCL $(OBJS)
 all: forcl
 
 forcl: forcl.o $(OBJS)
-	$(FC) -o $@ $< $(LIBS)
+	$(FC) $(FCFLAGS) -o $@ $< $(LIBS)
 
 forcl.o: forcl.f90 $(OBJS)
-	$(FC) -c $<
+	$(FC) -c $(FCFLAGS) $<
 
 opencl_utils.o: ../c/opencl_utils.c
 	$(CC) -c $(CFLAGS) $<
