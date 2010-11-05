@@ -4,9 +4,46 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <CoreServices/CoreServices.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+
+
+int64_t mach_absolute_time_test() {
+   uint64_t time = mach_absolute_time();
+   printf("mach_time==%ld\n", (long) time);
+   return (int64_t) time;
+}
+
+
+// Convert to milliseconds
+double mach_time_to_sec(uint64_t mach_elapsed)
+{
+   double ms;
+   static mach_timebase_info_data_t  sTimebaseInfo;
+   
+   if ( sTimebaseInfo.denom == 0 ) {
+      // initialize (yuk, hope it isn't some stray value)
+      (void) mach_timebase_info(&sTimebaseInfo);
+   }
+   
+   ms = (double) (mach_elapsed) / 1.0e9;
+   ms *= sTimebaseInfo.numer / sTimebaseInfo.denom;
+   
+   return ms;
+}
+
+double print_elapsed_time(uint64_t mach_elapsed)
+{
+   double elapsed = mach_time_to_sec(mach_elapsed);
+   fprintf(stdout, "Mach processor cycle time == %f ms\n", (float) elapsed);
+   fflush(stdout);
+   return mach_elapsed;
+}
+
 void print_addr(void * addr)
 {
-   printf("print_addr: %p\n", addr);
+   printf("print_addr: %p int(3)==%d\n", addr, ((int*)addr)[2]);
 }
 
 size_t c_sizeof_cl_mem()
@@ -25,7 +62,7 @@ char * load_program_source(const char * filename, size_t * count)
     FILE * fh;
     char * source;
 
-    printf("load_program_source:%s: len=%ld\n", filename, strlen(filename));
+    //printf("load_program_source:%s: len=%ld\n", filename, strlen(filename));
 
     fh = fopen(filename, "r");
     if (fh == 0) {
@@ -38,7 +75,7 @@ char * load_program_source(const char * filename, size_t * count)
     source[statbuf.st_size] = '\0';
 
     *count = statbuf.st_size;
-    printf("load_program_source: len=%ld\n", *count);
+    //printf("load_program_source: len=%ld\n", *count);
 
     return source;
 }
@@ -50,6 +87,12 @@ void stop_on_error(int code)
    switch (code) {
       case CL_SUCCESS:
          return;
+      case CL_INVALID_ARG_SIZE:
+         sprintf(msg, "%s (%d)", "CL_INVALID_ARG_SIZE", code);
+         break;
+      case CL_INVALID_ARG_VALUE:
+         sprintf(msg, "%s (%d)", "CL_INVALID_ARG_VALUE", code);
+         break;
       case CL_INVALID_COMMAND_QUEUE:
          sprintf(msg, "%s (%d)", "CL_INVALID_COMMAND_QUEUE", code);
          break;
@@ -65,8 +108,8 @@ void stop_on_error(int code)
       case CL_INVALID_MEM_OBJECT:
          sprintf(msg, "%s (%d)", "CL_INVALID_MEM_OBJECT", code);
          break;
-      case CL_INVALID_WORK_GROUP_SIZE:
-         sprintf(msg, "%s (%d)", "CL_INVALID_WORK_GROUP_SIZE", code);
+      case CL_INVALID_PROGRAM_EXECUTABLE:
+         sprintf(msg, "%s (%d)", "CL_INVALID_PROGRAM_EXECUTABLE", code);
          break;
       case CL_BUILD_PROGRAM_FAILURE:
          sprintf(msg, "%s (%d)", "CL_BUILD_PROGRAM_FAILURE", code);
