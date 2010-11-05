@@ -11,36 +11,61 @@
  * marked, so as not to confuse it with the version available from
  * LANL.
  */
-#include "SPUProgramTranslator.h"
+#include "SPUProgramTranslator.hpp"
+#include <string.h>
 
-int main(int argc, char* argv[])
+#define MAX_PATH_LEN 132
+
+int main(int argc, char * argv[])
 {
-  char* opf_name;
-  opf_name=(char *)malloc(25* sizeof(char));
-  strcpy(opf_name,argv[1]);
-  opf_name[strlen(opf_name)-4] ='\0';
-  strcat(opf_name, "_spu.c");
+   int len, ext_len;
+   char new_name[MAX_PATH_LEN];
+   char * old_name = argv[1];
 
-  writeFile("",opf_name,"./");  	
+   if (argc < 2) {
+      printf("usage gpu_trans file_name\n");
+      exit(1);
+   }
 
-  char **fname;
-  fname = (char **)malloc(2 * sizeof(char *));
-  fname[0] = (char *)malloc(25 * sizeof(char));
-  fname[1] = (char *)malloc(25 * sizeof(char));
-  strcpy(fname[1], opf_name);
-  strcpy(fname[0], argv[0]);
+   ext_len = (int) (strrchr(argv[1], '.') - argv[1]);
+   len = strlen(argv[1]);
+   ROSE_ASSERT(MAX_PATH_LEN > len);
+
+   // get new file name
+   //
+   strncpy(new_name, argv[1], len);
+   new_name[len-ext_len] ='\0';
+   strcat(new_name, "_spu.c");
+
+   printf("new file is %s, '.' position is %d, len = %d\n", new_name, ext_len, len);
+
+   writeFile("", new_name, "./");  	
+
+   // create ROSE project for initial file
+   //
+   SgProject * project_ip = frontend(argc, argv);
+   ROSE_ASSERT(project_ip != NULL);
+
+   // let's look at the original
+   unparseProject(project_ip);
+
+
+   //  char **fname;
+   //  fname = (char **)malloc(2 * sizeof(char *));
+   //  fname[0] = (char *)malloc(25 * sizeof(char));
+   //  fname[1] = (char *)malloc(25 * sizeof(char));
+   //  strcpy(fname[1], new_name);
+   //  strcpy(fname[0], argv[0]);
 	
-  SgProject* project_ip = frontend(argc, argv);
-  ROSE_ASSERT(project_ip != NULL);
-  
-  SgProject* project_op = frontend(2, fname);
-  ROSE_ASSERT(project_op != NULL);
+   argv[1] = new_name;
+   SgProject * project_op = frontend(2, argv);
+   ROSE_ASSERT(project_op != NULL);
  
-  PrgmTranslator project ;
-  project.input_prj = project_ip;
-  project.traverseInputFiles(project_op, postorder);
+   SPUProgramTranslator project ;
+   project.input_prj = project_ip;
+   project.traverseInputFiles(project_op, postorder);
 
-  unparseProject(project_op);
+   unparseProject(project_op);
 
-  return 0;
+   return 0;
 }

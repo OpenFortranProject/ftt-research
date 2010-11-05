@@ -1,7 +1,9 @@
 FC = ifort
 CC = gcc
 
-FCFLAGS = -g
+FCFLAGS = -g -m64
+CFLAGS = -g -arch i386
+CFLAGS = -g
 
 OBJS = OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
        OpenCL.o opencl_utils.o opencl_test.o Timer.o
@@ -17,16 +19,19 @@ APPS = forcl update_weights
 all: $(OBJS) $(APPS)
 
 forcl: forcl.o $(OBJS)
-	$(FC) -o $@ $< $(LIBS)
+	$(FC) $(FCFLAGS) -o $@ $< $(LIBS)
 
 update_weights: update_weights.o $(OBJS)
 	$(FC) -o $@ $< $(LIBS)
 
+forcl.o: forcl.f90 $(OBJS)
+	$(FC) -c $(FCFLAGS) $<
+
 opencl_utils.o: ../c/opencl_utils.c
-	$(CC) -c -g $<
+	$(CC) -c $(CFLAGS) $<
 
 opencl_test.o: ../c/opencl_test.c
-	$(CC) -c -g $<
+	$(CC) -c $(CFLAGS) $<
 
 # dependencies
 #

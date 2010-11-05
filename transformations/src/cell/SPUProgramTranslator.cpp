@@ -12,19 +12,19 @@
  * LANL.
  */
 
-#include "SPUProgramTranslator.h"
+#include "SPUProgramTranslator.hpp"
 
-PrgmTranslator::PrgmTranslator()
+SPUProgramTranslator::SPUProgramTranslator()
 {
 
 }
 
-PrgmTranslator::~PrgmTranslator()
+SPUProgramTranslator::~SPUProgramTranslator()
 {
 
 }
 
-void PrgmTranslator::visit(SgNode* astNode)
+void SPUProgramTranslator::visit(SgNode* astNode)
 {
   SgGlobal* global_scope = isSgGlobal(astNode);
   if(global_scope != NULL)
@@ -79,7 +79,7 @@ void PrgmTranslator::visit(SgNode* astNode)
   } 
 }
 
-void PrgmTranslator::addTypedef(SgGlobal* global_scope)
+void SPUProgramTranslator::addTypedef(SgGlobal* global_scope)
 {
   if(global_scope != NULL)
   {
@@ -120,22 +120,24 @@ void PrgmTranslator::addTypedef(SgGlobal* global_scope)
   } 
 }
 
-void PrgmTranslator::addHeader(SgGlobal* global_scope)
+void SPUProgramTranslator::addHeader(SgGlobal* global_scope)
 {
+   bool isSystemHeader = false;
+
   if(global_scope != NULL)
   {
     pushScopeStack(global_scope);
 
-    insertHeader("spu_intrinsics.h",false);
-    insertHeader("simdmath.h",false);
-    insertHeader("FTT_SPU.h",false);
-    insertHeader("alf_accel.h",false);
+    insertHeader("spu_intrinsics.h", PreprocessingInfo::after, isSystemHeader);
+    insertHeader("simdmath.h",       PreprocessingInfo::after, isSystemHeader);
+    insertHeader("FTT_SPU.h",        PreprocessingInfo::after, isSystemHeader);
+    insertHeader("alf_accel.h",      PreprocessingInfo::after, isSystemHeader);
  
     popScopeStack();
   }
 }
 
-void PrgmTranslator::handleElementalFunctions(SgFunctionDeclaration* functionDeclaration, SgGlobal* global_scope)
+void SPUProgramTranslator::handleElementalFunctions(SgFunctionDeclaration* functionDeclaration, SgGlobal* global_scope)
 {
   SgProcedureHeaderStatement* procedure = isSgProcedureHeaderStatement(functionDeclaration);
   Rose_STL_Container<SgInitializedName*> func_params = functionDeclaration->get_args();
@@ -207,7 +209,7 @@ void PrgmTranslator::handleElementalFunctions(SgFunctionDeclaration* functionDec
   appendStatement(func, global_scope);
 }
 
-SgFunctionDeclaration* PrgmTranslator::addFunctionDeclaration(SgFunctionDeclaration* functionDeclaration, SgGlobal* global_scope)
+SgFunctionDeclaration* SPUProgramTranslator::addFunctionDeclaration(SgFunctionDeclaration* functionDeclaration, SgGlobal* global_scope)
 {
   SgName givename = functionDeclaration->get_name();
   char *fname;
@@ -254,7 +256,7 @@ SgFunctionDeclaration* PrgmTranslator::addFunctionDeclaration(SgFunctionDeclarat
   return func;
 }
 
-void PrgmTranslator::replaceVariableName(SgFunctionDeclaration* input_func, const char* oldname, const char* newname)
+void SPUProgramTranslator::replaceVariableName(SgFunctionDeclaration* input_func, const char* oldname, const char* newname)
 {
   Rose_STL_Container<SgNode*> varRefList = NodeQuery::querySubTree(input_func->get_definition()->get_body(),V_SgFunctionRefExp);
   
@@ -279,7 +281,7 @@ void PrgmTranslator::replaceVariableName(SgFunctionDeclaration* input_func, cons
   }
 }
 
-void PrgmTranslator::addStatementsToFunction(SgFunctionDeclaration* input_func, SgFunctionDeclaration* output_func, bool elemental)
+void SPUProgramTranslator::addStatementsToFunction(SgFunctionDeclaration* input_func, SgFunctionDeclaration* output_func, bool elemental)
 {
   SgBasicBlock* input_block = input_func->get_definition()->get_body();
   SgBasicBlock* output_block = output_func->get_definition()->get_body();
@@ -444,7 +446,7 @@ void PrgmTranslator::addStatementsToFunction(SgFunctionDeclaration* input_func, 
   }
 }
 
-void PrgmTranslator::addVariableDeclarations(SgVariableDeclaration* variable, SgBasicBlock* output_block, bool elemental)
+void SPUProgramTranslator::addVariableDeclarations(SgVariableDeclaration* variable, SgBasicBlock* output_block, bool elemental)
 {
 
   if((variable->get_declarationModifier().get_typeModifier().isIntent_in()) ||
@@ -479,7 +481,7 @@ void PrgmTranslator::addVariableDeclarations(SgVariableDeclaration* variable, Sg
   }
 }
 
-void PrgmTranslator::addSpecificVariables(SgBasicBlock* output_block)
+void SPUProgramTranslator::addSpecificVariables(SgBasicBlock* output_block)
 {
   SgVariableDeclaration* varDeclare, *varDeclare1;
   varDeclare = buildVariableDeclaration("i, count, iIn, iInout, iOut", buildUnsignedIntType());
@@ -498,7 +500,7 @@ void PrgmTranslator::addSpecificVariables(SgBasicBlock* output_block)
   appendStatement(buildAssignStatement (buildVarRefExp("sInout", output_block), buildIntVal(0)), output_block);
 }
 
-void PrgmTranslator::initializeIntentTypeScalarVariables(SgVariableDeclaration* variable, SgBasicBlock* output_block)
+void SPUProgramTranslator::initializeIntentTypeScalarVariables(SgVariableDeclaration* variable, SgBasicBlock* output_block)
 {
   int intent_flag = 0;
   SgName* buffer;
@@ -559,7 +561,7 @@ void PrgmTranslator::initializeIntentTypeScalarVariables(SgVariableDeclaration* 
   }
 }
 
-void PrgmTranslator::initializeIntentTypeArrayVariables(SgVariableDeclaration* variable, SgBasicBlock* output_block)
+void SPUProgramTranslator::initializeIntentTypeArrayVariables(SgVariableDeclaration* variable, SgBasicBlock* output_block)
 {
   int intent_flag = 0;
   SgName* buffer;
@@ -617,7 +619,7 @@ void PrgmTranslator::initializeIntentTypeArrayVariables(SgVariableDeclaration* v
   }
 }
 
-SgStatement* PrgmTranslator::handleFortranShift(SgStatement* stmt, SgBasicBlock* output_block)
+SgStatement* SPUProgramTranslator::handleFortranShift(SgStatement* stmt, SgBasicBlock* output_block)
 {
   SgExpression* expr = (isSgExprStatement(stmt))->get_expression();
   SgBasicBlock* block = buildBasicBlock();
@@ -829,7 +831,7 @@ SgStatement* PrgmTranslator::handleFortranShift(SgStatement* stmt, SgBasicBlock*
   return block;
 }
 
-SgType* PrgmTranslator::getBaseType(SgType* vartype)
+SgType* SPUProgramTranslator::getBaseType(SgType* vartype)
 {
   SgTypedefType* typedef_type;
   SgType* type = NULL;
@@ -1069,7 +1071,7 @@ SgType* PrgmTranslator::getBaseType(SgType* vartype)
   return type;
 }
 
-void PrgmTranslator::deleteTypedef(SgGlobal* global_scope)
+void SPUProgramTranslator::deleteTypedef(SgGlobal* global_scope)
 {
   if(global_scope != NULL)
   {
