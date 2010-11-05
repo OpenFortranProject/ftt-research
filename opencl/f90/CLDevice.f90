@@ -39,8 +39,9 @@ contains
 
       ! create a compute context
       !
-      this%context = clCreateContext(C_NULL_PTR, 1, this%device_ids(this%device_id), &
+      this%context = clCreateContext(C_NULL_PTR, 1, this%device_ids(1+this%device_id), &
                                      C_NULL_FUNPTR, C_NULL_PTR, status);
+
       if (status /= CL_SUCCESS) then
          print *, "CLDevice%initialize: Failed to create compute context for device", this%device_id
          call stop_on_error(status)
@@ -48,7 +49,7 @@ contains
 
       ! create a command queue
       !
-      this%commands = clCreateCommandQueue(this%context, this%device_ids(this%device_id), &
+      this%commands = clCreateCommandQueue(this%context, this%device_ids(1+this%device_id), &
                                            0, status)
       if (status /= CL_SUCCESS) then
          print *, "CLDevice%initialize: Failed to create a command queue"
@@ -76,7 +77,7 @@ contains
       type(CLKernel) :: kernel
       integer(c_int) :: status
       
-      status = kernel%init(this%context, this%commands, this%device_ids(this%device_id), filename, name)
+      status = kernel%init(this%context, this%commands, this%device_ids(1+this%device_id), filename, name)
 
    end function createKernel
 
