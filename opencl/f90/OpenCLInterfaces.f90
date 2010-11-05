@@ -46,7 +46,7 @@ interface
    !                 void *                        /* user_data */,
    !                 cl_int *                      /* errcode_ret */);
    function clCreateContext(properties, num_devices, devices, pfn_notify, user_data, errcode_ret) &
-            result(context_ret) bind(C, name="clCreateContext_test")
+            result(context_ret) bind(C, name="clCreateContext")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
@@ -68,7 +68,7 @@ interface
    !                      cl_command_queue_properties   /* properties */,
    !                      cl_int *                      /* errcode_ret */);
    function clCreateCommandQueue(context, device, properties, errcode_ret) &
-            result(command_queue_ret) bind(C, name="clCreateCommandQueue_test")
+            result(command_queue_ret) bind(C, name="clCreateCommandQueue")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
@@ -112,7 +112,7 @@ interface
    !                           const size_t *    /* lengths */,
    !                           cl_int *          /* errcode_ret */);
    function clCreateProgramWithSource(context, count, strings, lengths, errcode_ret) &
-            result(program_ret) bind(C, name="clCreateProgramWithSource_test")
+            result(program_ret) bind(C, name="clCreateProgramWithSource")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
@@ -132,7 +132,7 @@ interface
    !                void (*pfn_notify)(cl_program /* program */, void * /* user_data */),
    !                void *               /* user_data */);
    function clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data) &
-            result(status) bind(C, name="clBuildProgram_test")
+            result(status) bind(C, name="clBuildProgram")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
@@ -145,6 +145,28 @@ interface
       integer(cl_int) :: status
    end function clBuildProgram
       
+   ! cl_int
+   ! clGetProgramBuildInfo(cl_program            /* program */,
+   !                       cl_device_id          /* device */,
+   !                       cl_program_build_info /* param_name */,
+   !                       size_t                /* param_value_size */,
+   !                       void *                /* param_value */,
+   !                       size_t *              /* param_value_size_ret */);
+   function clGetProgramBuildInfo(program, device, param_name, &
+                                  param_value_size, param_value, param_value_size_ret) &
+            result(status) bind(C, name="clGetProgramBuildInfo_test")
+      use, intrinsic :: ISO_C_BINDING
+      use :: OpenCLTypes
+      implicit none
+      type(c_ptr), value :: program
+      type(c_ptr), value :: device
+      integer(cl_program_build_info), value :: param_name
+      integer(c_size_t), value :: param_value_size
+      character, dimension(*) :: param_value
+      integer(c_size_t), intent(out) :: param_value_size_ret
+      integer(cl_int) :: status
+   end function clGetProgramBuildInfo
+
 
    ! Kernel Object APIs
    !
@@ -154,7 +176,7 @@ interface
    !                const char *    /* kernel_name */,
    !                cl_int *        /* errcode_ret */);
    function clCreateKernel(program, kernel_name, errcode_ret) &
-            result(kernel_ret) bind(C, name="clCreateKernel_test")
+            result(kernel_ret) bind(C, name="clCreateKernel")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
@@ -170,14 +192,14 @@ interface
    !                size_t       /* arg_size */,
    !                const void * /* arg_value */);
    function clSetKernelArg(kernel, arg_index, arg_size, arg_value) &
-            result(status) bind(C, name="clSetKernelArg_test")
+            result(status) bind(C, name="clSetKernelArg")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
       type(c_ptr), value :: kernel
       integer(cl_uint), value :: arg_index
       integer(c_size_t), value :: arg_size
-      type(c_ptr) :: arg_value
+      type(c_ptr), value :: arg_value
       integer(cl_int) :: status
    end function clSetKernelArg
 
@@ -192,7 +214,7 @@ interface
    !                void *       /* host_ptr */,
    !                cl_int *     /* errcode_ret */);
    function clCreateBuffer(context, flags, size, host_ptr, errcode_ret) &
-            result(buffer_ret) bind(C, name="clCreateBuffer_test")
+            result(buffer_ret) bind(C, name="clCreateBuffer")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
@@ -271,7 +293,7 @@ interface
    !                         cl_event *       /* event */);
    function clEnqueueUnmapMemObject(command_queue, memobj, mapped_ptr, &
                                     num_events_in_wait_list, event_wait_list, event) &
-            result(status) bind(C, name="clEnqueueUnmapMemObject_test")
+            result(status) bind(C, name="clEnqueueUnmapMemObject")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
@@ -297,7 +319,7 @@ interface
    function clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, &
                                    global_work_size, local_work_size, num_events_in_wait_list, &
                                    event_wait_list, event) &
-            result(status) bind(C, name="clEnqueueNDRangeKernel_test")
+            result(status) bind(C, name="clEnqueueNDRangeKernel")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
