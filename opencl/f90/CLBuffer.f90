@@ -9,7 +9,8 @@ module CLBuffer_mod
       logical :: mapped                ! true when buffer is mapped
       logical :: profiling             ! flag to enable profiling
       type(c_ptr) :: d_buf             ! handle to buffer on the device
-      type(c_ptr) :: h_ptr             ! pointer to buffer on host (only valid when mapped)
+      type(c_ptr) :: h_ptr             ! base address of host buffer (may be NULL)
+      type(c_ptr) :: mapped_ptr        ! pointer to buffer on host (only valid when mapped)
       integer(c_size_t) :: size        ! size of buffer object
    contains
       procedure, pass(this) :: init
@@ -30,7 +31,8 @@ contains
 
       this%commands = commands
       this%size = size
-      this%h_ptr = C_NULL_PTR
+      this%h_ptr = host_ptr
+      this%mapped_ptr = C_NULL_PTR
 
       this%d_buf = clCreateBuffer(context, flags, size, host_ptr, status)
       if (status /= CL_SUCCESS) then
@@ -46,22 +48,22 @@ contains
       mem_obj_rtn = this%d_buf
    end function clMemObject
 
-   function map(this, flags) result(h_ptr_ret)
+   function map(this, flags) result(mapped_ptr_ret)
       implicit none
       class(CLBuffer) :: this
       integer(cl_bitfield) :: flags
-      type(c_ptr) :: h_ptr_ret
+      type(c_ptr) :: mapped_ptr_ret
       integer(c_int) :: status
 
-      this%h_ptr = clEnqueueMapBuffer(this%commands, this%d_buf, CL_TRUE, &
-                                      flags, 0, this%size, 0, C_NULL_PTR, this%event, status)
+      this%mapped_ptr = clEnqueueMapBuffer(this%commands, this%d_buf, CL_TRUE, &
+                                           flags, 0, this%size, 0, C_NULL_PTR, this%event, status)
       if (status /= CL_SUCCESS) then
-         this%h_ptr = C_NULL_PTR
+         this%mapped_ptr = C_NULL_PTR
          print *, "CLBuffer::map: Failed to enqueue map buffer!"
          call stop_on_error(status)
       end if
 
-      h_ptr_ret = this%h_ptr
+      mapped_ptr_ret = this%mapped_ptr
 
    end function map
 
@@ -70,14 +72,15 @@ contains
       class(CLBuffer) :: this
       integer(c_int) :: status
 
-      status = clEnqueueUnmapMemObject(this%commands, this%d_buf, this%h_ptr, 0, C_NULL_PTR, this%event)
+      status = clEnqueueUnmapMemObject(this%commands, this%d_buf, this%mapped_ptr, &
+                                       0, C_NULL_PTR, this%event)
 
       if (status /= CL_SUCCESS) then
          print *, "CLBuffer::unmap: Failed to enqueue unmap memory object!"
          call stop_on_error(status)
       end if
 
-      this%h_ptr = C_NULL_PTR   ! buffer no longer mapped for host usage
+      this%mapped_ptr = C_NULL_PTR   ! buffer no longer mapped for host usage
 
    end function unmap
 
