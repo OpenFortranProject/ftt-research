@@ -1,11 +1,17 @@
 program forcl
    use OpenCL
    integer :: status
-   integer, parameter :: NX = 16
-   integer, parameter :: NY = 16
 
-   integer(c_size_t) :: nxg, nyg, nxl, nyl
-   integer, target, dimension(NX,NY) :: A, B, C
+   integer(c_size_t), parameter :: NX  = 64
+   integer(c_size_t), parameter :: NY  = 64
+   integer(c_size_t), parameter :: NXL = 16
+   integer(c_size_t), parameter :: NYL = 16
+   integer,           parameter :: NPAD = 1
+
+   integer(c_size_t), parameter :: SIZE_INT = 4
+
+!   integer(c_size_t) :: nxg, nyg, nxl, nyl
+   integer, target, dimension(NX+2*NPAD,NY+2*NPAD) :: A, B, C
    integer, pointer, dimension(:,:) :: p_A, p_B, p_C
 
    type(CLDevice) :: device
@@ -14,15 +20,21 @@ program forcl
    type(c_ptr)    :: h_A, h_B, h_C
 
    integer(cl_bitfield) :: flags
-   integer(c_size_t) :: byte_size = 4*NX*NY
+   integer(c_size_t) :: global_ex_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_INT
+   integer(c_size_t) :: local_ex_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_INT
+
+   if (NXL < 2*NPAD .or. NYL < 2*NPAD) then
+      print *, "thread work group size is too small, die!!!"
+      stop 1
+   end if
 
    status = device%init(1)
 
    ! create memory buffers
    !
-   d_A = device%createBuffer(byte_size, c_loc(A))
-   d_B = device%createBuffer(byte_size, c_loc(B))
-   d_C = device%createBuffer(byte_size, c_loc(C))
+   d_A = device%createBuffer(global_ex_size, c_loc(A))
+   d_B = device%createBuffer(global_ex_size, c_loc(B))
+   d_C = device%createBuffer(global_ex_size, c_loc(C))
 
    ! map memory so that it can be initialized on host
    !
@@ -32,8 +44,11 @@ program forcl
    call c_f_pointer(h_A, p_A, shape(A))
    call c_f_pointer(h_B, p_B, shape(B))
 
-   p_A = 1
-   p_B = 2
+   p_A = 0
+   p_B = 0
+
+   p_A(2:NX+NPAD, 2:NY+NPAD) = 1
+   p_B(2:NX+NPAD, 2:NY+NPAD) = 2
 
    ! finished initializing memory, unmap for use on device
    !
@@ -42,24 +57,52 @@ program forcl
 
    ! create the kernel
    !
-   kernel = device%createKernel("elemental_add.cl", "elemental_add")
+   kernel = device%createKernel("shift.cl", "shift")
 
    ! add arguments
    !
-   status = kernel%setKernelArg(0, d_A%clMemObject()) + status
-   status = kernel%setKernelArg(1, d_B%clMemObject()) + status
-   status = kernel%setKernelArg(2, d_C%clMemObject()) + status
+   status = kernel%setKernelArgInt(0, NPAD) + status
+   status = kernel%setKernelArgMem(1, d_A%clMemObject()) + status
+   status = kernel%setKernelArgMem(2, d_B%clMemObject()) + status
+   status = kernel%setKernelArgMem(3, d_C%clMemObject()) + status
+   status = kernel%setKernelArgLoc(4, local_ex_size) + status
 
-   nxg = NX; nyg = NY;
-   nxl = 1;  nyl = 1;
-   status = kernel%run(nxg, nyg, nxl, nyl) + status
+   ! run the kernel on the device
+   !
+   status = kernel%run(NX, NY, NXL, NYL) + status
 
    ! get the results
    !
    h_C = d_C%map(CL_MAP_READ)
    call c_f_pointer(h_C, p_C, shape(C))
 
-   print *, p_C(3,3), " =", p_A(3,3), " +", p_B(3,3)
+   print *, "external corners"
+   print *, p_C(1,1), " =", p_A(1,1), " +", p_B(1,1)
+   print *, p_C(1,NX+2*NPAD), " =", p_A(1,NX+2*NPAD), " +", p_B(1,NX+2*NPAD)
+   print *, p_C(NX+2*NPAD,1), " =", p_A(NX+2*NPAD,1), " +", p_B(NX+2*NPAD,1)
+   print *, p_C(NX+2*NPAD,NX+2*NPAD), " =", p_A(NX+2*NPAD,NX+2*NPAD), " +", p_B(NX+2*NPAD,NX+2*NPAD)
+
+   print *, "internal corners"
+   print *, p_C(1+NPAD,1+NPAD), " =", p_A(1+NPAD,1+NPAD), " +", p_B(1+NPAD,1+NPAD)
+   print *, p_C(1+NPAD,NX+1*NPAD), " =", p_A(1+NPAD,NX+1*NPAD), " +", p_B(1+NPAD,NX+1*NPAD)
+   print *, p_C(NX+1*NPAD,1+NPAD), " =", p_A(NX+1*NPAD,1+NPAD), " +", p_B(NX+1*NPAD,1+NPAD)
+   print *, p_C(NX+1*NPAD,NX+1*NPAD), " =", p_A(NX+1*NPAD,NX+1*NPAD), " +", p_B(NX+1*NPAD,NX+1*NPAD)
+
+   print *, "partial corners"
+   print *, p_C(1+NPAD,2+NPAD), " =", p_A(1+NPAD,2+NPAD), " +", p_B(1+NPAD,2+NPAD)
+   print *, p_C(1+NPAD,NX+0*NPAD), " =", p_A(1+NPAD,NX+0*NPAD), " +", p_B(1+NPAD,NX+0*NPAD)
+   print *, p_C(NX+1*NPAD,2+NPAD), " =", p_A(NX+1*NPAD,2+NPAD), " +", p_B(NX+1*NPAD,2+NPAD)
+   print *, p_C(NX+1*NPAD,NX+0*NPAD), " =", p_A(NX+1*NPAD,NX+0*NPAD), " +", p_B(NX+1*NPAD,NX+0*NPAD)
+
+   print *, "internal-1 corners"
+   print *, p_C(2+NPAD,2+NPAD), " =", p_A(2+NPAD,2+NPAD), " +", p_B(2+NPAD,2+NPAD)
+   print *, p_C(2+NPAD,NX+0*NPAD), " =", p_A(2+NPAD,NX+0*NPAD), " +", p_B(2+NPAD,NX+0*NPAD)
+   print *, p_C(NX+0*NPAD,2+NPAD), " =", p_A(NX+0*NPAD,2+NPAD), " +", p_B(NX+0*NPAD,2+NPAD)
+   print *, p_C(NX+0*NPAD,NX+0*NPAD), " =", p_A(NX+0*NPAD,NX+0*NPAD), " +", p_B(NX+0*NPAD,NX+0*NPAD)
+
+   print *, "interior points"
+   print *, p_C(5,5), " =", p_A(5,5), " +", p_B(5,5)
+   print *, p_C(48,48), " =", p_A(48,48), " +", p_B(48,48)
 
    if (status /= CL_SUCCESS) print *, "status=", status
 
