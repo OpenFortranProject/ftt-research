@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <math.h>
+
+
+void update_weight_c(size_t n, float dt, float APost[], float M[])
+{
+   int k;
+   float decayLTD;
+   const float ampLTD = 1.1f, tauLTD = 20.0f;
+
+   decayLTD = exp(-dt / tauLTD);
+   for (k = 0; k < n; k++) {
+      M[k] = decayLTD*M[k] - ampLTD*APost[k];
+   }
+}
+
+
 cl_int
 clGetDeviceIDs_test(cl_platform_id platform,
                     cl_device_type device_type,
@@ -9,10 +25,13 @@ clGetDeviceIDs_test(cl_platform_id platform,
                     cl_device_id * devices,
                     cl_uint * num_devices)
 {
-   int status;
+   int i, status;
    printf("clGetDeviceIDs_test: platform==%p num_entries==%d\n", platform, num_entries);
    status = clGetDeviceIDs(platform, device_type, num_entries, devices, num_devices);
    printf("clGetDeviceIDs_test: status==%d num_devices==%d\n", status, *num_devices);
+   for (i = 0; i < *num_devices; i++) {
+      printf("    device[%d]==%p\n", i, devices[i]);
+   }
    return status;
 }
 
@@ -24,7 +43,10 @@ clCreateContext_test(const cl_context_properties * properties,
                      void * user_data,
                      cl_int * status)
 {
+   int i;
    cl_context context;
+   printf("clCreateContext_test: num_devices==%d device==%p\n", num_devices, devices[0]);
+   //   context = clCreateContext(properties, num_devices, devices, NULL, user_data, status);
    context = clCreateContext(properties, num_devices, devices, NULL, user_data, status);
    printf("clCreateContext_test: context==%p\n", context);
    return context;
@@ -62,8 +84,8 @@ clCreateProgramWithSource_test(cl_context        context,
                                cl_int *          errcode_ret)
 {
    cl_program program;
-   printf("clCreateProgramWithSource_test: context==%p count==%d length==%ld source==\n%s\n",
-          context, count, lengths[0], strings[0]);
+   printf("clCreateProgramWithSource_test: context==%p count==%d length==%ld\n",
+          context, count, lengths[0]);
    program = clCreateProgramWithSource(context, count, strings, lengths, errcode_ret);
    printf("clCreateProgramWithSource_test: program==%p\n", program);
    return program;
@@ -79,8 +101,23 @@ clBuildProgram_test(cl_program           program,
                     void *               user_data)
 {
    printf("clBuildProgram_test: program==%p num_devices==%d\n", program, num_devices);
-   //   return clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
    return clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
+}
+
+
+cl_int
+clGetProgramBuildInfo_test(cl_program            program,
+                           cl_device_id          device,
+                           cl_program_build_info param_name,
+                           size_t                param_value_size,
+                           void *                param_value,
+                           size_t *              param_value_size_ret)
+{
+   cl_int status;
+   status = clGetProgramBuildInfo(program, device, param_name,
+                                  param_value_size, param_value, param_value_size_ret);
+   printf("%s\n", (char*)param_value);
+   return status;
 }
 
 
@@ -99,7 +136,8 @@ clSetKernelArg_test(cl_kernel    kernel,
                     size_t       arg_size,
                     const void * arg_value)
 {
-   printf("clSetKernelArg_test: kernel==%p arg_index==%d arg_size=%ld\n", kernel, arg_index, arg_size);
+   printf("clSetKernelArg_test: kernel==%p arg_index==%d arg_size=%ld arg_value==%p\n",
+          kernel, arg_index, arg_size, arg_value);
    return clSetKernelArg(kernel, arg_index, arg_size, arg_value);
 }
 
@@ -134,8 +172,8 @@ clEnqueueMapBuffer_test(cl_command_queue  command_queue,
    /* WARNING, event not specified correctly for non-blocking map */
    host_ptr_ret = clEnqueueMapBuffer(command_queue, buffer, blocking_map, map_flags, offset, cb,
                               num_events_in_wait_list, event_wait_list, NULL /*event*/, errcode_ret);
-   printf("clEnqueueMapBuffer_test: buf==%p flags==%ld offset==%ld event==%p host_ptr==%p\n",
-          buffer, (long) map_flags, offset, event, host_ptr_ret);
+//   printf("clEnqueueMapBuffer_test: buf==%p flags==%ld offset==%ld event==%p host_ptr==%p\n",
+//          buffer, (long) map_flags, offset, event, host_ptr_ret);
    return host_ptr_ret;
 }
 
