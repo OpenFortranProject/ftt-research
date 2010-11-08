@@ -49,10 +49,62 @@ module OpenCLTypes
   integer(cl_bitfield), parameter :: CL_MAP_READ  = 2**0            ! (1 << 0)
   integer(cl_bitfield), parameter :: CL_MAP_WRITE = 2**1            ! (1 << 1)
 
-  type :: cl_platform_id
+  type, BIND(C) :: cl_platform_id
     type(c_ptr) :: val
   end type cl_platform_id
 
   type(cl_platform_id), parameter :: platform_id_null = cl_platform_id(C_NULL_PTR)
+
+
+!
+! These should be moved to CLTypes?
+!
+
+   integer, parameter :: MAX_DEVICES = 2
+
+   type :: CLDevice
+      integer(c_int) :: device_id             ! device id (normally 0 for GPU, 1 for CPU)
+      integer(c_int) :: num_devices           ! number of computing devices (cl_uint)
+      type(c_ptr) :: device_ids(MAX_DEVICES)  ! compute device id (cl_device_id)
+      type(c_ptr) :: context                  ! compute context (cl_context)
+      type(c_ptr) :: commands                 ! compute command queue (cl_command_queue)
+!   contains
+!      procedure, pass(this) :: init
+!      procedure, pass(this) :: createKernel
+!      procedure, pass(this) :: createBuffer
+   end type CLDevice
+
+   type :: CLBuffer
+      type(c_ptr) :: commands          ! compute command queue (cl_command_queue)
+      type(c_ptr) :: event             ! event identifying the kernel execution instance
+      logical :: mapped                ! true when buffer is mapped
+      logical :: profiling             ! flag to enable profiling
+      type(c_ptr) :: d_buf             ! handle to buffer on the device
+      type(c_ptr) :: h_ptr             ! base address of host buffer (may be NULL)
+      type(c_ptr) :: mapped_ptr        ! pointer to buffer on host (only valid when mapped)
+      integer(c_size_t) :: size        ! size of buffer object
+!   contains
+!      procedure, pass(this) :: init
+!      procedure, pass(this) :: clMemObject
+!      procedure, pass(this) :: map
+!      procedure, pass(this) :: unmap
+   end type CLBuffer
+
+   type :: CLKernel
+      type(c_ptr) :: kernel            ! compute kernel
+      type(c_ptr) :: commands          ! compute command queue (cl_command_queue)
+      type(c_ptr) :: device            ! device we are using
+      type(c_ptr) :: program           ! compute program
+      type(c_ptr) :: event             ! event identifying the kernel execution instance
+      logical     :: profiling         ! flag to enable profiling
+      integer(c_int) :: elapsed        ! elapsed time in microseconds
+!   contains
+!      procedure, pass(this) :: init
+!      procedure, pass(this) :: setKernelArgInt
+!      procedure, pass(this) :: setKernelArgLoc
+!      procedure, pass(this) :: setKernelArgMem
+!      procedure, pass(this) :: setKernelArgReal
+!      procedure, pass(this) :: run
+   end type CLKernel
 
 end module OpenCLTypes
