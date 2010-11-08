@@ -1,5 +1,6 @@
 program forcl
    use OpenCL
+   implicit none
    integer :: status
 
    integer(c_size_t), parameter :: NX  = 64
@@ -28,18 +29,18 @@ program forcl
       stop 1
    end if
 
-   status = device%init(1)
+   status = init(device, 1)
 
    ! create memory buffers
    !
-   d_A = device%createBuffer(global_ex_size, c_loc(A))
-   d_B = device%createBuffer(global_ex_size, c_loc(B))
-   d_C = device%createBuffer(global_ex_size, c_loc(C))
+   d_A = createBuffer(device, global_ex_size, c_loc(A))
+   d_B = createBuffer(device, global_ex_size, c_loc(B))
+   d_C = createBuffer(device, global_ex_size, c_loc(C))
 
    ! map memory so that it can be initialized on host
    !
-   h_A = d_A%map(CL_MAP_WRITE)
-   h_B = d_B%map(CL_MAP_WRITE)
+   h_A = map(d_A, CL_MAP_WRITE)
+   h_B = map(d_B, CL_MAP_WRITE)
 
    call c_f_pointer(h_A, p_A, shape(A))
    call c_f_pointer(h_B, p_B, shape(B))
@@ -52,28 +53,30 @@ program forcl
 
    ! finished initializing memory, unmap for use on device
    !
-   status = d_A%unmap()
-   status = d_B%unmap()
+   status = unmap(d_A)
+   status = unmap(d_B)
 
    ! create the kernel
    !
-   kernel = device%createKernel("shift.cl", "shift")
+   kernel = createKernel(device, &
+                         "shift.cl" // C_NULL_CHAR, &
+                         "shift"    // C_NULL_CHAR)
 
    ! add arguments
    !
-   status = kernel%setKernelArgInt(0, NPAD) + status
-   status = kernel%setKernelArgMem(1, d_A%clMemObject()) + status
-   status = kernel%setKernelArgMem(2, d_B%clMemObject()) + status
-   status = kernel%setKernelArgMem(3, d_C%clMemObject()) + status
-   status = kernel%setKernelArgLoc(4, local_ex_size) + status
+   status = setKernelArgInt(kernel, 0, NPAD) + status
+   status = setKernelArgMem(kernel, 1, clMemObject(d_A)) + status
+   status = setKernelArgMem(kernel, 2, clMemObject(d_B)) + status
+   status = setKernelArgMem(kernel, 3, clMemObject(d_C)) + status
+   status = setKernelArgLoc(kernel, 4, local_ex_size) + status
 
    ! run the kernel on the device
    !
-   status = kernel%run(NX, NY, NXL, NYL) + status
+   status = run(kernel, NX, NY, NXL, NYL) + status
 
    ! get the results
    !
-   h_C = d_C%map(CL_MAP_READ)
+   h_C = map(d_C, CL_MAP_READ)
    call c_f_pointer(h_C, p_C, shape(C))
 
    print *, "external corners"
