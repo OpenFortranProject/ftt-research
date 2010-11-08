@@ -1,4 +1,5 @@
-FC = ifort
+#FC = ifort
+FC = gfortran
 CC = gcc
 
 FCFLAGS = -g -m64
