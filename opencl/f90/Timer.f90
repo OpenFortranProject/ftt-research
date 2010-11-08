@@ -6,11 +6,11 @@ module Timer_mod
       integer :: rank
       integer(c_int64_t) :: mach_start, mach_end, mach_elapsed
 !      real(c_double) :: mach_start, mach_end, mach_elapsed
-   contains
-      procedure, pass(this) :: init
-      procedure, pass(this) :: start
-      procedure, pass(this) :: stop
-      procedure, pass(this) :: elapsed_time
+!   contains
+!      procedure, pass(this) :: init
+!      procedure, pass(this) :: start
+!      procedure, pass(this) :: stop
+!      procedure, pass(this) :: elapsed_time
    end type MachTimer
 
    interface
@@ -30,24 +30,27 @@ module Timer_mod
 
 contains
 
-   subroutine init(this)
+   subroutine init_timer(this)
       implicit none
-      class(MachTimer) :: this
+!      class(MachTimer) :: this
+      type(MachTimer) :: this
       this%rank = 0
       this%mach_start   = mach_absolute_time()
       this%mach_end     = this%mach_start
       this%mach_elapsed = 0
-   end subroutine init
+   end subroutine init_timer
 
    subroutine start(this)
       implicit none
-      class(MachTimer) :: this
+!      class(MachTimer) :: this
+      type(MachTimer) :: this
       this%mach_start = mach_absolute_time()
    end subroutine start
 
    subroutine stop(this)
       implicit none
-      class(MachTimer) :: this
+!      class(MachTimer) :: this
+      type(MachTimer) :: this
       this%mach_end = mach_absolute_time();
       this%mach_elapsed = this%mach_elapsed + this%mach_end - this%mach_start
    end subroutine stop
