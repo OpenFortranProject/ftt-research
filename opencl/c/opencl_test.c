@@ -86,6 +86,7 @@ clCreateProgramWithSource_test(cl_context        context,
    cl_program program;
    printf("clCreateProgramWithSource_test: context==%p count==%d length==%ld\n",
           context, count, lengths[0]);
+   //   printf("clCreateProgramWithSource_test: src==%s\n", strings[0]);
    program = clCreateProgramWithSource(context, count, strings, lengths, errcode_ret);
    printf("clCreateProgramWithSource_test: program==%p\n", program);
    return program;
@@ -100,8 +101,11 @@ clBuildProgram_test(cl_program           program,
                     void (*pfn_notify)(cl_program /* program */, void * /* user_data */),
                     void *               user_data)
 {
+   cl_int status;
    printf("clBuildProgram_test: program==%p num_devices==%d\n", program, num_devices);
-   return clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
+   status = clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
+   printf("clBuildProgram_test: status==%d\n", status);
+   return status;
 }
 
 
