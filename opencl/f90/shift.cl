@@ -19,7 +19,7 @@ static inline uint global_size_ex(uint dimindx, uint nPad)
 }
 
 /**
- * copy shifted region of A to the patch
+ * copy shifted region of A to local patch
  */
 static inline void shift_to_patch(__local  int * patch,
                                   __global int * A,
