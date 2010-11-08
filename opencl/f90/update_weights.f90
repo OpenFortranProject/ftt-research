@@ -1,4 +1,4 @@
-elemental function update_weight_decr(nPad, dt, APost, M) result(decr)
+elemental function update_weight_decr(nPad, dt, apost, m) result(decr)
    integer, intent(in) :: nPad
    real, intent(in) :: dt, apost, m
    real :: decayLTD, decr
@@ -13,13 +13,21 @@ end function update_weight_decr
 program update_weights
    use OpenCL
    use Timer_mod
+   implicit none
 
    interface
+      elemental function update_weight_decr(nPad, dt, apost, m) result(decr)
+         implicit none
+         integer, intent(in) :: nPad
+         real, intent(in) :: dt, apost, m
+         real :: decr
+      end function update_weight_decr   
       subroutine update_weight_c(n, dt, APost, M) bind(C,name="update_weight_c")
          use ISO_C_BINDING
+         implicit none
          integer(c_size_t), value :: n
-         real, value :: dt
-         real, dimension(*) :: aPost, M
+         real(c_float), value :: dt
+         real(c_float), dimension(*) :: aPost, M
       end subroutine
    end interface
 
@@ -40,7 +48,7 @@ program update_weights
 
    ! work group size
    integer(c_size_t), parameter :: NXL = 16
-   integer(c_size_t), parameter :: NYL = 16
+   integer(c_size_t), parameter :: NYL = 4
    integer(c_size_t) :: nxg, nyg
 
    integer(c_size_t), parameter :: SIZE_FLOAT = 4
@@ -49,6 +57,7 @@ program update_weights
    real(c_float), target, dimension(NXP*NYP,NX,NY) :: P, W
    real(c_float), pointer, dimension(:,:)   :: p_APost, p_M
    real(c_float), pointer, dimension(:,:,:) :: p_P, p_W
+   real(c_float) :: dt
 
    type(MachTimer) :: timer
    integer(c_int64_t) :: time
@@ -60,63 +69,72 @@ program update_weights
 
    integer(cl_bitfield) :: flags
    integer(c_size_t) :: global_size = NX*NY * SIZE_FLOAT
-   integer(c_size_t) :: local_size  = NXL*(NYL+2*NPAD) * SIZE_FLOAT
+   integer(c_size_t) :: local_size  = NXL*NYL * SIZE_FLOAT
    integer(c_size_t) :: global_ex_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_FLOAT
    integer(c_size_t) :: local_ex_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_FLOAT
 
-   integer :: device_id, i
+   integer :: device_id, i, nLoops, nLoc, nThFac
 
-   device_id = 0
+   dt = 0.5
+
+   device_id = 1
+   nLoops = 20
+   nLoc = 1
+   nThFac = 1
+
    if (device_id == 0) then
       nxg = NXL; nyg = NYL
    else
       nxg = 1; nyg = 1
    end if
 
-   status = device%init(device_id)
+   status = init(device, device_id)
 
    ! create memory buffers
    !
-   d_APost = device%createBuffer(global_ex_size*nxScale*nyScale, c_loc(APost))
-   d_M     = device%createBuffer(global_ex_size*nxScale*nyScale, c_loc(M))
+   d_APost = createBuffer(device, global_ex_size*nxScale*nyScale, c_loc(APost))
+   d_M     = createBuffer(device, global_ex_size*nxScale*nyScale, c_loc(M))
 
-   d_P = device%createBuffer(global_size*NXP*NYP, c_loc(P))
-   d_W = device%createBuffer(global_size*NXP*NYP, c_loc(W))
+   d_P = createBuffer(device, global_size*NXP*NYP, c_loc(P))
+   d_W = createBuffer(device, global_size*NXP*NYP, c_loc(W))
 
    ! map memory so that it can be initialized on host
    !
-   h_APost = d_APost%map(CL_MAP_WRITE)
-   h_M = d_M%map(CL_MAP_WRITE)
-   h_P = d_P%map(CL_MAP_WRITE)
-   h_W = d_W%map(CL_MAP_WRITE)
+   h_APost = map(d_APost, CL_MAP_WRITE)
+   h_M     = map(d_M, CL_MAP_WRITE)
+   h_P     = map(d_P, CL_MAP_WRITE)
+   h_W     = map(d_W, CL_MAP_WRITE)
 
    call c_f_pointer(h_APost, p_APost, shape(APost))
    call c_f_pointer(h_M, p_M, shape(M))
    call c_f_pointer(h_P, p_P, shape(P))
    call c_f_pointer(h_W, p_W, shape(W))
 
-   p_A = 1.0
+   p_APost = 1.1
    p_M = 0.01
    p_P = 0.02
    p_W = 1.0 / (NXP*NYP)
 
    ! finished initializing memory, unmap for use on device
    !
-   status = d_APost%unmap()
-   status = d_M%unmap()
-   status = d_P%unmap()
-   status = d_W%unmap()
+   status = unmap(d_APost)
+   status = unmap(d_M)
+   status = unmap(d_P)
+   status = unmap(d_W)
 
    ! create the kernel
    !
-   kernel = device%createKernel("update_weights.cl", "update_weight_decr")
+   kernel = createKernel(device, &
+                         "update_weights.cl"  // C_NULL_CHAR, &
+                         "update_weight_decr" // C_NULL_CHAR)
 
    ! add arguments for update_weights kernel
    !
-   status = kernel%setKernelArgInt (0, NPAD) + status
-   status = kernel%setKernelArgReal(1, dt) + status
-   status = kernel%setKernelArgMem (2, d_APost%clMemObject()) + status
-   status = kernel%setKernelArgMem (3, d_M%clMemObject()) + status
+   status = setKernelArgInt (kernel, 0, NPAD) + status
+   status = setKernelArgReal(kernel, 1, dt) + status
+   status = setKernelArgMem (kernel, 2, clMemObject(d_APost)) + status
+   status = setKernelArgMem (kernel, 3, clMemObject(d_M)) + status
+   status = setKernelArgLoc (kernel, 4, local_size) + status
 
    ! add arguments for update_weights kernel
    !
@@ -132,37 +150,37 @@ program update_weights
    ! run the kernel on the device
    !
    print *
-   call timer%init()
-   call timer%start()
-   do i = 1, 10
-      status = kernel%run(NX*nxScale, NY*nyScale, nxg, nyg) + status
+   call init_timer(timer)
+   call start(timer)
+   do i = 1, nLoops
+      status = run(kernel, NX*nxScale, NY*nyScale/nThFac, nxg, nyg) + status
    end do
-   call timer%stop()
-   call timer%elapsed_time()
+   call stop(timer)
+   call elapsed_time(timer)
 
    ! get the results
    !
-   h_W = d_W%map(CL_MAP_READ)
+   h_W = map(d_W, CL_MAP_READ)
    call c_f_pointer(h_W, p_W, shape(W))
 
    if (status /= CL_SUCCESS) print *, "status=", status
 
-   print *
-   call timer%init()
-   call timer%start()
-   do i = 1, 10
-      M = update_weight_decr(1, .5, APost, M)
-   end do
-   call timer%stop()
-   call timer%elapsed_time()
+!   print *
+!   call timer%init()
+!   call timer%start()
+!   do i = 1, nLoc*nLoops
+!      M = update_weight_decr(1, dt, APost, M)
+!   end do
+!   call timer%stop()
+!   call timer%elapsed_time()
 
    print *
-   call timer%init()
-   call timer%start()
-   do i = 1, 10
-      call update_weight_c(NX*nxScale * NY*nyScale, .5, APost, M)
+   call init_timer(timer)
+   call start(timer)
+   do i = 1, nLoc*nLoops
+      call update_weight_c(NX*nxScale * NY*nyScale, dt, APost, M)
    end do
-   call timer%stop()
-   call timer%elapsed_time()
+   call stop(timer)
+   call elapsed_time(timer)
 
 end program
