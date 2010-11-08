@@ -2,27 +2,16 @@ module CLDevice_mod
    use, intrinsic :: ISO_C_BINDING
    use :: OpenCLTypes
    use :: OpenCLInterfaces
-
-   integer, parameter :: MAX_DEVICES = 2
-
-   type :: CLDevice
-      integer(c_int) :: device_id             ! device id (normally 0 for GPU, 1 for CPU)
-      integer(c_int) :: num_devices           ! number of computing devices (cl_uint)
-      type(c_ptr) :: device_ids(MAX_DEVICES)  ! compute device id (cl_device_id)
-      type(c_ptr) :: context                  ! compute context (cl_context)
-      type(c_ptr) :: commands                 ! compute command queue (cl_command_queue)
-   contains
-      procedure, pass(this) :: init
-      procedure, pass(this) :: createKernel
-      procedure, pass(this) :: createBuffer
-   end type CLDevice
+   use :: CLKernel_mod
+   use :: CLBuffer_mod
 
 contains
 
    function init(this, device_id) result(status)
-      class(CLDevice) :: this
+      !class(CLDevice) :: this
+      type(CLDevice) :: this
       integer(c_int) :: device_id
-      integer(cl_bitfield) :: old_properties
+      integer(cl_bitfield) :: properties, old_properties
       integer(cl_int) :: status
 
       this%device_id = device_id
@@ -49,8 +38,9 @@ contains
 
       ! create a command queue
       !
+      properties = 0  ! NULL
       this%commands = clCreateCommandQueue(this%context, this%device_ids(1+this%device_id), &
-                                           0, status)
+                                           properties, status)
       if (status /= CL_SUCCESS) then
          print *, "CLDevice%initialize: Failed to create a command queue"
          call stop_on_error(status)
@@ -71,26 +61,31 @@ contains
    function createKernel(this, filename, name) result(kernel)
       use CLKernel_mod
       implicit none
-      class(CLDevice) :: this
+      !class(CLDevice) :: this
+      type(CLDevice) :: this
       character(*) :: filename
       character(*) :: name
       type(CLKernel) :: kernel
       integer(c_int) :: status
       
-      status = kernel%init(this%context, this%commands, this%device_ids(1+this%device_id), filename, name)
+      status = init_kernel(kernel, this%context, this%commands, &
+                           this%device_ids(1+this%device_id), filename, name)
 
    end function createKernel
 
    function createBuffer(this, size, host_ptr) result(cl_buf)
       use CLBuffer_mod
       implicit none
-      class(CLDevice) :: this
+      !class(CLDevice) :: this
+      type(CLDevice) :: this
       integer(c_size_t) :: size
       type(c_ptr) :: host_ptr
       type(CLBuffer) :: cl_buf
       integer(c_int) :: status
       
-      status = cl_buf%init(this%context, this%commands, CL_MEM_USE_HOST_PTR, size, host_ptr)
+!      status = cl_buf%init(this%context, this%commands, CL_MEM_USE_HOST_PTR, size, host_ptr)
+      status = init_buffer(cl_buf, this%context, this%commands, &
+                           CL_MEM_USE_HOST_PTR, size, host_ptr)
 
    end function createBuffer
 
