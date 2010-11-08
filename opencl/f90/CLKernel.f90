@@ -3,23 +3,6 @@ module CLKernel_mod
    use :: OpenCLTypes
    use :: OpenCLInterfaces
 
-   type :: CLKernel
-      type(c_ptr) :: kernel            ! compute kernel
-      type(c_ptr) :: commands          ! compute command queue (cl_command_queue)
-      type(c_ptr) :: device            ! device we are using
-      type(c_ptr) :: program           ! compute program
-      type(c_ptr) :: event             ! event identifying the kernel execution instance
-      logical     :: profiling         ! flag to enable profiling
-      integer(c_int) :: elapsed        ! elapsed time in microseconds
-   contains
-      procedure, pass(this) :: init
-      procedure, pass(this) :: setKernelArgInt
-      procedure, pass(this) :: setKernelArgLoc
-      procedure, pass(this) :: setKernelArgMem
-      procedure, pass(this) :: setKernelArgReal
-      procedure, pass(this) :: run
-   end type CLKernel
-
    interface setKernelArg
       module procedure setKernelArgInt, setKernelArgMem, setKernelArgLoc, &
                        setKernelArgReal
@@ -27,9 +10,10 @@ module CLKernel_mod
 
 contains
 
-   function init(this, context, commands, device, filename, name) result(status)
+   function init_kernel(this, context, commands, device, filename, name) result(status)
       implicit none
-      class(CLKernel) :: this
+      !class(CLKernel) :: this
+      type(CLKernel) :: this
       type(c_ptr) :: context, commands, device
       character(*) :: filename, name
       integer(cl_int) :: status
@@ -38,7 +22,7 @@ contains
       type(c_ptr) :: source
 
       integer(c_size_t) :: err_len
-      integer, parameter :: err_buf_len = 2048
+      integer(c_size_t), parameter :: err_buf_len = 2048
       character :: err_buf(err_buf_len)
 
       this%device = device
@@ -61,7 +45,8 @@ contains
 
       ! Build the program executable
       !
-      status = clBuildProgram(this%program, 0, C_NULL_PTR, C_NULL_CHAR, C_NULL_FUNPTR, C_NULL_PTR)
+      status = clBuildProgram(this%program, 0, C_NULL_PTR, &
+                              "-cl-fast-relaxed-math" // C_NULL_CHAR, C_NULL_FUNPTR, C_NULL_PTR)
       if (status /= CL_SUCCESS) then
 
          print *, "CLKernel::init: Failed to build program executable!"
@@ -78,13 +63,14 @@ contains
          print *, "CLKernel::init: Failed to create compute kernel!"
          call stop_on_error(status)
       end if
-   end function init
+   end function init_kernel
 
    function setKernelArgInt(this, argid, int_var) result(status)
       implicit none
-      class(CLKernel) :: this
+      !class(CLKernel) :: this
+      type(CLKernel) :: this
       integer, intent(in) :: argid
-      integer(c_int) :: int_var
+      integer(c_int), target :: int_var
       integer(cl_int) :: status
       integer(c_size_t) :: arg_size
 
@@ -100,7 +86,8 @@ contains
 
    function setKernelArgLoc(this, argid, size) result(status)
       implicit none
-      class(CLKernel) :: this
+      !class(CLKernel) :: this
+      type(CLKernel) :: this
       integer, intent(in) :: argid
       integer(c_size_t) :: size
       integer(cl_int) :: status
@@ -114,9 +101,10 @@ contains
 
    function setKernelArgMem(this, argid, cl_mem_obj) result(status)
       implicit none
-      class(CLKernel) :: this
+      !class(CLKernel) :: this
+      type(CLKernel) :: this
       integer, intent(in) :: argid
-      type(c_ptr) :: cl_mem_obj
+      type(c_ptr), target :: cl_mem_obj
       integer(cl_int) :: status
 
       status = clSetKernelArg(this%kernel, argid, c_sizeof_cl_mem(), c_loc(cl_mem_obj))
@@ -128,9 +116,10 @@ contains
 
    function setKernelArgReal(this, argid, real_var) result(status)
       implicit none
-      class(CLKernel) :: this
+      !class(CLKernel) :: this
+      type(CLKernel) :: this
       integer, intent(in) :: argid
-      real(c_float) :: real_var
+      real(c_float), target :: real_var
       integer(cl_int) :: status
       integer(c_size_t) :: arg_size
 
@@ -146,7 +135,8 @@ contains
 
    function run(this, gWorkSizeX, gWorkSizeY, lWorkSizeX, lWorkSizeY) result(status)
       implicit none
-      class(CLKernel) :: this
+      !class(CLKernel) :: this
+      type(CLKernel) :: this
       integer(c_size_t) :: gWorkSizeX, gWorkSizeY, lWorkSizeX, lWorkSizeY
       integer(cl_int) :: status
 
