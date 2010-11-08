@@ -53,7 +53,7 @@ interface
       type(c_ptr), value :: properties
       integer(cl_uint), value :: num_devices
       type(c_ptr) :: devices(*)
-      type(c_funptr) :: pfn_notify
+      type(c_funptr), value :: pfn_notify
       type(c_ptr), value :: user_data
       integer(cl_int), intent(out) :: errcode_ret
       type(c_ptr) :: context_ret
@@ -139,7 +139,7 @@ interface
       type(c_ptr), value :: program
       integer(cl_uint), value :: num_devices
       type(c_ptr), value :: device_list
-      character, dimension(*) :: options
+      character(kind=c_char), dimension(*) :: options
       type(c_funptr), value :: pfn_notify
       type(c_ptr), value :: user_data
       integer(cl_int) :: status
@@ -162,7 +162,7 @@ interface
       type(c_ptr), value :: device
       integer(cl_program_build_info), value :: param_name
       integer(c_size_t), value :: param_value_size
-      character, dimension(*) :: param_value
+      character(kind=c_char), dimension(*) :: param_value
       integer(c_size_t), intent(out) :: param_value_size_ret
       integer(cl_int) :: status
    end function clGetProgramBuildInfo
@@ -181,7 +181,7 @@ interface
       use :: OpenCLTypes
       implicit none
       type(c_ptr), value :: program
-      character, dimension(*) :: kernel_name
+      character(kind=c_char), dimension(*) :: kernel_name
       integer(cl_int) :: errcode_ret
       type(c_ptr) :: kernel_ret
    end function clCreateKernel      
@@ -343,7 +343,7 @@ interface
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
-      character, dimension(*) :: filename
+      character(kind=c_char), dimension(*) :: filename
       integer(c_size_t), dimension(*) :: count
       type(c_ptr) :: source
    end function
