@@ -3,18 +3,58 @@
 #define TAU_LTD   (20.0f)
 #define TAU_LTP   (20.0f)
 
+#undef USE_LOCAL_MEMORY
+
+
+/**
+ * copy shifted region of A to the patch
+ */
+static inline void shift_to_patch(__local  float * patch,
+                                  __global float * A,
+                                  int xShift, yShift, int nPad)
+{
+   uint kxl, kyl;
+
+   const uint pStride = (uint)get_local_size(0); // patch is not padded for shift
+   const uint aStride = (uint)get_global_size(0) + 2*nPad;
+
+   // offset into extended array based on thread group location
+   //
+   const int offset =   ( (uint)get_group_id(0) * (uint)get_local_size(0) + nPad )
+                      + ( (uint)get_group_id(1) * (uint)get_local_size(1) + nPad ) * aStride;
+
+   // copy shifted array to patch (all threads participate)
+   //
+   kxl = get_local_id(0);
+   kyl = get_local_id(1);
+
+   patch[kxl + kyl*pStride] = A[(kxl-xShift) + (kyl-yShift)*aStride + offset];
+}
+
+
 /**
  * OpenCL kernel to update weight STDP decrement variable
  */
 __kernel void update_weight_decr (int nPad, float dt,
     __global float * APost,
-    __global float * M )
+    __global float * M,
+    __local  float * patch )
 {
-   const unsigned int kx = get_global_id(0);
-   const unsigned int ky = get_global_id(1);
-   const unsigned int k  = kx + ky*get_global_size(0);
+   const unsigned int k   = get_global_id(0) + get_global_id(1)*get_global_size(0);
+   const unsigned int kl  = get_local_id (0) + get_local_id (1)*get_local_size (0);
+
+   __local float * pAPost = &patch[0];
+   __local float * pM     = &patch[get_local_size()*get_local_size(1)*sizeof(float)];
 
    const float decayLTD = exp(-dt / TAU_LTD);
+
+   // copy to local scratch memory
+   //
+#ifdef USE_LOCAL_MEMORY
+   shift_to_patch(pAPost, APost, 0, 0, 0);
+   shift_to_patch(pM, M, 0, 0, 0);
+   barrier(CLK_LOCAL_MEM_FENCE);
+#endif
 
    // TODO:
    // both pDecr and activity are extended regions (plus margins)
@@ -23,7 +63,15 @@ __kernel void update_weight_decr (int nPad, float dt,
    // update M
    //
 
-   M[k] = decayLTD*M[k] - AMP_LTD*APost[k];
+#ifdef USE_LOCAL_MEMORY
+   float m = pM[kl];
+   float a = pAPost[kl];
+#else
+   float m = M[k];
+   float a = APost[k];
+#endif
+
+   M[k] = decayLTD*m - AMP_LTD*a;
 }
 
 
