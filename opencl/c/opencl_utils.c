@@ -6,6 +6,7 @@
 #  include <mach/mach_time.h>
 #else
 #  include <CL/opencl.h>
+#  include <sys/time.h>
 #endif
 
 #include <stdio.h>
