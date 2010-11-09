@@ -27,7 +27,7 @@ contains
 
       this%device = device
       this%commands = commands
-      this%profiling = .false.
+      this%profiling = .true.
       this%elapsed = 0
 
       status = CL_SUCCESS
@@ -141,7 +141,9 @@ contains
       integer(cl_int) :: status
 
       integer(c_size_t), dimension(2) :: global_work_offset, local_work_size, global_work_size
-     
+      integer(cl_ulong), target :: prof_start, prof_end
+      integer(c_size_t) :: param_size
+
       global_work_offset = 0
       global_work_size = [gWorkSizeX, gWorkSizeY]
       local_work_size  = [lWorkSizeX, lWorkSizeY]
@@ -159,6 +161,18 @@ contains
       ! wait for the command commands to get serviced before reading back results
       !
       status = clFinish(this%commands)
+
+      if (this%profiling) then
+         status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_START, &
+                                          c_sizeof_cl_ulong(), c_loc(prof_start), param_size)
+         status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_END,   &
+                                          c_sizeof_cl_ulong(), c_loc(prof_end), param_size)
+         if (status == 0) then
+            this%elapsed = (prof_end - prof_start) / 1000   ! microseconds
+            ! print *, "kernel::run: elapsed=", this%elapsed
+         endif
+
+      end if
 
    end function run
 
