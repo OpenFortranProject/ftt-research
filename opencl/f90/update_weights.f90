@@ -59,7 +59,7 @@ program update_weights
    real(c_float), pointer, dimension(:,:,:) :: p_P, p_W
    real(c_float) :: dt
 
-   type(MachTimer) :: timer
+   type(CPUTimer) :: timer
    integer(c_int64_t) :: time
    integer :: run_total = 0
 
