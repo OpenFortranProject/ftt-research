@@ -1,8 +1,15 @@
-#include <OpenCL/opencl.h>
-#include <stdio.h>
-#include <stdlib.h>
+#ifdef __APPLE__
+#  include <OpenCL/opencl.h>
+#  include <CoreServices/CoreServices.h>
+#  include <mach/mach.h>
+#  include <mach/mach_time.h>
+#else
+#  include <CL/opencl.h>
+#endif
 
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 
 void update_weight_c(size_t n, float dt, float APost[], float M[])
@@ -217,4 +224,20 @@ clEnqueueNDRangeKernel_test(cl_command_queue command_queue,
                                  num_events_in_wait_list,
                                  event_wait_list,
                                  event);
+}
+
+cl_int
+clGetEventProfilingInfo_test(cl_event            event,
+                             cl_profiling_info   param_name,
+                             size_t              param_value_size,
+                             void *              param_value,
+                             size_t *            param_value_size_ret)
+{
+   cl_int status = clGetEventProfilingInfo(event, param_name, param_value_size,
+                                           param_value, param_value_size_ret);
+   printf("clGetEventProfilingInfo_test: event==%p param_value_size==%ld param_value==%lu\n",
+          event, param_value_size, *(unsigned long*)param_value);
+   printf("    size_ret==%p, %ld\n",
+          param_value_size_ret, *param_value_size_ret);
+   return status;
 }
