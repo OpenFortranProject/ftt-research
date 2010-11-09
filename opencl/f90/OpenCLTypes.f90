@@ -8,6 +8,7 @@ module OpenCLTypes
   integer, parameter :: cl_bitfield = cl_ulong
 
   integer, parameter :: cl_program_build_info = cl_uint
+  integer, parameter :: cl_profiling_info     = cl_uint
 
   !
   ! OpenCL parameters
@@ -48,6 +49,13 @@ module OpenCLTypes
   !
   integer(cl_bitfield), parameter :: CL_MAP_READ  = 2**0            ! (1 << 0)
   integer(cl_bitfield), parameter :: CL_MAP_WRITE = 2**1            ! (1 << 1)
+
+  ! cl_profiling_info
+  !
+  integer(cl_profiling_info), parameter :: CL_PROFILING_COMMAND_QUEUED = 4736  ! 0x1280
+  integer(cl_profiling_info), parameter :: CL_PROFILING_COMMAND_SUBMIT = 4737  ! 0x1281
+  integer(cl_profiling_info), parameter :: CL_PROFILING_COMMAND_START  = 4738  ! 0x1282
+  integer(cl_profiling_info), parameter :: CL_PROFILING_COMMAND_END    = 4739  ! 0x1283
 
   type, BIND(C) :: cl_platform_id
     type(c_ptr) :: val
