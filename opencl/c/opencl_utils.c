@@ -1,25 +1,33 @@
-#include <OpenCL/opencl.h>
+#ifdef __APPLE__
+#  include <OpenCL/opencl.h>
+#  include <CoreServices/CoreServices.h>
+#  include <mach/mach.h>
+#  include <mach/mach_time.h>
+#else
+#  include <CL/opencl.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
-#include <CoreServices/CoreServices.h>
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-
 
 int64_t mach_absolute_time_test() {
+#ifdef __APPLE__
    uint64_t time = mach_absolute_time();
    printf("mach_time==%ld\n", (long) time);
    return (int64_t) time;
+#else
+   return 0;
+#endif
 }
-
 
 // Convert to milliseconds
 double mach_time_to_sec(uint64_t mach_elapsed)
 {
-   double ms;
+   double ms = 0.0;
+#ifdef __APPLE__
    static mach_timebase_info_data_t  sTimebaseInfo;
    
    if ( sTimebaseInfo.denom == 0 ) {
@@ -29,15 +37,18 @@ double mach_time_to_sec(uint64_t mach_elapsed)
    
    ms = (double) (mach_elapsed) / 1.0e9;
    ms *= sTimebaseInfo.numer / sTimebaseInfo.denom;
-   
+#endif   
    return ms;
 }
 
 double print_elapsed_time(uint64_t mach_elapsed)
 {
-   double elapsed = mach_time_to_sec(mach_elapsed);
+   double elapsed = 0.0;
+#ifdef __APPLE__
+   elapsed = mach_time_to_sec(mach_elapsed);
    fprintf(stdout, "Mach processor cycle time == %f ms\n", (float) elapsed);
    fflush(stdout);
+#endif
    return mach_elapsed;
 }
 
@@ -49,6 +60,11 @@ void print_addr(void * addr)
 size_t c_sizeof_cl_mem()
 {
    return sizeof(cl_mem);
+}
+
+size_t c_sizeof_cl_ulong()
+{
+   return sizeof(cl_ulong);
 }
 
 void c_free(void * buf)
