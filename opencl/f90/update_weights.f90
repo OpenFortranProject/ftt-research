@@ -61,6 +61,7 @@ program update_weights
 
    type(MachTimer) :: timer
    integer(c_int64_t) :: time
+   integer :: run_total = 0
 
    type(CLDevice) :: device
    type(CLKernel) :: kernel
@@ -154,9 +155,11 @@ program update_weights
    call start(timer)
    do i = 1, nLoops
       status = run(kernel, NX*nxScale, NY*nyScale/nThFac, nxg, nyg) + status
+      run_total = run_total + kernel%elapsed/1000
    end do
    call stop(timer)
    call elapsed_time(timer)
+   print *, "run_total=", run_total
 
    ! get the results
    !
