@@ -13,10 +13,9 @@
 #include <sys/stat.h>
 
 
-int64_t mach_absolute_time_test() {
+int64_t get_cpu_time() {
 #ifdef __APPLE__
    uint64_t time = mach_absolute_time();
-   printf("mach_time==%ld\n", (long) time);
    return (int64_t) time;
 #else
    return 0;
@@ -24,32 +23,28 @@ int64_t mach_absolute_time_test() {
 }
 
 // Convert to milliseconds
-double mach_time_to_sec(uint64_t mach_elapsed)
+double cpu_time_to_sec(uint64_t cpu_elapsed)
 {
-   double ms = 0.0;
+   double us = 0.0;
 #ifdef __APPLE__
-   static mach_timebase_info_data_t  sTimebaseInfo;
-   
-   if ( sTimebaseInfo.denom == 0 ) {
-      // initialize (yuk, hope it isn't some stray value)
-      (void) mach_timebase_info(&sTimebaseInfo);
-   }
-   
-   ms = (double) (mach_elapsed) / 1.0e9;
-   ms *= sTimebaseInfo.numer / sTimebaseInfo.denom;
+   static mach_timebase_info_data_t  info;
+   mach_timebase_info(&info);
+   cpu_elapsed *= info.numer;
+   cpu_elapsed /= info.denom;
+   us = (double) (cpu_elapsed/1000);  // microseconds
 #endif   
-   return ms;
+   return us/1000.0;
 }
 
-double print_elapsed_time(uint64_t mach_elapsed)
+double print_elapsed_time(uint64_t cpu_elapsed)
 {
    double elapsed = 0.0;
 #ifdef __APPLE__
-   elapsed = mach_time_to_sec(mach_elapsed);
+   elapsed = cpu_time_to_sec(cpu_elapsed);
    fprintf(stdout, "Mach processor cycle time == %f ms\n", (float) elapsed);
    fflush(stdout);
 #endif
-   return mach_elapsed;
+   return elapsed;
 }
 
 void print_addr(void * addr)
