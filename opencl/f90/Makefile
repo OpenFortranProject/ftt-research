@@ -3,8 +3,8 @@ FC = gfortran
 CC = gcc
 
 FCFLAGS = -g -m64
-CFLAGS = -g -arch i386
-CFLAGS = -g
+CFLAGS = -g -arch i386 $(INC)
+CFLAGS = -g $(INC)
 
 OBJS = OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
        OpenCL.o opencl_utils.o opencl_test.o Timer.o
