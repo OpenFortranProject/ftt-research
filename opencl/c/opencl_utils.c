@@ -1,4 +1,5 @@
 #ifdef __APPLE__
+#  define USE_MACH_TIME
 #  include <OpenCL/opencl.h>
 #  include <CoreServices/CoreServices.h>
 #  include <mach/mach.h>
@@ -12,13 +13,17 @@
 #include <string.h>
 #include <sys/stat.h>
 
-
-int64_t get_cpu_time() {
-#ifdef __APPLE__
-   uint64_t time = mach_absolute_time();
-   return (int64_t) time;
+uint64_t get_cpu_time() {
+#ifdef USE_MACH_TIME
+   return mach_absolute_time();
 #else
-   return 0;
+   struct timeval tim;
+   //   struct rusage ru;
+   //   getrusage(RUSAGE_SELF, &ru);
+   //   tim = ru.ru_utime;
+   gettimeofday(&tim, NULL);
+   //printf("get_cpu_time: sec==%d usec==%d\n", tim.tv_sec, tim.tv_usec);
+   return ((uint64_t) tim.tv_sec)*1000000 + (uint64_t) tim.tv_usec;   
 #endif
 }
 
@@ -26,24 +31,23 @@ int64_t get_cpu_time() {
 double cpu_time_to_sec(uint64_t cpu_elapsed)
 {
    double us = 0.0;
-#ifdef __APPLE__
+#ifdef USE_MACH_TIME
    static mach_timebase_info_data_t  info;
    mach_timebase_info(&info);
    cpu_elapsed *= info.numer;
    cpu_elapsed /= info.denom;
    us = (double) (cpu_elapsed/1000);  // microseconds
+#else
+   us = (double) cpu_elapsed;
 #endif   
    return us/1000.0;
 }
 
 double print_elapsed_time(uint64_t cpu_elapsed)
 {
-   double elapsed = 0.0;
-#ifdef __APPLE__
-   elapsed = cpu_time_to_sec(cpu_elapsed);
-   fprintf(stdout, "Mach processor cycle time == %f ms\n", (float) elapsed);
+   double elapsed = cpu_time_to_sec(cpu_elapsed);
+   fprintf(stdout, "processor cycle time == %f ms\n", (float) elapsed);
    fflush(stdout);
-#endif
    return elapsed;
 }
 
