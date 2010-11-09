@@ -14,7 +14,7 @@
 
 void update_weight_c(size_t n, float dt, float APost[], float M[])
 {
-   int k;
+   unsigned int k;
    float decayLTD;
    const float ampLTD = 1.1f, tauLTD = 20.0f;
 
@@ -32,7 +32,8 @@ clGetDeviceIDs_test(cl_platform_id platform,
                     cl_device_id * devices,
                     cl_uint * num_devices)
 {
-   int i, status;
+   int status;
+   unsigned int i;
    printf("clGetDeviceIDs_test: platform==%p num_entries==%d\n", platform, num_entries);
    status = clGetDeviceIDs(platform, device_type, num_entries, devices, num_devices);
    printf("clGetDeviceIDs_test: status==%d num_devices==%d\n", status, *num_devices);
@@ -50,9 +51,9 @@ clCreateContext_test(const cl_context_properties * properties,
                      void * user_data,
                      cl_int * status)
 {
-   int i;
    cl_context context;
-   printf("clCreateContext_test: num_devices==%d device==%p\n", num_devices, devices[0]);
+   printf("clCreateContext_test: num_devices==%d device==%p pfn_notify==%p\n",
+          num_devices, devices[0], pfn_notify);
    //   context = clCreateContext(properties, num_devices, devices, NULL, user_data, status);
    context = clCreateContext(properties, num_devices, devices, NULL, user_data, status);
    printf("clCreateContext_test: context==%p\n", context);
@@ -183,8 +184,8 @@ clEnqueueMapBuffer_test(cl_command_queue  command_queue,
    /* WARNING, event not specified correctly for non-blocking map */
    host_ptr_ret = clEnqueueMapBuffer(command_queue, buffer, blocking_map, map_flags, offset, cb,
                               num_events_in_wait_list, event_wait_list, NULL /*event*/, errcode_ret);
-//   printf("clEnqueueMapBuffer_test: buf==%p flags==%ld offset==%ld event==%p host_ptr==%p\n",
-//          buffer, (long) map_flags, offset, event, host_ptr_ret);
+   //   printf("clEnqueueMapBuffer_test: buf==%p flags==%ld offset==%ld event==%p host_ptr==%p\n",
+   //          buffer, (long) map_flags, offset, event, host_ptr_ret);
    return host_ptr_ret;
 }
 
