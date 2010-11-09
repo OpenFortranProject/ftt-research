@@ -74,13 +74,12 @@ program update_weights
    integer(c_size_t) :: global_ex_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_FLOAT
    integer(c_size_t) :: local_ex_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_FLOAT
 
-   integer :: device_id, i, nLoops, nLoc, nThFac
+   integer :: device_id, i, nLoops, nThFac
 
    dt = 0.5
 
    device_id = 1
    nLoops = 20
-   nLoc = 1
    nThFac = 1
 
    if (device_id == 0) then
@@ -168,19 +167,18 @@ program update_weights
 
    if (status /= CL_SUCCESS) print *, "status=", status
 
-!   print *
-!   call timer%init()
-!   call timer%start()
-!   do i = 1, nLoc*nLoops
-!      M = update_weight_decr(1, dt, APost, M)
-!   end do
-!   call timer%stop()
-!   call timer%elapsed_time()
-
    print *
    call init_timer(timer)
    call start(timer)
-   do i = 1, nLoc*nLoops
+   do i = 1, nLoops
+      M = update_weight_decr(1, dt, APost, M)
+   end do
+   call stop(timer)
+   call elapsed_time(timer)
+
+   call init_timer(timer)
+   call start(timer)
+   do i = 1, nLoops
       call update_weight_c(NX*nxScale * NY*nyScale, dt, APost, M)
    end do
    call stop(timer)
