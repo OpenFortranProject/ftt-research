@@ -158,7 +158,7 @@ program update_weights
    end do
    call stop(timer)
    call elapsed_time(timer)
-   print *, "run_total=", run_total
+   print *, "opencl timer==", run_total, "ms"
 
    ! get the results
    !
