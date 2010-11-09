@@ -57,7 +57,8 @@ contains
 
    subroutine elapsed_time(this)
       implicit none
-      class(MachTimer) :: this
+!      class(MachTimer) :: this
+      type(MachTimer) :: this
       real(c_double) :: time
       time = print_elapsed_time(this%mach_elapsed)
    end subroutine elapsed_time
