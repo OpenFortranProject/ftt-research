@@ -227,6 +227,30 @@ interface
    end function clCreateBuffer
 
 
+   ! Profiling APIs
+   !
+
+   ! cl_int
+   ! clGetEventProfilingInfo(cl_event            /* event */,
+   !                         cl_profiling_info   /* param_name */,
+   !                         size_t              /* param_value_size */,
+   !                         void *              /* param_value */,
+   !                         size_t *            /* param_value_size_ret */);
+   function clGetEventProfilingInfo(event, param_name, param_value_size, &
+                                    param_value, param_value_size_ret)   &
+            result(status) bind(C,name="clGetEventProfilingInfo")
+      use, intrinsic :: ISO_C_BINDING
+      use :: OpenCLTypes
+      implicit none
+      type(c_ptr), value :: event
+      integer(cl_profiling_info), value :: param_name
+      integer(c_size_t), value :: param_value_size
+      type(c_ptr), value :: param_value
+      integer(c_size_t) :: param_value_size_ret
+      integer(cl_int) :: status
+   end function clGetEventProfilingInfo
+
+
    ! Flush and Finish APIs
    !
 
@@ -349,6 +373,13 @@ interface
    end function
 
    function c_sizeof_cl_mem() result(size) bind(C, name="c_sizeof_cl_mem")
+      use, intrinsic :: ISO_C_BINDING
+      use :: OpenCLTypes
+      implicit none
+      integer(c_size_t) :: size
+   end function
+
+   function c_sizeof_cl_ulong() result(size) bind(C, name="c_sizeof_cl_ulong")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
