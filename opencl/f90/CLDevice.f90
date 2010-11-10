@@ -73,7 +73,22 @@ contains
 
    end function createKernel
 
-   function createBuffer(this, size, host_ptr) result(cl_buf)
+   function createBuffer(this, flags, size, host_ptr) result(cl_buf)
+      use CLBuffer_mod
+      implicit none
+      !class(CLDevice) :: this
+      type(CLDevice) :: this
+      integer(cl_bitfield) :: flags
+      integer(c_size_t) :: size
+      type(c_ptr) :: host_ptr
+      type(CLBuffer) :: cl_buf
+      integer(c_int) :: status
+      
+      status = init_buffer(cl_buf, this%context, this%commands, flags, size, host_ptr)
+
+   end function createBuffer
+
+   function createBufferMapped(this, size, host_ptr) result(cl_buf)
       use CLBuffer_mod
       implicit none
       !class(CLDevice) :: this
@@ -83,10 +98,9 @@ contains
       type(CLBuffer) :: cl_buf
       integer(c_int) :: status
       
-!      status = cl_buf%init(this%context, this%commands, CL_MEM_USE_HOST_PTR, size, host_ptr)
       status = init_buffer(cl_buf, this%context, this%commands, &
                            CL_MEM_USE_HOST_PTR, size, host_ptr)
 
-   end function createBuffer
+   end function createBufferMapped
 
 end module CLDevice_mod
