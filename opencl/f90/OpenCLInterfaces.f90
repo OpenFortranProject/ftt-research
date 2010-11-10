@@ -278,6 +278,32 @@ interface
    ! Enqueued Commands APIs
    !
 
+   ! cl_int
+   ! clEnqueueCopyBuffer(cl_command_queue    /* command_queue */, 
+   !                     cl_mem              /* src_buffer */,
+   !                     cl_mem              /* dst_buffer */, 
+   !                     size_t              /* src_offset */,
+   !                     size_t              /* dst_offset */,
+   !                     size_t              /* cb */, 
+   !                     cl_uint             /* num_events_in_wait_list */,
+   !                     const cl_event *    /* event_wait_list */,
+   !                     cl_event *          /* event */);
+   function clEnqueueCopyBuffer(command_queue, src_buffer, dst_buffer, src_offset, dst_offset, &
+                                cb, num_events_in_wait_list, event_wait_list, event) &
+            result(status) bind(C,name="clEnqueueCopyBuffer")
+      use, intrinsic :: ISO_C_BINDING
+      use :: OpenCLTypes
+      implicit none
+      type(c_ptr), value :: command_queue
+      type(c_ptr), value :: src_buffer, dst_buffer
+      integer(c_size_t), value :: src_offset, dst_offset, cb
+      integer(cl_uint), value :: num_events_in_wait_list
+      type(c_ptr), value :: event_wait_list
+      type(c_ptr) :: event
+      integer(cl_int) :: status
+   end function clEnqueueCopyBuffer      
+
+
    ! void *
    ! clEnqueueMapBuffer(cl_command_queue /* command_queue */,
    !                    cl_mem           /* buffer */,
@@ -388,16 +414,19 @@ interface
 
    subroutine c_free(buf) bind(C, name="c_free")
       use, intrinsic :: ISO_C_BINDING
+      implicit none
       type(c_ptr), value :: buf
    end subroutine
 
    subroutine stop_on_error(code) bind(C, name="stop_on_error")
       use, intrinsic :: ISO_C_BINDING
+      implicit none
       integer(c_int), value :: code
    end subroutine
 
    subroutine print_addr(addr) bind(C, name="print_addr")
      use, intrinsic :: ISO_C_BINDING
+     implicit none
      type(c_ptr), value :: addr
    end subroutine
 
