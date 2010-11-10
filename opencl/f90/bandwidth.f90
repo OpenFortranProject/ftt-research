@@ -32,7 +32,7 @@ program memory_bandwidth
    integer(c_size_t) :: global_mem_size = NX*NY * SIZE_FLOAT
    integer(c_size_t) :: local_mem_size  = NXL*NYL * SIZE_FLOAT
 
-   integer :: device_id, i, nLoops
+   integer :: device_id, i, j, nLoops
    integer :: ocl_time = 0
    real :: bandwidth
 
@@ -105,10 +105,23 @@ program memory_bandwidth
 
    ! get the results
    !
+   status = readBuffer(d_dst, c_loc(dst), global_mem_size) + status
+   if (status /= CL_SUCCESS) print *, "status=", status;  status = 0
+
 !   h_dst = map(d_dst, CL_MAP_READ)
 !   call c_f_pointer(h_dst, p_dst, shape(dst))
+   do j = 1, ny
+      do i = 1, nx
+         if (dst(i,j) /= src(i,j)) then
+            print *, "Results incorrect at ", i, j
+            stop 1
+         end if
+      end do
+   end do
 
-   if (status /= CL_SUCCESS) print *, "status=", status
+   if (status == CL_SUCCESS) then
+      print *, "Copy correctness verified..."
+   end if
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
    bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / (ocl_time/1000))
