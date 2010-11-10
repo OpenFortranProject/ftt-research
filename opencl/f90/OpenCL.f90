@@ -1,4 +1,3 @@
-
 !
 ! This module creates bindings between Fortran and OpenCL.
 !
