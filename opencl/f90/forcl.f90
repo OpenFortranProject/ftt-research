@@ -11,7 +11,7 @@ program forcl
 
    integer(c_size_t), parameter :: SIZE_INT = 4
 
-!   integer(c_size_t) :: nxg, nyg, nxl, nyl
+   integer(c_size_t) :: nxLocal, nyLocal
    integer, target, dimension(NX+2*NPAD,NY+2*NPAD) :: A, B, C
    integer, pointer, dimension(:,:) :: p_A, p_B, p_C
 
@@ -24,18 +24,27 @@ program forcl
    integer(c_size_t) :: global_ex_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_INT
    integer(c_size_t) :: local_ex_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_INT
 
+   integer :: device_id
+
    if (NXL < 2*NPAD .or. NYL < 2*NPAD) then
       print *, "thread work group size is too small, die!!!"
       stop 1
    end if
 
-   status = init(device, 1)
+   device_id = 0
+   if (device_id == 0) then
+      nxLocal = NXL; nyLocal = NYL
+   else
+      nxLocal = 1; nyLocal = 1
+   end if
+
+   status = init(device, device_id)
 
    ! create memory buffers
    !
-   d_A = createBuffer(device, global_ex_size, c_loc(A))
-   d_B = createBuffer(device, global_ex_size, c_loc(B))
-   d_C = createBuffer(device, global_ex_size, c_loc(C))
+   d_A = createBufferMapped(device, global_ex_size, c_loc(A))
+   d_B = createBufferMapped(device, global_ex_size, c_loc(B))
+   d_C = createBufferMapped(device, global_ex_size, c_loc(C))
 
    ! map memory so that it can be initialized on host
    !
@@ -72,7 +81,7 @@ program forcl
 
    ! run the kernel on the device
    !
-   status = run(kernel, NX, NY, NXL, NYL) + status
+   status = run(kernel, NX, NY, nxLocal, nyLocal) + status
 
    ! get the results
    !
