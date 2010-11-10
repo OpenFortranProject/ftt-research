@@ -49,6 +49,9 @@ program memory_bandwidth
 
    status = init(device, device_id)
 
+   src = 1.1
+   dst = 0.0
+
    ! create memory buffers
    !
    d_src = createBuffer(device, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, &
@@ -63,7 +66,7 @@ program memory_bandwidth
 !   h_src = map(d_src, CL_MAP_WRITE)
 !   call c_f_pointer(h_src, p_src, shape(src))
 
-   src = 1.1
+!   p_src = 1.1
 
    ! finished initializing memory, unmap for use on device
    !
@@ -92,12 +95,13 @@ program memory_bandwidth
    do i = 0, nLoops
       status = run(kernel, NX, NY, nxLocal, nyLocal) + status
       if (i > 0) then
-         ocl_time = ocl_time + kernel%elapsed/1000
+         !!print *, "       opencl timer==", kernel%elapsed, "ms"
+         ocl_time = ocl_time + kernel%elapsed
       end if
    end do
    call stop(timer)
    call print_elapsed_time(timer)
-   print *, "opencl timer==", ocl_time, "ms"
+   print *, "opencl timer==", ocl_time/1000, "ms"
 
    ! get the results
    !
@@ -107,7 +111,7 @@ program memory_bandwidth
    if (status /= CL_SUCCESS) print *, "status=", status
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
-   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / ocl_time)
+   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / (ocl_time/1000))
    print *, "bandwidth ==", bandwidth, "GB/s"
 
    print *
