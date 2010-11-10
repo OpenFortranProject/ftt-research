@@ -34,6 +34,22 @@ contains
       mem_obj_rtn = this%d_buf
    end function clMemObject
 
+   function copyBuffer(src, dst, size) result(status)
+      implicit none
+      type(CLBuffer) :: src, dst
+      integer(c_size_t) :: size, offset=0
+      integer(cl_int) :: status
+
+      ! assumes src and dst have same command queue
+      status = clEnqueueCopyBuffer(src%commands, src%d_buf, dst%d_buf, offset, offset, size, &
+                                   0, C_NULL_PTR, src%event)
+      if (status /= CL_SUCCESS) then
+         print *, "CLBuffer::copyBuffer: Failed to enqueue copy buffer!"
+         call stop_on_error(status)
+      end if
+
+   end function copyBuffer
+
    function map(this, flags) result(mapped_ptr_ret)
       implicit none
       !class(CLBuffer) :: this
