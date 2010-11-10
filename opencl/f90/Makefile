@@ -23,11 +23,10 @@ DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
 # detect architecture
 OSARCH= $(shell uname -m)
 
-SDKROOTDIR := /home/rasmussn/local/NVIDIA_GPU_Computing_SDK
-
 INCDIR  ?= .
 
 ifeq ($(DARWIN),)
+   SDKROOTDIR   := /home/rasmussn/local/NVIDIA_GPU_Computing_SDK
    LIBDIR       := $(SDKROOTDIR)/shared/lib/
    SHAREDDIR    := $(SDKROOTDIR)/shared/
    SHAREDLIBDIR := $(SDKROOTDIR)/shared/lib/linux
@@ -108,7 +107,7 @@ OBJS = OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
 
 LIBS += $(OBJS)
 
-APPS = forcl update_weights
+APPS = forcl update_weights bandwidth
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
@@ -117,13 +116,13 @@ APPS = forcl update_weights
 all: $(OBJS) $(APPS)
 
 forcl: forcl.o $(OBJS)
-	$(FC) $(FCFLAGS) -o $@ $< $(LIBS)
+	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
 update_weights: update_weights.o $(OBJS)
 	$(LINK) -o $@ $< $(LIBS)
 
-forcl.o: forcl.f90 $(OBJS)
-	$(LINK) -c $(FCFLAGS) $<
+bandwidth: bandwidth.o $(OBJS)
+	$(LINK) -o $@ $< $(LIBS)
 
 opencl_utils.o: ../c/opencl_utils.c
 	$(CC) -c $(CFLAGS) $<
@@ -133,6 +132,12 @@ opencl_test.o: ../c/opencl_test.c
 
 # dependencies
 #
+
+forcl.o: forcl.f90 $(OBJS)
+
+update_weights.o: update_weights.f90 $(OBJS)
+
+bandwidth.o: bandwidth.f90 $(OBJS)
 
 OpenCL.o: OpenCL.f90 CLBuffer.o CLDevice.o OpenCLTypes.o OpenCLInterfaces.o
 
