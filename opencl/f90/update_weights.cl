@@ -43,8 +43,10 @@ __kernel void update_weight_decr (int nPad, float dt,
    const unsigned int k   = get_global_id(0) + get_global_id(1)*get_global_size(0);
    const unsigned int kl  = get_local_id (0) + get_local_id (1)*get_local_size (0);
 
+#ifdef USE_LOCAL_MEMORY
    __local float * pAPost = &patch[0];
-   __local float * pM     = &patch[get_local_size()*get_local_size(1)*sizeof(float)];
+   __local float * pM     = &patch[get_local_size(0)*get_local_size(1)*sizeof(float)];
+#endif
 
    const float decayLTD = exp(-dt / TAU_LTD);
 
