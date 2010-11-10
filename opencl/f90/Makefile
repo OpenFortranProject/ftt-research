@@ -59,7 +59,7 @@ CWARN_FLAGS := -W -Wall
 LIB_ARCH := $(OSARCH)
 
 ifeq ($(DARWIN),)
-   ARCH_FLAGS += -arch x86_64
+   ARCH_FLAGS += -m64
 else
    ARCH_FLAGS += -m64
 endif
