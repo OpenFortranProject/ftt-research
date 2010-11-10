@@ -1,0 +1,3 @@
+This directory is for creating a Fortran to xml translator.  It is
+expected that code in this directory will be moved to a OFP contrib
+directory once completed.
