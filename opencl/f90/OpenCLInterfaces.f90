@@ -10,6 +10,23 @@ interface
    !                  cl_platform_id * /* platforms */,
    !                  cl_uint *        /* num_platforms */);
    !
+   function clGetPlatformIDs(num_entries, platforms, num_platforms) &
+            result(status) bind(C, name="clGetPlatformIDs")
+      use, intrinsic :: ISO_C_BINDING
+      use :: OpenCLTypes
+      implicit none
+      integer(cl_uint), value :: num_entries
+      type(c_ptr), dimension(*) :: platforms
+      integer(cl_uint) :: num_platforms
+      integer(cl_int) :: status
+   end function clGetPlatformIDs
+
+   ! cl_int
+   ! clGetPlatformInfo(cl_platform_id   /* platform */, 
+   !                   cl_platform_info /* param_name */,
+   !                   size_t           /* param_value_size */, 
+   !                   void *           /* param_value */,
+   !                   size_t *         /* param_value_size_ret */);
 
 
    ! Device APIs
@@ -27,7 +44,7 @@ interface
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
-      type(cl_platform_id), value :: platform
+      type(c_ptr), value :: platform
       integer(cl_bitfield), value :: device_type
       integer(cl_uint), value :: num_entries
       type(c_ptr) :: devices(*)
