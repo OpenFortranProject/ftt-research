@@ -279,6 +279,60 @@ interface
    !
 
    ! cl_int
+   ! clEnqueueReadBuffer(cl_command_queue    /* command_queue */,
+   !                     cl_mem              /* buffer */,
+   !                     cl_bool             /* blocking_read */,
+   !                     size_t              /* offset */,
+   !                     size_t              /* cb */, 
+   !                     void *              /* ptr */,
+   !                     cl_uint             /* num_events_in_wait_list */,
+   !                     const cl_event *    /* event_wait_list */,
+   !                    cl_event *          /* event */);
+   function clEnqueueReadBuffer(command_queue, buffer, blocking_read, offset, cb, &
+                                ptr, num_events_in_wait_list, event_wait_list, event) &
+            result(status) bind(C,name="clEnqueueReadBuffer")
+      use, intrinsic :: ISO_C_BINDING
+      use :: OpenCLTypes
+      implicit none
+      type(c_ptr), value :: command_queue
+      type(c_ptr), value :: buffer
+      integer(cl_bool), value :: blocking_read
+      integer(c_size_t), value :: offset, cb
+      type(c_ptr), value :: ptr
+      integer(cl_uint), value :: num_events_in_wait_list
+      type(c_ptr), value :: event_wait_list
+      type(c_ptr) :: event
+      integer(cl_int) :: status
+   end function clEnqueueReadBuffer
+                            
+   ! cl_int
+   ! clEnqueueWriteBuffer(cl_command_queue   /* command_queue */, 
+   !                      cl_mem             /* buffer */, 
+   !                      cl_bool            /* blocking_write */, 
+   !                      size_t             /* offset */, 
+   !                      size_t             /* cb */, 
+   !                      const void *       /* ptr */, 
+   !                      cl_uint            /* num_events_in_wait_list */, 
+   !                      const cl_event *   /* event_wait_list */, 
+   !                      cl_event *         /* event */);
+   function clEnqueueWriteBuffer(command_queue, buffer, blocking_write, offset, cb, &
+                                 ptr, num_events_in_wait_list, event_wait_list, event) &
+            result(status) bind(C,name="clEnqueueWriteBuffer")
+      use, intrinsic :: ISO_C_BINDING
+      use :: OpenCLTypes
+      implicit none
+      type(c_ptr), value :: command_queue
+      type(c_ptr), value :: buffer
+      integer(cl_bool), value :: blocking_write
+      integer(c_size_t), value :: offset, cb
+      type(c_ptr), value :: ptr
+      integer(cl_uint), value :: num_events_in_wait_list
+      type(c_ptr), value :: event_wait_list
+      type(c_ptr) :: event
+      integer(cl_int) :: status
+   end function clEnqueueWriteBuffer
+                            
+   ! cl_int
    ! clEnqueueCopyBuffer(cl_command_queue    /* command_queue */, 
    !                     cl_mem              /* src_buffer */,
    !                     cl_mem              /* dst_buffer */, 
@@ -301,8 +355,7 @@ interface
       type(c_ptr), value :: event_wait_list
       type(c_ptr) :: event
       integer(cl_int) :: status
-   end function clEnqueueCopyBuffer      
-
+   end function clEnqueueCopyBuffer
 
    ! void *
    ! clEnqueueMapBuffer(cl_command_queue /* command_queue */,
