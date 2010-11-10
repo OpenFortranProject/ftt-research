@@ -44,7 +44,7 @@ double cpu_time_to_sec(uint64_t cpu_elapsed)
    return us/1000.0;
 }
 
-double print_elapsed_time(uint64_t cpu_elapsed)
+double print_elapsed_time_c(uint64_t cpu_elapsed)
 {
    double elapsed = cpu_time_to_sec(cpu_elapsed);
    fprintf(stdout, "processor cycle time == %f ms\n", (float) elapsed);
@@ -141,6 +141,9 @@ void stop_on_error(int code)
          break;
       case CL_INVALID_QUEUE_PROPERTIES:
          sprintf(msg, "%s (%d)", "CL_INVALID_QUEUE_PROPERTIES", code);
+         break;
+      case CL_INVALID_WORK_GROUP_SIZE:
+         sprintf(msg, "%s (%d)", "CL_INVALID_WORK_GROUP_SIZE", code);
          break;
       case CL_INVALID_VALUE:
          sprintf(msg, "%s (%d)", "CL_INVALID_VALUE", code);
