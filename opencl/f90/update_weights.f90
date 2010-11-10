@@ -61,7 +61,6 @@ program update_weights
 
    type(CPUTimer) :: timer
    integer(c_int64_t) :: time
-   integer :: run_total = 0
 
    type(CLDevice) :: device
    type(CLKernel) :: kernel
@@ -69,16 +68,18 @@ program update_weights
    type(c_ptr)    :: h_APost, h_M, h_P, h_W
 
    integer(cl_bitfield) :: flags
-   integer(c_size_t) :: global_size = NX*NY * SIZE_FLOAT
-   integer(c_size_t) :: local_size  = NXL*NYL * SIZE_FLOAT
-   integer(c_size_t) :: global_ex_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_FLOAT
-   integer(c_size_t) :: local_ex_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_FLOAT
+   integer(c_size_t) :: global_mem_size = NX*NY * SIZE_FLOAT
+   integer(c_size_t) :: local_mem_size  = NXL*NYL * SIZE_FLOAT
+   integer(c_size_t) :: global_mem_ex_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_FLOAT
+   integer(c_size_t) :: local_mem_ex_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_FLOAT
 
    integer :: device_id, i, nLoops, nThFac
+   integer :: ocl_time = 0
+   real :: bandwidth
 
    dt = 0.5
 
-   device_id = 1
+   device_id = 0
    nLoops = 20
    nThFac = 1
 
@@ -92,11 +93,11 @@ program update_weights
 
    ! create memory buffers
    !
-   d_APost = createBuffer(device, global_ex_size*nxScale*nyScale, c_loc(APost))
-   d_M     = createBuffer(device, global_ex_size*nxScale*nyScale, c_loc(M))
+   d_APost = createBufferMapped(device, global_mem_ex_size*nxScale*nyScale, c_loc(APost))
+   d_M     = createBufferMapped(device, global_mem_ex_size*nxScale*nyScale, c_loc(M))
 
-   d_P = createBuffer(device, global_size*NXP*NYP, c_loc(P))
-   d_W = createBuffer(device, global_size*NXP*NYP, c_loc(W))
+   d_P = createBufferMapped(device, global_mem_size*NXP*NYP, c_loc(P))
+   d_W = createBufferMapped(device, global_mem_size*NXP*NYP, c_loc(W))
 
    ! map memory so that it can be initialized on host
    !
@@ -134,7 +135,7 @@ program update_weights
    status = setKernelArgReal(kernel, 1, dt) + status
    status = setKernelArgMem (kernel, 2, clMemObject(d_APost)) + status
    status = setKernelArgMem (kernel, 3, clMemObject(d_M)) + status
-   status = setKernelArgLoc (kernel, 4, local_size) + status
+   status = setKernelArgLoc (kernel, 4, local_mem_size) + status
 
    ! add arguments for update_weights kernel
    !
@@ -152,13 +153,19 @@ program update_weights
    print *
    call init_timer(timer)
    call start(timer)
-   do i = 1, nLoops
+   do i = 0, nLoops
       status = run(kernel, NX*nxScale, NY*nyScale/nThFac, nxg, nyg) + status
-      run_total = run_total + kernel%elapsed/1000
+      if (i > 0) then
+         ocl_time = ocl_time + kernel%elapsed/1000
+      end if
    end do
    call stop(timer)
-   call elapsed_time(timer)
-   print *, "opencl timer==", run_total, "ms"
+   call print_elapsed_time(timer)
+   print *, "opencl timer==", ocl_time, "ms"
+
+   ! 1.0e-9 -> GB, 1000 -> ms, 3 -> 2*to/1*fro
+   bandwidth = (1.0e-9 * 1000) * nLoops * (3*global_mem_ex_size*nxScale*nyScale / ocl_time)
+   print *, "bandwidth ==", bandwidth, "GB/s"
 
    ! get the results
    !
@@ -174,7 +181,7 @@ program update_weights
       M = update_weight_decr(1, dt, APost, M)
    end do
    call stop(timer)
-   call elapsed_time(timer)
+   call print_elapsed_time(timer)
 
    call init_timer(timer)
    call start(timer)
@@ -182,6 +189,6 @@ program update_weights
       call update_weight_c(NX*nxScale * NY*nyScale, dt, APost, M)
    end do
    call stop(timer)
-   call elapsed_time(timer)
+   call print_elapsed_time(timer)
 
 end program
