@@ -14,11 +14,21 @@ contains
       integer(cl_bitfield) :: properties, old_properties
       integer(cl_int) :: status
 
+      integer(cl_uint) :: num_platforms
+      type(c_ptr) :: platforms(2)
+
       this%device_id = device_id
+
+      ! get and use the first platform available
+      !
+      status = clGetPlatformIDs(2, platforms, num_platforms)
+      if (num_platforms > 1) then
+         print *, "number of platforms =", num_platforms
+      end if
 
       ! get number of devices available
       !
-      status = clGetDeviceIDs(platform_id_null, CL_DEVICE_TYPE_ALL, &
+      status = clGetDeviceIDs(platforms(1), CL_DEVICE_TYPE_ALL, &
                               MAX_DEVICES, this%device_ids, this%num_devices)
 
       if (status /= CL_SUCCESS) then
