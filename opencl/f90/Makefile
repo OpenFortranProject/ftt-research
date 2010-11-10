@@ -152,6 +152,6 @@ Timer.o : Timer.f90
 OpenCLInterfaces.o: OpenCLTypes.o
 
 clean:
-	rm -f $(OBJS) forcl.o update_weights.o
+	rm -f $(OBJS) forcl.o update_weights.o bandwidth.o
 	rm -f *.mod
 	rm -f $(APPS)
