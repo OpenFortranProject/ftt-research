@@ -34,12 +34,29 @@ contains
       mem_obj_rtn = this%d_buf
    end function clMemObject
 
+   function readBuffer(this, dst, size) result(status)
+      implicit none
+      type(CLBuffer) :: this
+      type(c_ptr) :: dst
+      integer(c_size_t) :: size, offset
+      integer(cl_int) :: status
+
+      offset = 0
+      status = clEnqueueReadBuffer(this%commands, this%d_buf, CL_TRUE, offset, size, &
+                                   dst, 0, C_NULL_PTR, this%event)
+      if (status /= CL_SUCCESS) then
+         print *, "CLBuffer::readBuffer: Failed to enqueue read buffer!"
+         call stop_on_error(status)
+      end if
+   end function readBuffer
+
    function copyBuffer(src, dst, size) result(status)
       implicit none
       type(CLBuffer) :: src, dst
-      integer(c_size_t) :: size, offset=0
+      integer(c_size_t) :: size, offset
       integer(cl_int) :: status
 
+      offset = 0
       ! assumes src and dst have same command queue
       status = clEnqueueCopyBuffer(src%commands, src%d_buf, dst%d_buf, offset, offset, size, &
                                    0, C_NULL_PTR, src%event)
