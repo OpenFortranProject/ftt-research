@@ -11,18 +11,15 @@ program forcl
 
    integer(c_size_t), parameter :: SIZE_INT = 4
 
-   integer(c_size_t) :: nxLocal, nyLocal
    integer, target, dimension(NX+2*NPAD,NY+2*NPAD) :: A, B, C
-   integer, pointer, dimension(:,:) :: p_A, p_B, p_C
 
    type(CLDevice) :: device
    type(CLKernel) :: kernel
    type(CLBuffer) :: d_A, d_B, d_C
-   type(c_ptr)    :: h_A, h_B, h_C
 
-   integer(cl_bitfield) :: flags
-   integer(c_size_t) :: global_ex_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_INT
-   integer(c_size_t) :: local_ex_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_INT
+   integer(c_size_t) :: nxLocal, nyLocal
+   integer(c_size_t) :: global_ex_mem_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_INT
+   integer(c_size_t) :: local_ex_mem_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_INT
 
    integer :: device_id
 
@@ -40,82 +37,69 @@ program forcl
 
    status = init(device, device_id)
 
+   ! initialize memory
+   !
+   A = 0
+   B = 0
+   C = 0
+
+   A(2:NX+NPAD, 2:NY+NPAD) = 1
+   B(2:NX+NPAD, 2:NY+NPAD) = 2
+
    ! create memory buffers
    !
-   d_A = createBufferMapped(device, global_ex_size, c_loc(A))
-   d_B = createBufferMapped(device, global_ex_size, c_loc(B))
-   d_C = createBufferMapped(device, global_ex_size, c_loc(C))
-
-   ! map memory so that it can be initialized on host
-   !
-   h_A = map(d_A, CL_MAP_WRITE)
-   h_B = map(d_B, CL_MAP_WRITE)
-
-   call c_f_pointer(h_A, p_A, shape(A))
-   call c_f_pointer(h_B, p_B, shape(B))
-
-   p_A = 0
-   p_B = 0
-
-   p_A(2:NX+NPAD, 2:NY+NPAD) = 1
-   p_B(2:NX+NPAD, 2:NY+NPAD) = 2
-
-   ! finished initializing memory, unmap for use on device
-   !
-   status = unmap(d_A)
-   status = unmap(d_B)
+   d_A = createBuffer(device, CL_MEM_READ_ONLY  + CL_MEM_COPY_HOST_PTR, global_ex_mem_size, c_loc(A))
+   d_B = createBuffer(device, CL_MEM_READ_ONLY  + CL_MEM_COPY_HOST_PTR, global_ex_mem_size, c_loc(B))
+   d_C = createBuffer(device, CL_MEM_WRITE_ONLY + CL_MEM_COPY_HOST_PTR, global_ex_mem_size, c_loc(C))
 
    ! create the kernel
    !
    kernel = createKernel(device, &
                          "shift.cl" // C_NULL_CHAR, &
-                         "shift"    // C_NULL_CHAR)
+                         "shift_individually" // C_NULL_CHAR)
 
    ! add arguments
    !
-   status = setKernelArgInt(kernel, 0, NPAD) + status
-   status = setKernelArgMem(kernel, 1, clMemObject(d_A)) + status
-   status = setKernelArgMem(kernel, 2, clMemObject(d_B)) + status
-   status = setKernelArgMem(kernel, 3, clMemObject(d_C)) + status
-   status = setKernelArgLoc(kernel, 4, local_ex_size) + status
+   status = setKernelArgInt(kernel, 0, NPAD)
+   status = setKernelArgMem(kernel, 1, clMemObject(d_A))
+   status = setKernelArgMem(kernel, 2, clMemObject(d_B))
+   status = setKernelArgMem(kernel, 3, clMemObject(d_C))
+   status = setKernelArgLoc(kernel, 4, local_ex_mem_size)
 
    ! run the kernel on the device
    !
-   status = run(kernel, NX, NY, nxLocal, nyLocal) + status
+   status = run(kernel, NX, NY, nxLocal, nyLocal)
 
    ! get the results
    !
-   h_C = map(d_C, CL_MAP_READ)
-   call c_f_pointer(h_C, p_C, shape(C))
+   status = readBuffer(d_C, c_loc(C), global_ex_mem_size)
 
    print *, "external corners"
-   print *, p_C(1,1), " =", p_A(1,1), " +", p_B(1,1)
-   print *, p_C(1,NX+2*NPAD), " =", p_A(1,NX+2*NPAD), " +", p_B(1,NX+2*NPAD)
-   print *, p_C(NX+2*NPAD,1), " =", p_A(NX+2*NPAD,1), " +", p_B(NX+2*NPAD,1)
-   print *, p_C(NX+2*NPAD,NX+2*NPAD), " =", p_A(NX+2*NPAD,NX+2*NPAD), " +", p_B(NX+2*NPAD,NX+2*NPAD)
+   print *, C(1,1), " =", A(1,1), " +", B(1,1)
+   print *, C(1,NX+2*NPAD), " =", A(1,NX+2*NPAD), " +", B(1,NX+2*NPAD)
+   print *, C(NX+2*NPAD,1), " =", A(NX+2*NPAD,1), " +", B(NX+2*NPAD,1)
+   print *, C(NX+2*NPAD,NX+2*NPAD), " =", A(NX+2*NPAD,NX+2*NPAD), " +", B(NX+2*NPAD,NX+2*NPAD)
 
    print *, "internal corners"
-   print *, p_C(1+NPAD,1+NPAD), " =", p_A(1+NPAD,1+NPAD), " +", p_B(1+NPAD,1+NPAD)
-   print *, p_C(1+NPAD,NX+1*NPAD), " =", p_A(1+NPAD,NX+1*NPAD), " +", p_B(1+NPAD,NX+1*NPAD)
-   print *, p_C(NX+1*NPAD,1+NPAD), " =", p_A(NX+1*NPAD,1+NPAD), " +", p_B(NX+1*NPAD,1+NPAD)
-   print *, p_C(NX+1*NPAD,NX+1*NPAD), " =", p_A(NX+1*NPAD,NX+1*NPAD), " +", p_B(NX+1*NPAD,NX+1*NPAD)
+   print *, C(1+NPAD,1+NPAD), " =", A(1+NPAD,1+NPAD), " +", B(1+NPAD,1+NPAD)
+   print *, C(1+NPAD,NX+1*NPAD), " =", A(1+NPAD,NX+1*NPAD), " +", B(1+NPAD,NX+1*NPAD)
+   print *, C(NX+1*NPAD,1+NPAD), " =", A(NX+1*NPAD,1+NPAD), " +", B(NX+1*NPAD,1+NPAD)
+   print *, C(NX+1*NPAD,NX+1*NPAD), " =", A(NX+1*NPAD,NX+1*NPAD), " +", B(NX+1*NPAD,NX+1*NPAD)
 
    print *, "partial corners"
-   print *, p_C(1+NPAD,2+NPAD), " =", p_A(1+NPAD,2+NPAD), " +", p_B(1+NPAD,2+NPAD)
-   print *, p_C(1+NPAD,NX+0*NPAD), " =", p_A(1+NPAD,NX+0*NPAD), " +", p_B(1+NPAD,NX+0*NPAD)
-   print *, p_C(NX+1*NPAD,2+NPAD), " =", p_A(NX+1*NPAD,2+NPAD), " +", p_B(NX+1*NPAD,2+NPAD)
-   print *, p_C(NX+1*NPAD,NX+0*NPAD), " =", p_A(NX+1*NPAD,NX+0*NPAD), " +", p_B(NX+1*NPAD,NX+0*NPAD)
+   print *, C(1+NPAD,2+NPAD), " =", A(1+NPAD,2+NPAD), " +", B(1+NPAD,2+NPAD)
+   print *, C(1+NPAD,NX+0*NPAD), " =", A(1+NPAD,NX+0*NPAD), " +", B(1+NPAD,NX+0*NPAD)
+   print *, C(NX+1*NPAD,2+NPAD), " =", A(NX+1*NPAD,2+NPAD), " +", B(NX+1*NPAD,2+NPAD)
+   print *, C(NX+1*NPAD,NX+0*NPAD), " =", A(NX+1*NPAD,NX+0*NPAD), " +", B(NX+1*NPAD,NX+0*NPAD)
 
    print *, "internal-1 corners"
-   print *, p_C(2+NPAD,2+NPAD), " =", p_A(2+NPAD,2+NPAD), " +", p_B(2+NPAD,2+NPAD)
-   print *, p_C(2+NPAD,NX+0*NPAD), " =", p_A(2+NPAD,NX+0*NPAD), " +", p_B(2+NPAD,NX+0*NPAD)
-   print *, p_C(NX+0*NPAD,2+NPAD), " =", p_A(NX+0*NPAD,2+NPAD), " +", p_B(NX+0*NPAD,2+NPAD)
-   print *, p_C(NX+0*NPAD,NX+0*NPAD), " =", p_A(NX+0*NPAD,NX+0*NPAD), " +", p_B(NX+0*NPAD,NX+0*NPAD)
+   print *, C(2+NPAD,2+NPAD), " =", A(2+NPAD,2+NPAD), " +", B(2+NPAD,2+NPAD)
+   print *, C(2+NPAD,NX+0*NPAD), " =", A(2+NPAD,NX+0*NPAD), " +", B(2+NPAD,NX+0*NPAD)
+   print *, C(NX+0*NPAD,2+NPAD), " =", A(NX+0*NPAD,2+NPAD), " +", B(NX+0*NPAD,2+NPAD)
+   print *, C(NX+0*NPAD,NX+0*NPAD), " =", A(NX+0*NPAD,NX+0*NPAD), " +", B(NX+0*NPAD,NX+0*NPAD)
 
    print *, "interior points"
-   print *, p_C(5,5), " =", p_A(5,5), " +", p_B(5,5)
-   print *, p_C(48,48), " =", p_A(48,48), " +", p_B(48,48)
-
-   if (status /= CL_SUCCESS) print *, "status=", status
+   print *, C(5,5), " =", A(5,5), " +", B(5,5)
+   print *, C(48,48), " =", A(48,48), " +", B(48,48)
 
 end program
