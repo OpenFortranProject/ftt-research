@@ -90,7 +90,7 @@ program memory_bandwidth
    !
    print *
    print *, "Measuring device bandwidth using loads/stores"
-   call init_timer(timer)
+   call init(timer)
    call start(timer)
    do i = 0, nLoops
       status = run(kernel, NX, NY, nxLocal, nyLocal) + status
@@ -129,7 +129,7 @@ program memory_bandwidth
 
    print *
    print *, "Measuring device bandwidth clEnqueueCopyBuffer"
-   call init_timer(timer)
+   call init(timer)
    call start(timer)
    do i = 0, nLoops
       status = copyBuffer(d_src, d_dst, global_mem_size) + status

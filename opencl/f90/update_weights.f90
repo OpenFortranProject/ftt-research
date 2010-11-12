@@ -132,7 +132,7 @@ program update_weights
    ! run the kernel on the device
    !
    print *
-   call init_timer(timer)
+   call init(timer)
    call start(timer)
    do i = 0, nLoops
       status = run(kernel, NX*nxScale, NY*nyScale, nxLocal, nyLocal) + status
@@ -155,7 +155,7 @@ program update_weights
    if (status /= CL_SUCCESS) print *, "status=", status
 
    print *
-   call init_timer(timer)
+   call init(timer)
    call start(timer)
    do i = 1, nLoops
       M = update_weight_decr(1, dt, APost, M)
@@ -163,7 +163,7 @@ program update_weights
    call stop(timer)
    call print_elapsed_time(timer)
 
-   call init_timer(timer)
+   call init(timer)
    call start(timer)
    do i = 1, nLoops
       call update_weight_c(NX*nxScale * NY*nyScale, dt, APost, M)
