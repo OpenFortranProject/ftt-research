@@ -43,20 +43,7 @@ __kernel void update_weight_decr (int nPad, float dt,
    const unsigned int k   = get_global_id(0) + get_global_id(1)*get_global_size(0);
    const unsigned int kl  = get_local_id (0) + get_local_id (1)*get_local_size (0);
 
-#ifdef USE_LOCAL_MEMORY
-   __local float * pAPost = &patch[0];
-   __local float * pM     = &patch[get_local_size(0)*get_local_size(1)*sizeof(float)];
-#endif
-
    const float decayLTD = exp(-dt / TAU_LTD);
-
-   // copy to local scratch memory
-   //
-#ifdef USE_LOCAL_MEMORY
-   shift_to_patch(pAPost, APost, 0, 0, 0);
-   shift_to_patch(pM, M, 0, 0, 0);
-   barrier(CLK_LOCAL_MEM_FENCE);
-#endif
 
    // TODO:
    // both pDecr and activity are extended regions (plus margins)
@@ -65,15 +52,7 @@ __kernel void update_weight_decr (int nPad, float dt,
    // update M
    //
 
-#ifdef USE_LOCAL_MEMORY
-   float m = pM[kl];
-   float a = pAPost[kl];
-#else
-   float m = M[k];
-   float a = APost[k];
-#endif
-
-   M[k] = decayLTD*m - AMP_LTD*a;
+   M[k] = decayLTD*M[k] - AMP_LTD*APost[k];
 }
 
 
@@ -95,7 +74,6 @@ __kernel void update_weights (int nPad, int nxp, int nyp, int nfp,
    // TODO:
    // both pDecr and activity are extended regions (plus margins)
    // to make processing them together simpler
-
 
    // update M
    //
