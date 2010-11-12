@@ -12,7 +12,7 @@
 dbg := 0
 
 # fortran compiler flag
-intel_fortran := 0
+intel_fortran := 1
 
 # detect OS                                                                               
 OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
@@ -103,11 +103,11 @@ CFLAGS   += $(INCLUDES) $(COMMONFLAGS)
 FCFLAGS  += $(COMMONFLAGS)
 
 OBJS = OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
-       OpenCL.o opencl_utils.o opencl_test.o Timer.o
+       OpenCL.o opencl_utils.o opencl_test.o Timer.o test_shift_impl.o
 
 LIBS += $(OBJS)
 
-APPS = forcl update_weights bandwidth
+APPS = test_shift update_weights bandwidth
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
@@ -115,7 +115,7 @@ APPS = forcl update_weights bandwidth
 
 all: $(OBJS) $(APPS)
 
-forcl: forcl.o $(OBJS)
+test_shift: test_shift.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
 update_weights: update_weights.o $(OBJS)
@@ -133,7 +133,9 @@ opencl_test.o: ../c/opencl_test.c
 # dependencies
 #
 
-forcl.o: forcl.f90 $(OBJS)
+test_shift.o: test_shift.f90 $(OBJS)
+
+test_shift_impl.o: test_shift_impl.f90
 
 update_weights.o: update_weights.f90 $(OBJS)
 
@@ -152,6 +154,6 @@ Timer.o : Timer.f90
 OpenCLInterfaces.o: OpenCLTypes.o
 
 clean:
-	rm -f $(OBJS) forcl.o update_weights.o bandwidth.o
+	rm -f $(OBJS) test_shift.o update_weights.o bandwidth.o
 	rm -f *.mod
 	rm -f $(APPS)
