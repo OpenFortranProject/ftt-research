@@ -36,6 +36,10 @@ module Timer_mod
       end function cpu_time_to_sec
    end interface
 
+   interface init
+      module procedure init_timer
+   end interface init
+
 contains
 
    subroutine init_timer(this)
