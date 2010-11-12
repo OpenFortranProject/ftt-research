@@ -29,17 +29,32 @@ void update_weight_c(size_t n, float dt, float APost[], float M[])
 
 void loops_c(float * A, float * B, int nx, int ny, int nPad)
 {
-   int k;
+   int i, j, k;
 
-   int nk = nx*ny;
    int sy = nx + 2*nPad;
    int offset = nPad + nPad*sy;
 
-   //   for (k = 0; k < nk; k++) {
-   //      A[k] = B[k];
-   //   }
-   memcpy(A, B, nx*ny*sizeof(float));
+   for (j = 0; j < ny; j++) {
+      for (i = 0; i < nx; i++) {
+         k = i + j*sy + offset;
+         A[k] = (B[k] + B[k+1] + B[k-1] + B[k+sy] - B[k-sy]) / 5.0f;
+      }
+   }
+   //   memcpy(A, B, nx*ny*sizeof(float));
+}
 
+void noop_c(float * A, float * B, int nx, int ny, int nPad)
+{
+   int k;
+
+   int nk = nx*ny;
+   //   int sy = nx + 2*nPad;
+   //   int offset = nPad + nPad*sy;
+
+   for (k = 0; k < nk; k++) {
+      A[k] = (float) nPad;
+      B[k] = 2.0f;
+   }
 }
 
 
