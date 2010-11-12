@@ -5,9 +5,13 @@ module CLDevice_mod
    use :: CLKernel_mod
    use :: CLBuffer_mod
 
+   interface init
+      module procedure init_device
+   end interface init
+
 contains
 
-   function init(this, device_id) result(status)
+   function init_device(this, device_id) result(status)
       !class(CLDevice) :: this
       type(CLDevice) :: this
       integer(c_int) :: device_id
@@ -66,7 +70,7 @@ contains
          call stop_on_error(status)
       end if
 
-   end function init
+   end function init_device
 
    function createKernel(this, filename, name) result(kernel)
       use CLKernel_mod
@@ -78,8 +82,8 @@ contains
       type(CLKernel) :: kernel
       integer(c_int) :: status
       
-      status = init_kernel(kernel, this%context, this%commands, &
-                           this%device_ids(1+this%device_id), filename, name)
+      status = init(kernel, this%context, this%commands, &
+                    this%device_ids(1+this%device_id), filename, name)
 
    end function createKernel
 
@@ -94,7 +98,7 @@ contains
       type(CLBuffer) :: cl_buf
       integer(c_int) :: status
       
-      status = init_buffer(cl_buf, this%context, this%commands, flags, size, host_ptr)
+      status = init(cl_buf, this%context, this%commands, flags, size, host_ptr)
 
    end function createBuffer
 
@@ -108,8 +112,7 @@ contains
       type(CLBuffer) :: cl_buf
       integer(c_int) :: status
       
-      status = init_buffer(cl_buf, this%context, this%commands, &
-                           CL_MEM_USE_HOST_PTR, size, host_ptr)
+      status = init(cl_buf, this%context, this%commands, CL_MEM_USE_HOST_PTR, size, host_ptr)
 
    end function createBufferMapped
 

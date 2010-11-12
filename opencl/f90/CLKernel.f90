@@ -8,6 +8,10 @@ module CLKernel_mod
                        setKernelArgReal
    end interface
 
+   interface init
+      module procedure init_kernel
+   end interface init
+
 contains
 
    function init_kernel(this, context, commands, device, filename, name) result(status)

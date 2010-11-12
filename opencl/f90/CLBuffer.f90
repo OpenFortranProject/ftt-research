@@ -3,6 +3,10 @@ module CLBuffer_mod
    use :: OpenCLTypes
    use :: OpenCLInterfaces
 
+   interface init
+      module procedure init_buffer
+   end interface init
+
 contains
 
    function init_buffer(this, context, commands, flags, size, host_ptr) result(status)
