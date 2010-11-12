@@ -20,6 +20,19 @@ program test_shift
          real(c_float), dimension(*) :: A, B
          integer(c_int), value :: nx, ny, nPad
       end subroutine loops_c
+      subroutine noop_c(A, B, nx, ny, nPad) bind(C,name="noop_c")
+         use, intrinsic :: ISO_C_BINDING
+         implicit none
+         real(c_float), dimension(*) :: A, B
+         integer(c_int), value :: nx, ny, nPad
+      end subroutine noop_c
+
+      function left(A, n) result(lA)
+         real, target, dimension(:,:) :: A
+         integer :: n
+         real, pointer, dimension(:,:) :: lA
+      end function left
+
    end interface
 
    integer :: status
@@ -52,6 +65,8 @@ program test_shift
    integer :: device_id, d_time, i, nLoops=10
    logical :: check_results
    real :: bandwidth, flops
+
+   real, pointer, dimension(:,:) :: lA
 
    check_results = .false.
 
@@ -99,15 +114,15 @@ program test_shift
    print *
    print *, "Measuring flops and effective bandwidth of computation"
    d_time = 0
-   call init_timer(timer)
-   call start(timer)
+   call init(timer)
    do i = 1, nLoops
+      call start(timer)
       status = run(kernel, NX, NY, nxLocal, nyLocal)
+      call stop(timer)
       !print *, "       device timer==", kernel%elapsed, "microsec"
       d_time = d_time + kernel%elapsed
    end do
 
-   call stop(timer)
    h_time = elapsed_time(timer)
    print *, "   host time    ==   ", real(h_time), " msec"
    print *, "   device timer ==", d_time, "        usec"
@@ -126,12 +141,13 @@ program test_shift
 
    print *
    print *, "Measuring flops and effective bandwidth on CPU for Fortran arrays"
-   call init_timer(timer)
-   call start(timer)
+   call init(timer)
    do i = 1, nLoops
+      call start(timer)
       call shift_f90(A, C, nPad)
+      call stop(timer)
+      call noop_c(A, C, nxGlobal, nyGlobal, nPad)
    end do
-   call stop(timer)
    h_time = elapsed_time(timer)
    print *, "   host time    ==   ", real(h_time)
 
@@ -142,16 +158,16 @@ program test_shift
    ! 1.0e-9 -> GFlop, 1000 -> ms, 5 -> 4 sums / 1 div
    flops = (1.0e-9 * 1000) * nLoops * (5*NX*NY/h_time)
    print *, "   flops        ==    ", flops, "GFlops"
-   print *
 
    print *
    print *, "Measuring flops and effective bandwidth on CPU for C loops"
-   call init_timer(timer)
-   call start(timer)
+   call init(timer)
    do i = 1, nLoops
+      call start(timer)
       call loops_c(A, C, nxGlobal, nyGlobal, nPad)
+      call stop(timer)
+      call noop_c(A, C, nxGlobal, nyGlobal, nPad)
    end do
-   call stop(timer)
    h_time = elapsed_time(timer)
    print *, "   host time    ==   ", real(h_time)
 
@@ -166,12 +182,13 @@ program test_shift
 
    print *
    print *, "Measuring flops and effective bandwidth on CPU for Fortran loops"
-   call init_timer(timer)
-   call start(timer)
+   call init(timer)
    do i = 1, nLoops
+      call start(timer)
       call loops_f90(A, C, nPad)
+      call stop(timer)
+      call noop_c(A, C, nxGlobal, nyGlobal, nPad)
    end do
-   call stop(timer)
    h_time = elapsed_time(timer)
    print *, "   host time    ==   ", real(h_time)
 
@@ -214,4 +231,21 @@ program test_shift
       print *, C(48,48), " =", A(48,48), " +", B(48,48)
    end if
 
+
+   lA => left(A, 1)
+   print *, lA(1,:)
+   print *, lA(2,:)
+   print *, lA(3,:)
+
 end program test_shift
+
+
+
+function left(A, n) result(lA)
+   real, target, dimension(:,:) :: A
+   integer :: n
+   real, pointer, dimension(:,:) :: lA
+
+   lA => A(1:3,1:3)
+
+end function left
