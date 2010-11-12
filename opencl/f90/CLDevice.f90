@@ -113,4 +113,18 @@ contains
 
    end function createBufferMapped
 
+   subroutine limitLocalSize(this, nxg, nyg)
+      implicit none
+      !class(CLDevice) :: this
+      type(CLDevice) :: this
+      integer(c_size_t), intent(inout) :: nxg, nyg
+
+      ! for now just limit device 1
+      ! TODO - look at device and adjust accordingly
+      if (this%device_id == 1) then
+         nxg = 1; nyg = 1
+      end if
+
+   end subroutine limitLocalSize
+
 end module CLDevice_mod
