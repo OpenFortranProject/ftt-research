@@ -1,7 +1,8 @@
 subroutine loops_c_f(A, B, nx, ny, nPad) bind(C,name="loops_c_f")
+   use, intrinsic :: ISO_C_BINDING
    implicit none
-   real, dimension(*) :: A, B
-   integer, value :: nx, ny, nPad
+   real(c_float), dimension(*) :: A, B
+   integer(c_int), value :: nx, ny, nPad
 
    integer :: k, nk, sy, offset
 

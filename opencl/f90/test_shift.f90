@@ -15,9 +15,10 @@ program test_shift
          integer :: nPad
       end subroutine loops_f90
       subroutine loops_c(A, B, nx, ny, nPad) bind(C,name="loops_c")
+         use, intrinsic :: ISO_C_BINDING
          implicit none
-         real, dimension(*) :: A, B
-         integer, value :: nx, ny, nPad
+         real(c_float), dimension(*) :: A, B
+         integer(c_int), value :: nx, ny, nPad
       end subroutine loops_c
    end interface
 
@@ -48,7 +49,7 @@ program test_shift
    real(c_double) :: h_time
 
    integer :: nxGlobal=NX, nyGlobal=NY
-   integer :: device_id, d_time, i, nLoops=1
+   integer :: device_id, d_time, i, nLoops=10
    logical :: check_results
    real :: bandwidth, flops
 
