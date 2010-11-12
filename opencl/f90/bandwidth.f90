@@ -21,7 +21,7 @@ program memory_bandwidth
    real(c_float), pointer, dimension(:,:)  :: p_src, p_dst
 
    type(CPUTimer) :: timer
-   real(c_double) :: cpu_time
+   real(c_double) :: h_time
 
    type(CLDevice) :: device
    type(CLKernel) :: kernel
@@ -33,7 +33,7 @@ program memory_bandwidth
    integer(c_size_t) :: local_mem_size  = NXL*NYL * SIZE_FLOAT
 
    integer :: device_id, i, j, nLoops
-   integer :: ocl_time = 0
+   integer :: d_time = 0
    real :: bandwidth
 
    device_id = 0
@@ -96,12 +96,12 @@ program memory_bandwidth
       status = run(kernel, NX, NY, nxLocal, nyLocal) + status
       if (i > 0) then
          !!print *, "       opencl timer==", kernel%elapsed, "ms"
-         ocl_time = ocl_time + kernel%elapsed
+         d_time = d_time + kernel%elapsed
       end if
    end do
    call stop(timer)
    call print_elapsed_time(timer)
-   print *, "opencl timer==", ocl_time/1000, "ms"
+   print *, "opencl timer==", d_time/1000, "ms"
 
    ! get the results
    !
@@ -124,7 +124,7 @@ program memory_bandwidth
    end if
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
-   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / (ocl_time/1000))
+   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / (d_time/1000))
    print *, "bandwidth ==", bandwidth, "GB/s"
 
    print *
@@ -139,8 +139,8 @@ program memory_bandwidth
    if (status /= CL_SUCCESS) print *, "status=", status
 
    call stop(timer)
-   cpu_time = elapsed_time(timer)
-   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / cpu_time)
+   h_time = elapsed_time(timer)
+   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / h_time)
    print *, "bandwidth ==", bandwidth, "GB/s"
 
 end program
