@@ -49,14 +49,12 @@ program update_weights
    ! work group size
    integer(c_size_t), parameter :: NXL = 16
    integer(c_size_t), parameter :: NYL = 4
-   integer(c_size_t) :: nxg, nyg
+   integer(c_size_t) :: nxLocal, nyLocal
 
    integer(c_size_t), parameter :: SIZE_FLOAT = 4
 
    real(c_float), target, dimension(NX*nxScale+2*NPAD,NY*nyScale+2*NPAD) :: APost, M
    real(c_float), target, dimension(NXP*NYP,NX,NY) :: P, W
-   real(c_float), pointer, dimension(:,:)   :: p_APost, p_M
-   real(c_float), pointer, dimension(:,:,:) :: p_P, p_W
    real(c_float) :: dt
 
    type(CPUTimer) :: timer
@@ -65,7 +63,6 @@ program update_weights
    type(CLDevice) :: device
    type(CLKernel) :: kernel
    type(CLBuffer) :: d_APost, d_M, d_P, d_W
-   type(c_ptr)    :: h_APost, h_M, h_P, h_W
 
    integer(cl_bitfield) :: flags
    integer(c_size_t) :: global_mem_size = NX*NY * SIZE_FLOAT
@@ -73,7 +70,7 @@ program update_weights
    integer(c_size_t) :: global_mem_ex_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_FLOAT
    integer(c_size_t) :: local_mem_ex_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_FLOAT
 
-   integer :: device_id, i, nLoops, nThFac
+   integer :: device_id, i, nLoops
    integer :: ocl_time = 0
    real :: bandwidth
 
@@ -81,47 +78,31 @@ program update_weights
 
    device_id = 0
    nLoops = 20
-   nThFac = 1
 
    if (device_id == 0) then
-      nxg = NXL; nyg = NYL
+      nxLocal = NXL; nyLocal = NYL
    else
-      nxg = 1; nyg = 1
+      nxLocal = 1; nyLocal = 1
    end if
 
    status = init(device, device_id)
 
+   ! initialize buffers
+   !
+   APost = 1.1
+   M = 0.01
+   P = 0.02
+   W = 1.0 / (NXP*NYP)
+
    ! create memory buffers
    !
-   d_APost = createBufferMapped(device, global_mem_ex_size*nxScale*nyScale, c_loc(APost))
-   d_M     = createBufferMapped(device, global_mem_ex_size*nxScale*nyScale, c_loc(M))
+   d_APost = createBuffer(device, CL_MEM_COPY_HOST_PTR, &
+                          global_mem_ex_size*nxScale*nyScale, c_loc(APost))
+   d_M     = createBuffer(device, CL_MEM_COPY_HOST_PTR, &
+                          global_mem_ex_size*nxScale*nyScale, c_loc(M))
 
-   d_P = createBufferMapped(device, global_mem_size*NXP*NYP, c_loc(P))
-   d_W = createBufferMapped(device, global_mem_size*NXP*NYP, c_loc(W))
-
-   ! map memory so that it can be initialized on host
-   !
-   h_APost = map(d_APost, CL_MAP_WRITE)
-   h_M     = map(d_M, CL_MAP_WRITE)
-   h_P     = map(d_P, CL_MAP_WRITE)
-   h_W     = map(d_W, CL_MAP_WRITE)
-
-   call c_f_pointer(h_APost, p_APost, shape(APost))
-   call c_f_pointer(h_M, p_M, shape(M))
-   call c_f_pointer(h_P, p_P, shape(P))
-   call c_f_pointer(h_W, p_W, shape(W))
-
-   p_APost = 1.1
-   p_M = 0.01
-   p_P = 0.02
-   p_W = 1.0 / (NXP*NYP)
-
-   ! finished initializing memory, unmap for use on device
-   !
-   status = unmap(d_APost)
-   status = unmap(d_M)
-   status = unmap(d_P)
-   status = unmap(d_W)
+   d_P = createBuffer(device, CL_MEM_COPY_HOST_PTR, global_mem_size*NXP*NYP, c_loc(P))
+   d_W = createBuffer(device, CL_MEM_COPY_HOST_PTR, global_mem_size*NXP*NYP, c_loc(W))
 
    ! create the kernel
    !
@@ -154,23 +135,22 @@ program update_weights
    call init_timer(timer)
    call start(timer)
    do i = 0, nLoops
-      status = run(kernel, NX*nxScale, NY*nyScale/nThFac, nxg, nyg) + status
+      status = run(kernel, NX*nxScale, NY*nyScale, nxLocal, nyLocal) + status
       if (i > 0) then
-         ocl_time = ocl_time + kernel%elapsed/1000
+         ocl_time = ocl_time + kernel%elapsed
       end if
    end do
    call stop(timer)
    call print_elapsed_time(timer)
-   print *, "opencl timer==", ocl_time, "ms"
+   print *, "opencl timer==", ocl_time/1000, "ms"
 
    ! 1.0e-9 -> GB, 1000 -> ms, 3 -> 2*to/1*fro
-   bandwidth = (1.0e-9 * 1000) * nLoops * (3*global_mem_ex_size*nxScale*nyScale / ocl_time)
+   bandwidth = (1.0e-9 * 1000) * nLoops * (3*global_mem_ex_size*nxScale*nyScale/(ocl_time/1000))
    print *, "bandwidth ==", bandwidth, "GB/s"
 
    ! get the results
    !
-   h_W = map(d_W, CL_MAP_READ)
-   call c_f_pointer(h_W, p_W, shape(W))
+   status = readBuffer(d_W, c_loc(W), global_mem_size) + status
 
    if (status /= CL_SUCCESS) print *, "status=", status
 
