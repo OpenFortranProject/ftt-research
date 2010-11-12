@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+ * These functions test equivalent functions in Fortran
+ */
 
 void update_weight_c(size_t n, float dt, float APost[], float M[])
 {
@@ -22,6 +25,21 @@ void update_weight_c(size_t n, float dt, float APost[], float M[])
    for (k = 0; k < n; k++) {
       M[k] = decayLTD*M[k] - ampLTD*APost[k];
    }
+}
+
+void loops_c(float * A, float * B, int nx, int ny, int nPad)
+{
+   int k;
+
+   int nk = nx*ny;
+   int sy = nx + 2*nPad;
+   int offset = nPad + nPad*sy;
+
+   //   for (k = 0; k < nk; k++) {
+   //      A[k] = B[k];
+   //   }
+   memcpy(A, B, nx*ny*sizeof(float));
+
 }
 
 
