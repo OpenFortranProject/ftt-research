@@ -102,8 +102,8 @@ endif
 CFLAGS   += $(INCLUDES) $(COMMONFLAGS)
 FCFLAGS  += $(COMMONFLAGS)
 
-OBJS = OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
-       OpenCL.o opencl_utils.o opencl_test.o Timer.o test_shift_impl.o
+OBJS = Timer.o OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
+       OpenCL.o opencl_utils.o opencl_test.o test_shift_impl.o
 
 LIBS += $(OBJS)
 
