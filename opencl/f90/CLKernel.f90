@@ -15,6 +15,7 @@ module CLKernel_mod
 contains
 
    function init_kernel(this, context, commands, device, filename, name) result(status)
+      use Timer_mod
       implicit none
       !class(CLKernel) :: this
       type(CLKernel) :: this
@@ -33,6 +34,8 @@ contains
       this%commands = commands
       this%profiling = .true.
       this%elapsed = 0
+
+      call init(this%timer)
 
       status = CL_SUCCESS
 
@@ -164,7 +167,9 @@ contains
 
       ! wait for the command commands to get serviced before reading back results
       !
+      call start(this%timer)
       status = clFinish(this%commands)
+      call stop(this%timer)
 
       if (this%profiling) then
          status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_START, &
