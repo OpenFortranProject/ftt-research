@@ -66,8 +66,6 @@ program test_shift
    logical :: check_results
    real :: bandwidth, flops
 
-   real, pointer, dimension(:,:) :: lA
-
    check_results = .false.
 
    if (NXL < 2*NPAD .or. NYL < 2*NPAD) then
@@ -125,6 +123,8 @@ program test_shift
 
    h_time = elapsed_time(timer)
    print *, "   host time    ==   ", real(h_time), " msec"
+   h_time = elapsed_time(kernel%timer)
+   print *, "   wait time    ==   ", real(h_time)
    print *, "   device timer ==", d_time, "        usec"
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
@@ -191,7 +191,6 @@ program test_shift
    end do
    h_time = elapsed_time(timer)
    print *, "   host time    ==   ", real(h_time)
-
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
    bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / h_time)
    print *, "   bandwidth    ==    ", bandwidth, "GB/s"
@@ -230,12 +229,6 @@ program test_shift
       print *, C(5,5), " =", A(5,5), " +", B(5,5)
       print *, C(48,48), " =", A(48,48), " +", B(48,48)
    end if
-
-
-   lA => left(A, 1)
-   print *, lA(1,:)
-   print *, lA(2,:)
-   print *, lA(3,:)
 
 end program test_shift
 
