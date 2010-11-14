@@ -1,5 +1,6 @@
 module OpenCLTypes
   use, intrinsic :: ISO_C_BINDING
+  use Timer_mod
 
   integer, parameter :: cl_int      = C_INT
   integer, parameter :: cl_uint     = C_INT
@@ -106,6 +107,7 @@ module OpenCLTypes
       type(c_ptr) :: event             ! event identifying the kernel execution instance
       logical     :: profiling         ! flag to enable profiling
       integer(c_int) :: elapsed        ! elapsed time in microseconds
+      type(CPUTimer) :: timer          ! cpu timer for collecting event timing
 !   contains
 !      procedure, pass(this) :: init
 !      procedure, pass(this) :: setKernelArgInt
