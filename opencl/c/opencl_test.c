@@ -59,6 +59,18 @@ void noop_c(float * A, float * B, int nx, int ny, int nPad)
 
 
 cl_int
+clGetPlatformIDs_test(cl_uint          num_entries,
+                      cl_platform_id * platforms,
+                      cl_uint *        num_platforms)
+{
+   int status;
+   printf("clGetPlatformIDs_test: num_entries==%d\n", num_entries);
+   status = clGetPlatformIDs(num_entries, platforms, num_platforms);
+   printf("clGetPlatformIDs_test: num_platforms==%d\n", *num_platforms);
+   return status;
+}
+
+cl_int
 clGetDeviceIDs_test(cl_platform_id platform,
                     cl_device_type device_type,
                     cl_uint num_entries,
@@ -247,8 +259,8 @@ clEnqueueNDRangeKernel_test(cl_command_queue command_queue,
                             const cl_event * event_wait_list,
                             cl_event *       event)
 {
-   printf("clEnqueueNDRangeKernel_test: wk_dim==%d g_work_size==%ld,%ld l_work_size==%ld,%ld\n",
-          work_dim, global_work_size[0], global_work_size[1], local_work_size[0], local_work_size[1]);
+   //   printf("clEnqueueNDRangeKernel_test: wk_dim==%d g_work_size==%ld,%ld l_work_size==%ld,%ld\n",
+   //          work_dim, global_work_size[0], global_work_size[1], local_work_size[0], local_work_size[1]);
    return clEnqueueNDRangeKernel(command_queue,
                                  kernel,
                                  work_dim,
@@ -257,7 +269,8 @@ clEnqueueNDRangeKernel_test(cl_command_queue command_queue,
                                  local_work_size,
                                  num_events_in_wait_list,
                                  event_wait_list,
-                                 event);
+                                 //                                 event);
+                                 NULL);
 }
 
 cl_int
