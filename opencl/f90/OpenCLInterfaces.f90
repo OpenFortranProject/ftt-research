@@ -439,7 +439,7 @@ interface
    function clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, &
                                    global_work_size, local_work_size, num_events_in_wait_list, &
                                    event_wait_list, event) &
-            result(status) bind(C, name="clEnqueueNDRangeKernel")
+            result(status) bind(C, name="clEnqueueNDRangeKernel_test")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
