@@ -3,10 +3,10 @@ module CLKernel_mod
    use :: OpenCLTypes
    use :: OpenCLInterfaces
 
-   interface setKernelArg
-      module procedure setKernelArgInt, setKernelArgMem, setKernelArgLoc, &
-                       setKernelArgReal
-   end interface
+!   interface setKernelArg
+!      module procedure setKernelArgInt, setKernelArgMem, setKernelArgLoc, &
+!                       setKernelArgReal
+!   end interface
 
    interface init
       module procedure init_kernel
@@ -32,7 +32,7 @@ contains
 
       this%device = device
       this%commands = commands
-      this%profiling = .true.
+      this%profiling = .false.
       this%elapsed = 0
 
       call init(this%timer)
@@ -157,8 +157,11 @@ contains
 
       ! execute the kernel
       !
+      call start(this%timer)
       status = clEnqueueNDRangeKernel(this%commands, this%kernel, 2, global_work_offset, &
-                                      global_work_size, local_work_size, 0, C_NULL_PTR, this%event)
+                                      global_work_size, local_work_size, 0, C_NULL_PTR, C_NULL_PTR)
+      call stop(this%timer)
+
       if (status /= CL_SUCCESS) then
          print *, "CLDevice::run(): Failed to execute kernel!"
          ! print *, "CLDevice::run(): max_local_work_size==%ld\n", max_local_size)
@@ -167,9 +170,9 @@ contains
 
       ! wait for the command commands to get serviced before reading back results
       !
-      call start(this%timer)
-      status = clFinish(this%commands)
-      call stop(this%timer)
+!      call start(this%timer)
+!      status = clFinish(this%commands)
+!      call stop(this%timer)
 
       if (this%profiling) then
          status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_START, &
