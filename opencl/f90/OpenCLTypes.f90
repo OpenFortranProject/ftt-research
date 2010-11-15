@@ -4,7 +4,7 @@ module OpenCLTypes
 
   integer, parameter :: cl_int      = C_INT
   integer, parameter :: cl_uint     = C_INT
-  integer, parameter :: cl_ulong    = C_LONG
+  integer, parameter :: cl_ulong    = C_INT64_T
   integer, parameter :: cl_bool     = cl_int
   integer, parameter :: cl_bitfield = cl_ulong
 
