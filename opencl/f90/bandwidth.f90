@@ -100,8 +100,11 @@ program memory_bandwidth
       end if
    end do
    call stop(timer)
-   call print_elapsed_time(timer)
-   print *, "opencl timer==", d_time/1000, "ms"
+   print *, " opencl timer ==", d_time/1000, "ms"
+   h_time = elapsed_time(timer)
+   print *, "   host time    ==   ", real(h_time)
+   h_time = elapsed_time(kernel%timer)
+   print *, "   wait time    ==   ", real(h_time)
 
    ! get the results
    !
