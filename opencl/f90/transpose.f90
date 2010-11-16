@@ -31,12 +31,14 @@ program transpose
    integer(c_size_t) :: global_mem_size = NX*NY * SIZE_FLOAT
    integer(c_size_t) :: local_mem_size  = NXL*NYL * SIZE_FLOAT
 
-   integer :: device_id, i, j, nLoops
+   integer :: device_id, i, j, nLoops, nWarmup
    integer :: d_time = 0
    real :: throughput
 
    device_id = 0
-   nLoops = 100
+
+   nWarmup = 20
+   nLoops  = 100
 
    nxg = NX
    nyg = NY
@@ -71,7 +73,7 @@ program transpose
    status = setKernelArgInt(kernel, 3, nxg)
    status = setKernelArgInt(kernel, 4, nyg)
 
-   do i = 1, 10
+   do i = 1, nWarmup
       status = run(kernel, NX, NY, nxLocal, nyLocal)
    end do
    status = clFinish(kernel%commands)
@@ -81,21 +83,15 @@ program transpose
    print *
    print *, "Measuring device bandwidth using loads/stores"
    call init(timer)
-   do i = 0, nLoops
-      status = run(kernel, NX, NY, nxLocal, nyLocal) + status
-      if (i > 0) then
-         if (i == 1) call start(timer)
-         !!print *, "       opencl timer==", kernel%elapsed, "ms"
-         !d_time = d_time + kernel%elapsed
-      end if
+   call start(timer)
+   do i = 1, nLoops
+      status = run(kernel, NX, NY, nxLocal, nyLocal)
    end do
-
    status = clFinish(kernel%commands)
    call stop(timer)
 
-   !print *, " opencl timer   ==   ", real(d_time/1000)/nLoops, "ms"
    h_time = elapsed_time(kernel%timer)
-   print *, "   wait time    ==   ", real(h_time)/nLoops, "ms"
+   print *, "startup time    ==   ", real(h_time)/nLoops, "ms"
    h_time = elapsed_time(timer)
    print *, "   host time    ==   ", real(h_time)/nLoops, "ms"
 
