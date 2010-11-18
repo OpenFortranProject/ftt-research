@@ -32,12 +32,14 @@ program memory_bandwidth
    integer(c_size_t) :: global_mem_size = NX*NY * SIZE_FLOAT
    integer(c_size_t) :: local_mem_size  = NXL*NYL * SIZE_FLOAT
 
-   integer :: device_id, i, j, nLoops
+   integer :: device_id, i, j, nLoops, nWarmup
    integer :: d_time = 0
    real :: bandwidth
 
    device_id = 0
-   nLoops = 20
+
+   nWarmup = 20
+   nLoops  = 100
 
    nxg = NX
    nyg = NY
@@ -86,25 +88,29 @@ program memory_bandwidth
    status = setKernelArgMem (kernel, 3, clMemObject(d_dst)) + status
 !   status = setKernelArgLoc (kernel, 4, local_size) + status
 
+   ! warmup the runtime
+   !
+   do i = 1, nWarmup
+      status = run(kernel, NX, NY, nxLocal, nyLocal)
+   end do
+   status = clFinish(kernel%commands)
+
    ! run the kernel on the device
    !
    print *
    print *, "Measuring device bandwidth using loads/stores"
    call init(timer)
    call start(timer)
-   do i = 0, nLoops
+   do i = 1, nLoops
       status = run(kernel, NX, NY, nxLocal, nyLocal) + status
-      if (i > 0) then
-         !!print *, "       opencl timer==", kernel%elapsed, "ms"
-         d_time = d_time + kernel%elapsed
-      end if
    end do
+   status = clFinish(kernel%commands)
    call stop(timer)
-   print *, " opencl timer ==", d_time/1000, "ms"
-   h_time = elapsed_time(timer)
-   print *, "   host time    ==   ", real(h_time)
+
    h_time = elapsed_time(kernel%timer)
-   print *, "   wait time    ==   ", real(h_time)
+   print *, "startup time    ==   ", real(h_time)/nLoops, "ms"
+   h_time = elapsed_time(timer)
+   print *, "   host time    ==   ", real(h_time)/nLoops, "ms"
 
    ! get the results
    !
@@ -127,8 +133,8 @@ program memory_bandwidth
    end if
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
-   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / (d_time/1000))
-   print *, "bandwidth ==", bandwidth, "GB/s"
+   bandwidth = (1.0e-9 * 1000) * nLoops * (global_mem_size / h_time)
+   print *, "unidirectional bandwidth ==", bandwidth, "GB/s"
 
    print *
    print *, "Measuring device bandwidth clEnqueueCopyBuffer"
