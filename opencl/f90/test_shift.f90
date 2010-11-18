@@ -37,16 +37,15 @@ program test_shift
 
    integer :: status
 
-   integer(c_size_t), parameter :: SCALE = 4
-   integer(c_size_t), parameter :: NX  = SCALE*512
-   integer(c_size_t), parameter :: NY  = SCALE*512
+   integer(c_size_t), parameter :: SCALE = 2
+   integer(c_size_t), parameter :: NX  = SCALE*1280
+   integer(c_size_t), parameter :: NY  = SCALE*1280
    integer(c_size_t), parameter :: NXL = 16
    integer(c_size_t), parameter :: NYL = 16
    integer,           parameter :: NPAD = 1
 
    integer(c_size_t), parameter :: SIZE_ELEMENT = 4
 
-   !integer, target, dimension(NX+2*NPAD,NY+2*NPAD) :: A, B, C
    real, target, dimension(NX+2*NPAD,NY+2*NPAD) :: A, B, C
 
    type(CLDevice) :: device
@@ -62,9 +61,9 @@ program test_shift
    real(c_double) :: h_time
 
    integer :: nxGlobal=NX, nyGlobal=NY
-   integer :: device_id, d_time, i, nLoops=10
+   integer :: device_id, d_time, i, nLoops=100, nWarm=20
    logical :: check_results
-   real :: bandwidth, flops
+   real :: bandwidth, throughput, flops
 
    check_results = .false.
 
@@ -106,34 +105,42 @@ program test_shift
    status = setKernelArgMem(kernel, 3, clMemObject(d_C))
    status = setKernelArgLoc(kernel, 4, local_ex_mem_size)
 
+print*, "warmup"
+   ! warmup the kernel
+   !
+   do i = 1, nWarm
+      status = run(kernel, NX, NY, nxLocal, nyLocal)
+   end do
+   status = clFinish(kernel%commands)
+
    ! run the kernel on the device
    !
 
    print *
-   print *, "Measuring flops and effective bandwidth of computation"
-   d_time = 0
+   print *, "Measuring flops and effective bandwidth for GPU computation: global_mem_size ==", &
+            global_mem_size, "NX ==", NX, "NY ==", NY, "NPAD ==", NPAD
    call init(timer)
+   call start(timer)
    do i = 1, nLoops
-      call start(timer)
       status = run(kernel, NX, NY, nxLocal, nyLocal)
-      call stop(timer)
-      !print *, "       device timer==", kernel%elapsed, "microsec"
-      d_time = d_time + kernel%elapsed
    end do
+   status = clFinish(kernel%commands)
+   call stop(timer)
 
-   h_time = elapsed_time(timer)
-   print *, "   host time    ==   ", real(h_time), " msec"
    h_time = elapsed_time(kernel%timer)
-   print *, "   wait time    ==   ", real(h_time)
-   print *, "   device timer ==", d_time, "        usec"
+   print *, " submit time    ==   ", real(h_time)/nLoops
+   h_time = elapsed_time(timer)
+   print *, "   host time    ==   ", real(h_time)/nLoops, " msec (avg)"
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
-   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / (d_time/1000))
-   print *, "   bandwidth    ==    ", bandwidth, "GB/s"
+   throughput = (1.0e-9 * 1000) * nLoops * global_mem_size / h_time
+   print *, "   throughput   ==    ", throughput, "GB/s"
 
    ! 1.0e-9 -> GFlop, 1000 -> ms, 5 -> 4 sums / 1 div
    flops = (1.0e-9 * 1000) * nLoops * (5*NX*NY/h_time)
    print *, "   flops        ==    ", flops, "GFlops"
+
+stop 1
 
    ! get the results
    !
