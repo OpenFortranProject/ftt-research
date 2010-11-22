@@ -18,7 +18,6 @@ program memory_bandwidth
    integer(c_size_t), parameter :: SIZE_FLOAT = 4
 
    real(c_float), target, dimension(NX,NY) :: src, dst
-   real(c_float), pointer, dimension(:,:)  :: p_src, p_dst
 
    type(CPUTimer) :: timer
    real(c_double) :: h_time
@@ -26,7 +25,6 @@ program memory_bandwidth
    type(CLDevice) :: device
    type(CLKernel) :: kernel
    type(CLBuffer) :: d_src, d_dst
-   type(c_ptr)    :: h_src, h_dst
 
    integer(cl_bitfield) :: flags
    integer(c_size_t) :: global_mem_size = NX*NY * SIZE_FLOAT
@@ -60,25 +58,11 @@ program memory_bandwidth
                         global_mem_size, c_loc(src))
    d_dst = createBuffer(device, CL_MEM_WRITE_ONLY, global_mem_size, C_NULL_PTR)
 
-!   d_src = createBufferMapped(device, global_mem_size, c_loc(src))
-!   d_dst = createBufferMapped(device, global_mem_size, c_loc(dst))
-
-   ! map memory so that it can be initialized on host
-   !
-!   h_src = map(d_src, CL_MAP_WRITE)
-!   call c_f_pointer(h_src, p_src, shape(src))
-
-!   p_src = 1.1
-
-   ! finished initializing memory, unmap for use on device
-   !
-!   status = unmap(d_src)
-
    ! create the kernel
    !
    kernel = createKernel(device, &
                          "mem_bandwidth.cl"  // C_NULL_CHAR, &
-                         "mem_bandwidth" // C_NULL_CHAR)
+                         "mem_bandwidth"     // C_NULL_CHAR)
 
    ! add arguments
    !
@@ -86,7 +70,6 @@ program memory_bandwidth
    status = setKernelArgInt (kernel, 1, nyg) + status
    status = setKernelArgMem (kernel, 2, clMemObject(d_src)) + status
    status = setKernelArgMem (kernel, 3, clMemObject(d_dst)) + status
-!   status = setKernelArgLoc (kernel, 4, local_size) + status
 
    ! warmup the runtime
    !
@@ -98,7 +81,7 @@ program memory_bandwidth
    ! run the kernel on the device
    !
    print *
-   print *, "Measuring device bandwidth using loads/stores"
+   print *, "Measuring device thoughput using loads/stores"
    call init(timer)
    call start(timer)
    do i = 1, nLoops
@@ -117,8 +100,6 @@ program memory_bandwidth
    status = readBuffer(d_dst, c_loc(dst), global_mem_size) + status
    if (status /= CL_SUCCESS) print *, "status=", status;  status = 0
 
-!   h_dst = map(d_dst, CL_MAP_READ)
-!   call c_f_pointer(h_dst, p_dst, shape(dst))
    do j = 1, ny
       do i = 1, nx
          if (dst(i,j) /= src(i,j)) then
@@ -133,8 +114,8 @@ program memory_bandwidth
    end if
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
-   bandwidth = (1.0e-9 * 1000) * nLoops * (global_mem_size / h_time)
-   print *, "unidirectional bandwidth ==", bandwidth, "GB/s"
+   bandwidth = (1.0e-9 * 1000) * nLoops * global_mem_size / h_time
+   print *, "throughput ==", bandwidth, "GB/s"
 
    print *
    print *, "Measuring device bandwidth clEnqueueCopyBuffer"
@@ -149,7 +130,7 @@ program memory_bandwidth
 
    call stop(timer)
    h_time = elapsed_time(timer)
-   bandwidth = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / h_time)
-   print *, "bandwidth ==", bandwidth, "GB/s"
+   bandwidth = (1.0e-9 * 1000) * nLoops * global_mem_size / h_time
+   print *, "throughput ==", bandwidth, "GB/s"
 
 end program
