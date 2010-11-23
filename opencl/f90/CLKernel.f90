@@ -170,8 +170,9 @@ contains
       call stop(this%timer)
 
       if (status /= CL_SUCCESS) then
-         print *, "CLDevice::run(): Failed to execute kernel!"
-         ! print *, "CLDevice::run(): max_local_work_size==%ld\n", max_local_size)
+         print *, "CLKernel::run(): Failed to execute kernel!"
+         print *, "CLKernel::run(): local_work_size==", local_work_size
+         print *, "CLKernel::run(): global_work_size==", global_work_size
          call stop_on_error(status)
       end if
 
