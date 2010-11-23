@@ -21,7 +21,7 @@ contains
       type(CLKernel) :: this
       type(c_ptr) :: context, commands, device
       character(*) :: filename, name
-      integer(cl_int) :: status
+      integer(cl_int) :: status, status_save
 
       integer(c_size_t) :: lengths(1)
       type(c_ptr) :: source
@@ -55,12 +55,19 @@ contains
       status = clBuildProgram(this%program, 0, C_NULL_PTR, &
                               "-cl-fast-relaxed-math" // C_NULL_CHAR, C_NULL_FUNPTR, C_NULL_PTR)
       if (status /= CL_SUCCESS) then
+         status_save = status
 
          print *, "CLKernel::init: Failed to build program executable!"
          status = clGetProgramBuildInfo(this%program, this%device, &
                                         CL_PROGRAM_BUILD_LOG, err_buf_len, err_buf, err_len)
-!         printf("%s\n", buffer);
-         call stop_on_error(status)
+         if (status /= CL_SUCCESS) then
+            print *, "CLKernel::init: error buf length may be too small, is", 2048, " should be", err_len
+            print *
+            print *, err_buf
+            call stop_on_error(status)
+         end if
+
+         call stop_on_error(status_save)
       end if
 
       ! Create the compute kernel in the program we wish to run
