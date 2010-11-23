@@ -30,8 +30,8 @@ end module regions
 
 module shallow_water_mod
    integer, parameter :: NPAD = 1
-   integer, parameter :: NX  = 2*1280    ! factor of 2 because of float4
-   integer, parameter :: NY  = 2*1280
+   integer, parameter :: NX  = 1280
+   integer, parameter :: NY  = 1280
 end module shallow_water_mod
 
 program shallow_water_f

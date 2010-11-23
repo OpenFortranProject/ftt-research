@@ -6,8 +6,8 @@ program shallow_water
    integer :: status
 
    integer,           parameter :: NPAD = 1
-   integer(c_size_t), parameter :: NX  = 2*1280    ! factor of 2 because of float4
-   integer(c_size_t), parameter :: NY  = 2*1280
+   integer(c_size_t), parameter :: NX  = 1280
+   integer(c_size_t), parameter :: NY  = 1280
    integer(c_size_t), parameter :: NXL = 16
    integer(c_size_t), parameter :: NYL = 16
 
