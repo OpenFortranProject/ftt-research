@@ -1,3 +1,5 @@
+#define DO_COMPUTATION
+
 #define NPAD 1
 
 #define KXL get_local_id(0)
@@ -106,6 +108,8 @@ __kernel void wave_advance (
    iV = transfer_halo(V, halo, V_tile);
 
    barrier(CLK_LOCAL_MEM_FENCE);
+
+#ifdef DO_COMPUTATION
 
    // first half step
    //
@@ -232,4 +236,13 @@ __kernel void wave_advance (
              - dtdx * ( Ux[k_up] * Vx[k_up] / Hx[k_up] )
              + dtdx * ( Vy[k_lt]*Vy[k_lt] / Hy[k_lt] + gs*Hy[k_lt]*Hy[k_lt] )
              - dtdx * ( Vy[k_rt]*Vy[k_rt] / Hy[k_rt] + gs*Hy[k_rt]*Hy[k_rt] );
+
+#else
+
+   H[k] = U_tile[kl];
+   U[k] = V_tile[kl];
+   V[k] = H_tile[kl];
+
+#endif
+
 }
