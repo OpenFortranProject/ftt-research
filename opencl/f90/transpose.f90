@@ -81,7 +81,7 @@ program transpose
    ! run the kernel on the device
    !
    print *
-   print *, "Measuring device bandwidth using loads/stores"
+   print *, "Measuring device throughput using loads/stores"
    call init(timer)
    call start(timer)
    do i = 1, nLoops
@@ -119,7 +119,7 @@ program transpose
             "  workgroup ==", nxLocal*nyLocal
 
    print *
-   print *, "Measuring device bandwidth clEnqueueCopyBuffer"
+   print *, "Measuring device throughput clEnqueueCopyBuffer"
    call init(timer)
    call start(timer)
    do i = 0, nLoops
@@ -131,7 +131,7 @@ program transpose
 
    call stop(timer)
    h_time = elapsed_time(timer)
-   throughput = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / h_time)
-   print *, "bandwidth ==", throughput, "GB/s"
+   throughput = (1.0e-9 * 1000) * nLoops * (global_mem_size / h_time)
+   print *, "throughput ==", throughput, "GB/s"
 
 end program
