@@ -1,7 +1,17 @@
-#define CODE_INLINE
-#define TOP_LEFT
-#undef PERFORM_COMPUTATION
-#undef DO_PADDING
+#define PERFORM_COMPUTATION
+
+#define NPAD 1
+
+#define KXL get_local_id(0)
+#define KYL get_local_id(1)
+
+#define TILE_OFFSET(base, idx, size) ( base + idx*size.s0*size.s1 )
+
+static inline int region_idx(int4 halo, int2 size)
+{
+   return (KXL+halo.s0) + (KYL+halo.s2)*size.s0;
+}
+
 
 // allow data type of buffers to change
 //
@@ -60,41 +70,35 @@ static inline void copy_shifts_subsection(__local  ofp_data_t * patch,
                                           __global ofp_data_t * A,
                                           int lPad, int gPad)
 {
-   const int lStride = get_local_size(0)  + 2*lPad;
-   const int gStride = get_global_size(0) + 2*gPad;
+   const int lStride = get_local_size(0)  + 2*NPAD;
+   const int gStride = get_global_size(0) + 2*NPAD;
 
    // offset to central (non-extended) portion of array
    //
-   int gOffset =   ( get_group_id(0) * get_local_size(0) )
-                 + ( get_group_id(1) * get_local_size(1) ) * gStride;
+   int g_ex_offset =   ( get_group_id(0) * get_local_size(0) )
+                     + ( get_group_id(1) * get_local_size(1) ) * gStride;
 
-   // offset to central (non-extended) portion of patch
-   //
-   int lOffset = lPad + lPad*lStride;
-
-   int kxl = get_local_id(0);
-   int kyl = get_local_id(1);
+   const int kl = KXL + KYL*lStride;
+   const int k  = KXL + KYL*gStride + g_ex_offset;
 
    // top-left portion
    //
-   patch[kxl + kyl*lStride] = A[kxl + kyl*gStride + gOffset];
+   patch[kl] = A[k];
 
    // right section
    //
-   if (kxl < 2*lPad) {
-      patch[kxl + get_local_size(0) + kyl*lStride]
-        = A[kxl + get_local_size(0) + kyl*gStride + gOffset];
+   if (KXL < 2*NPAD) {
+      patch[kl + get_local_size(0)] = A[k + get_local_size(0)];
    }
 
    // bottom section
    //
-   if (kyl < 2*lPad) {
-      patch[kxl + (kyl + get_local_size(1))*lStride]
-        = A[kxl + (kyl + get_local_size(1))*gStride + gOffset];
+   if (KYL < 2*NPAD) {
+      patch[kl + get_local_size(1)*lStride] = A[k + get_local_size(1)*gStride];
 
-      if (kxl < 2*lPad) {
-         patch[kxl + get_local_size(0) + (kyl + get_local_size(1))*lStride]
-           = A[kxl + get_local_size(0) + (kyl + get_local_size(1))*gStride + gOffset];
+      if (KXL < 2*NPAD) {
+         patch[kl + get_local_size(0) + get_local_size(1)*lStride]
+           = A[k  + get_local_size(0) + get_local_size(1)*gStride];
       }
    }
 }
@@ -124,6 +128,8 @@ __kernel void shift (int nShift,
    int gOffset =   ( get_group_id(0) * get_local_size(0) + nPad )
                  + ( get_group_id(1) * get_local_size(1) + nPad ) * gStride;
 
+   const int pOffset = NPAD + NPAD*lStride;
+
    const int kl  = kxl + kyl*get_local_size(0);
 
    // copy all shifted subsections into a single extended local region
@@ -132,6 +138,7 @@ __kernel void shift (int nShift,
    barrier(CLK_LOCAL_MEM_FENCE);
 
 #ifdef PERFORM_COMPUTATION
+
    // probably should test for nxGlobal, nyGlobal
    //
    C[k] = ( C[k]
@@ -140,9 +147,12 @@ __kernel void shift (int nShift,
         +   patch[kxl + (kyl-nShift)*lStride + pOffset]
         +   patch[kxl + (kyl+nShift)*lStride + pOffset]
           ) / 5.0;
-#endif
+
+#else
 
    C[k] = patch[kl];
+
+#endif
 }
 
 
