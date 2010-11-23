@@ -7,8 +7,8 @@ contains
       integer, intent(in), dimension(4) :: halo
       integer, dimension(2) :: lb, ub
 
-      lb = lbounds(A)
-      ub = ubounds(A)
+      lb = lbound(A)
+      ub = ubound(A)
       pA => A(lb(1)+halo(1):ub(1)-halo(2), lb(2)+halo(3):ub(2)-halo(4))
 
    end function region
@@ -19,8 +19,8 @@ contains
       integer, intent(in), dimension(4) :: halo
       integer, dimension(2) :: lb, ub
 
-      lb = lbounds(A)
-      ub = ubounds(A)
+      lb = lbound(A)
+      ub = ubound(A)
       pA => A(lb(1)+halo(1):ub(1)-halo(2), lb(2)+halo(3):ub(2)-halo(4))
 
    end function transfer_halo
@@ -30,8 +30,8 @@ end module regions
 
 module shallow_water_mod
    integer, parameter :: NPAD = 1
-   integer, parameter :: NX  = 1080
-   integer, parameter :: NY  = 1080
+   integer, parameter :: NX  = 2*1280    ! factor of 2 because of float4
+   integer, parameter :: NY  = 2*1280
 end module shallow_water_mod
 
 program shallow_water_f
@@ -41,23 +41,27 @@ program shallow_water_f
    implicit none
 
    interface
-      subroutine wave_advance(H, U, V)
+      subroutine wave_advance(H, U, V, dx, dt)
          implicit none
          real, target, dimension(:,:) :: H, U, V
+         real, intent(in) :: dx, dt
       end subroutine wave_advance
    end interface
 
    real, target, dimension(NX+2*NPAD,NY+2*NPAD) :: H, U, V
+   real :: dx, dt
 
    type(CPUTimer) :: timer
    real(c_double) :: time
 
-   integer :: i, nLoops
+   integer :: i, nLoops=100
    integer :: global_mem_size = (NX+2*NPAD)*(NY+2*NPAD)*4
    real :: throughput, flops
 
    ! initialize memory
    !
+
+   dx = 1.0;  dt = 0.01;
 
    H = 1.0;  U = 0.0;  V = 0.0;
 
@@ -67,17 +71,18 @@ program shallow_water_f
    call init(timer)
    call start(timer)
    do i = 1, nLoops
-      call wave_advance(H, U, V)
+      call wave_advance(H, U, V, dx, dt)
    end do
+   call stop(timer)
    time = elapsed_time(timer)
 
-   print *, "   run time    ==   ", real(time)
+   print *, "   run time    ==   ", real(time)/nLoops
    ! 1.0e-9 -> GB, 1000 -> ms
    throughput = (1.0e-9 * 1000) * nLoops * global_mem_size / time
    print *, "   throughput    ==    ", throughput, "GB/s"
 
    ! 1.0e-9 -> GFlop, 1000 -> ms, 5 -> 4 sums / 1 div
-   flops = (1.0e-9 * 1000) * nLoops * (5*NX*NY/time)
+   flops = (1.0e-9 * 1000) * nLoops * (100*NX*NY/time)
    print *, "   flops        ==    ", flops, "GFlops"
 
 end program shallow_water_f
@@ -183,5 +188,8 @@ subroutine wave_advance(H, U, V, dx, dt)
            + dtdx * ( region(Vy, face_lt)**2 / region(Hy, face_lt) + gs*region(Hy, face_lt)**2 ) &
            - dtdx * ( region(Vy, face_rt)**2 / region(Hy, face_rt) + gs*region(Hy, face_rt)**2 )
 
+   ! clean up memory
+   !
+   deallocate( Hx, Ux, Vx, Hy, Uy, Vy)
 
 end subroutine wave_advance
