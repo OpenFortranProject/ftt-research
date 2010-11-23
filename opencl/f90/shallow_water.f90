@@ -6,8 +6,8 @@ program shallow_water
    integer :: status
 
    integer,           parameter :: NPAD = 1
-   integer(c_size_t), parameter :: NX  = 1080
-   integer(c_size_t), parameter :: NY  = 1080
+   integer(c_size_t), parameter :: NX  = 2*1280    ! factor of 2 because of float4
+   integer(c_size_t), parameter :: NY  = 2*1280
    integer(c_size_t), parameter :: NXL = 16
    integer(c_size_t), parameter :: NYL = 16
 
@@ -40,14 +40,14 @@ program shallow_water
       stop 1
    end if
 
-   device_id = 0
+   device_id = 1
    status = init(device, device_id)
    call limitLocalSize(device, nxLocal, nyLocal)
 
    ! initialize memory
    !
 
-   dx = 1.0;  dt = 0.1;
+   dx = 1.0;  dt = 0.01;
 
    H = 1.0;  U = 0.0;  V = 0.0;
 
@@ -84,8 +84,9 @@ print*, "warmup"
    !
 
    print *
-   print *, "Measuring flops and effective bandwidth for GPU computation: global_mem_size ==", &
-            global_mem_size, "NX ==", NX, "NY ==", NY, "NPAD ==", NPAD
+   print *, "Measuring flops and effective bandwidth for GPU computation:"
+   print *, "global_mem_size ==", &
+             global_mem_size, "NX ==", NX, "NY ==", NY, "NPAD ==", NPAD
    call init(timer)
    call start(timer)
    do i = 1, nLoops
@@ -100,11 +101,11 @@ print*, "warmup"
    print *, "   host time    ==   ", real(h_time)/nLoops, " msec (avg)"
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
-   throughput = (1.0e-9 * 1000) * nLoops * global_mem_size / h_time
+   throughput = (1.0e-9 * 1000) * nLoops * (3*global_mem_size / h_time)
    print *, "   throughput   ==    ", throughput, "GB/s"
 
    ! 1.0e-9 -> GFlop, 1000 -> ms, 5 -> 4 sums / 1 div
-   flops = (1.0e-9 * 1000) * nLoops * (5*NX*NY/h_time)
+   flops = (1.0e-9 * 1000) * nLoops * (100*NX*NY/h_time)
    print *, "   flops        ==    ", flops, "GFlops"
 
 end program shallow_water
