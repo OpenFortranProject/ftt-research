@@ -61,7 +61,7 @@ program shallow_water_f
    ! initialize memory
    !
 
-   dx = 1.0;  dt = 0.01;
+   dx = 1.0;  dt = 0.025;
 
    H = 1.0;  U = 0.0;  V = 0.0;
 
