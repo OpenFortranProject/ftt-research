@@ -108,10 +108,10 @@ static inline void copy_shifts_subsection(__local  ofp_data_t * patch,
  * computes the average of surrounding array elements
  */
 __kernel void shift (int nShift,
-          __global ofp_data_t * A,
-          __global ofp_data_t * B,
-          __global ofp_data_t * C,
-          __local  ofp_data_t * patch )
+          __global ofp_data_t A[],
+          __global ofp_data_t B[],
+          __global ofp_data_t C[],
+          __local  ofp_data_t patch[] )
 {
    // TEMP - need to know size of extended array (rightPad?)
    const int nPad = nShift;
