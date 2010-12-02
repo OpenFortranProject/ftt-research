@@ -1,6 +1,8 @@
 #include <rose.h>
 #include <iostream>
 
+#define CL_SPECIALIZE
+
 using namespace SageBuilder;
 using namespace SageInterface;
 
@@ -14,6 +16,7 @@ public:
    virtual void visit(SgNode * node);
    virtual void atTraversalEnd();
 
+   void visit(SgAllocateStatement   * alloc_stmt);
    void visit(SgFunctionDeclaration * func_decl);
    void visit(SgVariableDeclaration * var_decl);
    void visit(SgFunctionCallExp     * func_call_exp);
@@ -28,30 +31,51 @@ public:
    //
 
    SgExpression      * buildCExpr(SgExpression * expr);
+   SgBinaryOp        * buildCBinaryOp(SgBinaryOp * expr);
    SgFunctionCallExp * buildCFunctionCallExp(SgFunctionCallExp * expr);
+   SgValueExp        * buildCValueExp(SgValueExp * expr);
    SgVarRefExp       * buildCVarRefExp(SgVarRefExp * expr);
    SgExprListExp     * buildCExprListExp(SgExprListExp * expr);
+
+   SgAggregateInitializer * buildCAggregateInitializer(SgAggregateInitializer * expr);
 
    // helper functions
    //
 
    bool isFunctionArg(SgInitializedName * name);
+   bool isRegionSelector(SgInitializedName * var);
    const char * isFunctionCall(const char * name, SgExprStatement * expr_stmt);
+   const char * insertTransferHaloVarDecl(SgFunctionCallExp * fcall);
+   void insertTileOffsetFor(std::string name);
 
 protected:
 
-   SgGlobal * cl_scope;   
+   SgGlobal * cl_global_scope;   
    SgBasicBlock * cl_block;
    SgFunctionDeclaration * src_func_decl;
+
+   int tile_idx;
+
+   // list of variables that are used as region selectors
+   std::vector<SgInitializedName *> selectors;
 };
 
 FortranTraversal::FortranTraversal(SgGlobal * scope)
 {
-   this->cl_scope = scope;
+   this->cl_global_scope = scope;
+   this->tile_idx = 0;
 }
 
 void FortranTraversal::visit(SgNode * node)
 {
+   // handle array assignment
+   //SgPntrArrRefExp* arrayReference = isSgPntrArrRefExp(*i);
+   //FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, SgUnparse_Info& info)
+
+   // TODO - replace with switch
+   if (isSgAllocateStatement(node) != NULL) {
+      visit( (SgAllocateStatement *) node);
+   }
    if (isSgFunctionDeclaration(node) != NULL) {
       visit( (SgFunctionDeclaration *) node);
    }
@@ -64,6 +88,24 @@ void FortranTraversal::visit(SgNode * node)
    if (isSgExprStatement(node) != NULL) {
       visit( (SgExprStatement *) node);
    }
+}
+
+void FortranTraversal::visit(SgAllocateStatement * alloc_stmt)
+{
+   SgExprListExp* exprs = alloc_stmt->get_expr_list();
+   ROSE_ASSERT(exprs != NULL);
+
+   std::string exprs_str = exprs->unparseToString();
+   printf("SgAllocateStatement: allocate exprs are %s\n", exprs_str.c_str());
+
+   SgExpressionPtrList::iterator i = exprs->get_expressions().begin();
+   SgPntrArrRefExp * arrayRef = isSgPntrArrRefExp(*i);
+   ROSE_ASSERT(arrayRef != NULL);
+   SgVarRefExp * lhs = isSgVarRefExp(arrayRef->get_lhs_operand());
+   ROSE_ASSERT(lhs != NULL);
+
+   // define local tile, e.g., hx = TILE_OFFSET(tiles,3,get_tile_size())
+   insertTileOffsetFor(lhs->get_symbol()->get_name().getString());
 }
 
 void FortranTraversal::visit(SgFunctionDeclaration * func_decl)
@@ -116,25 +158,18 @@ void FortranTraversal::visit(SgFunctionDeclaration * func_decl)
    cl_func = buildDefiningFunctionDeclaration(func_decl->get_name(),
                                               buildVoidType(),
                                               params,
-                                              cl_scope);
+                                              cl_global_scope);
    cl_func->get_functionModifier().setOpenclKernel();
-   appendStatement(cl_func, cl_scope);
+   appendStatement(cl_func, cl_global_scope);
 
    // save basic block for later processing
    //
    cl_block = cl_func->get_definition()->get_body();
-
-   // add common kernel declarations
-   //
-   std::string code = "   // these variables will be needed by all kernels\n";
-   code += "   const int2 t_size = {get_local_size(0) + 2*NPAD, get_local_size(1) + 2*NPAD};\n";
-   code += "   const int k = (get_global_id(0) + NPAD)\n";
-   code += " + (get_global_id(1) + NPAD) * (get_global_size(0) + 2*NPAD);\n\n";
-   code += "   int kl = KXL + KYL*t_size.s0;";
 }
 
 void FortranTraversal::visit(SgVariableDeclaration * var_decl)
 {
+   SgVariableDeclaration * cl_var_decl;
    SgInitializedNamePtrList vars = var_decl->get_variables();
    SgInitializedNamePtrList::iterator it_vars;
 
@@ -147,32 +182,31 @@ void FortranTraversal::visit(SgVariableDeclaration * var_decl)
       if (isFunctionArg(var)) continue;
 
       printf("  var name is %s\n", var->get_name().str());
+#ifdef CL_SPECIALIZE
       if (isSgArrayType(var_type) != NULL) {
-         SgArrayType * array_type = isSgArrayType(var_type);
-
-         //         SgType * base_type = buildPointerType(array_type->findBaseType());
-
-         SgExprListExp* dim_list = array_type->get_dim_info();
-         std::string dim_list_str = dim_list->unparseToString();
-         printf("  array rank is %d diminfo is %s\n", array_type->get_rank(), dim_list_str.c_str());
-
-         if (array_type->get_rank() == 1 && isSgTypeInt(array_type->findBaseType()) != NULL) {
-            printf("     array is integer type\n");
-
-            //            SgClassDeclaration * var_type = buildStructDeclaration("int4", cl_blockf);
-
-            //SgExpressionPtr SgExpressionPtrList::iterator it = dim_list->get_expressions().begin();
-            //            std::string str = (*it)->unparseToString();
-            // sgValueExp and SgIntVal
-            //            printf("     exp is %s %d\n", str.c_str(), str=="4");
+         // if var is a region selector, create index variable for associated local tile
+         if (isRegionSelector(var)) {
+            printf("    region selector\n");
+            selectors.insert(var);
+            var_type = buildOpaqueType("int4", cl_block);
          }
       }
+      else if (isSgPointerType(var_type) != NULL) {
+         printf("    pointer type\n");
+         // TODO - look to see if variable is defined by transfer_halo call
+         // for now just assume it is
+         var_type = var_type->findBaseType();
+      }
+#endif
 
+      if (isSgArrayType(var_type) != NULL) {
+         var_type = buildPointerType(isSgArrayType(var_type)->findBaseType());
+      }
 
-      SgVariableDeclaration * cl_var_decl = buildVariableDeclaration(var->get_name(), var_type);
+      cl_var_decl = buildVariableDeclaration(var->get_name(), var_type);
       appendStatement(cl_var_decl, cl_block);
 
-      // allocatable variables need to be make local on device
+      // allocatable variables need to be local on device
       //
       if (var_decl->get_declarationModifier().get_typeModifier().isAllocatable()) {
          cl_var_decl->get_declarationModifier().get_storageModifier().setOpenclLocal();
@@ -190,18 +224,19 @@ void FortranTraversal::visit(SgFunctionCallExp * func_call_expr) {
    }
 }
 
+/**
+ * Matches assignment statements (including pointer association)
+ */
 void FortranTraversal::visit(SgExprStatement * expr_stmt)
 {
-   const char * var = isFunctionCall("transfer_halo", expr_stmt);
-   if (var != NULL) {
-      printf("visit:SgExprStatement: found transfer_halo call\n");
-   }
-
    SgExprStatement * c_expr_stmt = buildCExprStatement(expr_stmt);
-   printf("visit SgExprStatement: c_expr_stmt==%p\n", c_expr_stmt);
    if (c_expr_stmt != NULL) {
       appendStatement(c_expr_stmt, cl_block);
    }
+
+#ifdef CL_SPECIALIZE
+   // if lhs is a region selector, define index variable for associated local tile
+#endif
 }
 
 void FortranTraversal::atTraversalEnd()
@@ -221,6 +256,17 @@ SgExprStatement * FortranTraversal::buildCExprStatement(SgExprStatement * expr_s
 
    SgExpression * c_lhs = buildCExpr(bin_op->get_lhs_operand());
    SgExpression * c_rhs = buildCExpr(bin_op->get_rhs_operand());
+   ROSE_ASSERT(c_lhs != NULL);
+   ROSE_ASSERT(c_rhs != NULL);
+
+#ifdef CL_SPECIALIZE
+   // insert cast if required by lhs and rhs is SgAggregateInitializer
+   // TODO - check that lhs is int4 variable
+   if (isSgAggregateInitializer(c_rhs) != NULL) {
+      c_rhs = buildCastExp(c_rhs, buildOpaqueType("int4", cl_block));
+   }
+#endif
+
    SgBinaryOp   * c_bin_op = buildBinaryExpression<SgAssignOp>(c_lhs, c_rhs);
 
    return buildExprStatement(c_bin_op);
@@ -228,17 +274,95 @@ SgExprStatement * FortranTraversal::buildCExprStatement(SgExprStatement * expr_s
 
 SgExpression * FortranTraversal::buildCExpr(SgExpression * expr)
 {
-   if (expr == NULL) return NULL;
+   if (expr == NULL) {
+      printf("buildCExpr: NULL expression\n");
+      return NULL;
+   }
 
    switch (expr->variantT())
    {
-      case V_SgFunctionCallExp: return buildCFunctionCallExp(isSgFunctionCallExp(expr));
-
-      // symbol references
-      case V_SgVarRefExp: return buildCVarRefExp(isSgVarRefExp(expr));
+      case V_SgFunctionCallExp:      return buildCFunctionCallExp(isSgFunctionCallExp(expr));
+      case V_SgVarRefExp:            return buildCVarRefExp(isSgVarRefExp(expr));
+      case V_SgAggregateInitializer: return buildCAggregateInitializer(isSgAggregateInitializer(expr));
    }
 
-   //printf("buildCExpr: Unimplemented\n");
+   // lots of unary, binary and value exprs so general catch all here
+   //
+   if (isSgBinaryOp(expr) != NULL) {
+      return buildCBinaryOp(isSgBinaryOp(expr));
+   }
+   if (isSgUnaryOp(expr) != NULL) {
+      return buildCUnaryOp(isSgUnaryOp(expr));
+   }
+   if (isSgValueExp(expr) != NULL) {
+      return buildCValueExp(isSgValueExp(expr));
+   }
+
+   printf("buildCExpr: Unimplemented variantT==%d\n", expr->variantT());
+   return NULL;
+}
+
+SgBinaryOp * FortranTraversal::buildCBinaryOp(SgBinaryOp * expr)
+{
+   SgExpression * c_lhs = buildCExpr(expr->get_lhs_operand());
+   SgExpression * c_rhs = buildCExpr(expr->get_rhs_operand());
+   ROSE_ASSERT(c_lhs != NULL);
+   ROSE_ASSERT(c_rhs != NULL);
+
+   switch (expr->variantT())
+   {
+      case V_SgMinusOp:    return buildUnaryExpression<SgMinusOp>(c_lhs, c_rhs);
+      case V_SgAddOp:      return buildBinaryExpression<SgAddOp>(c_lhs, c_rhs);
+      case V_SgDivideOp:   return buildBinaryExpression<SgDivideOp>(c_lhs, c_rhs);
+      case V_SgMultiplyOp: return buildBinaryExpression<SgMultiplyOp>(c_lhs, c_rhs);
+      case V_SgSubtractOp: return buildBinaryExpression<SgSubtractOp>(c_lhs, c_rhs);
+   }
+
+   if (isSgExponentiationOp(expr) != NULL) {
+      if (isSgIntVal(c_rhs) != NULL) {
+         SgIntVal * val = isSgIntVal(c_rhs);
+         if (val->get_value() == 2) {
+            return buildBinaryExpression<SgMultiplyOp>(c_lhs, c_lhs);
+
+         }
+      }
+      printf("buildCBinaryOp: Unimplemented exponentiation lhs==%d rhs==%d\n",
+             expr->get_lhs_operand()->variantT(), expr->get_rhs_operand()->variantT());
+   }
+      
+   printf("buildCBinaryOp: Unimplemented variantT==%d\n", expr->variantT());
+   return NULL;
+}
+
+SgBinaryOp * FortranTraversal::buildCBinaryOp(SgBinaryOp * expr)
+{
+   SgExpression * c_lhs = buildCExpr(expr->get_lhs_operand());
+   SgExpression * c_rhs = buildCExpr(expr->get_rhs_operand());
+   ROSE_ASSERT(c_lhs != NULL);
+   ROSE_ASSERT(c_rhs != NULL);
+
+   switch (expr->variantT())
+   {
+      case V_SgMinusOp:    return buildUnaryExpression<SgMinusOp>(c_lhs, c_rhs);
+      case V_SgAddOp:      return buildBinaryExpression<SgAddOp>(c_lhs, c_rhs);
+      case V_SgDivideOp:   return buildBinaryExpression<SgDivideOp>(c_lhs, c_rhs);
+      case V_SgMultiplyOp: return buildBinaryExpression<SgMultiplyOp>(c_lhs, c_rhs);
+      case V_SgSubtractOp: return buildBinaryExpression<SgSubtractOp>(c_lhs, c_rhs);
+   }
+
+   if (isSgExponentiationOp(expr) != NULL) {
+      if (isSgIntVal(c_rhs) != NULL) {
+         SgIntVal * val = isSgIntVal(c_rhs);
+         if (val->get_value() == 2) {
+            return buildBinaryExpression<SgMultiplyOp>(c_lhs, c_lhs);
+
+         }
+      }
+      printf("buildCBinaryOp: Unimplemented exponentiation lhs==%d rhs==%d\n",
+             expr->get_lhs_operand()->variantT(), expr->get_rhs_operand()->variantT());
+   }
+      
+   printf("buildCBinaryOp: Unimplemented variantT==%d\n", expr->variantT());
    return NULL;
 }
 
@@ -248,7 +372,24 @@ SgFunctionCallExp * FortranTraversal::buildCFunctionCallExp(SgFunctionCallExp * 
    SgFunctionRefExp  * fref  = isSgFunctionRefExp(fcall->get_function());
    SgExprListExp     * exprs = buildCExprListExp(fcall->get_args());
 
-   printf("buildCFunctionCallExp: for function %s\n", fref->get_symbol()->get_name().str());
+   std::string name = fref->get_symbol()->get_name().getString();
+
+   printf("buildCFunctionCallExp: for function %s\n", name.c_str());
+
+#ifdef CL_SPECIALIZE
+   // define pointer to tile variable for transfer_halo and add variable to call
+   if (name == "transfer_halo") {
+      const char * tile = insertTransferHaloVarDecl(fcall);
+      exprs->append_expression(buildVarRefExp(tile, cl_block));
+   }
+   // region call to an array dereference
+   if (name == "region") {
+      printf("buildCFunctionCallExp: MODIFYING CALL TO REGION\n");
+      //      const char * tile = insertTransferHaloVarDecl(fcall);
+      //      exprs->append_expression(buildVarRefExp(tile, cl_block));
+   }
+#endif
+
    return buildFunctionCallExp(fref->get_symbol(), exprs);
 }
 
@@ -267,11 +408,44 @@ SgExprListExp * FortranTraversal::buildCExprListExp(SgExprListExp * expr_list)
    return c_expr_list;
 }
 
+SgValueExp * FortranTraversal::buildCValueExp(SgValueExp * expr)
+{
+   SgValueExp * val = NULL;
+   switch (expr->variantT())
+   {
+      case V_SgFloatVal: {
+         SgFloatVal * f_val = isSgFloatVal(expr);
+         SgFloatVal * c_val = buildFloatVal(f_val->get_value());  val = c_val;
+         c_val->set_valueString(f_val->get_valueString());        break;
+      }
+      case V_SgIntVal: {
+         SgIntVal * f_val = isSgIntVal(expr);
+         SgIntVal * c_val = buildIntVal(f_val->get_value());  val = c_val;
+         c_val->set_valueString(f_val->get_valueString());    break;
+      }
+   }
+
+   if (val == NULL) {
+      printf("buildCValueExp: val is NULL, variantT==%d\n", expr->variantT());
+   }
+
+   return val;
+}
+
 SgVarRefExp * FortranTraversal::buildCVarRefExp(SgVarRefExp * expr)
 {
    printf("buildCExpr: buildVarRefExp for %s\n", expr->get_symbol()->get_name().str());
    return buildVarRefExp(expr->get_symbol()->get_name(), cl_block);
 }
+
+SgAggregateInitializer * FortranTraversal::buildCAggregateInitializer(SgAggregateInitializer * expr)
+{
+   return buildAggregateInitializer(expr->get_initializers(), expr->get_type());
+}
+
+
+// helper functions
+//
 
 bool FortranTraversal::isFunctionArg(SgInitializedName * arg)
 {
@@ -287,6 +461,45 @@ bool FortranTraversal::isFunctionArg(SgInitializedName * arg)
    return false;
 }
 
+bool FortranTraversal::isRegionSelector(SgInitializedName * var)
+{
+   bool isSelector = false;
+   SgType * var_type = var->get_type();
+
+   // see if var is already in selector list
+   //
+   for (int i = 0; i < selectors.size(); i++) {
+      if (var->get_name().getString() == selectors[i]->get_name().getString()) {
+         return true;
+      }
+   }
+
+   // first do the easy stuff
+   //
+   if (isSgArrayType(var_type) != NULL) {
+      SgArrayType * array_type = isSgArrayType(var_type);
+      SgExpressionPtrList & dim_ptrs = array_type->get_dim_info()->get_expressions();
+
+      if (array_type->get_rank() == 1 && isSgTypeInt(array_type->findBaseType()) != NULL) {
+         // TODO - could be a variable reference rather than a value expression
+         if (isSgIntVal(dim_ptrs.front()) != NULL) {
+            if (isSgIntVal(dim_ptrs.front())->get_value() == 4) isSelector = true;
+         }
+      }
+   }
+
+   // look for var in region and transfer_halo calls
+   //
+   if (isSelector == true) {
+      SgStatementPtrList & stmts = src_func_decl->get_definition()->get_body()->getStatementList();
+   }
+
+   return isSelector;
+}
+
+/**
+ * This function is not used and doesn't work as named
+ */
 const char * FortranTraversal::isFunctionCall(const char * name, SgExprStatement * expr_stmt)
 {
    SgBinaryOp * bin_op = isSgBinaryOp(expr_stmt->get_expression());
@@ -298,6 +511,48 @@ const char * FortranTraversal::isFunctionCall(const char * name, SgExprStatement
    }
    return NULL;
 }
+
+const char * FortranTraversal::insertTransferHaloVarDecl(SgFunctionCallExp * fcall)
+{
+   SgExpressionPtrList::iterator it = fcall->get_args()->get_expressions().begin();
+   SgVarRefExp * arg = isSgVarRefExp(*it);
+   SgInitializedName * argName = arg->get_symbol()->get_declaration();
+   std::string str = arg->get_symbol()->get_name().getString() + "_tile";
+
+   // declare local tile, e.g., __local float *h_tile
+   SgVariableDeclaration *
+      cl_var_decl = buildVariableDeclaration(SgName(str), buildPointerType(arg->get_type()->findBaseType()));
+   cl_var_decl->get_declarationModifier().get_storageModifier().setOpenclLocal();
+   appendStatement(cl_var_decl, cl_block);
+
+   // define local tile, e.g., h_tile = TILE_OFFSET(tiles,0,get_tile_size())
+   insertTileOffsetFor(str);
+
+   return str.c_str();
+}
+
+void FortranTraversal::insertTileOffsetFor(std::string name)
+{
+   SgExpression * expr;
+
+   SgFunctionSymbol * tile_offset = isSgFunctionSymbol(cl_global_scope->lookup_symbol("TILE_OFFSET"));
+   SgFunctionSymbol * get_tile_size = isSgFunctionSymbol(cl_global_scope->lookup_symbol("get_tile_size"));
+   ROSE_ASSERT(tile_offset != NULL && get_tile_size != NULL);
+
+   SgExprListExp * exprs = buildExprListExp();
+   exprs->append_expression(buildVarRefExp("tiles", cl_block));
+   exprs->append_expression(buildIntVal(tile_idx++));
+   exprs->append_expression(buildFunctionCallExp(get_tile_size, buildExprListExp()));
+
+   SgExpression * lhs = buildVarRefExp(SgName(name), cl_block);
+   SgExpression * rhs = buildFunctionCallExp(tile_offset, exprs);
+
+   SgBinaryOp * bin_expr = buildBinaryExpression<SgAssignOp>(lhs, rhs);
+
+   SgExprStatement * assign_stmt = buildExprStatement(bin_expr);
+   appendStatement(assign_stmt, cl_block);
+}
+
 
 
 int main(int argc, char ** argv)
@@ -311,10 +566,10 @@ int main(int argc, char ** argv)
    ROSE_ASSERT(src_file);
 	
    SgSourceFile * cl_file = isSgSourceFile((*project)[1]);
-   SgGlobal * cl_scope = cl_file->get_globalScope();
-   ROSE_ASSERT(cl_scope);
+   SgGlobal * cl_global_scope = cl_file->get_globalScope();
+   ROSE_ASSERT(cl_global_scope);
 
-   FortranTraversal traversal(cl_scope);
+   FortranTraversal traversal(cl_global_scope);
 
    SgDeclarationStatementPtrList & decls = src_file->get_globalScope()->get_declarations();
    SgDeclarationStatementPtrList::iterator it_decls;
