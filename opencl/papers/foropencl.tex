@@ -1,0 +1,170 @@
+\begin{document}
+
+\title{ForOpenCL: Examing Fortran as a base language for accelerated platforms:
+I forgot what we decided upon}
+
+%
+% \author{}
+%
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+
+
+\section{Introduction}
+
+1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
+2. Goal is to code for readability and maintainability, not performance
+3. This goal requires expression in a high-level language.
+4. But language must be simple enough for compiler to analyze.
+5. Thus ideal if language maps well to accelerator architectures.
+6. Data parallel constructs in Fortran 90 are chosen.
+7. Up to 65 times speed up measured on automatically transformed code.
+
+At Los Alamos we have a wide variety of computer platforms from which
+to choose.  The common platform is made up of cluster of compute nodes
+with standard multi-core processors.  Some nodes have accelerators
+that range from the IBM Cell processor (Roadrunner) to a variety of
+GPUs from NVIDIA and AMD.  Some nodes have have hardware with vector
+instructions and others do not.  An important question is what programming
+model and what languages are best suited for these platforms.
+
+A data parallel programming model is suited for accelerators....
+
+One possibility is to adopt a new language like CUDA or Chapel...
+Another possibility is to use a mature language with OpenMP directives
+or write OpenCL kernels.
+
+The problem is that many of the language choices expose too much detail
+about the machine architecture.  This is particularly true of CUDA and OpenCL.
+
+At this point in time it is not really possible to write once and
+run efficiently on the wide variety of computer platforms we have
+available.
+
+This papers addresses this issue by examining features in Fortran that
+allow programmers to express algorithms at a very high level but yet
+can be transformed by a compiler to run efficiently on a wide variety
+of platforms.  In particular we consider nodes of GPUs.
+
+We demonstrate that the array syntax of Fortran maps surprisingly well
+onto GPUs when transformed to OpenCL kernels.  These Fortran language
+features include pure and elemental functions and array constructs
+like where and shift.  In addition we add a few functions that enable
+a program to be deployed on machines with a hierarchy of processing elements,
+such as nodes employing GPU acceleration,
+\emph{without requiring explicit declaration of parallelism within the program.}
+In addition the program uses entirely standard Fortran so it can be
+on a single core without concurrency.
+
+We study automatic transformations of Fortran for two applications examples.
+The first is a simple shallow water model in two dimensions using
+finite volume methods with .... for time update.  The second is based
+on the primary compute kernels from PetaVision, a high-performance, 
+neural science framework that is used in models of visual cortex.
+
+
+\section{The programming model and Fortran-language subset}
+
+The static analysis and source-to-source transformations used are not magic
+and require the programmer to use a subset of Fortran that employs
+a data-parallel programming model in this section we describe this
+language subset.
+
+Similar to ZPL.
+
+\subsubsection{elemental functions}
+
+\subsubsection{pure procedures}
+
+Mention that don't require pure procedures as region functions are not pure.
+But programmers should otherwise think in terms of writing pure procedures.
+
+\subsection{Limitations}
+
+Only Fortran procedures are transformed into OpenCL kernels.  The programmer
+must currently explicitly call these kernels from Fortran using the ForOpenCL
+library described below.  It is also possible using ROSE to modify the calling
+site so that the entire program can be transformed but this functionality is
+outside the scope of this paper.  Here we specifically examine transforming
+Fortran procedures to OpenCL kernels.
+
+Only elemental functions may be called from kernel functions.  These include
+fortran functions that have an OpenCL analog and user-defined elemental functions.
+
+Array sizes must be multiples of the local kernel size,
+get_local_size(0)*get_local_size(1).  This may be relaxed in the future.
+
+\subsection{ForOpenCL}
+
+ForOpenCL is library of Fortran modules.  It contains Fortran 2003 interface
+descriptions that allow language interoperability with the C OpenCL runtime.
+
+\section{Transformation examples}
+
+This sections show short Fortran code examples and OpenCL equivalent.
+The notation uses uppercase for arrays and lowercase for scalar quantities.
+Interior array subsections are denoted by an i preceeding the array, e.g. iA
+is the interior subset of array A.
+
+\subsubsection{array syntax}
+
+PetaVision updates the action potential with the statement,
+
+   V = V - iA*(V - v_rest)                  !! Fortran
+
+   V[l] = V[l] - iA[lex]*(V[l] - v_rest);   // OpenCL equivalent
+
+\subsubsection{where construct}
+
+A neuron in PetaVision fires (activity is set to 1)
+whenever the action potential is greater than some threshold.
+This is easily expressed with a where construct.
+
+   where (V > Vth)                        !! Fortran
+      iA = 1
+   elsewhere
+      iA = 0
+   end where
+
+   iA[lex] = (V[l] > Vth[l]) ? 1 : 0;     // OpenCL equivalent
+
+
+\subsection{New functions}
+
+%\subsubsection{transfer_halo}
+\subsubsection{region}
+
+One of the state variables in the shallow water code is H, effectively the
+height of the water.  This variable has a halo (ghost-cell region) surrounding
+the interior of the grid to handle boundary conditions.  When using
+MPI, the halo regions contains values from adjacent processors that must be
+updated with new values at each time step.  This is accomplished with the
+transfer_halo function.  The shallow water code assumes a five point stencil
+so the state variables are extended by 2 in each dimension (e.g., by one to the
+left, right, up, and down).
+
+halo = [1,1,1,1]
+iH => region(H, halo, transfer=false)
+
+\section{Static Analysis}
+
+1. Dependence analysis to insert thread group barriers
+
+   barrier(CLK_LOCAL_MEM_FENCE)
+
+2. subsection variables associated with array variables
+
+\subsection{Analysis not required}
+
+1. loop fusion
+2. removal of array temporaries (shifts)
+
+\section{Performance}
+
+
+\end{document}
