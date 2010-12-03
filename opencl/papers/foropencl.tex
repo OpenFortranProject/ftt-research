@@ -7,8 +7,7 @@
 \usepackage{url}
 
 
-\title{ForOpenCL: Examing Fortran as a base language for accelerated platforms:
-I forgot what we decided upon}
+\title{Exploiting First-Class Arrays in Fortran for Accelerator Programming}
 \author{Awesome Fortran Programmers}
 
 \begin{document}
@@ -23,7 +22,10 @@ I am abstract.
 
 \section{Introduction}
 
-This paper presents a compiler-level approach for targeting a single program to multiple fundamentally different low level execution and programming models while allowing the application programmer to adopt a single high level programming model.
+This paper presents a compiler-level approach for targeting a single
+program to multiple fundamentally different low level execution and
+programming models while allowing the application programmer to adopt
+a single high level programming model.
 
 1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
 2. Goal is to code for readability and maintainability, not performance
@@ -63,11 +65,11 @@ We demonstrate that the array syntax of Fortran maps surprisingly well
 onto GPUs when transformed to OpenCL kernels.  These Fortran language
 features include pure and elemental functions and array constructs
 like where and shift.  In addition we add a few functions that enable
-a program to be deployed on machines with a hierarchy of processing elements,
-such as nodes employing GPU acceleration,
-\emph{without requiring explicit declaration of parallelism within the program.}
-In addition the program uses entirely standard Fortran so it can be
-on a single core without concurrency.
+a program to be deployed on machines with a hierarchy of processing
+elements, such as nodes employing GPU acceleration, \emph{without
+  requiring explicit declaration of parallelism within the program.}
+In addition the program uses entirely standard Fortran so it can be on
+a single core without concurrency.
 
 We study automatic transformations of Fortran for two applications examples.
 The first is a simple shallow water model in two dimensions using
@@ -77,25 +79,64 @@ neural science framework that is used in models of visual cortex.
 
 \subsection{Why Fortran?}
 
-A likely question that one may pose is ``\emph{Why Fortran and not a more modern language like X?}''
-The recent rise in interest in concurrency and parallelism at the language level driven by multicore CPUs and
-manycore accelerators has driven a number of new language developments, both as novel languages and extensions
-on existing ones.
+A likely question that one may pose is ``\emph{Why Fortran and not a
+  more modern language like X?}''  The recent rise in interest in
+concurrency and parallelism at the language level driven by multicore
+CPUs and manycore accelerators has driven a number of new language
+developments, both as novel languages and extensions on existing ones.
 
-For scientific users, these new languages and language extensions present a challenge: how do developers effectively use them while avoiding rewriting their code and potentially growing dependent on a transient technology that will vanish tomorrow?  
+For scientific users, these new languages and language extensions
+present a challenge: how do developers effectively use them while
+avoiding rewriting their code and potentially growing dependent on a
+transient technology that will vanish tomorrow?
 
-Fortran is unique in that it has contained language features that are well suited to modern architectures for a number of years.
-This should be unsurprising --- Fortran was a primary language used to target systems such as the vector supercomputers and massively parallel systems of the 1970s and 1980s.  These are the systems in which architectural features were developed that have led to single chip high performance architectures of interest today.  Given that these new systems have features very similar to their predecessors, it is clear that the language features within Fortran for them are still relevant.
+Fortran is unique in that it has contained language features that are
+well suited to modern architectures for a number of years.  This
+should be unsurprising --- Fortran was a primary language used to
+target systems such as the vector supercomputers and massively
+parallel systems of the 1970s and 1980s.  These are the systems in
+which architectural features were developed that have led to single
+chip high performance architectures of interest today.  Given that
+these new systems have features very similar to their predecessors, it
+is clear that the language features within Fortran for them are still
+relevant.
 
 \section{The programming model and Fortran-language subset}
 
-The static analysis and source-to-source transformations used are very basic
-and simply require the programmer to use a subset of Fortran that employs
-a data-parallel programming model.  In particular, it encourages use of language features that
-were introduced and standardized in the Fortran 90 language specification.  In this section we describe the
-set of Fortran 90 features that our analysis and transformation method are based on.
+The static analysis and source-to-source transformations used are very
+basic and simply require the programmer to use a subset of Fortran
+that employs a data-parallel programming model.  In particular, it
+encourages use of language features that were introduced and
+standardized in the Fortran 90 language specification.  In this
+section we describe the set of Fortran 90 features that our analysis
+and transformation method are based on.
 
-Similar to ZPL.
+Fortran 90 introduced a rich array syntax that allows programmers to
+write code that is in terms of whole arrays or subarrays, with data
+parallel operators to compute on the arrays.  This has the benefit of
+avoiding explicit looping in the code and maintaining a high-level
+style that is closer to the original mathematical specification of the
+problem being solved.  More importantly from a compilation
+perspective, this defers decisions about how to implement these
+whole-array operations to a compilation tool.  When faced with a novel
+architecture such as modern GPUs that are ideally suited to data parallel
+programming models, the fit between Fortran arrays and these systems is
+quite clean.
+
+This paper uses four simple features of Fortran that form a language subset
+that does not require any language extensions and can be easily transformed
+to a lower level implementation in either CUDA or OpenCL.
+
+\begin{enumerate}
+\item Elemental functions
+\item Pure procedures
+\item Shift operators
+\item Array notation
+\end{enumerate}
+
+\subsection{Relationship to other languages}
+
+Similar to ZPL, CM5 stencil compilers, CMFortran stuff.
 
 %% cites: ZPL, CM5 stencil compilers
 
