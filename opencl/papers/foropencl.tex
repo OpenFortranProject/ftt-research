@@ -123,6 +123,10 @@ these new systems have features very similar to their predecessors, it
 is clear that the language features within Fortran for them are still
 relevant.
 
+%%
+%%
+%%
+
 \section{The programming model and Fortran-language subset}
 
 The static analysis and source-to-source transformations used are very
@@ -149,14 +153,58 @@ This paper uses four simple features of Fortran that form a language subset
 that does not require any language extensions and can be easily transformed
 to a lower level implementation in either CUDA or OpenCL.
 
-\begin{enumerate}
-\item Elemental functions
-\item Pure procedures
-\item Shift operators
-\item Array notation
-\end{enumerate}
+\subsubsection*{Elemental functions}
+
+An elemental function consumes and produces scalar values, but can be
+applied to variables of array type such that the function is
+applied to each and every element of the array.  This allows programmers
+to avoid explicit looping and instead simply state that they intend a
+function to be applied to every element of an array in parallel, deferring
+the choice of implementation technique to the compiler.  Elemental
+functions are intended to be used for data parallel programming, and
+as a result must be side effect free (or, \emph{pure}).
+
+\subsubsection*{Pure procedures}
+
+Pure procedures, like elemental functions, must be free of side effects.
+The absence of side effects removes ordering constraints from the compiler
+allowing it to invoke pure functions out of order.  Procedures and functions
+of this sort are also common in pure functional languages like Haskell,
+and are exploited by compilers in order to emit parallel code automatically
+due to their suitability for compiler-level analysis.
+
+\subsubsection*{Shift operators}
+
+Many array-based algorithms require the same operation to be performed
+on each element of the array using the value of that element and some small
+set of neighboring cells.  Often programmers implement these operations that
+are local to each element within the inner-loop of a set of nested FOR-
+or DO-loops using offsets relative to the current array index.  An alternative
+to this local-view of the algorithm is to take a global view and write the
+algorithm in terms of the whole array.  For example, consider a 1D array in
+which we wish to subtract the $(i-1)$th element from the $i$th for all
+elements.  One way to look at this is that we are subtracting the entire array
+shifted by one element from itself.
+
+Fortran provides a set of shifting operators that allow programmers to
+define operations based on shifted arrays.  These intrinsic operators take
+an array, a dimension, and the amount by which it should be shifted (using
+the sign to indicate direction).  By defining operations on entire arrays
+based on a global view of them shifted relative to each other, programmers can
+avoid explicit looping and potentially tricky index arithmetic.  Furthermore,
+analysis of the extent of the set of shifted arrays in a given expression
+allows analysis tools to determine the amount of temporary or buffer storage
+necessary to hold intermediate values during whole array operations.  With
+explicit loops, programmers must maintain this temporary storage manually.
+
+\subsubsection*{Array notation}
+
+The final piece that we exploit is the array notation present in modern
+versions of Fortran.  ....
 
 \subsection{Relationship to other languages}
+
+
 
 Similar to ZPL, CM5 stencil compilers, CMFortran stuff.
 
