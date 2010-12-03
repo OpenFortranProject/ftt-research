@@ -1,5 +1,6 @@
 all:
 	pdflatex foropencl.tex
+	bibtex foropencl
 	pdflatex foropencl.tex
 	pdflatex foropencl.tex
 

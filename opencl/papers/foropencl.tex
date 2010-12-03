@@ -25,7 +25,10 @@ I am abstract.
 This paper presents a compiler-level approach for targeting a single
 program to multiple fundamentally different low level execution and
 programming models while allowing the application programmer to adopt
-a single high level programming model.
+a single high level programming model.  We suggest that features of
+Fortran 90 for data parallel programming are well suited to automatic
+transformation to generate code specifically tuned for different
+low-level programming models such as OpenCL and CUDA.
 
 1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
 2. Goal is to code for readability and maintainability, not performance
@@ -43,18 +46,37 @@ GPUs from NVIDIA and AMD.  Some nodes have have hardware with vector
 instructions and others do not.  An important question is what programming
 model and what languages are best suited for these platforms.
 
-A data parallel programming model is suited for accelerators....
+A data parallel programming model is well suited to emerging architectures
+that are based on either vector processing or massively parallel collections
+of simple cores.  A popular trend for programming systems such as GPU
+accelerators is the CUDA language from NVidia, or new languages like Chapel
+from Cray.  A less intrusive approach that is well suited to legacy 
+applications and languages are language extensions or libraries that allow
+programmers to avoid adopting entirely new languages.  The recent OpenCL
+specification is intended to support this programming model, as are
+directive-based methods such as OpenMP or the ``Accelerate'' product from
+the Portland Group.
 
-One possibility is to adopt a new language like CUDA or Chapel...
-Another possibility is to use a mature language with OpenMP directives
-or write OpenCL kernels.
-
-The problem is that many of the language choices expose too much detail
-about the machine architecture.  This is particularly true of CUDA and OpenCL.
+The problem with many of these choices is that they expose too much detail
+about the machine architecture to the programmer.  
+This is particularly true of CUDA and OpenCL.  In CUDA, programmers must
+adapt their codes to fit the threading model used by NVidia GPUs, while
+OpenCL requires programmers to provide specially tuned versions of
+their code for different classes of machine.  In both cases, the programmer
+is also responsible for explicitly managing memory, including staging of
+data back and forth from the host CPU and the accelerator device memory.
+While these models have been attractive as a method for early adopters
+to utilize these new architectures, they are less attractive to programmers
+who do not have the time or resources to manually port their code to every
+new architecture and programming model that emerges.
 
 At this point in time it is not really possible to write once and
 run efficiently on the wide variety of computer platforms we have
-available.
+available.  For some classes of applications, we believe that this goal
+is possible using language constructs already present in a popular
+mainstream scientific programming language -- Fortran.
+
+\subsection{Approach}
 
 This papers addresses this issue by examining features in Fortran that
 allow programmers to express algorithms at a very high level but yet
@@ -242,5 +264,11 @@ iH => region(H, halo, transfer=false)
 
 \section{Performance}
 
+\section{Junk}
+
+\cite{chamberlain04zpl}
+
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv,foropencl}
 
 \end{document}
