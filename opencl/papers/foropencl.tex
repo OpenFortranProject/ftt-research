@@ -1,21 +1,60 @@
+\documentclass[10pt, conference, compsocconf]{IEEEtran}
+
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage[cmex10]{amsmath}
+\usepackage{array}
+\usepackage{url}
+
+
+\title{Exploiting First-Class Arrays in Fortran for Accelerator Programming}
+
+%%
+%% reorder appropriately later
+%%
+\author{\IEEEauthorblockN{Matthew J. Sottile}
+\IEEEauthorblockA{Galois, Inc.\\
+421 SW 6th Ave. Suite 300 \\
+Portland, OR 97204\\
+Email: matt@galois.com}
+\and
+\IEEEauthorblockN{Craig E Rasmussen}
+\IEEEauthorblockA{Los Alamos National Laboratory\\
+CCS-7, MS B287\\
+Los Alamos, NM\\
+Email: rasmussn@lanl.gov}
+}
+
 \begin{document}
-
-\title{ForOpenCL: Examing Fortran as a base language for accelerated platforms:
-I forgot what we decided upon}
-
-%
-% \author{}
-%
 
 \maketitle
 
 \begin{abstract}
-
+Emerging architectures for high performance computing often are well
+suited to a data parallel programming model.  This paper presents a
+simple programming methodology based on existing languages and compiler
+tools that allows programmers to take advantage of these systems.
+We will work with the array features of Fortran 90 to show how this
+infrequently exploited, standardized language feature is easily
+transformed to lower level accelerator code.  Our transformations are
+based on a mapping from Fortran 90 to C++ code with OpenCL extensions.
 \end{abstract}
 
 
 
 \section{Introduction}
+
+This paper presents a compiler-level approach for targeting a single
+program to multiple fundamentally different low level execution and
+programming models while allowing the application programmer to adopt
+a single high level programming model.  We show that features of
+Fortran 90 for data parallel programming are well suited to automatic
+transformation to generate code specifically tuned for different
+low-level programming models such as OpenCL and CUDA.  For algorithms
+that can be easily expressed in terms of whole array, data parallel operations,
+writing code in Fortran and transforming it automatically to specific low
+level implementations removes the burden from the programmer of working
+with tedious, error prone, low-level tools.
 
 1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
 2. Goal is to code for readability and maintainability, not performance
@@ -33,18 +72,38 @@ GPUs from NVIDIA and AMD.  Some nodes have have hardware with vector
 instructions and others do not.  An important question is what programming
 model and what languages are best suited for these platforms.
 
-A data parallel programming model is suited for accelerators....
+A data parallel programming model is well suited to emerging
+architectures that are based on either vector processing or massively
+parallel collections of simple cores.  A popular trend for programming
+systems such as GPU accelerators is the CUDA language from NVidia, or
+new languages like Chapel from Cray.  A less intrusive approach that
+is well suited to legacy applications and languages are language
+extensions or libraries that allow programmers to avoid adopting
+entirely new languages.  The recent OpenCL specification is intended
+to support this programming model, as are directive-based methods such
+as OpenMP or the Accelerator programming model from the Portland
+Group~\cite{pgi10accelerator}.
 
-One possibility is to adopt a new language like CUDA or Chapel...
-Another possibility is to use a mature language with OpenMP directives
-or write OpenCL kernels.
-
-The problem is that many of the language choices expose too much detail
-about the machine architecture.  This is particularly true of CUDA and OpenCL.
+The problem with many of these choices is that they expose too much detail
+about the machine architecture to the programmer.  
+This is particularly true of CUDA and OpenCL.  In CUDA, programmers must
+adapt their codes to fit the threading model used by NVidia GPUs, while
+OpenCL requires programmers to provide specially tuned versions of
+their code for different classes of machine.  In both cases, the programmer
+is also responsible for explicitly managing memory, including staging of
+data back and forth from the host CPU and the accelerator device memory.
+While these models have been attractive as a method for early adopters
+to utilize these new architectures, they are less attractive to programmers
+who do not have the time or resources to manually port their code to every
+new architecture and programming model that emerges.
 
 At this point in time it is not really possible to write once and
 run efficiently on the wide variety of computer platforms we have
-available.
+available.  For some classes of applications, we believe that this goal
+is possible using language constructs already present in a popular
+mainstream scientific programming language -- Fortran.
+
+\subsection{Approach}
 
 This papers addresses this issue by examining features in Fortran that
 allow programmers to express algorithms at a very high level but yet
@@ -55,11 +114,11 @@ We demonstrate that the array syntax of Fortran maps surprisingly well
 onto GPUs when transformed to OpenCL kernels.  These Fortran language
 features include pure and elemental functions and array constructs
 like where and shift.  In addition we add a few functions that enable
-a program to be deployed on machines with a hierarchy of processing elements,
-such as nodes employing GPU acceleration,
-\emph{without requiring explicit declaration of parallelism within the program.}
-In addition the program uses entirely standard Fortran so it can be
-on a single core without concurrency.
+a program to be deployed on machines with a hierarchy of processing
+elements, such as nodes employing GPU acceleration, \emph{without
+  requiring explicit declaration of parallelism within the program.}
+In addition the program uses entirely standard Fortran so it can be on
+a single core without concurrency.
 
 We study automatic transformations of Fortran for two applications examples.
 The first is a simple shallow water model in two dimensions using
@@ -67,15 +126,123 @@ finite volume methods with .... for time update.  The second is based
 on the primary compute kernels from PetaVision, a high-performance, 
 neural science framework that is used in models of visual cortex.
 
+\subsection{Why Fortran?}
+
+A likely question that one may pose is ``\emph{Why Fortran and not a
+  more modern language like X?}''  The recent rise in interest in
+concurrency and parallelism at the language level driven by multicore
+CPUs and manycore accelerators has driven a number of new language
+developments, both as novel languages and extensions on existing ones.
+
+For scientific users, these new languages and language extensions
+present a challenge: how do developers effectively use them while
+avoiding rewriting their code and potentially growing dependent on a
+transient technology that will vanish tomorrow?
+
+Fortran is unique in that it has contained language features that are
+well suited to modern architectures for a number of years.  This
+should be unsurprising --- Fortran was a primary language used to
+target systems such as the vector supercomputers and massively
+parallel systems of the 1970s and 1980s.  These are the systems in
+which architectural features were developed that have led to single
+chip high performance architectures of interest today.  Given that
+these new systems have features very similar to their predecessors, it
+is clear that the language features within Fortran for them are still
+relevant.
+
+%%
+%%
+%%
 
 \section{The programming model and Fortran-language subset}
 
-The static analysis and source-to-source transformations used are not magic
-and require the programmer to use a subset of Fortran that employs
-a data-parallel programming model in this section we describe this
-language subset.
+The static analysis and source-to-source transformations used are very
+basic and simply require the programmer to use a subset of Fortran
+that employs a data-parallel programming model.  In particular, it
+encourages use of language features that were introduced and
+standardized in the Fortran 90 language specification.  In this
+section we describe the set of Fortran 90 features that our analysis
+and transformation method are based on.
 
-Similar to ZPL.
+Fortran 90 introduced a rich array syntax that allows programmers to
+write code that is in terms of whole arrays or subarrays, with data
+parallel operators to compute on the arrays.  This has the benefit of
+avoiding explicit looping in the code and maintaining a high-level
+style that is closer to the original mathematical specification of the
+problem being solved.  More importantly from a compilation
+perspective, this defers decisions about how to implement these
+whole-array operations to a compilation tool.  When faced with a novel
+architecture such as modern GPUs that are ideally suited to data parallel
+programming models, the fit between Fortran arrays and these systems is
+quite clean.
+
+This paper uses four simple features of Fortran that form a language subset
+that does not require any language extensions and can be easily transformed
+to a lower level implementation in either CUDA or OpenCL.
+
+\subsubsection*{Elemental functions}
+
+An elemental function consumes and produces scalar values, but can be
+applied to variables of array type such that the function is
+applied to each and every element of the array.  This allows programmers
+to avoid explicit looping and instead simply state that they intend a
+function to be applied to every element of an array in parallel, deferring
+the choice of implementation technique to the compiler.  Elemental
+functions are intended to be used for data parallel programming, and
+as a result must be side effect free (or, \emph{pure}).
+
+\subsubsection*{Pure procedures}
+
+Pure procedures, like elemental functions, must be free of side effects.
+The absence of side effects removes ordering constraints from the compiler
+allowing it to invoke pure functions out of order.  Procedures and functions
+of this sort are also common in pure functional languages like Haskell,
+and are exploited by compilers in order to emit parallel code automatically
+due to their suitability for compiler-level analysis.
+
+\subsubsection*{Shift operators}
+
+Many array-based algorithms require the same operation to be performed
+on each element of the array using the value of that element and some small
+set of neighboring cells.  Often programmers implement these operations that
+are local to each element within the inner-loop of a set of nested FOR-
+or DO-loops using offsets relative to the current array index.  An alternative
+to this local-view of the algorithm is to take a global view and write the
+algorithm in terms of the whole array.  For example, consider a 1D array in
+which we wish to subtract the $(i-1)$th element from the $i$th for all
+elements.  One way to look at this is that we are subtracting the entire array
+shifted by one element from itself.
+
+Fortran provides a set of shifting operators that allow programmers to
+define operations based on shifted arrays.  These intrinsic operators take
+an array, a dimension, and the amount by which it should be shifted (using
+the sign to indicate direction).  By defining operations on entire arrays
+based on a global view of them shifted relative to each other, programmers can
+avoid explicit looping and potentially tricky index arithmetic.  Furthermore,
+analysis of the extent of the set of shifted arrays in a given expression
+allows analysis tools to determine the amount of temporary or buffer storage
+necessary to hold intermediate values during whole array operations.  With
+explicit loops, programmers must maintain this temporary storage manually.
+
+\subsubsection*{Array notation}
+
+The final piece that we exploit is the array notation present in modern
+versions of Fortran.  ....
+
+\subsection{Relationship to other languages}
+
+Techniques based on whole-array programming being mapped to high performance,
+parallel implementations are not new.  
+
+Similar to ZPL, CM5 stencil compilers, CMFortran stuff.
+
+%% cites: ZPL, CM5 stencil compilers
+
+% put something here on:
+%
+% shifts
+% array notation
+% 
 
 \subsubsection{elemental functions}
 
@@ -97,7 +264,7 @@ Only elemental functions may be called from kernel functions.  These include
 fortran functions that have an OpenCL analog and user-defined elemental functions.
 
 Array sizes must be multiples of the local kernel size,
-get_local_size(0)*get_local_size(1).  This may be relaxed in the future.
+{\tt get\_local\_size(0)*get\_local\_size(1)}.  This may be relaxed in the future.
 
 \subsection{ForOpenCL}
 
@@ -115,9 +282,11 @@ is the interior subset of array A.
 
 PetaVision updates the action potential with the statement,
 
+\begin{verbatim}
    V = V - iA*(V - v_rest)                  !! Fortran
 
    V[l] = V[l] - iA[lex]*(V[l] - v_rest);   // OpenCL equivalent
+\end{verbatim}
 
 \subsubsection{where construct}
 
@@ -125,6 +294,7 @@ A neuron in PetaVision fires (activity is set to 1)
 whenever the action potential is greater than some threshold.
 This is easily expressed with a where construct.
 
+\begin{verbatim}
    where (V > Vth)                        !! Fortran
       iA = 1
    elsewhere
@@ -132,7 +302,7 @@ This is easily expressed with a where construct.
    end where
 
    iA[lex] = (V[l] > Vth[l]) ? 1 : 0;     // OpenCL equivalent
-
+\end{verbatim}
 
 \subsection{New functions}
 
@@ -144,18 +314,22 @@ height of the water.  This variable has a halo (ghost-cell region) surrounding
 the interior of the grid to handle boundary conditions.  When using
 MPI, the halo regions contains values from adjacent processors that must be
 updated with new values at each time step.  This is accomplished with the
-transfer_halo function.  The shallow water code assumes a five point stencil
+{\tt transfer\_halo} function.  The shallow water code assumes a five point stencil
 so the state variables are extended by 2 in each dimension (e.g., by one to the
 left, right, up, and down).
 
+\begin{verbatim}
 halo = [1,1,1,1]
 iH => region(H, halo, transfer=false)
+\end{verbatim}
 
 \section{Static Analysis}
 
 1. Dependence analysis to insert thread group barriers
 
+\begin{verbatim}
    barrier(CLK_LOCAL_MEM_FENCE)
+\end{verbatim}
 
 2. subsection variables associated with array variables
 
@@ -166,5 +340,11 @@ iH => region(H, halo, transfer=false)
 
 \section{Performance}
 
+\section{Junk}
+
+\cite{chamberlain04zpl, roth97stencils}
+
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv,foropencl}
 
 \end{document}
