@@ -8,14 +8,36 @@
 
 
 \title{Exploiting First-Class Arrays in Fortran for Accelerator Programming}
-\author{Awesome Fortran Programmers}
+
+%%
+%% reorder appropriately later
+%%
+\author{\IEEEauthorblockN{Matthew J. Sottile}
+\IEEEauthorblockA{Galois, Inc.\\
+421 SW 6th Ave. Suite 300 \\
+Portland, OR 97204\\
+Email: matt@galois.com}
+\and
+\IEEEauthorblockN{Craig E Rasmussen}
+\IEEEauthorblockA{Los Alamos National Laboratory\\
+CCS-7, MS B287\\
+Los Alamos, NM\\
+Email: rasmussn@lanl.gov}
+}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-I am abstract.
+Emerging architectures for high performance computing often are well
+suited to a data parallel programming model.  This paper presents a
+simple programming methodology based on existing languages and compiler
+tools that allows programmers to take advantage of these systems.
+We will work with the array features of Fortran 90 to show how this
+infrequently exploited, standardized language feature is easily
+transformed to lower level accelerator code.  Our transformations are
+based on a mapping from Fortran 90 to C++ code with OpenCL extensions.
 \end{abstract}
 
 
@@ -25,10 +47,14 @@ I am abstract.
 This paper presents a compiler-level approach for targeting a single
 program to multiple fundamentally different low level execution and
 programming models while allowing the application programmer to adopt
-a single high level programming model.  We suggest that features of
+a single high level programming model.  We show that features of
 Fortran 90 for data parallel programming are well suited to automatic
 transformation to generate code specifically tuned for different
-low-level programming models such as OpenCL and CUDA.
+low-level programming models such as OpenCL and CUDA.  For algorithms
+that can be easily expressed in terms of whole array, data parallel operations,
+writing code in Fortran and transforming it automatically to specific low
+level implementations removes the burden from the programmer of working
+with tedious, error prone, low-level tools.
 
 1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
 2. Goal is to code for readability and maintainability, not performance
@@ -46,16 +72,17 @@ GPUs from NVIDIA and AMD.  Some nodes have have hardware with vector
 instructions and others do not.  An important question is what programming
 model and what languages are best suited for these platforms.
 
-A data parallel programming model is well suited to emerging architectures
-that are based on either vector processing or massively parallel collections
-of simple cores.  A popular trend for programming systems such as GPU
-accelerators is the CUDA language from NVidia, or new languages like Chapel
-from Cray.  A less intrusive approach that is well suited to legacy 
-applications and languages are language extensions or libraries that allow
-programmers to avoid adopting entirely new languages.  The recent OpenCL
-specification is intended to support this programming model, as are
-directive-based methods such as OpenMP or the ``Accelerate'' product from
-the Portland Group.
+A data parallel programming model is well suited to emerging
+architectures that are based on either vector processing or massively
+parallel collections of simple cores.  A popular trend for programming
+systems such as GPU accelerators is the CUDA language from NVidia, or
+new languages like Chapel from Cray.  A less intrusive approach that
+is well suited to legacy applications and languages are language
+extensions or libraries that allow programmers to avoid adopting
+entirely new languages.  The recent OpenCL specification is intended
+to support this programming model, as are directive-based methods such
+as OpenMP or the Accelerator programming model from the Portland
+Group~\cite{pgi10accelerator}.
 
 The problem with many of these choices is that they expose too much detail
 about the machine architecture to the programmer.  
@@ -204,7 +231,8 @@ versions of Fortran.  ....
 
 \subsection{Relationship to other languages}
 
-
+Techniques based on whole-array programming being mapped to high performance,
+parallel implementations are not new.  
 
 Similar to ZPL, CM5 stencil compilers, CMFortran stuff.
 
@@ -314,7 +342,7 @@ iH => region(H, halo, transfer=false)
 
 \section{Junk}
 
-\cite{chamberlain04zpl,pgi10accelerator}
+\cite{chamberlain04zpl, roth97stencils}
 
 \bibliographystyle{IEEEtran}
 \bibliography{IEEEabrv,foropencl}
