@@ -1,3 +1,60 @@
+%
+% I'm adding an outline here so I can see how everything fits together
+
+%
+% \title{Exploiting First-Class Arrays in Fortran for Accelerator Programming}
+%
+
+%
+% \abstract
+%
+
+%
+% \section{Introduction}
+%    \subsection{Approach}
+%    \subsection{Why Fortran?}
+%    \subsection{Other Languages}
+%
+
+%
+% \section{Programming model}
+%    \subsection{Fortran Syntax}   
+%       \subsubsection*{Array notation}
+%       \subsubsection*{Elemental functions}
+%       \subsubsection*{Pure procedures}
+%       \subsubsection*{Shift operators}
+%       \subsubsection*{Regions}
+%    \subsection{Parallelism}
+%    \subsection{New Functions}
+%    \subsection{Limitations}
+%
+
+%
+% \section{Source-To-Source Transformations}
+%    \subsection{ForOpenCL}
+%       \subsubsection{array syntax}
+%       \subsubsection{where construct}
+%    \subsection{New functions}
+%       \subsubsection{region}
+%    \subsection{Static Analysis}
+%       \subsubsection{Analysis not required}
+%    \subsection{Simplifying Assumptions}
+%
+
+%
+% \section{Shallow Water Model}
+%    \subsection{Equations}
+%
+
+%
+% \section{Performance}
+%
+
+%
+% \section{Conclusions}
+%
+
+
 \documentclass[10pt, conference, compsocconf]{IEEEtran}
 
 \usepackage{cite}
@@ -64,13 +121,26 @@ with tedious, error prone, low-level tools.
 6. Data parallel constructs in Fortran 90 are chosen.
 7. Up to 65 times speed up measured on automatically transformed code.
 
-At Los Alamos we have a wide variety of computer platforms from which
-to choose.  The common platform is made up of cluster of compute nodes
-with standard multi-core processors.  Some nodes have accelerators
-that range from the IBM Cell processor (Roadrunner) to a variety of
-GPUs from NVIDIA and AMD.  Some nodes have have hardware with vector
-instructions and others do not.  An important question is what programming
-model and what languages are best suited for these platforms.
+At Los Alamos National Laboratory (LANL) we have a wide variety of computer
+platforms from which to choose.  The common platform is made up of clusters of
+compute nodes with standard multi-core processors.  Some nodes also have
+accelerators that range from the IBM Cell processor (Roadrunner) to a variety
+of GPUs from NVIDIA and AMD.  Some nodes have hardware with vector
+instructions and others do not. The peak
+performance of the accelerated nodes range from 200+ GFlops for the IBM Cell/B.E.
+processor to XXX for NVIDIA Fermi. %% Fermi has another name
+
+%% NEW - CER
+However, the performance that these accelerator architectures offer comes at a
+cost as processor architectures are trending toward multiple cores with
+instances of integrated accelerator units and less of a reliance on memory
+caches.  These changes place a heavy burden on application programmers as they
+are forced to adapt to the new systems.  An especially challenging problem
+faced by application programmers is not only how to program to these new
+architectures (considering the massive scale of concurrency available), but
+also how to design programs that are portable across the changing landscape of
+computer architectures.  The fundamental question we address is what
+programming model and what languages are best suited for these platforms.
 
 A data parallel programming model is well suited to emerging
 architectures that are based on either vector processing or massively
@@ -105,7 +175,7 @@ mainstream scientific programming language -- Fortran.
 
 \subsection{Approach}
 
-This papers addresses this issue by examining features in Fortran that
+This paper addresses this issue by examining features in Fortran that
 allow programmers to express algorithms at a very high level but yet
 can be transformed by a compiler to run efficiently on a wide variety
 of platforms.  In particular we consider nodes of GPUs.
@@ -120,24 +190,112 @@ elements, such as nodes employing GPU acceleration, \emph{without
 In addition the program uses entirely standard Fortran so it can be on
 a single core without concurrency.
 
-We study automatic transformations of Fortran for two applications examples.
-The first is a simple shallow water model in two dimensions using
-finite volume methods with .... for time update.  The second is based
-on the primary compute kernels from PetaVision, a high-performance, 
-neural science framework that is used in models of visual cortex.
+%% NEW - CER
+The sheer complexity of programming for clusters of many or multi-core
+processors with tens of millions threads of execution make the simplicity of
+the data parallel model attractive.  Furthermore, the increasing complexity of
+todays applications (especially when convolved with the increasing complexity
+of the hardware) and the need for portability across hardware architectures
+make a higher-level and simpler programming model like data parallel
+attractive.
+
+%% NEW - CER
+The goal of this work is to exploit source-to-source transformations that
+allow programmers to develop and maintain programs at a high-level of
+abstraction, without coding to a specific hardware architecture.
+Furthermore these transformations allow multiple hardware architectures
+to be targeted without changing the high-level source.  It also removes the
+necessity for application programmers to understand details of the accelerator
+architecture or to know OpenCL.
+
+We use the ROSE compiler infrastructure \cite{} to develop these
+transformations.  ROSE uses the Open Fortran Parser \cite{} to parse Fortran
+2008 syntax and can output (unparse) to OpenCL.  Since ROSE's intermediate
+representation (IR) was constructed to represent multiple languages, it is
+relatively straightforward to transform high-level Fortran IR nodes to OpenCL
+nodes.  Furthermore, the Fortran array syntax maps directly to one, two, and
+three-dimensional thread groups in OpenCL.
+
+%%We study automatic transformations of Fortran for two applications examples.  The first is a simple shallow water model in two dimensions using finite volume methods with .... for time update.  The second is based on the primary compute kernels from PetaVision, a high-performance, neural science framework that is used in models of visual cortex.
+
+%% To simplify things, lets save PetaVision for the local stuff as it requires convolutions
+
+We study automatic transformations of Fortran for an application example that
+is typical of many applications that are based on finite-difference or
+finite-volume methods in computational fluid dynamics (CFD).  The example is a
+simple shallow water model in two dimensions using finite volume methods with
+.... for time update.
+
+%% NEW - CER
+PAGOSA is a production code at LANL completely written in data-parallel
+Fortran.  In a prior work we investigated automatically transforming this code
+to run on LANL's Petaflop Roadrunner computer (a hybrid mixture of Opterons
+and IBM Cell processors).  We demonstrated that a source-to-source compiler
+can automatically vectorize and parallelize (both within the Cell processor
+and across nodes) a small section of this code.  Preliminary results showed a
+12 times performance gain on the Cell processor over a traditional single core
+processor.  A factor of 9 is gained from vectorizing and parallelizing the
+code to run on the Cell and the rest is gained from automatically overlapping
+inter-node communication with computation on the Cell.
 
 \subsection{Why Fortran?}
 
-A likely question that one may pose is ``\emph{Why Fortran and not a
-  more modern language like X?}''  The recent rise in interest in
-concurrency and parallelism at the language level driven by multicore
-CPUs and manycore accelerators has driven a number of new language
-developments, both as novel languages and extensions on existing ones.
+%% NEW - CER
+Fortran \footnote{Originally named FORTRAN for FORmula TRANslation language.}
+is the oldest high-level programming language, and was developed to facilitate
+the translation of math formulae into machine code. Fortran was the first
+major language to use a compiler to translate from a high-level program
+representation to assembly language. Due to its age, it carries certain arcane
+baggage that later programming languages have evolved away from. As a result,
+Fortran has fallen into disfavor in certain programming circles.
+
+%% NEW - CER
+However, with the introduction of Fortran 90 (and later revisions to the
+standard), Fortran is a truly modern programming language. Much of the arcane
+baggage associated with it is actually no longer part of the language used by
+modern programmers, and exists in a deprecated form simply to support legacy
+codes. It is now modular and has many object-oriented features. Furthermore,
+Fortran should be of interest to those studying parallel programming because
+of its functional and data parallel constructs and because of the coarray
+notation introduced after Fortran 2003. Unlike languages like C and C++, which
+are considered to be more modern, Fortran has become a truly parallel language
+with features added to recent language standards. With coarrays, Fortran
+provides a mechanism to run replicas (called images) of a program on many
+different processors (or cores) at the same time. It also provides language
+constructs that allow the program to both read from and write to data residing
+on {\it remote} processors and to synchronize the different program images so
+that access to the data by the multiple images can be done atomically.
+
+A likely question that one may pose is ``\emph{Why Fortran and not a more
+  modern language like X?}''  The recent rise in interest in concurrency and
+parallelism at the language level driven by multicore CPUs and manycore
+accelerators has driven a number of new language developments, both as novel
+languages and extensions on existing ones.
+
+%% NEW - CER
+So perhaps it is time to replace Fortran with yet another computer language.  The
+problems with replacing Fortran with an entirely new language are two fold:
+the economics of replacing the existing application base and the difficulty in
+obtaining programmer acceptance.  It is estimated that replacing a major
+production application at Los Alamos National Laboratory would cost between 50
+and 150 million dollars.  In terms of programmer acceptance, there is always
+the "chicken and egg problem": programmers won't use a new language until they
+can expect good performance across a variety of platforms, and compiler
+vendors can't afford to produce quality compilers until there is a reasonable
+expectation of a market.
 
 For scientific users, these new languages and language extensions
 present a challenge: how do developers effectively use them while
 avoiding rewriting their code and potentially growing dependent on a
 transient technology that will vanish tomorrow?
+
+%% NEW - CER
+History has also shown that an investment in rewriting code does not guarantee
+success either, as seen in an effort at LANL to modernize a legacy Fortran
+code with the the newer C++ POOMA framework.  This massive overhaul effort led
+to a code that was both slower and less flexible than the original Fortran
+\cite{}.  Similar experiences have occurred in the past, notably during the
+devlopment of the Sisal language.
 
 Fortran is unique in that it has contained language features that are
 well suited to modern architectures for a number of years.  This
@@ -176,9 +334,107 @@ architecture such as modern GPUs that are ideally suited to data parallel
 programming models, the fit between Fortran arrays and these systems is
 quite clean.
 
+%% NEW - CER
+We will examine how the existing data-parallel constructs in Fortran can be
+combined with coarrays or MPI to provide effectively a new parallel programming
+language, one that is evolutionary in nature and provides complete compatibility
+with existing applications and libraries.  Data parallelism is a high-level
+abstraction that is, at the same time, both easier to program and gives the
+compiler more leeway (if fully exploited) in retargeting a program to different
+computer architectures.
+
+%% NEW - CER
+An example of this style of programming in Fortran is shown in
+
+\begin{verbatim}
+
+  Bz = Bz + dt * (cshift(Ex,dim=2,shift=+1) - Ex) / dy  &
+          - dt * (cshift(Ey,dim=1,shift=+1) - Ey) / dx
+
+\end{verbatim}
+
+%% NEW - CER
+This example is a solution to Maxwell's equations for the $z$ component of the
+magnetic field using Fortran array syntax.  Note that there are no explicit
+loops in this example.  The operators {\tt +}, {\tt -}, and {\tt *} are
+applied to all of the elements of the three-dimensional arrays {\tt Bz}, {\tt
+  Ex}, and {\tt Ey}, individually.  This is why data parallelism has been
+called collection-oriented programming by
+Blelloch~\cite{blelloch90,rajopadhyedidlacs}.  As the {\tt cshift} function
+and the array-valued expressions all semantically returns a value, this style
+of programming is also similar to functional programming (or value-oriented
+programming). %%~\cite{simonpeytonjones}).  The heart of the solution to
+Maxwell's equations is the statement shown in Listing~\ref{lst:dpexample} and
+five similar, simple equations.
+
+%% NEW - CER
+The power in this notation is that the compiler is free to distribute the
+computation in these expressions over any hardware processing elements available
+to it, such as the vector units on an Intel or AMD processor or the Synergistic
+Processing Units on an IBM Cell processor.  If the arrays are declared as
+coarrays, this includes spreading the computation over \emph{all of the nodes in
+  a cluster as well.}  In this case, communication occurs within the
+\texttt{cshift} functions, though the compiler is free to overlap communication
+and computation by scheduling the communication early and performing the
+computation on the interior of the arrays while waiting for the communication to
+complete.
+
+%% NEW - CER
+Complete and very concise and elegant programs can be built with statements
+similar to that shown in Listing~\ref{lst:dpexample}, using intrinsic
+functions like the array constructors (\texttt{CSHIFT}, \texttt{MERGE},
+\texttt{TRANSPOSE}, ...), the array location functions (\texttt{MAXLOC} and
+\texttt{MINLOC}), and the array reduction functions (\texttt{ANY},
+\texttt{COUNT}, \texttt{MINVAL}, \texttt{SUM}, \texttt{PRODUCT},
+...)~\cite{guydp}.  It should be emphasized, however, that {\it no} compiler
+currently supplies coarray versions of these intrinsic functions as they are
+not defined by the proposed Fortran 2008 standard (we have submitted a paper
+proposing the integration of coarrays with these intricics functions to the J3
+Fortran committee~\cite{rasmussen-caf-intrinsics}).  With coarray or MPI
+implementations of these intrinsic functions, programs written in this
+data-parallel subset of Fortran are implicitly parallel.  Furthermore, in
+instances it is necessary to implement algorithms that don't lend themselves
+to expressibility in this data-parallel subset, coarray notation can be used
+for complete access to individual (including remote) data elements.  It is the
+combination of data parallel and coarray constructs, with the transformational
+properties of a source-to-source compiler (transforming array notation to
+optimized Fortran 95 and library calls), that make this possibility such a
+promising avenue for research.
+
+%% NEW - CER
+This style of programming meets the requirements we have set for a programming
+model for developing petascale applications.  It allows the programmer to
+program at a very-high level of abstraction while providing the compiler with
+maximum flexibility in targeting the application for a particular hardware
+architecture.  The data parallel programming model simultaneously meets the
+seemingly conflicting goals of maintainability, portability, and performance.
+
+%% NEW - CER
+Unfortunately, this style of programming has never really caught on because
+when Fortran 90 was first introduced, performance was relatively poor and thus
+programmers shied away from using array syntax (even now, some are actively
+counseling against its usage because of performance issues~\cite{Cray-SC07}).
+Thus the Fortran community was caught in a classic ``chicken-and-egg''
+conundrum: (1) programmers didn't use it because it was slow; and (2)
+compilers vendors didn't improve it because programmers didn't use it.
+
+%% NEW - CER
+The goal of this research is to demonstrate that parallel programs written in
+this style of Fortran are maintainable and can achieve good performance on a
+variety of processor architectures, including possibly, future terascale
+architectures from Intel (such as the Larrabee architecture).  Using a code
+segment from a production code at Los Alamos (written entirely in this style
+of Fortran), we have demonstrated the potential for source-to-source
+transformations to target the IBM Cell architecture used in Los Alamos
+National Laboratories' Roadrunner computer~\footnote{Roadrunner is the first
+  computer to break the petaflop barrier.}.  Initial results show that
+transformed code using OFP and ROSE can achieve a speedup of up to 13 times on
+sixteen Roadrunner nodes, compared with the equivalent number of single-core
+Opteron nodes.
+
 This paper uses four simple features of Fortran that form a language subset
 that does not require any language extensions and can be easily transformed
-to a lower level implementation in either CUDA or OpenCL.
+to a lower-level implementation in either CUDA or OpenCL.
 
 \subsubsection*{Elemental functions}
 
@@ -191,6 +447,24 @@ the choice of implementation technique to the compiler.  Elemental
 functions are intended to be used for data parallel programming, and
 as a result must be side effect free (or, \emph{pure}).
 
+%% NEW - CER
+The use of array notation allows one to program in a data-parallel subset of
+Fortran. This style of programming makes use of array notation and pure and
+elemental functions to operate on array elements.
+
+%% NEW - CER
+Because elemental functions return scalar values and are free from side
+effects, the compiler is free to distribute the computation over any hardware
+processing elements available to it, such as the multiple cores and vector
+units on an Intel or AMD processor or the Synergistic Processing Units on an
+IBM Cell processor.
+
+%% NEW - CER
+An example of an elemental function is shown in Listing~\ref{lst:elemental}.
+This example simply returns its input divided by 2. While this may seem like a
+trivial example, such simple functions may be composed with other elemental
+functions to perform powerful computations, especially when applied to arrays.
+
 \subsubsection*{Pure procedures}
 
 Pure procedures, like elemental functions, must be free of side effects.
@@ -199,6 +473,37 @@ allowing it to invoke pure functions out of order.  Procedures and functions
 of this sort are also common in pure functional languages like Haskell,
 and are exploited by compilers in order to emit parallel code automatically
 due to their suitability for compiler-level analysis.
+
+%% NEW - CER
+The use of an elemental function is shown in the pure procedure {\tt laplace}
+in Listing~\ref{lst:pure}. This function (for example) can be used to solve
+the steady-state temperature along a one-dimensional surface. The temperature
+at any point along the surface is equal to the average of the temperature at
+neighboring points. Rather than writing explicit loops and using indexing to
+reference neighboring points, one may simply shift the array {\tt T} to the
+left and right, add the results and divide by 2. The intrinsic function {\tt
+EOSHIFT} (end-off shift) semantically returns an array copy with the value at
+any element shifted by the amount given by the {\tt shift} argument. The value
+shifted in at the boundary is supplied by the {\tt boundary} argument. The
+elemental function {\tt one\_half} is used to divide by 2.
+
+%% NEW - CER
+Note that semantically the elemental functions return their array results by
+value. This is important because had loops been used to express the {\tt
+laplace} procedure, temporary variables would have been required. Otherwise,
+{\tt T(i)} would be updated with new values of {\tt T(i-1)}.
+
+%% NEW - CER
+ A ``pure'' function is one
+without side effects (though it may change the value of array elements in an
+array argument). An elemental function is a pure function with the additional
+constraint that it takes only scalar arguments and must return a scalar.
+Though defined in terms of scalars, surprisingly, an elemental function may
+take an array as an actual argument, with the compiler applying the function
+to each element of the array, and returning an array result. The plus operator
+as described in the previous paragraph can be seen as an elemental function,
+as the plus operator is defined in terms of scalars but can be applied to
+whole arrays and can return an array result.
 
 \subsubsection*{Shift operators}
 
@@ -226,8 +531,54 @@ explicit loops, programmers must maintain this temporary storage manually.
 
 \subsubsection*{Array notation}
 
+%% NEW - CER
+Arrays are first class citizens in Fortran as they are part of the language
+type system rather than just a pointer to raw memory as in C. A Fortran array
+contains metadata associated with it that describes the array's shape and
+size. This metadata is lacking in other languages, such as C, C++, and Java.
+Even in the case where multidimensional array data structures are available
+(such as in C++ or Java), they exist outside the language standard, limiting
+the ability of the compiler to analyze them fully. The existence of this
+metadata allows the use of array notation whereby explicit indexing of arrays
+is not required. For example, if {\tt A}, {\tt B}, and {\tt C} are all arrays
+of the same rank and shape, then the statement {\tt C = A + B} results in the
+sum of elements of {\tt A} and {\tt B} being stored in the corresponding
+elements of {\tt C}. The first element of {\tt C} will contain the value of
+the first element of {\tt A} added to the first element of {\tt B}.
+
 The final piece that we exploit is the array notation present in modern
-versions of Fortran.  ....
+versions of Fortran.  For example,
+
+\begin{equation}
+\label{eq:dataparallel}
+A = B + s * C
+\end{equation}
+
+is a array assignment statement where A, B, and C are arrays and s is a
+scalar.  Note that no explicit iteration over array indices is needed and that
+the individual operators, plus, times, and assignment are applied by the
+compiler to individual elements of the arrays independently.  Thus the
+compiler is able to spread the computation in~\ref{eq:dataparallel} across any
+hardware threads under its control.
+
+There are several advantages to this style of programming:
+
+\begin{itemize}
+	\item There are no loops or index variables to keep track of.  Off by one
+index errors are a common programming mistake.
+        \item The written code is closer to the algorithm, easier to understand, and is usually substantially shorter.
+	\item Semantically the intrinsic functions return arrays by value.  This is usually what the algorithm requires.
+	\item Because pure and elemental function are free from side effects, it is easier for a compiler to schedule the work to be done in parallel.
+\end{itemize}
+
+Complete and very concise and elegant programs can be built with procedures
+similar to the {\tt laplace} example shown above. To aid this effort, Fortran
+supplies intrinsic functions like the array constructors (\texttt{CSHIFT},
+\texttt{EOSHIFT}, \texttt{MERGE}, \texttt{TRANSPOSE}, ...), the array location
+functions (\texttt{MAXLOC} and \texttt{MINLOC}), and the array reduction
+functions (\texttt{ANY}, \texttt{COUNT}, \texttt{MINVAL}, \texttt{SUM},
+\texttt{PRODUCT}, ...).
+
 
 \subsection{Relationship to other languages}
 
