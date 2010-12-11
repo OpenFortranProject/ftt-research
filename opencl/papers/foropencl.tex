@@ -13,7 +13,7 @@
 % \section{Introduction}
 %    \subsection{Approach}
 %    \subsection{Why Fortran?}
-%    \subsection{Other Languages}
+%    \subsection{Comparison to Other Languages}
 %
 
 %
@@ -22,10 +22,10 @@
 %       \subsubsection*{Array notation}
 %       \subsubsection*{Elemental functions}
 %       \subsubsection*{Pure procedures}
-%       \subsubsection*{Shift operators}
+%       \subsubsection*{Shift functions}
 %       \subsubsection*{Regions}
-%    \subsection{Parallelism}
 %    \subsection{New Functions}
+%    \subsection{Parallelism}
 %    \subsection{Limitations}
 %
 
@@ -140,7 +140,10 @@ faced by application programmers is not only how to program to these new
 architectures (considering the massive scale of concurrency available), but
 also how to design programs that are portable across the changing landscape of
 computer architectures.  The fundamental question we address is what
-programming model and what languages are best suited for these platforms.
+programming model and language constructs are best suited for these platforms.
+
+%% NEW - CER
+%%%We will examine how the existing data-parallel constructs in Fortran can be combined with coarrays or MPI to provide effectively a new parallel programming language, one that is evolutionary in nature and provides complete compatibility with existing applications and libraries.  Data parallelism is a high-level abstraction that is, at the same time, both easier to program and gives the compiler more leeway (if fully exploited) in retargeting a program to different computer architectures.
 
 A data parallel programming model is well suited to emerging
 architectures that are based on either vector processing or massively
@@ -190,45 +193,40 @@ elements, such as nodes employing GPU acceleration, \emph{without
 In addition the program uses entirely standard Fortran so it can be on
 a single core without concurrency.
 
-%% NEW - CER
-The sheer complexity of programming for clusters of many or multi-core
-processors with tens of millions threads of execution make the simplicity of
-the data parallel model attractive.  Furthermore, the increasing complexity of
-todays applications (especially when convolved with the increasing complexity
-of the hardware) and the need for portability across hardware architectures
-make a higher-level and simpler programming model like data parallel
-attractive.
+We provide (via Fortran interfaces in the ForOpenCL library) a mechanism to
+call the C OpenCL runtime and enable Fortran programmers to access OpenCL
+kernels.  Transformations are supplied that provide a mechanism for converting
+Fortran procedures written in the Fortran subset described in this paper to
+OpenCL kernels.  We use the ROSE compiler infrastructure \cite{} to develop
+these transformations.  ROSE uses the Open Fortran Parser \cite{} to parse
+Fortran 2008 syntax and can output (unparse) to OpenCL.  Since ROSE's
+intermediate representation (IR) was constructed to represent multiple
+languages, it is relatively straightforward to transform high-level Fortran IR
+nodes to OpenCL nodes.  Furthermore, the Fortran array syntax maps directly to
+one, two, and three-dimensional thread groups in OpenCL.
 
-%% NEW - CER
-The goal of this work is to exploit source-to-source transformations that
-allow programmers to develop and maintain programs at a high-level of
-abstraction, without coding to a specific hardware architecture.
-Furthermore these transformations allow multiple hardware architectures
-to be targeted without changing the high-level source.  It also removes the
-necessity for application programmers to understand details of the accelerator
-architecture or to know OpenCL.
+Transformations for general Fortran procedures are not provided.  Furthermore,
+a mechanism to transform the calling site to automatically invoke
+OpenCL kernels is not provided at this time.  While it is possible to
+accomplish this task within ROSE, it is considered outside the scope of this
+paper.
 
-We use the ROSE compiler infrastructure \cite{} to develop these
-transformations.  ROSE uses the Open Fortran Parser \cite{} to parse Fortran
-2008 syntax and can output (unparse) to OpenCL.  Since ROSE's intermediate
-representation (IR) was constructed to represent multiple languages, it is
-relatively straightforward to transform high-level Fortran IR nodes to OpenCL
-nodes.  Furthermore, the Fortran array syntax maps directly to one, two, and
-three-dimensional thread groups in OpenCL.
+We examine the performance of the Fortran data-parallel abstraction when
+transformed to OpenCL to run on GPU architectures.  Since single node performance
+is often given as a reason for not using data-parallel constructs within Fortran,
+we consider the performance of serial data-parallel codes compared with the
+usage of explicit loop constructs.
 
-%%We study automatic transformations of Fortran for two applications examples.  The first is a simple shallow water model in two dimensions using finite volume methods with .... for time update.  The second is based on the primary compute kernels from PetaVision, a high-performance, neural science framework that is used in models of visual cortex.
+We study automatic transformations and the performance for an
+application example that is typical of many applications that are based on
+finite-difference or finite-volume methods in computational fluid dynamics
+(CFD).  The example is a simple shallow water model in two dimensions using
+finite volume methods with .... for time update.
 
-%% To simplify things, lets save PetaVision for the local stuff as it requires convolutions
-
-We study automatic transformations of Fortran for an application example that
-is typical of many applications that are based on finite-difference or
-finite-volume methods in computational fluid dynamics (CFD).  The example is a
-simple shallow water model in two dimensions using finite volume methods with
-.... for time update.
-
-%% NEW - CER
-PAGOSA is a production code at LANL completely written in data-parallel
-Fortran.  In a prior work we investigated automatically transforming this code
+%% NEW - CER - copied from proposal
+An initial study was made for an important procedure in PAGOSA,
+production code at LANL completely written in data-parallel
+Fortran.  We investigated automatically transforming this code
 to run on LANL's Petaflop Roadrunner computer (a hybrid mixture of Opterons
 and IBM Cell processors).  We demonstrated that a source-to-source compiler
 can automatically vectorize and parallelize (both within the Cell processor
@@ -237,6 +235,10 @@ and across nodes) a small section of this code.  Preliminary results showed a
 processor.  A factor of 9 is gained from vectorizing and parallelizing the
 code to run on the Cell and the rest is gained from automatically overlapping
 inter-node communication with computation on the Cell.
+
+%%We study automatic transformations of Fortran for two applications examples.  The first is a simple shallow water model in two dimensions using finite volume methods with .... for time update.  The second is based on the primary compute kernels from PetaVision, a high-performance, neural science framework that is used in models of visual cortex.
+
+%% To simplify things, lets save PetaVision for the local stuff as it requires convolutions
 
 \subsection{Why Fortran?}
 
@@ -259,14 +261,9 @@ Fortran should be of interest to those studying parallel programming because
 of its functional and data parallel constructs and because of the coarray
 notation introduced after Fortran 2003. Unlike languages like C and C++, which
 are considered to be more modern, Fortran has become a truly parallel language
-with features added to recent language standards. With coarrays, Fortran
-provides a mechanism to run replicas (called images) of a program on many
-different processors (or cores) at the same time. It also provides language
-constructs that allow the program to both read from and write to data residing
-on {\it remote} processors and to synchronize the different program images so
-that access to the data by the multiple images can be done atomically.
+with features added to recent language standards.
 
-A likely question that one may pose is ``\emph{Why Fortran and not a more
+Yet, a likely question that one may pose is ``\emph{Why Fortran and not a more
   modern language like X?}''  The recent rise in interest in concurrency and
 parallelism at the language level driven by multicore CPUs and manycore
 accelerators has driven a number of new language developments, both as novel
@@ -308,19 +305,35 @@ these new systems have features very similar to their predecessors, it
 is clear that the language features within Fortran for them are still
 relevant.
 
-%%
-%%
-%%
+\section{Comparison to Other Languages}
 
-\section{The programming model and Fortran-language subset}
+%% Matt you should provide an historical (and current) context here
+
+
+Techniques based on whole-array programming being mapped to high performance,
+parallel implementations are not new.  
+
+Similar to ZPL, CM5 stencil compilers, CMFortran stuff.
+
+%% cites: ZPL, CM5 stencil compilers POOMA, HPL OpenMP, CUDA
+
+% put something here on: regions, array notation, ...
+
+\section{Programming Model}
 
 The static analysis and source-to-source transformations used are very
-basic and simply require the programmer to use a subset of Fortran
+basic but require the programmer to use a subset of Fortran
 that employs a data-parallel programming model.  In particular, it
 encourages use of language features that were introduced and
 standardized in the Fortran 90 language specification.  In this
 section we describe the set of Fortran 90 features that our analysis
 and transformation method are based on.
+
+This paper uses four simple features of Fortran that form a language subset
+that does not require any language extensions and can be easily transformed
+to a lower-level implementation in either CUDA or OpenCL.
+
+\subsubsection*{Array notation}
 
 Fortran 90 introduced a rich array syntax that allows programmers to
 write code that is in terms of whole arrays or subarrays, with data
@@ -335,13 +348,175 @@ programming models, the fit between Fortran arrays and these systems is
 quite clean.
 
 %% NEW - CER
-We will examine how the existing data-parallel constructs in Fortran can be
-combined with coarrays or MPI to provide effectively a new parallel programming
-language, one that is evolutionary in nature and provides complete compatibility
-with existing applications and libraries.  Data parallelism is a high-level
-abstraction that is, at the same time, both easier to program and gives the
-compiler more leeway (if fully exploited) in retargeting a program to different
-computer architectures.
+Arrays are first class citizens in Fortran as they are part of the language
+type system rather than just a pointer to raw memory as in C. A Fortran array
+contains metadata associated with it that describes the array's shape and
+size. This metadata is lacking in other languages, such as C, C++, and Java.
+Even in the case where multidimensional array data structures are available
+(such as in C++ or Java), they exist outside the language standard, limiting
+the ability of the compiler to analyze them fully. The existence of this
+metadata allows the use of array notation whereby explicit indexing of arrays
+is not required. For example, if {\tt A}, {\tt B}, and {\tt C} are all arrays
+of the same rank and shape and {\tt s} is a scalar, then the statement
+
+\begin{verbatim}
+
+ C = A + s*B
+
+\end{verbatim}
+
+results in the sum of elements of {\tt A} and {\tt s} times the elements of
+{\tt B} being stored in the corresponding elements of {\tt C}. The first
+element of {\tt C} will contain the value of the first element of {\tt A}
+added to the first element of {\tt c*B}.  Note that no explicit iteration over
+array indices is needed and that the individual operators, plus, times, and
+assignment are applied by the compiler to individual elements of the arrays
+independently.  Thus the compiler is able to spread the computation in the
+example across any hardware threads under its control.
+
+%% NEW - CER
+%%% The use of array notation allows one to program in a data-parallel subset of Fortran. This style of programming makes use of array notation and pure and elemental functions to operate on array elements.
+
+\subsubsection*{Elemental functions}
+
+An elemental function consumes and produces scalar values, but can be applied
+to variables of array type such that the function is applied to each and every
+element of the array.  This allows programmers to avoid explicit looping and
+instead simply state that they intend a function to be applied to every
+element of an array in parallel, deferring the choice of implementation
+technique to the compiler.  Elemental functions are intended to be used for
+data parallel programming, and as a result must be side effect free (or,
+\emph{pure}).
+
+%% NEW - CER
+%%% Because elemental functions return scalar values and are free from side effects, the compiler is free to distribute the computation over any hardware processing elements available to it, such as the multiple cores and vector units on an Intel or AMD processor or the Synergistic Processing Units on an IBM Cell processor.
+
+%% NEW - CER
+An example of shown above using array syntax could be refactored to use
+the elemental function,
+
+\begin{verbatim}
+   pure elemental real function elem_example(a, b, s)
+      real, intent(in) :: a, b, s
+      elem_example = a + s*b
+   end function
+\end{verbatim}
+
+and called with
+
+\begin{verbatim}
+   C = elem_example(A, B, s)
+\end{verbatim}
+
+Note that while {\tt elem_example} is defined in terms of purely scalar
+quantities, it can be \emph{applied} to arrays as shown.
+
+While this may seem like a trivial example, such simple functions may be
+composed with other elemental functions to perform powerful computations,
+especially when applied to arrays.  ForOpenCL transforms elemental functions to inline OpenCL
+functions.  Thus there is no penalty for usage of elemental functions and provide
+a convient mechanism to express algorithms in simpler segments.
+
+Also note that the plus and times operators shown in the data-statement
+example can be seen as an elemental functions, as plus and times are defined
+in terms of scalars but can be applied to whole arrays and can return an array
+result.
+
+\subsubsection*{Pure procedures}
+
+Pure procedures, like elemental functions, must be free of side effects.
+(athough it may change the value of array elements in an array argument,
+unlike elemental arguments which must have the intent(in) attribute).
+The absence of side effects removes ordering constraints from the compiler
+allowing it to invoke pure functions out of order.  Procedures and functions
+of this sort are also common in pure functional languages like Haskell,
+and are exploited by compilers in order to emit parallel code automatically
+due to their suitability for compiler-level analysis.
+
+Since pure procedures don't have side effects they a candidates for running on
+accelerators in OpenCL.  Currently ForOpenCL transforms pure procedures to
+OpenCL kernels that emph{do not} call other procedures, except for elemental
+functions.
+
+\subsubsection*{Shift functions}
+
+Many array-based algorithms require the same operation to be performed
+on each element of the array using the value of that element and some small
+set of neighboring cells.  Often programmers implement these operations that
+are local to each element within the inner-loop of a set of nested FOR-
+or DO-loops using offsets relative to the current array index.  An alternative
+to this local-view of the algorithm is to take a global view and write the
+algorithm in terms of the whole array.  For example, consider a 1D array in
+which we wish to subtract the $(i-1)$th element from the $i$th for all
+elements.  One way to look at this is that we are subtracting the entire array
+shifted by one element from itself.
+
+Fortran provides a set of shifting operators that allow programmers to
+define operations based on shifted arrays.  These intrinsic operators take
+an array, a dimension, and the amount by which it should be shifted (using
+the sign to indicate direction).  By defining operations on entire arrays
+based on a global view of them shifted relative to each other, programmers can
+avoid explicit looping and potentially tricky index arithmetic.  Furthermore,
+analysis of the extent of the set of shifted arrays in a given expression
+allows analysis tools to determine the amount of temporary or buffer storage
+necessary to hold intermediate values during whole array operations.  With
+explicit loops, programmers must maintain this temporary storage manually.
+
+\subsubsection*{Regions}
+
+Borrowing from ZPL, we introduce the concept of regions to Fortran.  In
+Fortran, regions are expressed as pointers to a subsection of an existing array.
+Regions may refer to an interior portion of an array or the entire array.
+
+The use of regions implies the use of the halo (or ghost) cell pattern 
+where the size of an array is increased to provide extra array elements
+surrounding the interior portion of the array.  
+%parlab.eecs.berkeley.edu/wiki/_media/patterns/ghostcell.pdf
+
+Regions are similar to the shift operator as they can be used to reference
+portions of the array that are shifted with respect to the interior portion.
+However, unlike the shift operator, regions are not expressed in terms of
+boundary conditions and thus don't explicitly \emph{require} a knowledge of
+not the application of boundary conditions locally.  Thus, as will be shown
+below, regions are more suitable for usage by OpenCL thread groups which
+access only local subsections of an array stored in global memory.
+
+Unfortunately, as regions functions return pointers to arrays, they cannot
+be used in pure procedures in current Fortran.  We relax this constraint in
+ForOpenCL for region pointers only.
+
+\subsection{New Functions}
+
+% TODO - Craig - describe these functions
+%   region
+%   interior (can be written in terms of regions) but also specifies the thread
+%       group domain)
+%   more ...
+%
+
+
+\subsection{Parallelism}
+
+% TODO - Matt - do you want a try at this.
+
+% need to describe processor hierarchy of nodes and accelerators
+% need to describe memory hierarchy as well in regards to global array view,
+% node array view (with a copy is GPU global memory) and local GPU memory which
+% further subdivides the node array memory
+
+% figures on slicing and dicing of memory region go here
+
+
+There are several advantages to this style of programming using array syntax, shifts, regions,
+and pure and elemental functions:
+
+\begin{itemize}
+	\item There are no loops or index variables to keep track of.  Off by one
+index errors are a common programming mistake.
+        \item The written code is closer to the algorithm, easier to understand, and is usually substantially shorter.
+	\item Semantically the intrinsic functions return arrays by value (though not regions).  This is usually what the algorithm requires.
+	\item Because pure and elemental function are free from side effects, it is easier for a compiler to schedule the work to be done in parallel.
+\end{itemize}
 
 %% NEW - CER
 An example of this style of programming in Fortran is shown in
@@ -368,42 +543,20 @@ Maxwell's equations is the statement shown in Listing~\ref{lst:dpexample} and
 five similar, simple equations.
 
 %% NEW - CER
-The power in this notation is that the compiler is free to distribute the
-computation in these expressions over any hardware processing elements available
-to it, such as the vector units on an Intel or AMD processor or the Synergistic
-Processing Units on an IBM Cell processor.  If the arrays are declared as
-coarrays, this includes spreading the computation over \emph{all of the nodes in
-  a cluster as well.}  In this case, communication occurs within the
-\texttt{cshift} functions, though the compiler is free to overlap communication
-and computation by scheduling the communication early and performing the
-computation on the interior of the arrays while waiting for the communication to
-complete.
+%%% The power in this notation is that the compiler is free to distribute the computation in these expressions over any hardware processing elements available to it, such as the vector units on an Intel or AMD processor or the Synergistic Processing Units on an IBM Cell processor.  If the arrays are declared as coarrays, this includes spreading the computation over \emph{all of the nodes in   a cluster as well.}  In this case, communication occurs within the \texttt{cshift} functions, though the compiler is free to overlap communication and computation by scheduling the communication early and performing the computation on the interior of the arrays while waiting for the communication to complete.
 
 %% NEW - CER
-Complete and very concise and elegant programs can be built with statements
-similar to that shown in Listing~\ref{lst:dpexample}, using intrinsic
-functions like the array constructors (\texttt{CSHIFT}, \texttt{MERGE},
-\texttt{TRANSPOSE}, ...), the array location functions (\texttt{MAXLOC} and
-\texttt{MINLOC}), and the array reduction functions (\texttt{ANY},
-\texttt{COUNT}, \texttt{MINVAL}, \texttt{SUM}, \texttt{PRODUCT},
-...)~\cite{guydp}.  It should be emphasized, however, that {\it no} compiler
-currently supplies coarray versions of these intrinsic functions as they are
-not defined by the proposed Fortran 2008 standard (we have submitted a paper
-proposing the integration of coarrays with these intricics functions to the J3
-Fortran committee~\cite{rasmussen-caf-intrinsics}).  With coarray or MPI
-implementations of these intrinsic functions, programs written in this
-data-parallel subset of Fortran are implicitly parallel.  Furthermore, in
-instances it is necessary to implement algorithms that don't lend themselves
-to expressibility in this data-parallel subset, coarray notation can be used
-for complete access to individual (including remote) data elements.  It is the
-combination of data parallel and coarray constructs, with the transformational
-properties of a source-to-source compiler (transforming array notation to
-optimized Fortran 95 and library calls), that make this possibility such a
-promising avenue for research.
+Complete and very concise and elegant programs can be built with procedures
+similar to the example shown above. To aid this effort, Fortran
+supplies intrinsic functions like the array constructors (\texttt{CSHIFT},
+\texttt{EOSHIFT}, \texttt{MERGE}, \texttt{TRANSPOSE}, ...), the array location
+functions (\texttt{MAXLOC} and \texttt{MINLOC}), and the array reduction
+functions (\texttt{ANY}, \texttt{COUNT}, \texttt{MINVAL}, \texttt{SUM},
+\texttt{PRODUCT}, ...).  To this set we add region functions described above.
 
 %% NEW - CER
 This style of programming meets the requirements we have set for a programming
-model for developing petascale applications.  It allows the programmer to
+model for developing applications suitable for acceleration.  It allows the programmer to
 program at a very-high level of abstraction while providing the compiler with
 maximum flexibility in targeting the application for a particular hardware
 architecture.  The data parallel programming model simultaneously meets the
@@ -419,188 +572,10 @@ conundrum: (1) programmers didn't use it because it was slow; and (2)
 compilers vendors didn't improve it because programmers didn't use it.
 
 %% NEW - CER
-The goal of this research is to demonstrate that parallel programs written in
+A goal of this paper is to demonstrate that parallel programs written in
 this style of Fortran are maintainable and can achieve good performance on a
 variety of processor architectures, including possibly, future terascale
-architectures from Intel (such as the Larrabee architecture).  Using a code
-segment from a production code at Los Alamos (written entirely in this style
-of Fortran), we have demonstrated the potential for source-to-source
-transformations to target the IBM Cell architecture used in Los Alamos
-National Laboratories' Roadrunner computer~\footnote{Roadrunner is the first
-  computer to break the petaflop barrier.}.  Initial results show that
-transformed code using OFP and ROSE can achieve a speedup of up to 13 times on
-sixteen Roadrunner nodes, compared with the equivalent number of single-core
-Opteron nodes.
-
-This paper uses four simple features of Fortran that form a language subset
-that does not require any language extensions and can be easily transformed
-to a lower-level implementation in either CUDA or OpenCL.
-
-\subsubsection*{Elemental functions}
-
-An elemental function consumes and produces scalar values, but can be
-applied to variables of array type such that the function is
-applied to each and every element of the array.  This allows programmers
-to avoid explicit looping and instead simply state that they intend a
-function to be applied to every element of an array in parallel, deferring
-the choice of implementation technique to the compiler.  Elemental
-functions are intended to be used for data parallel programming, and
-as a result must be side effect free (or, \emph{pure}).
-
-%% NEW - CER
-The use of array notation allows one to program in a data-parallel subset of
-Fortran. This style of programming makes use of array notation and pure and
-elemental functions to operate on array elements.
-
-%% NEW - CER
-Because elemental functions return scalar values and are free from side
-effects, the compiler is free to distribute the computation over any hardware
-processing elements available to it, such as the multiple cores and vector
-units on an Intel or AMD processor or the Synergistic Processing Units on an
-IBM Cell processor.
-
-%% NEW - CER
-An example of an elemental function is shown in Listing~\ref{lst:elemental}.
-This example simply returns its input divided by 2. While this may seem like a
-trivial example, such simple functions may be composed with other elemental
-functions to perform powerful computations, especially when applied to arrays.
-
-\subsubsection*{Pure procedures}
-
-Pure procedures, like elemental functions, must be free of side effects.
-The absence of side effects removes ordering constraints from the compiler
-allowing it to invoke pure functions out of order.  Procedures and functions
-of this sort are also common in pure functional languages like Haskell,
-and are exploited by compilers in order to emit parallel code automatically
-due to their suitability for compiler-level analysis.
-
-%% NEW - CER
-The use of an elemental function is shown in the pure procedure {\tt laplace}
-in Listing~\ref{lst:pure}. This function (for example) can be used to solve
-the steady-state temperature along a one-dimensional surface. The temperature
-at any point along the surface is equal to the average of the temperature at
-neighboring points. Rather than writing explicit loops and using indexing to
-reference neighboring points, one may simply shift the array {\tt T} to the
-left and right, add the results and divide by 2. The intrinsic function {\tt
-EOSHIFT} (end-off shift) semantically returns an array copy with the value at
-any element shifted by the amount given by the {\tt shift} argument. The value
-shifted in at the boundary is supplied by the {\tt boundary} argument. The
-elemental function {\tt one\_half} is used to divide by 2.
-
-%% NEW - CER
-Note that semantically the elemental functions return their array results by
-value. This is important because had loops been used to express the {\tt
-laplace} procedure, temporary variables would have been required. Otherwise,
-{\tt T(i)} would be updated with new values of {\tt T(i-1)}.
-
-%% NEW - CER
- A ``pure'' function is one
-without side effects (though it may change the value of array elements in an
-array argument). An elemental function is a pure function with the additional
-constraint that it takes only scalar arguments and must return a scalar.
-Though defined in terms of scalars, surprisingly, an elemental function may
-take an array as an actual argument, with the compiler applying the function
-to each element of the array, and returning an array result. The plus operator
-as described in the previous paragraph can be seen as an elemental function,
-as the plus operator is defined in terms of scalars but can be applied to
-whole arrays and can return an array result.
-
-\subsubsection*{Shift operators}
-
-Many array-based algorithms require the same operation to be performed
-on each element of the array using the value of that element and some small
-set of neighboring cells.  Often programmers implement these operations that
-are local to each element within the inner-loop of a set of nested FOR-
-or DO-loops using offsets relative to the current array index.  An alternative
-to this local-view of the algorithm is to take a global view and write the
-algorithm in terms of the whole array.  For example, consider a 1D array in
-which we wish to subtract the $(i-1)$th element from the $i$th for all
-elements.  One way to look at this is that we are subtracting the entire array
-shifted by one element from itself.
-
-Fortran provides a set of shifting operators that allow programmers to
-define operations based on shifted arrays.  These intrinsic operators take
-an array, a dimension, and the amount by which it should be shifted (using
-the sign to indicate direction).  By defining operations on entire arrays
-based on a global view of them shifted relative to each other, programmers can
-avoid explicit looping and potentially tricky index arithmetic.  Furthermore,
-analysis of the extent of the set of shifted arrays in a given expression
-allows analysis tools to determine the amount of temporary or buffer storage
-necessary to hold intermediate values during whole array operations.  With
-explicit loops, programmers must maintain this temporary storage manually.
-
-\subsubsection*{Array notation}
-
-%% NEW - CER
-Arrays are first class citizens in Fortran as they are part of the language
-type system rather than just a pointer to raw memory as in C. A Fortran array
-contains metadata associated with it that describes the array's shape and
-size. This metadata is lacking in other languages, such as C, C++, and Java.
-Even in the case where multidimensional array data structures are available
-(such as in C++ or Java), they exist outside the language standard, limiting
-the ability of the compiler to analyze them fully. The existence of this
-metadata allows the use of array notation whereby explicit indexing of arrays
-is not required. For example, if {\tt A}, {\tt B}, and {\tt C} are all arrays
-of the same rank and shape, then the statement {\tt C = A + B} results in the
-sum of elements of {\tt A} and {\tt B} being stored in the corresponding
-elements of {\tt C}. The first element of {\tt C} will contain the value of
-the first element of {\tt A} added to the first element of {\tt B}.
-
-The final piece that we exploit is the array notation present in modern
-versions of Fortran.  For example,
-
-\begin{equation}
-\label{eq:dataparallel}
-A = B + s * C
-\end{equation}
-
-is a array assignment statement where A, B, and C are arrays and s is a
-scalar.  Note that no explicit iteration over array indices is needed and that
-the individual operators, plus, times, and assignment are applied by the
-compiler to individual elements of the arrays independently.  Thus the
-compiler is able to spread the computation in~\ref{eq:dataparallel} across any
-hardware threads under its control.
-
-There are several advantages to this style of programming:
-
-\begin{itemize}
-	\item There are no loops or index variables to keep track of.  Off by one
-index errors are a common programming mistake.
-        \item The written code is closer to the algorithm, easier to understand, and is usually substantially shorter.
-	\item Semantically the intrinsic functions return arrays by value.  This is usually what the algorithm requires.
-	\item Because pure and elemental function are free from side effects, it is easier for a compiler to schedule the work to be done in parallel.
-\end{itemize}
-
-Complete and very concise and elegant programs can be built with procedures
-similar to the {\tt laplace} example shown above. To aid this effort, Fortran
-supplies intrinsic functions like the array constructors (\texttt{CSHIFT},
-\texttt{EOSHIFT}, \texttt{MERGE}, \texttt{TRANSPOSE}, ...), the array location
-functions (\texttt{MAXLOC} and \texttt{MINLOC}), and the array reduction
-functions (\texttt{ANY}, \texttt{COUNT}, \texttt{MINVAL}, \texttt{SUM},
-\texttt{PRODUCT}, ...).
-
-
-\subsection{Relationship to other languages}
-
-Techniques based on whole-array programming being mapped to high performance,
-parallel implementations are not new.  
-
-Similar to ZPL, CM5 stencil compilers, CMFortran stuff.
-
-%% cites: ZPL, CM5 stencil compilers
-
-% put something here on:
-%
-% shifts
-% array notation
-% 
-
-\subsubsection{elemental functions}
-
-\subsubsection{pure procedures}
-
-Mention that don't require pure procedures as region functions are not pure.
-But programmers should otherwise think in terms of writing pure procedures.
+architectures from Intel (such as the XXX architecture).
 
 \subsection{Limitations}
 
@@ -617,6 +592,12 @@ fortran functions that have an OpenCL analog and user-defined elemental function
 Array sizes must be multiples of the local kernel size,
 {\tt get\_local\_size(0)*get\_local\_size(1)}.  This may be relaxed in the future.
 
+
+\section{Source-To-Source Transformations}
+
+% TODO - craig - I need to go through this section and replace PetaVision
+% with the shallow water code
+
 \subsection{ForOpenCL}
 
 ForOpenCL is library of Fortran modules.  It contains Fortran 2003 interface
@@ -626,8 +607,8 @@ descriptions that allow language interoperability with the C OpenCL runtime.
 
 This sections show short Fortran code examples and OpenCL equivalent.
 The notation uses uppercase for arrays and lowercase for scalar quantities.
-Interior array subsections are denoted by an i preceeding the array, e.g. iA
-is the interior subset of array A.
+Interior array subsections are denoted by an i succeeding the array, e.g. Ai
+is the interior region of array A.
 
 \subsubsection{array syntax}
 
@@ -690,6 +671,31 @@ iH => region(H, halo, transfer=false)
 2. removal of array temporaries (shifts)
 
 \section{Performance}
+
+\section{Conclusions}
+
+%% Explain what we have accomplished (copied from proposal)
+
+%% NEW - CER
+The sheer complexity of programming for clusters of many or multi-core
+processors with tens of millions threads of execution make the simplicity of
+the data parallel model attractive.  Furthermore, the increasing complexity of
+todays applications (especially when convolved with the increasing complexity
+of the hardware) and the need for portability across hardware architectures
+make a higher-level and simpler programming model like data parallel
+attractive.
+
+%% NEW - CER
+The goal of this work has been to exploit source-to-source transformations that
+allow programmers to develop and maintain programs at a high-level of
+abstraction, without coding to a specific hardware architecture.
+Furthermore these transformations allow multiple hardware architectures
+to be targeted without changing the high-level source.  It also removes the
+necessity for application programmers to understand details of the accelerator
+architecture or to know OpenCL.
+
+% Summarize results
+
 
 \section{Junk}
 
