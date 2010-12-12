@@ -75,13 +75,19 @@ run efficiently on the wide variety of computer platforms we have
 available.  For some classes of applications, we believe that this goal
 is possible using language constructs already present in a popular
 mainstream scientific programming language -- Fortran.
+A common, long-standing tongue-in-cheek response to new language developments
+in the scientific and high performance computing community is that a new language
+will arise to answer the needs of new systems, and it will be called Fortran.  
+We believe that the work presented in this paper validates that notion -- 
+we need a new language to work with, and that language is Fortran.
 
 \subsection{Approach}
 
-This paper addresses this issue by examining features in Fortran that
-allow programmers to express algorithms at a very high level but yet
-can be transformed by a compiler to run efficiently on a wide variety
-of platforms.  In particular we consider nodes of GPUs.
+This paper addresses the accelerator programmign problem by examining
+features in Fortran that allow programmers to express algorithms at a
+very high level that can be easily transformed by a compiler to run
+efficiently on a wide variety of platforms.  In particular we consider
+computers based on GPUs and related accelerator processors.
 
 We demonstrate that the array syntax of Fortran maps surprisingly well
 onto GPUs when transformed to OpenCL kernels.  These Fortran language
@@ -91,7 +97,9 @@ a program to be deployed on machines with a hierarchy of processing
 elements, such as nodes employing GPU acceleration, \emph{without
   requiring explicit declaration of parallelism within the program.}
 In addition the program uses entirely standard Fortran so it can be on
-a single core without concurrency.
+a single core without concurrency.  This work also is applicable
+to vendor-specific languages similar to OpenCL such as the NVidia
+CUDA language.
 
 We provide (via Fortran interfaces in the ForOpenCL library) a mechanism to
 call the C OpenCL runtime and enable Fortran programmers to access OpenCL
@@ -123,17 +131,17 @@ finite-difference or finite-volume methods in computational fluid dynamics
 (CFD).  The example is a simple shallow water model in two dimensions using
 finite volume methods with .... for time update.
 
-%% NEW - CER - copied from proposal
-An initial study was made for an important procedure in PAGOSA,
-production code at LANL completely written in data-parallel
-Fortran.  We investigated automatically transforming this code
-to run on LANL's Petaflop Roadrunner computer (a hybrid mixture of Opterons
-and IBM Cell processors).  We demonstrated that a source-to-source compiler
-can automatically vectorize and parallelize (both within the Cell processor
-and across nodes) a small section of this code.  Preliminary results showed a
-12 times performance gain on the Cell processor over a traditional single core
-processor.  A factor of 9 is gained from vectorizing and parallelizing the
-code to run on the Cell and the rest is gained from automatically overlapping
+An initial study was made for an important procedure in PAGOSA, a
+non-research, production-grade code at LANL completely written in
+data-parallel Fortran.  We investigated automatically transforming
+this code to run on LANL's Petaflop Roadrunner computer (a hybrid
+mixture of AMD Opterons and IBM Cell processors).  We demonstrated that a
+source-to-source compiler can automatically vectorize and parallelize
+(both within the Cell processor and across nodes) a small section of
+this code.  Preliminary results showed a 12 times performance gain on
+the Cell processor over a traditional single core processor.  A factor
+of 9 is gained from vectorizing and parallelizing the code to run on
+the Cell and the rest is gained from automatically overlapping
 inter-node communication with computation on the Cell.
 
 %%We study automatic transformations of Fortran for two applications examples.  The first is a simple shallow water model in two dimensions using finite volume methods with .... for time update.  The second is based on the primary compute kernels from PetaVision, a high-performance, neural science framework that is used in models of visual cortex.
@@ -142,26 +150,36 @@ inter-node communication with computation on the Cell.
 
 \subsection{Why Fortran?}
 
-%% NEW - CER
-Fortran \footnote{Originally named FORTRAN for FORmula TRANslation language.}
-is the oldest high-level programming language, and was developed to facilitate
-the translation of math formulae into machine code. Fortran was the first
-major language to use a compiler to translate from a high-level program
-representation to assembly language. Due to its age, it carries certain arcane
-baggage that later programming languages have evolved away from. As a result,
-Fortran has fallen into disfavor in certain programming circles.
+Fortran (originally named FORTRAN, the FORmula TRANslation
+language\footnote{The capitalization convention for referring the
+  language was changed in 1990 to \emph{Fortran}}) is the oldest
+high-level programming language in continuous use since its
+introduction, and was developed to facilitate the translation of math
+formulae into machine code. Fortran was the first major language to
+use a compiler to translate from a high-level program representation
+to assembly language. Due to its age, it carries certain arcane
+baggage that later programming languages have evolved away from. As a
+result, Fortran has fallen into disfavor in certain programming
+circles.  Modern versions of the language standardized in 1990, 1995, 2003, and 2008
+have removed much of this legacy baggage, but these changes are not
+widely known.  Modern Fortran exhibits features that are similar to 
+other modern programming languages, and does not mandate legacy features
+from decades old, deprecated versions of the language.
 
-%% NEW - CER
-However, with the introduction of Fortran 90 (and later revisions to the
-standard), Fortran is a truly modern programming language. Much of the arcane
-baggage associated with it is actually no longer part of the language used by
-modern programmers, and exists in a deprecated form simply to support legacy
-codes. It is now modular and has many object-oriented features. Furthermore,
-Fortran should be of interest to those studying parallel programming because
-of its functional and data parallel constructs and because of the coarray
-notation introduced after Fortran 2003. Unlike languages like C and C++, which
-are considered to be more modern, Fortran has become a truly parallel language
-with features added to recent language standards.
+With the introduction of Fortran 90 (and later revisions to the
+standard), Fortran became a truly modern programming language. Much of
+the arcane baggage associated with it is actually no longer part of
+the language used by modern programmers, and exists in a deprecated
+form simply to support legacy codes. It is now modular and has many
+object-oriented features.  It now includes a type system in which rich
+first-class array data types and corresponding syntax are part of the
+language, something that languages like C continue to lack.
+Furthermore, Fortran should be of interest to those studying parallel
+programming because of its functional and data parallel constructs and
+because of the coarray notation introduced in Fortran 2008. Unlike
+languages like C and C++, which are considered to be more modern,
+Fortran has become a truly parallel language with features added to
+recent language standards.
 
 Yet, a likely question that one may pose is ``\emph{Why Fortran and not a more
   modern language like X?}''  The recent rise in interest in concurrency and
