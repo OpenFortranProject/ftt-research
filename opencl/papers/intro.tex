@@ -1,4 +1,5 @@
 \section{Introduction}
+\label{sec:intro}
 
 This paper presents a compiler-level approach for targeting a single
 program to multiple fundamentally different low level execution and
@@ -7,10 +8,10 @@ a single high level programming model.  We show that features of
 Fortran 90 for data parallel programming are well suited to automatic
 transformation to generate code specifically tuned for different
 low-level programming models such as OpenCL and CUDA.  For algorithms
-that can be easily expressed in terms of whole array, data parallel operations,
-writing code in Fortran and transforming it automatically to specific low
-level implementations removes the burden from the programmer of working
-with tedious, error prone, low-level tools.
+that can be easily expressed in terms of whole array, data parallel
+operations, writing code in Fortran and transforming it automatically
+to specific low level implementations removes the burden from the
+programmer of working with tedious, error prone, low-level tools.
 
 1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
 2. Goal is to code for readability and maintainability, not performance
@@ -203,3 +204,106 @@ chip high performance architectures of interest today.  Given that
 these new systems have features very similar to their predecessors, it
 is clear that the language features within Fortran for them are still
 relevant.
+
+\subsection{Comparison to Other Languages}
+
+A number of previous efforts have exploited data parallel programming
+at the language level to utilize novel architectuers, particularly
+in previous decades during the reign of vector and massively
+parallel computers in the high performance computing world.  The
+origin of the array syntax that was adopted in Fortran 90 can be found
+in the APL language\cite{iverson79apl}.  Fortran 90 differed from
+previous extensions of Fortran in that parallelism within whole-array operations
+was expressed at the expression level instead of via parallelism within explicit
+DO-loops (such as within IVTRAN for the Illiac IV). 
+
+The High Performance Fortran (HPF) extension of Fortran 90 was
+proposed to add features to the language that would enhance the
+ability of compilers to emit fast parallel code for distributed and
+shared memory parallel computers\cite{koelbel94hpf}.  One of the
+notable additions to the language in HPF was syntax to specify the
+distribution of data structures amongst a set of parallel processors.
+HPF also introduced an alternative looping construct to the
+traditional DO-loop called \emph{FORALL} that was better suited for
+parallel compilation.  An additional keyword, \emph{INDEPENDENT}, was
+added to allow the programmer to indicate when the order of execution
+of the program (such as a sequence of loop iterations) can be flexible
+in order to allow parallel execution.  Interestingly, the parallelism
+features introduced in HPF did not exploit the new array features
+introduced in 1990 in any significant way, relying instead on explicit
+loop-based parallelism.  This was likely in order to support parallel
+programming that wasn't easily mapped onto a pure data parallel model.
+
+In some instances though, a purely data parallel model is appropriate
+for part or all of the major computations within a program.  One of
+the systems where programmers relied heavily on higher level
+operations instead of explicit looping constructs was the Thinking
+Machines Connection Machine 5 (CM-5).  A common programming pattern
+used on the CM-5 that we exploit in this paper was to write
+whole-array operations from a global perspective in which computations
+are expressed in terms of operations over the entire array instead of
+a single local index.  The use of the array shift intrinsic functions
+(like {\tt CSHIFT}) were used to build computations in which arrays
+were combined by shifting the entire arrays instead of working based
+on local offsets from singe indices.  A simple 1D example is one in
+which an element is replaced with the average of its own value with
+that of its two direct neighbors.  Ignoring boundary indices that wrap
+around, explicit indexing will result in a loop such as:
+
+\begin{verbatim}
+do i = 2,(n-1)
+  X(i) = (X(i-1) + X(i) + X(i+1)) / 3
+end do
+\end{verbatim}
+
+When shifts are employed, this can be expressed as:
+
+\begin{verbatim}
+X = (cshift(X,-1) + X + cshift(X,1)) / 3
+\end{verbatim}
+
+Similar whole array shifting was used in higher dimensions for finite
+different codes within the computational physics community, especially
+at Los Alamos for codes targetting the CM-5 system that resided there until the
+late 1990s.  
+
+The whole-array model was attractive because it deferred
+responsibility for optimally implementing the computations to the
+compiler.  Instead of relying on a compiler to infer parallelism from
+a set of explicit loops, the choice for how to implement loops was
+left entirely up to the tool.  Unfortunately, this had two side
+effects that have limited broad acceptance of the whole-array
+programming model in Fortran.  First, programmers must translate their
+algorithms into a set of global operations.  Finite difference
+stencils and similar computations are traditionally defined in terms
+of offsets from some central index.  Shifting, while conceptually
+analogous, can be awkward to think about for high dimensional stencils
+with many points.  Second, the semantics of these operations are such
+that all elements of an array operation are updated as if they were
+updated simultaneously.  In a program where the programmer explicitly
+manages arrays and loops, double buffering techniques and user managed
+temporaries are used to maintain these semantics.  When the compiler
+is responsible for managing this intermediate storage, it has
+historically proven that they are inefficient and generate code that
+requires far more temporary storage than really necessary.  This is
+not a flaw of the language constructs, but a sign of the lack of
+sophistication of the compilers with respect to their internal
+analysis to determine how to optimally generate this intermediate
+storage.
+
+An interesting line of language research that grew out of the early work
+with HPF was that associated with the ZPL language work at the University
+of Washington~\ref{chamberlain04zpl}.  In ZPL, programmers adopt a simimlar
+global view of computation over arrays, but define their computations based
+on the local view of indices that participate in the update of each element of
+an array.  For example, in the 1D averaging case stated above, a programmer would
+define the computation in terms of the update that occurs at each index in terms
+of relative offsets from that index:
+
+\begin{verbatim}
+Write some ZPL
+\end{verbatim}
+
+This would then be executed over the entire array. {\bf more...}
+
+Stuff on stencil compilers?  No?
