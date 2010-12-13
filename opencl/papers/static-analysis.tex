@@ -1,0 +1,15 @@
+\section{Static Analysis}
+\label{sec:static-analysis}
+
+1. Dependence analysis to insert thread group barriers
+
+\begin{verbatim}
+   barrier(CLK_LOCAL_MEM_FENCE)
+\end{verbatim}
+
+2. subsection variables associated with array variables
+
+\subsection{Analysis not required}
+
+1. loop fusion
+2. removal of array temporaries (shifts)

@@ -1,0 +1,61 @@
+\section{Source-To-Source Transformations}
+
+% TODO - craig - I need to go through this section and replace PetaVision
+% with the shallow water code
+
+\subsection{ForOpenCL}
+
+ForOpenCL is library of Fortran modules.  It contains Fortran 2003 interface
+descriptions that allow language interoperability with the C OpenCL runtime.
+
+\section{Transformation examples}
+
+This sections show short Fortran code examples and OpenCL equivalent.
+The notation uses uppercase for arrays and lowercase for scalar quantities.
+Interior array subsections are denoted by an i succeeding the array, e.g. Ai
+is the interior region of array A.
+
+\subsubsection{array syntax}
+
+PetaVision updates the action potential with the statement,
+
+\begin{verbatim}
+   V = V - iA*(V - v_rest)                  !! Fortran
+
+   V[l] = V[l] - iA[lex]*(V[l] - v_rest);   // OpenCL equivalent
+\end{verbatim}
+
+\subsubsection{where construct}
+
+A neuron in PetaVision fires (activity is set to 1)
+whenever the action potential is greater than some threshold.
+This is easily expressed with a where construct.
+
+\begin{verbatim}
+   where (V > Vth)                        !! Fortran
+      iA = 1
+   elsewhere
+      iA = 0
+   end where
+
+   iA[lex] = (V[l] > Vth[l]) ? 1 : 0;     // OpenCL equivalent
+\end{verbatim}
+
+\subsection{New functions}
+
+%\subsubsection{transfer_halo}
+\subsubsection{region}
+
+One of the state variables in the shallow water code is H, effectively the
+height of the water.  This variable has a halo (ghost-cell region) surrounding
+the interior of the grid to handle boundary conditions.  When using
+MPI, the halo regions contains values from adjacent processors that must be
+updated with new values at each time step.  This is accomplished with the
+{\tt transfer\_halo} function.  The shallow water code assumes a five point stencil
+so the state variables are extended by 2 in each dimension (e.g., by one to the
+left, right, up, and down).
+
+\begin{verbatim}
+halo = [1,1,1,1]
+iH => region(H, halo, transfer=false)
+\end{verbatim}
