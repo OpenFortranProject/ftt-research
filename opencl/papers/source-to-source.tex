@@ -1,7 +1,7 @@
 \section{Source-To-Source Transformations}
 
-This section describes the transformations that take Fortran elemental and pure procedures
-as input and generate OpenCL kernels.
+This section describes the transformations that take Fortran elemental and
+pure procedures as input and generate OpenCL kernels.
 
 \subsection{OpenCL}
 
@@ -38,11 +38,19 @@ shown in the foreground divided into 4 \emph{local} tiles that partition the
 array.  Halo regions in global memory are shown in dark gray and halo regions
 in local memory are shown in light gray.
 
-We emphasize that the hierarchical distribution of memory used on the
-OpenCL device shown in Figure~\ref{fig:cl-memory} can be extended to include memory
-across MPI nodes as well.  In this case, the virtual global array is represented by the background
-layer (with its halo) and its partitions stored in the 4 MPI nodes shown in the
-foreground.
+\begin{figure}[!t]
+\centering
+\includegraphics[width=2.5in]{cl-memory.pdf}
+\caption{A schematic of global memory for an array and its copy stored in local memory
+for four thread groups.}
+\label{fig:cl-memory}
+\end{figure}
+
+We emphasize that the hierarchical distribution of memory used on the OpenCL
+device shown in Figure~\ref{fig:cl-memory} can be extended to include memory
+across MPI nodes as well.  In this case, the virtual global array is
+represented by the background layer (with its halo) and its partitions stored
+in the 4 MPI nodes shown in the foreground.
 
 Halo regions are constrained semantically so that they can not be written to
 by an OpenCL kernel because the \emph{region} and \emph{interior} functions
@@ -76,63 +84,85 @@ interoperability with the OpenCL runtime.
 
 \section{Transformation examples}
 
-This sections show short Fortran code examples and OpenCL equivalent.  The
-notation uses uppercase for arrays and lowercase for scalar quantities.
-Interior and region array copies are denoted by an i or an r preceeding the array.
-For example, {\tt iH = interior(H, halo)} is a local copy of interior region
-of array {\tt H} (representing height) in the shallow water code.
+This sections outlines the OpenCL equivalent syntax for portions of the
+Fortran shallow-water code described in the previous section.  The notation
+uses uppercase for arrays and lowercase for scalar quantities.  Interior and
+region array copies are denoted by an i or an r preceeding the array.  For
+example, {\tt iH = interior(H, halo)} is a local copy of interior region of
+array {\tt H} (representing height) in the shallow water code.
 
 \subsubsection{interior and region functions}
 
 While the serial versions of the interior and regions functions return an
-array copy, in OpenCL, these functions return a scalar quantity based on
-the location of a thread in a thread group and the relationship of its location
-to the array copy in local memory.  Because we assume there is a thread for
-every element in the interior, the array index is just the thread index adjusted
-for the halo.  Thus {\tt interior} and {\tt region} are just inline OpenCL
+array copy, in OpenCL, these functions return a scalar quantity based on the
+location of a thread in a thread group and the relationship of its location to
+the array copy in local memory.  Because we assume there is a thread for every
+element in the interior, the array index is just the thread index adjusted for
+the halo.  Thus {\tt interior} and {\tt region} are just inline OpenCL
 functions provided by the ForOpenCL library.
+
+\subsubsection{function and variable declarations}
+
+Fortran kernel procedures have direct correspondence with OpenCL equivalents.
+For example, {\tt wave_advance} is transformed as {\tt __kernel void
+  wave_advance(__ global float * H, ..., float dt);}.  The global state
+variables have local equivalents, e.g., {\tt __local float
+  H_local[MAX_LOCAL_SIZE]}, declared with the appropriate size and are copied
+to local memory by the compiler with inlined library functions.  The flux
+array temporaries (region variables) are declared similarly but initialized to
+zero with inlined library functions.  Interior variables are simple scalars,
+e.g., {\tt float iH;}.  Region variables cannot be scalar objects because
+regions are shifted and thus \emph{shared} by threads within a thread group.
 
 \subsubsection{array syntax}
 
-
-
+Array syntax transforms nearly directly to OpenCL code.  For example, interior
+variables are particularly straightforward as they as scalar quantities in
+OpenCL,
 \begin{verbatim}
-   V = V - iA*(V - v_rest)                  !! Fortran
-
-   V[l] = V[l] - iA[lex]*(V[l] - v_rest);   // OpenCL equivalent
+   iH = iH + (dt/dx) * ( region(Ux, face_lt) - region(Ux, face_rt) )
+           + (dt/dy) * ( region(Vy, face_dn) - region(Vy, face_up) );
 \end{verbatim}
 
-\subsubsection{where construct}
-
-A neuron in PetaVision fires (activity is set to 1)
-whenever the action potential is greater than some threshold.
-This is easily expressed with a where construct.
-
+Region variables are more complicated because they are arrays.
 \begin{verbatim}
-   where (V > Vth)                        !! Fortran
-      iA = 1
-   elsewhere
-      iA = 0
-   end where
-
-   iA[lex] = (V[l] > Vth[l]) ? 1 : 0;     // OpenCL equivalent
+   Hx[l] = 0.5 * ( region(H_local, face_lt) + ... );
 \end{verbatim}
+where {\tt l = LX + LY*(NLX+halo(0)+halo(1)))} is a local index variable, {\tt
+  LX = get_local_id(0)} is the local thread id in the $x$ dimension, {\tt LY =
+  get_local_id(1)} is the local thread id in the $y$ dimension, {\tt NLX =
+  get_local_size(0)} is the size of the thread group in the $x$ dimension, and
+the {\tt get_local_id} and {\tt get_local_size} functions are defined by the
+OpenCL compiler.
 
-\subsection{New functions}
 
-%\subsubsection{transfer_halo}
-\subsubsection{region}
+\subsection{Performance measurements}
 
-One of the state variables in the shallow water code is H, effectively the
-height of the water.  This variable has a halo (ghost-cell region) surrounding
-the interior of the grid to handle boundary conditions.  When using
-MPI, the halo regions contains values from adjacent processors that must be
-updated with new values at each time step.  This is accomplished with the
-{\tt transfer\_halo} function.  The shallow water code assumes a five point stencil
-so the state variables are extended by 2 in each dimension (e.g., by one to the
-left, right, up, and down).
+Performance measurements were made comparing the transformed code with
+different versions of the serial shallow-water code.  The serial versions
+include the original written in C and two Fortran versions: one using copy
+semantics for the regions and one using reference semantics.  We also compare
+with a hand written OpenCL implementation that was optimized for local memory
+usage (no array temporaries).  The measurments were made using an NVIDIA Fermi
+GPU (TODO - need model numbers) running at XXX Hz and a VENDOR hexacore CPU
+running at XXX Hz.  The compilers were gfortran and gcc VERSIONS with
+optimization of -O3.
 
-\begin{verbatim}
-halo = [1,1,1,1]
-iH => region(H, halo, transfer=false)
-\end{verbatim}
+The performance comparison is shown in Figure~\ref{fig:cl-performance} for
+varying array sizes (of the state variables).  The time represents an average
+of 100 iterations of the outer time-advance loop calling the OpenCL kernel.
+This tight loop keeps the OpenCL kernel supplied with threads to take
+advantage of potential latency hiding by the NVIDIA GPU.  Any serial code
+within this loop would reduce the measured values.
+
+As can be seen in Figure~\ref{fig:cl-performance}, the transformed get very
+good results of roughly 65 times speedup over the best Fortran code and YYY
+speedup over the original C code.  It comes with XXX \% of the hand coded
+OpenCL version.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=2.5in]{cl-performance.pdf}
+\caption{Performance comparison for varying array size.}
+\label{fig:cl-performance}
+\end{figure}
