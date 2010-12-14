@@ -13,73 +13,100 @@ operations, writing code in Fortran and transforming it automatically
 to specific low level implementations removes the burden from the
 programmer of working with tedious, error prone, low-level tools.
 
-1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
-2. Goal is to code for readability and maintainability, not performance
-3. This goal requires expression in a high-level language.
-4. But language must be simple enough for compiler to analyze.
-5. Thus ideal if language maps well to accelerator architectures.
-6. Data parallel constructs in Fortran 90 are chosen.
-7. Up to 65 times speed up measured on automatically transformed code.
+In the ideal situation, application programmers would like to adopt
+a programming model in which they write their application once and
+use automated tools to retarget it to many architectures.  This has
+proven to be very challenging historically due to the subtle balance
+between high-level expressiveness of code and the performance of the
+lower-level code that is emitted by a compiler.  This ideal high-level
+model that programmers work with should emphasize readability,
+maintainability, and close proximity in abstraction to the problem being
+solved.  It should not be corrupted with details of specific target
+architectures solely for the purpose of single-system performance.
+For certain classes of applications, specifically those that map well
+onto a data-parallel programming model, we show that Fortran 90 contains
+language features that encourage high-level programming abstractions
+without sacrificing performance during low-level code generation.
 
-At Los Alamos National Laboratory (LANL) we have a wide variety of computer
-platforms from which to choose.  The common platform is made up of clusters of
-compute nodes with standard multi-core processors.  Some nodes also have
-accelerators that range from the IBM Cell processor (Roadrunner) to a variety
-of GPUs from NVIDIA and AMD.  Some nodes have hardware with vector
-instructions and others do not. The peak
-performance of the accelerated nodes range from 200+ GFlops for the IBM Cell/B.E.
-processor to XXX for NVIDIA Fermi. %% Fermi has another name
+%1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
+%2. Goal is to code for readability and maintainability, not performance
+%3. This goal requires expression in a high-level language.
+%4. But language must be simple enough for compiler to analyze.
+%5. Thus ideal if language maps well to accelerator architectures.
+%6. Data parallel constructs in Fortran 90 are chosen.
+%7. Up to 65 times speed up measured on automatically transformed code.
 
-%% NEW - CER
-However, the performance that these accelerator architectures offer comes at a
-cost as processor architectures are trending toward multiple cores with
-instances of integrated accelerator units and less of a reliance on memory
-caches.  These changes place a heavy burden on application programmers as they
-are forced to adapt to the new systems.  An especially challenging problem
-faced by application programmers is not only how to program to these new
-architectures (considering the massive scale of concurrency available), but
-also how to design programs that are portable across the changing landscape of
-computer architectures.  The fundamental question we address is what
-programming model and language constructs are best suited for these platforms.
+At Los Alamos National Laboratory (LANL), as with many supercomputing
+facilities today, users have a wide variety of computer platforms from
+which to choose.  The most common platform is made up of clusters of
+compute nodes with standard multi-core processors.  An increasingly
+common feature is that some nodes also have accelerators that range
+from the IBM Cell processor (such as the LANL Roadrunner system) to a
+variety of GPUs from NVIDIA and AMD.  Some nodes have hardware with
+vector instructions and others do not.  The peak performance of these
+accelerated nodes often resides in the hundreds of gigaflops.
+
+%The peak performance of the
+%accelerated nodes range from 200+ GFlops for the IBM Cell/B.E.
+%processor to XXX for NVIDIA Fermi. %% Fermi has another name
+
+However, the performance that these accelerator architectures offer
+comes at a cost as processor architectures are trending toward
+multiple cores with instances of integrated accelerator units with
+user managed memory and less of a reliance on superscalar instruction
+level parallelism and hardware managed memory hierarchies (such as
+traditional caches).  These changes place a heavy burden on
+application programmers as they are forced to adapt to the new
+systems.  An especially challenging problem faced by application
+programmers is not only how to program to these new architectures
+(considering the massive scale of concurrency available), but also how
+to design programs that are portable across the changing landscape of
+computer architectures with unique memory systems and programming
+models.  The fundamental question we address is what programming model
+and language constructs are best suited to span this set of new
+hardware designs.
 
 %% NEW - CER
 %%%We will examine how the existing data-parallel constructs in Fortran can be combined with coarrays or MPI to provide effectively a new parallel programming language, one that is evolutionary in nature and provides complete compatibility with existing applications and libraries.  Data parallelism is a high-level abstraction that is, at the same time, both easier to program and gives the compiler more leeway (if fully exploited) in retargeting a program to different computer architectures.
 
-A data parallel programming model is well suited to emerging
-architectures that are based on either vector processing or massively
-parallel collections of simple cores.  A popular trend for programming
-systems such as GPU accelerators is the CUDA language from NVidia, or
-new languages like Chapel from Cray.  A less intrusive approach that
-is well suited to legacy applications and languages are language
+A common theme amongst new processors is the emphasis on data parallel
+programming.  This model is well suited to emerging architectures that
+are based on either vector processing or massively parallel
+collections of simple cores.  A popular trend for programming systems
+such as GPU accelerators is the CUDA language from NVidia, or new
+languages like Chapel from Cray.  A less intrusive approach that is
+well suited to legacy applications and languages are language
 extensions or libraries that allow programmers to avoid adopting
 entirely new languages.  The recent OpenCL specification is intended
 to support this programming model, as are directive-based methods such
 as OpenMP or the Accelerator programming model from the Portland
 Group~\cite{pgi10accelerator}.
 
-The problem with many of these choices is that they expose too much detail
-about the machine architecture to the programmer.  
-This is particularly true of CUDA and OpenCL.  In CUDA, programmers must
-adapt their codes to fit the threading model used by NVidia GPUs, while
+The problem with many of these choices is that they expose too much
+detail about the machine architecture to the programmer.  This is
+particularly true of CUDA and OpenCL.  In CUDA, programmers must adapt
+their codes to fit the threading model used by NVidia GPUs, while
 OpenCL requires programmers to provide specially tuned versions of
-their code for different classes of machine.  In both cases, the programmer
-is also responsible for explicitly managing memory, including staging of
-data back and forth from the host CPU and the accelerator device memory.
-While these models have been attractive as a method for early adopters
-to utilize these new architectures, they are less attractive to programmers
-who do not have the time or resources to manually port their code to every
-new architecture and programming model that emerges.
+their code for different classes of machine.  In both cases, the
+programmer is also responsible for explicitly managing memory,
+including staging of data back and forth from the host CPU and the
+accelerator device memory.  While these models have been attractive as
+a method for early adopters to utilize these new architectures, they
+are less attractive to programmers who do not have the time or
+resources to manually port their code to every new architecture and
+programming model that emerges.
 
-At this point in time it is not really possible to write once and
-run efficiently on the wide variety of computer platforms we have
-available.  For some classes of applications, we believe that this goal
-is possible using language constructs already present in a popular
-mainstream scientific programming language -- Fortran.
-A common, long-standing tongue-in-cheek response to new language developments
-in the scientific and high performance computing community is that a new language
-will arise to answer the needs of new systems, and it will be called Fortran.  
-We believe that the work presented in this paper validates that notion -- 
-we need a new language to work with, and that language is Fortran.
+At this point in time it is not really possible to write once and run
+efficiently on the wide variety of computer platforms we have
+available.  For some classes of applications, we believe that this
+goal is possible using language constructs already present in a
+popular mainstream scientific programming language -- Fortran.  A
+common, long-standing tongue-in-cheek response to new language
+developments in the scientific and high performance computing
+community is that a new language will arise to answer the needs of new
+systems, and it will be called Fortran.  We believe that the work
+presented in this paper validates that notion -- we need a new
+language to work with, and that language is Fortran.
 
 \subsection{Approach}
 
