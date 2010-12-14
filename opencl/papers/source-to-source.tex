@@ -1,23 +1,100 @@
 \section{Source-To-Source Transformations}
 
-% TODO - craig - I need to go through this section and replace PetaVision
-% with the shallow water code
+This section describes the transformations that take Fortran elemental and pure procedures
+as input and generate OpenCL kernels.
+
+\subsection{OpenCL}
+
+OpenCL~\cite{opencl:standard} is an open language standard for developing
+applications for accelerators.  The C-based language provides extensions for
+programming kernels that run on accelerator processing elements.  The kernels
+are run by calling a C runtime library from the OpenCL host (normally the
+CPU).  Efforts to standardize a C++ runtime are underway and Fortran
+interfaces to the C runtime are described later.
+
+An important concept in OpenCL is that of a thread and a thread group.  Thread
+groups are used to run an OpenCL kernel concurrently on several processor
+elements on the OpenCL device (often a GPU).  Consider a data-parallel
+statement written in terms of an elemental fuction as discussed above.  The
+act of running an OpenCL kernel can be thought of as having a particular
+thread assigned to each instance of the call to the elemental function as it
+is mapped across the arrays in the data-parallel statement.  In practice,
+these threads are packaged into thread groups when they are run on the device
+hardware.
+
+Device memory is separated hierarchically.  A thread instance has access to
+its own memory, thread groups to OpenCL local memory, and all thread groups
+have access to OpenCL global memory.  When multiple members of a thread group
+access the same memory elements, for example if {\tt region} or {\tt shift}
+functions are called, for performance reasons it is often best if global
+memory accessed by a thread group is copied into local memory.
+
+The \emph{region} and \emph{halo} constructs easily map onto the OpenCL memory
+hierarchy.  A schematic of this mapping is shown in Figure~\ref{fig:cl-memory}
+for a two-dimensional array with a 2x2 array of 4 thread groups.  The memory
+for the array and its halo are stored in global memory on the device as shown
+in the background layer of the figure.  The array copy in local memory is
+shown in the foreground divided into 4 \emph{local} tiles that partition the
+array.  Halo regions in global memory are shown in dark gray and halo regions
+in local memory are shown in light gray.
+
+We emphasize that the hierarchical distribution of memory used on the
+OpenCL device shown in Figure~\ref{fig:cl-memory} can be extended to include memory
+across MPI nodes as well.  In this case, the virtual global array is represented by the background
+layer (with its halo) and its partitions stored in the 4 MPI nodes shown in the
+foreground.
+
+Halo regions are constrained semantically so that they can not be written to
+by an OpenCL kernel because the \emph{region} and \emph{interior} functions
+return copies of the global memory.  Thus once memory for a halo region has
+been transferred into global device memory by all of the host nodes running
+MPI (before the OpenCL kernel is run), memory is in a consistent state so that
+the kernels are free to read from global device memory.  Because the local
+memory is a copy, it functions as a software cache for the local thread group.
+Thus the compiler must insert OpenCL barriers at proper locations in the code
+to insure that all threads have written to the local memory cache before any
+thread can read from the cache.  On exit from a kernel, the local memory cache
+is copied back to global memory for all \emph{interior} regions leaving global
+memory in a consistent state again.
 
 \subsection{ForOpenCL}
 
-ForOpenCL is library of Fortran modules.  It contains Fortran 2003 interface
-descriptions that allow language interoperability with the C OpenCL runtime.
+This work describes transformations that automatically create OpenCL kernel
+functions from Fortran pure and elemental procedures.  These transformations
+will not transform an entire program.  Users, for now, must explicitly replace
+calls to Fortran kernel procedures that run on the device, with calls to the
+OpenCL runtime that will run the kernel on the OpenCL host.  While these host
+transformations are straightforward using ROSE, they are outside the scope of
+this paper.
+
+In addition to the Fortran to OpenCL transformations, the
+ForOpenCL~\cite{http:ofp} library provides programmers with the ability to
+call the C OpenCL runtime from Fortran.  ForOpenCL is a set of Fortran modules
+providing Fortran 2003 interface descriptions and classes that allow language
+interoperability with the OpenCL runtime.
+
 
 \section{Transformation examples}
 
-This sections show short Fortran code examples and OpenCL equivalent.
-The notation uses uppercase for arrays and lowercase for scalar quantities.
-Interior array subsections are denoted by an i succeeding the array, e.g. Ai
-is the interior region of array A.
+This sections show short Fortran code examples and OpenCL equivalent.  The
+notation uses uppercase for arrays and lowercase for scalar quantities.
+Interior and region array copies are denoted by an i or an r preceeding the array.
+For example, {\tt iH = interior(H, halo)} is a local copy of interior region
+of array {\tt H} (representing height) in the shallow water code.
+
+\subsubsection{interior and region functions}
+
+While the serial versions of the interior and regions functions return an
+array copy, in OpenCL, these functions return a scalar quantity based on
+the location of a thread in a thread group and the relationship of its location
+to the array copy in local memory.  Because we assume there is a thread for
+every element in the interior, the array index is just the thread index adjusted
+for the halo.  Thus {\tt interior} and {\tt region} are just inline OpenCL
+functions provided by the ForOpenCL library.
 
 \subsubsection{array syntax}
 
-PetaVision updates the action potential with the statement,
+
 
 \begin{verbatim}
    V = V - iA*(V - v_rest)                  !! Fortran
