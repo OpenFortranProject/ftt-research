@@ -1,0 +1,71 @@
+\section{Shallow Water Model}
+
+A short description of the shallow water model goes here.
+
+\subsection{Serial code examples}
+
+The Fortran kernel procedure {\tt wave_advance} for the shallow water code
+is declared as:
+\begin{verbatim}
+   pure subroutine wave_advance(H, U, V, dx, dy, dt)
+      real, dimension(:,:), intent(inout) :: H, U, V
+      real, intent(in) :: dx, dy, dt
+      !$OFP CONTIGUOUS :: H, U, V
+      !$OFP KERNEL :: wave_advance
+   end subroutine
+\end{verbatim}
+where {\tt H, U}, and {\tt V} are start variables for height and
+$x$ and $y$ momentum respectively.  The \emph{OFP} compiler directives
+{\tt CONTIGUOUS} and {\tt KERNEL} are added because contiguous is Fortran
+2008 syntax (not in current compilers) and kernel is an \emph{OFP} extension.
+
+Temporary arrays are required for the interior copies {\tt iH, iU}, and
+{\tt iV} of the state variables and for the flux quantities {\tt Hx, Hy, Ux,
+Vx}, and {\tt Vy} defined on cell faces.  These temporary arrays are declared as,
+\begin{verbatim}
+   real, allocatable, dimension(:,:) :: iH, iU, iV
+   real, allocatable, dimension(:,:) :: Hx, Hy, Ux, Uy, Vx, Vy
+\end{verbatim}
+
+Halos variables for the interior and cell faces are defined as
+\begin{verbatim}
+   integer, dimension(4) :: halo, face_lt, face_rt, face_up, face_dn
+   halo    = [1,1,1,1]
+   face_lt = [0,1,1,1]; face_rt = [1,0,1,1]
+   face_dn = [1,1,0,1]; face_up = [1,1,1,0]
+\end{verbatim}
+Note that the halos for the four faces each have a 0 in the definition. Thus the returned
+array copy will have size that is larger than the interior regions that use {\tt [1,1,1,1]}.
+This is because there is one more cell face quantity than there are cells in a given direction.
+
+The Lax Wendrof (???) update algorithm for the shallow-water model has two steps.
+The fluxes are first updated on the cell faces, for example,
+\begin{verbatim}
+   Hx =           0.5 * ( region(H, face_lt) + region(H, face_rt) ) &
+        + (0.5*dt/dx) * ( region(U, face_lt) - region(U, face_rt) )
+\end{verbatim}
+updates the $x$-direction flux for the height state variable.
+
+Then second step uses these fluxes to update the interior regions for the state varaibles.
+For example,
+\begin{verbatim}
+   face_lt = [0,1,0,0];  face_rt = [1,0,0,0]
+   face_dn = [0,0,0,1];  face_up = [0,0,1,0]
+   iH = iH + (dt/dx) * ( region(Ux, face_lt) - region(Ux, face_rt) ) &
+           + (dt/dy) * ( region(Vy, face_dn) - region(Vy, face_up) )
+\end{verbatim}
+Note that face halos have been redefined so that the array copy returned by
+now has the same size as the interior region.
+
+These simple code segments show how the shallow water model is
+implemented in standard Fortran (2003) using the data-parallel
+programming model described above.  The resulting code is simple,
+consise, and easy to understand.  However it does \emph{not}
+necessarily perform well because of the temporary array variables,
+especially those produced by the {\tt region} function.  This is
+generally true of algorithms that use Fortran shift functions as well,
+as some Fortran compilers (e.g., gfortran) do not generate optimal
+code for shifts.  We note (as seen below) that these temporary array
+copies are replaced by scalars in the transformed Fortran code so
+there is no performance penalty for using data-parallel statements
+as outlined.
