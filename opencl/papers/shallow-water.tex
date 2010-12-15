@@ -1,6 +1,52 @@
 \section{Shallow Water Model}
 
-A short description of the shallow water model goes here.
+The numerical code used for this study is from a presentation at the
+NM Supercomputing Challenge~\cite{Robey07}.
+The algorithm solves the standard 2D Shallow Water equations. This
+algorithm is typical of a wide range of modeling equations based on
+conservation laws such as compressible fluid dynamics (CFD), elastic
+material waves, acoustics, electromagnetic waves and even traffic
+flow~\cite{Leveque02}. For the shallow water problem there are
+three equations with one based on conservation of mass and the other
+two on conservation of momentum.\begin{eqnarray*}
+h_{t}+(hu)_{x}+(hv)_{y} & = & 0\quad\mbox{(mass)}\\
+(hu)_{t}+(h{u}^{2}+\tfrac{1}{2}gh^{2})_{x}+(huv)_{y} & = & 0\mbox{\quad($x$-momentum)}\\
+(hv)_{t}+(huv)_{x}+(h{v}^{2}+\tfrac{1}{2}gh^{2})_{y} & = & 0\mbox{\quad($y$-momentum)}\end{eqnarray*}
+
+
+%h_{t}+(hu)_{x}+(hv)_{y} & = & 0\qquad\mbox{(conservation of mass)}\\
+%(hu)_{t}+(h{u}^{2}+\tfrac{1}{2}gh^{2})_{x}+(huv)_{y} & = & 0\mbox{\qquad(conservation of x-momentum)}\\
+%(hv)_{t}+(huv)_{x}+(h{v}^{2}+\tfrac{1}{2}gh^{2})_{y} & = & 0\mbox{\qquad(conservation of y-momentum)}\end{eqnarray*}
+
+
+where h = height of water column (mass), $u$ = x velocity, $v$ =
+y velocity, and $g$ = gravity. The height $h$ can be used for mass
+because of the simplification of a unit cell size and a uniform water
+density. Another simplifying assumption is that the water depth is
+small in comparison to length and width and so velocities in the z-direction
+can be ignored. A fixed time step is used for simplicity though it
+must be less than $dt\leqq(\sqrt{gh}+|u|)/dx$.
+
+The numerical method is a two-step Lax-Wendroff scheme. The method
+has some numerical oscillations with sharp gradients but is adequate
+for simulating smooth shallow-water flows. In the following explanation,
+$U$ is the conserved state variable at the center of the cell . This
+state variable, $U=(h,hu,hv)$ in the first term in the equations
+above. $F$ is the flux quantity that crosses the boundary of the cell
+and is subtracted from one cell and added to the other. The remaining
+terms after the first term are the flux terms in the equations above
+with one term for the flux in the x-direction and the next term for
+the flux in the y-direction. The first step estimates the values a
+half-step advanced in time and space on each face, using loops on
+the faces.\begin{eqnarray*}
+U_{i+\frac{1}{2},j}^{n+\frac{1}{2}} & = & (U_{i+1,j}^{n}+U_{i,j}^{n})/2+\frac{\triangle t}{2\triangle x}\left(F_{i+1,j}^{n}-F_{i,j}^{n}\right)\\
+U_{i,j+\frac{1}{2}}^{n+\frac{1}{2}} & = & (U_{i,j+1}^{n}+U_{i,j}^{n})/2+\frac{\triangle t}{2\triangle y}\left(F_{i,j+1}^{n}-F_{i,j}^{n}\right)\end{eqnarray*}
+
+
+The second step uses the estimated values from step 1 to compute the
+values at the next time step in a dimensionally unsplit loop.\[
+U_{i,j}^{n+1}=U_{i,j}^{n}-\frac{\triangle t}{\triangle x}(F_{i+\frac{1}{2},j}^{n+\frac{1}{2}}-F_{i-\frac{1}{2},j}^{n+\frac{1}{2}})-\frac{\triangle t}{\triangle y}(F_{i,j+\frac{1}{2}}^{n+\frac{1}{2}}-F_{i,j-\frac{1}{2}}^{n+\frac{1}{2}})\]
+
 
 \subsection{Serial code examples}
 
@@ -10,7 +56,7 @@ is declared as:
 {\small
 \begin{verbatim}
 pure subroutine wave_advance(H,U,V,dx,dy,dt)
-  real, dimension(:,:), intent(inout) :: H,U,V
+  real, dimension(:,:),intent(inout):: H,U,V
   real, intent(in) :: dx,dy,dt
   !$OFP CONTIGUOUS :: H,U,V
   !$OFP KERNEL :: wave_advance
@@ -54,7 +100,7 @@ there is one more cell face quantity than there are cells in a given
 direction.
 
 The Lax-Wendroff update algorithm for the shallow-water model has
-two steps.  The fluxes are first updated on the cell faces, for
+two steps.  The fluxes are first updated on cell faces, for
 example,
 
 {\small
@@ -66,6 +112,7 @@ Hx = 0.5*(region(H,face_lt)+ &
 \end{verbatim}
 }
 
+\noindent
 updates the $x$-direction flux for the height state variable.
 
 Then second step uses these fluxes to update the interior regions for
@@ -82,6 +129,7 @@ iH = iH + (dt/dx) * ( region(Ux, face_lt) - &
 \end{verbatim}
 }
 
+\noindent
 Note that face halos have been redefined so that the array copy
 returned by now has the same size as the interior region.
 

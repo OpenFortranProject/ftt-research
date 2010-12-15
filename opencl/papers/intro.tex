@@ -133,7 +133,7 @@ call the C OpenCL runtime and enable Fortran programmers to access OpenCL
 kernels.  Transformations are supplied that provide a mechanism for converting
 Fortran procedures written in the Fortran subset described in this paper to
 OpenCL kernels.  We use the ROSE compiler infrastructure \cite{rose-web} to develop
-these transformations.  ROSE uses the Open Fortran Parser \cite{ofp-web} to parse
+these transformations.  ROSE uses the Open Fortran Parser \cite{ofp:sf} to parse
 Fortran 2008 syntax and can output (unparse) to OpenCL.  Since ROSE's
 intermediate representation (IR) was constructed to represent multiple
 languages, it is relatively straightforward to transform high-level Fortran IR
@@ -238,7 +238,7 @@ History has also shown that an investment in rewriting code does not guarantee
 success either, as seen in an effort at LANL to modernize a legacy Fortran
 code with the the newer C++ POOMA framework.  This massive overhaul effort led
 to a code that was both slower and less flexible than the original Fortran
-\cite{pooma-cite}.  Similar experiences have occurred in the past, notably during the
+\cite{basili08hpc}.  Similar experiences have occurred in the past, notably during the
 devlopment of the Sisal language.
 
 Fortran is unique in that it has contained language features that are
@@ -299,9 +299,9 @@ around, explicit indexing will result in a loop such as:
 
 {\small
 \begin{verbatim}
-do i = 2,(n-1)
-  X(i) = (X(i-1) + X(i) + X(i+1)) / 3
-end do
+  do i = 2,(n-1)
+    X(i) = (X(i-1) + X(i) + X(i+1)) / 3
+  end do
 \end{verbatim}
 }
 
@@ -309,7 +309,7 @@ When shifts are employed, this can be expressed as:
 
 {\small
 \begin{verbatim}
-X = (cshift(X,-1) + X + cshift(X,1)) / 3
+  X = (cshift(X,-1) + X + cshift(X,1)) / 3
 \end{verbatim}
 }
 
@@ -351,10 +351,11 @@ an array.  For example, in the 1D averaging case stated above, a programmer woul
 define the computation in terms of the update that occurs at each index in terms
 of relative offsets from that index:
 
-\begin{verbatim}
-Write some ZPL
-\end{verbatim}
-
-This would then be executed over the entire array. {\bf more...}
-
-Stuff on stencil compilers?  No?
+%%TODO
+%%\begin{verbatim}
+%%Write some ZPL
+%%\end{verbatim}
+%%
+%%This would then be executed over the entire array. {\bf more...}
+%%
+%%Stuff on stencil compilers?  No?

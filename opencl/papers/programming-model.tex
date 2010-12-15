@@ -270,7 +270,7 @@ there are no explicit loops in this example.  The operators {\tt +},
 three-dimensional arrays {\tt Bz}, {\tt Ex}, and {\tt Ey},
 individually.  This is why data parallelism has been called
 collection-oriented programming by
-Blelloch~\cite{blelloch90,rajopadhyedidlacs}.  As the {\tt cshift}
+Blelloch~\cite{blelloch90,rajopadhye93}.  As the {\tt cshift}
 function and the array-valued expressions all semantically returns a
 value, this style of programming is also similar to functional
 programming (or value-oriented
@@ -304,16 +304,13 @@ seemingly conflicting goals of maintainability, portability, and performance.
 Unfortunately, this style of programming has never really caught on because
 when Fortran 90 was first introduced, performance was relatively poor and thus
 programmers shied away from using array syntax (even now, some are actively
-counseling against its usage because of performance issues~\cite{Cray-SC07}).
+counseling against its usage because of performance issues~\cite{Levesque:SC08}).
 Thus the Fortran community was caught in a classic ``chicken-and-egg''
 conundrum: (1) programmers didn't use it because it was slow; and (2)
 compilers vendors didn't improve it because programmers didn't use it.
-
-%% NEW - CER
 A goal of this paper is to demonstrate that parallel programs written in
-this style of Fortran are maintainable and can achieve good performance on a
-variety of processor architectures, including possibly, future terascale
-architectures from Intel (such as the XXX architecture).
+this style of Fortran are maintainable and can achieve good performance on
+accelerator architectures.
 
 \subsection{Limitations}
 
