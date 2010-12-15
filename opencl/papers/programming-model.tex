@@ -104,7 +104,7 @@ result.
 \subsubsection*{Pure procedures}
 
 Pure procedures, like elemental functions, must be free of side effects.
-(athough it may change the value of array elements in an array argument,
+(athough they may change the value of array elements in an array argument,
 unlike elemental arguments which must have the intent(in) attribute).
 The absence of side effects removes ordering constraints from the compiler
 allowing it to invoke pure functions out of order.  Procedures and functions
@@ -114,7 +114,7 @@ due to their suitability for compiler-level analysis.
 
 Since pure procedures don't have side effects they a candidates for running on
 accelerators in OpenCL.  Currently ForOpenCL transforms pure procedures to
-OpenCL kernels that emph{do not} call other procedures, except for elemental
+OpenCL kernels that \emph{do not} call other procedures, except for elemental
 functions.
 
 \subsubsection*{Shift functions}
@@ -156,27 +156,52 @@ Regions are similar to the shift operator as they can be used to reference
 portions of the array that are shifted with respect to the interior portion.
 However, unlike the shift operator, regions are not expressed in terms of
 boundary conditions and thus don't explicitly \emph{require} a knowledge of
-not the application of boundary conditions locally.  Thus, as will be shown
+nor the application of boundary conditions locally.  Thus, as will be shown
 below, regions are more suitable for usage by OpenCL thread groups which
 access only local subsections of an array stored in global memory.
 
-Unfortunately, as regions functions return pointers to arrays, they cannot
-be used in pure procedures in current Fortran.  We relax this constraint in
-ForOpenCL for region pointers only.
+\subsection{New Procedures}
 
-\subsection{New Functions}
+Unlike OpenMP, we require limited use of compiler directives, although
+two are used to enforce the semantics required by the programming
+model.  These directives are:
+\begin{itemize}
+   \item !$OFP CONTIGUOUS: specifies that an dummy array variable is
+   contiguous in memory. CONTIGUOUS is an attribute in Fortran 2008.
+   \item !$OFP KERNEL: specifies that a pure subroutine can be
+     transformed to an OpenCL kernel.
+\end{itemize}
 
-% TODO - Craig - describe these functions
-%   region
-%   interior (can be written in terms of regions) but also specifies the thread
-%       group domain)
-%   more ...
-%
+Three new procedures (in addition to the intrinsic shift function) are
+defined in Fortran that are used in array-syntax operations.  Each
+procedure takes a integer array halo argument that specifies the
+number of ghost cells on either side of a region, for each dimension.
+For example {\tt halo = [left, right, down, up]} specifies a halo for
+a two-dimensional region.  These functions are:
+\begin{itemize}
+   \item transfer_halo(array, halo): an impure subroutine that
+     exchanges halo regions between nodes using MPI or Fortran
+     coarrays. Array is the memory stored on the node representing the
+     node-local portion of a virtual global array. Not used in this work.
+   \item interior(array, halo): a pure function that returns a copy of
+     the interior portion of the array specified by halo. Array is
+     local to a node.
+   \item region(array, halo): a pure function that returns a copy of
+     the portion of the array specified by halo.  Array is local to a node.
+\end{itemize}
 
+It should be noted that the two functions {\tt interior} and {\tt
+  region} are pure and thus can be called from within a pure kernel
+procedure.  These two functions are part of the language recognized by
+the compiler and though the two functions return a copy of a portion
+of an array \emph{semantically}, the compiler is not forced to
+actually make a copy and is free to enforce copy semantics through
+other means.
 
 \subsection{Parallelism}
 
-% TODO - Matt - do you want a try at this.
+% TODO - Matt - do you want a try at this.  Not sure we have room for
+% this subsection. I briefly mention node parallelism in other sections.
 
 % need to describe processor hierarchy of nodes and accelerators
 % need to describe memory hierarchy as well in regards to global array view,
@@ -193,7 +218,7 @@ and pure and elemental functions:
 	\item There are no loops or index variables to keep track of.  Off by one
 index errors are a common programming mistake.
         \item The written code is closer to the algorithm, easier to understand, and is usually substantially shorter.
-	\item Semantically the intrinsic functions return arrays by value (though not regions).  This is usually what the algorithm requires.
+	\item Semantically the intrinsic functions return arrays by value.  This is usually what the algorithm requires.
 	\item Because pure and elemental function are free from side effects, it is easier for a compiler to schedule the work to be done in parallel.
 \end{itemize}
 
@@ -268,6 +293,12 @@ Fortran procedures to OpenCL kernels.
 Only elemental functions may be called from kernel functions.  These include
 fortran functions that have an OpenCL analog and user-defined elemental functions.
 
-Array sizes must be multiples of the local kernel size,
-{\tt get\_local\_size(0)*get\_local\_size(1)}.  This may be relaxed in the future.
+A kernel procedure (specified by the !$OFP KERNEL directive) must be
+pure and all array variables must be declared as contiguous.  A kernel
+procedure may not call other procedures except for limited intrisic
+functions (primarily math), user-defined elemental function, and the
+{\tt interior} and {\tt region} functions.
 
+Array sizes must be multiples of the local kernel size, {\tt
+  get\_local\_size(0)*get\_local\_size(1)}.  This may be relaxed in
+the future.
