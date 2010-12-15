@@ -104,10 +104,10 @@ functions provided by the ForOpenCL library.
 \subsubsection{function and variable declarations}
 
 Fortran kernel procedures have direct correspondence with OpenCL equivalents.
-For example, {\tt wave_advance} is transformed as {\tt __kernel void
-  wave_advance(__ global float * H, ..., float dt);}.  The global state
-variables have local equivalents, e.g., {\tt __local float
-  H_local[MAX_LOCAL_SIZE]}, declared with the appropriate size and are copied
+For example, {\tt wave\_advance} is transformed as {\tt \_\_kernel void
+  wave\_advance(\_\_ global float * H, ..., float dt);}.  The global state
+variables have local equivalents, e.g., {\tt \_\_local float
+  H\_local[MAX\_LOCAL\_SIZE]}, declared with the appropriate size and are copied
 to local memory by the compiler with inlined library functions.  The flux
 array temporaries (region variables) are declared similarly but initialized to
 zero with inlined library functions.  Interior variables are simple scalars,
@@ -129,10 +129,10 @@ Region variables are more complicated because they are arrays.
    Hx[l] = 0.5 * ( region(H_local, face_lt) + ... );
 \end{verbatim}
 where {\tt l = LX + LY*(NLX+halo(0)+halo(1)))} is a local index variable, {\tt
-  LX = get_local_id(0)} is the local thread id in the $x$ dimension, {\tt LY =
-  get_local_id(1)} is the local thread id in the $y$ dimension, {\tt NLX =
-  get_local_size(0)} is the size of the thread group in the $x$ dimension, and
-the {\tt get_local_id} and {\tt get_local_size} functions are defined by the
+  LX = get\_local\_id(0)} is the local thread id in the $x$ dimension, {\tt LY =
+  get\_local\_id(1)} is the local thread id in the $y$ dimension, {\tt NLX =
+  get\_local\_size(0)} is the size of the thread group in the $x$ dimension, and
+the {\tt get\_local\_id} and {\tt get\_local\_size} functions are defined by the
 OpenCL compiler.
 
 
@@ -160,9 +160,9 @@ good results of roughly 65 times speedup over the best Fortran code and YYY
 speedup over the original C code.  It comes with XXX \% of the hand coded
 OpenCL version.
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=2.5in]{cl-performance.pdf}
-\caption{Performance comparison for varying array size.}
-\label{fig:cl-performance}
-\end{figure}
+%\begin{figure}[!t]
+%\centering
+%\includegraphics[width=2.5in]{cl-performance.pdf}
+%\caption{Performance comparison for varying array size.}
+%\label{fig:cl-performance}
+%\end{figure}

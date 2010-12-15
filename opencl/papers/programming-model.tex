@@ -166,9 +166,9 @@ Unlike OpenMP, we require limited use of compiler directives, although
 two are used to enforce the semantics required by the programming
 model.  These directives are:
 \begin{itemize}
-   \item !$OFP CONTIGUOUS: specifies that an dummy array variable is
+   \item {\tt \!\$OFP CONTIGUOUS}: specifies that an dummy array variable is
    contiguous in memory. CONTIGUOUS is an attribute in Fortran 2008.
-   \item !$OFP KERNEL: specifies that a pure subroutine can be
+   \item {\tt \!\$OFP KERNEL}: specifies that a pure subroutine can be
      transformed to an OpenCL kernel.
 \end{itemize}
 
@@ -179,14 +179,14 @@ number of ghost cells on either side of a region, for each dimension.
 For example {\tt halo = [left, right, down, up]} specifies a halo for
 a two-dimensional region.  These functions are:
 \begin{itemize}
-   \item transfer_halo(array, halo): an impure subroutine that
+   \item {\tt transfer\_halo(array, halo)}: an impure subroutine that
      exchanges halo regions between nodes using MPI or Fortran
      coarrays. Array is the memory stored on the node representing the
      node-local portion of a virtual global array. Not used in this work.
-   \item interior(array, halo): a pure function that returns a copy of
+   \item {\tt interior(array, halo)}: a pure function that returns a copy of
      the interior portion of the array specified by halo. Array is
      local to a node.
-   \item region(array, halo): a pure function that returns a copy of
+   \item {\tt region(array, halo)}: a pure function that returns a copy of
      the portion of the array specified by halo.  Array is local to a node.
 \end{itemize}
 
@@ -293,7 +293,7 @@ Fortran procedures to OpenCL kernels.
 Only elemental functions may be called from kernel functions.  These include
 fortran functions that have an OpenCL analog and user-defined elemental functions.
 
-A kernel procedure (specified by the !$OFP KERNEL directive) must be
+A kernel procedure (specified by the {\tt \!\$OFP KERNEL} directive) must be
 pure and all array variables must be declared as contiguous.  A kernel
 procedure may not call other procedures except for limited intrisic
 functions (primarily math), user-defined elemental function, and the
