@@ -132,8 +132,8 @@ We provide (via Fortran interfaces in the ForOpenCL library) a mechanism to
 call the C OpenCL runtime and enable Fortran programmers to access OpenCL
 kernels.  Transformations are supplied that provide a mechanism for converting
 Fortran procedures written in the Fortran subset described in this paper to
-OpenCL kernels.  We use the ROSE compiler infrastructure \cite{} to develop
-these transformations.  ROSE uses the Open Fortran Parser \cite{} to parse
+OpenCL kernels.  We use the ROSE compiler infrastructure \cite{rose-web} to develop
+these transformations.  ROSE uses the Open Fortran Parser \cite{ofp-web} to parse
 Fortran 2008 syntax and can output (unparse) to OpenCL.  Since ROSE's
 intermediate representation (IR) was constructed to represent multiple
 languages, it is relatively straightforward to transform high-level Fortran IR
@@ -238,7 +238,7 @@ History has also shown that an investment in rewriting code does not guarantee
 success either, as seen in an effort at LANL to modernize a legacy Fortran
 code with the the newer C++ POOMA framework.  This massive overhaul effort led
 to a code that was both slower and less flexible than the original Fortran
-\cite{}.  Similar experiences have occurred in the past, notably during the
+\cite{pooma-cite}.  Similar experiences have occurred in the past, notably during the
 devlopment of the Sisal language.
 
 Fortran is unique in that it has contained language features that are
