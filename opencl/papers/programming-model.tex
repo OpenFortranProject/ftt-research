@@ -38,11 +38,11 @@ metadata allows the use of array notation whereby explicit indexing of arrays
 is not required. For example, if {\tt A}, {\tt B}, and {\tt C} are all arrays
 of the same rank and shape and {\tt s} is a scalar, then the statement
 
+{\small
 \begin{verbatim}
-
  C = A + s*B
-
 \end{verbatim}
+}
 
 results in the sum of elements of {\tt A} and {\tt s} times the elements of
 {\tt B} being stored in the corresponding elements of {\tt C}. The first
@@ -74,20 +74,24 @@ data parallel programming, and as a result must be side effect free (or,
 An example of shown above using array syntax could be refactored to use
 the elemental function,
 
+{\small
 \begin{verbatim}
-   pure elemental real function elem_example(a, b, s)
-      real, intent(in) :: a, b, s
-      elem_example = a + s*b
-   end function
+  pure elemental real function foo(a, b, s)
+    real, intent(in) :: a, b, s
+    foo = a + s*b
+  end function
 \end{verbatim}
+}
 
-and called with
+\noindent and called with
 
+{\small
 \begin{verbatim}
-   C = elem_example(A, B, s)
+  C = foo(A, B, s)
 \end{verbatim}
+}
 
-Note that while {\tt elem\_example} is defined in terms of purely scalar
+Note that while {\tt foo} is defined in terms of purely scalar
 quantities, it can be \emph{applied} to arrays as shown.
 
 While this may seem like a trivial example, such simple functions may be
@@ -225,12 +229,13 @@ index errors are a common programming mistake.
 %% NEW - CER
 An example of this style of programming in Fortran is shown in
 
+{\small
 \begin{verbatim}
-
-  Bz = Bz + dt * (cshift(Ex,dim=2,shift=+1) - Ex) / dy  &
-          - dt * (cshift(Ey,dim=1,shift=+1) - Ey) / dx
-
+  Bz = Bz &
+     + dt*(cshift(Ex,dim=2,shift=+1)-Ex)/dy &
+     - dt*(cshift(Ey,dim=1,shift=+1)-Ey)/dx
 \end{verbatim}
+}
 
 %% NEW - CER
 This example is a solution to Maxwell's equations for the $z$ component of the
