@@ -119,15 +119,24 @@ regions are shifted and thus \emph{shared} by threads within a thread group.
 Array syntax transforms nearly directly to OpenCL code.  For example, interior
 variables are particularly straightforward as they as scalar quantities in
 OpenCL,
+
+{\small
 \begin{verbatim}
-   iH = iH + (dt/dx) * ( region(Ux, face_lt) - region(Ux, face_rt) )
-           + (dt/dy) * ( region(Vy, face_dn) - region(Vy, face_up) );
+iH = iH + (dt/dx) * (region(Ux, face_lt) - 
+                     region(Ux, face_rt) )
+        + (dt/dy) * (region(Vy, face_dn) - 
+                     region(Vy, face_up) );
 \end{verbatim}
+}
 
 Region variables are more complicated because they are arrays.
+
+{\small
 \begin{verbatim}
-   Hx[l] = 0.5 * ( region(H_local, face_lt) + ... );
+Hx[l] = 0.5 * (region(H_local, face_lt)+ ...);
 \end{verbatim}
+}
+
 where {\tt l = LX + LY*(NLX+halo(0)+halo(1)))} is a local index variable, {\tt
   LX = get\_local\_id(0)} is the local thread id in the $x$ dimension, {\tt LY =
   get\_local\_id(1)} is the local thread id in the $y$ dimension, {\tt NLX =
