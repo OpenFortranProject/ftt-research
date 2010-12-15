@@ -143,9 +143,9 @@ different versions of the serial shallow-water code.  The serial versions
 include the original written in C and two Fortran versions: one using copy
 semantics for the regions and one using reference semantics.  We also compare
 with a hand written OpenCL implementation that was optimized for local memory
-usage (no array temporaries).  The measurments were made using an NVIDIA Fermi
-GPU (TODO - need model numbers) running at XXX Hz and a VENDOR hexacore CPU
-running at XXX Hz.  The compilers were gfortran and gcc VERSIONS with
+usage (no array temporaries).  The measurments were made using an NVIDIA Tesla C2050
+GPU (TODO - need model numbers) running at XXX Hz and an Intel XXX hexacore CPU
+running at XXX Hz with 2.56 GB of RAM.  The compilers were gfortran and gcc VERSIONS with
 optimization of -O3.
 
 The performance comparison is shown in Figure~\ref{fig:cl-performance} for
