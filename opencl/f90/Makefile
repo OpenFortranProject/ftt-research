@@ -107,7 +107,7 @@ OBJS = Timer.o OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o
 
 LIBS += $(OBJS)
 
-APPS = test_shift update_weights bandwidth shallow_water shallow_water_f
+APPS = test_shift update_weights bandwidth transpose shallow_water shallow_water_f
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
@@ -130,6 +130,9 @@ update_weights: update_weights.o $(OBJS)
 bandwidth: bandwidth.o $(OBJS)
 	$(LINK) -o $@ $< $(LIBS)
 
+transpose: transpose.o $(OBJS)
+	$(LINK) -o $@ $< $(LIBS)
+
 opencl_utils.o: ../c/opencl_utils.c
 	$(CC) -c $(CFLAGS) $<
 
@@ -146,6 +149,8 @@ test_shift_impl.o: test_shift_impl.f90
 update_weights.o: update_weights.f90 $(OBJS)
 
 bandwidth.o: bandwidth.f90 $(OBJS)
+
+transpose.o: transpose.f90 $(OBJS)
 
 OpenCL.o: OpenCL.f90 CLBuffer.o CLDevice.o OpenCLTypes.o OpenCLInterfaces.o
 
