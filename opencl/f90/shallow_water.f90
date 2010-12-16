@@ -76,9 +76,9 @@ program shallow_water
    status = setKernelArgLoc (kernel, 6, 9*tile_mem_size)
 !   status = setKernelArgLoc (kernel, 6, 1*tile_mem_size)
 
-print*, "warmup"
    ! warmup the kernel
    !
+   print *, "warmup"
    do i = 1, nWarm
       status = run(kernel, NX, NY, nxLocal, nyLocal)
    end do
