@@ -79,7 +79,7 @@ __kernel void wave_advance (
    float iH, iU, iV;
 
    // scalar quantities
-   float cs, gs, dtdx, dtdx2;
+   float cs, gs, dtdx, dtdy, dtdx2, dtdy2;
 
    // these will likely be needed by all kernels
    const int2 t_size = {get_local_size(0) + 2*NPAD, get_local_size(1) + 2*NPAD};
@@ -128,7 +128,9 @@ __kernel void wave_advance (
 
    gs = 0.5 * 9.8;
    dtdx = dt/dx;
+   dtdy = dt/dx;
    dtdx2 = 0.5 * dt/dx;
+   dtdy2 = 0.5 * dt/dy;
 
    face_lt = (int4) (0,1,1,1);
    face_rt = (int4) (1,0,1,1);
@@ -156,17 +158,17 @@ __kernel void wave_advance (
 
    // height
    Hy[kl] =     0.5 * ( H_tile[k_dn] + H_tile[k_up] )
-            + dtdx2 * ( U_tile[k_dn] - U_tile[k_up] );
+            + dtdy2 * ( U_tile[k_dn] - U_tile[k_up] );
 
    // x momentum
    Uy[kl] =     0.5 * ( U_tile[k_dn] + U_tile[k_up] )
-            + dtdx2 * ( U_tile[k_dn] * V_tile[k_dn] / H_tile[k_dn] )
-            - dtdx2 * ( U_tile[k_up] * V_tile[k_up] / H_tile[k_up] );
+            + dtdy2 * ( U_tile[k_dn] * V_tile[k_dn] / H_tile[k_dn] )
+            - dtdy2 * ( U_tile[k_up] * V_tile[k_up] / H_tile[k_up] );
 
    // x momentum
    Vy[kl] =     0.5 * ( V_tile[k_dn] + V_tile[k_up] )
-            + dtdx2 * ( V_tile[k_dn]*V_tile[k_dn] / H_tile[k_dn] + gs*H_tile[k_dn]*H_tile[k_dn] )
-            - dtdx2 * ( V_tile[k_up]*V_tile[k_up] / H_tile[k_up] + gs*H_tile[k_up]*H_tile[k_up] );
+            + dtdy2 * ( V_tile[k_dn]*V_tile[k_dn] / H_tile[k_dn] + gs*H_tile[k_dn]*H_tile[k_dn] )
+            - dtdy2 * ( V_tile[k_up]*V_tile[k_up] / H_tile[k_up] + gs*H_tile[k_up]*H_tile[k_up] );
 
    if (KXL < 1) {
       kl   += get_local_size(0);
@@ -200,17 +202,17 @@ __kernel void wave_advance (
 
       // height
       Hy[kl] =     0.5 * ( H_tile[k_dn] + H_tile[k_up] )
-               + dtdx2 * ( U_tile[k_dn] - U_tile[k_up] );
+               + dtdy2 * ( U_tile[k_dn] - U_tile[k_up] );
 
       // x momentum
       Uy[kl] =     0.5 * ( U_tile[k_dn] + U_tile[k_up] )
-               + dtdx2 * ( U_tile[k_dn] * V_tile[k_dn] / H_tile[k_dn] )
-               - dtdx2 * ( U_tile[k_up] * V_tile[k_up] / H_tile[k_up] );
+               + dtdy2 * ( U_tile[k_dn] * V_tile[k_dn] / H_tile[k_dn] )
+               - dtdy2 * ( U_tile[k_up] * V_tile[k_up] / H_tile[k_up] );
 
       // x momentum
       Vy[kl] =     0.5 * ( V_tile[k_dn] + V_tile[k_up] )
-               + dtdx2 * ( V_tile[k_dn]*V_tile[k_dn] / H_tile[k_dn] + gs*H_tile[k_dn]*H_tile[k_dn] )
-               - dtdx2 * ( V_tile[k_up]*V_tile[k_up] / H_tile[k_up] + gs*H_tile[k_up]*H_tile[k_up] );
+               + dtdy2 * ( V_tile[k_dn]*V_tile[k_dn] / H_tile[k_dn] + gs*H_tile[k_dn]*H_tile[k_dn] )
+               - dtdy2 * ( V_tile[k_up]*V_tile[k_up] / H_tile[k_up] + gs*H_tile[k_up]*H_tile[k_up] );
 
       kl   -= get_local_size(1) * t_size.s0;
       k_lt -= get_local_size(1) * t_size.s0;
@@ -235,19 +237,19 @@ __kernel void wave_advance (
 
    // height
    H[k] = iH + dtdx * ( Ux[k_lt] - Ux[k_rt] )
-             + dtdx * ( Vy[k_dn] - Vy[k_up] );
+             + dtdy * ( Vy[k_dn] - Vy[k_up] );
 
    // x momentum
    U[k] = iU + dtdx * ( Ux[k_lt]*Ux[k_lt] / Hx[k_lt] + gs*Hx[k_lt]*Hx[k_lt] )
              - dtdx * ( Ux[k_rt]*Ux[k_rt] / Hx[k_rt] + gs*Hx[k_rt]*Hx[k_rt] )
-             + dtdx * ( Uy[k_dn] * Vy[k_dn] / Hy[k_dn] )
-             - dtdx * ( Uy[k_up] * Vy[k_up] / Hy[k_up] );
+             + dtdy * ( Uy[k_dn] * Vy[k_dn] / Hy[k_dn] )
+             - dtdy * ( Uy[k_up] * Vy[k_up] / Hy[k_up] );
 
    // y momentum
    V[k] = iV + dtdx * ( Ux[k_dn] * Vx[k_dn] / Hx[k_dn] )
              - dtdx * ( Ux[k_up] * Vx[k_up] / Hx[k_up] )
-             + dtdx * ( Vy[k_lt]*Vy[k_lt] / Hy[k_lt] + gs*Hy[k_lt]*Hy[k_lt] )
-             - dtdx * ( Vy[k_rt]*Vy[k_rt] / Hy[k_rt] + gs*Hy[k_rt]*Hy[k_rt] );
+             + dtdy * ( Vy[k_lt]*Vy[k_lt] / Hy[k_lt] + gs*Hy[k_lt]*Hy[k_lt] )
+             - dtdy * ( Vy[k_rt]*Vy[k_rt] / Hy[k_rt] + gs*Hy[k_rt]*Hy[k_rt] );
 
 #else
 
