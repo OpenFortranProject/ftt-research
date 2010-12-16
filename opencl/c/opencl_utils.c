@@ -103,6 +103,9 @@ void stop_on_error(int code)
    switch (code) {
       case CL_SUCCESS:
          return;
+      case CL_INVALID_ARG_INDEX:
+         sprintf(msg, "%s (%d)", "CL_INVALID_ARG_INDEX", code);
+         break;
       case CL_INVALID_ARG_SIZE:
          sprintf(msg, "%s (%d)", "CL_INVALID_ARG_SIZE", code);
          break;
@@ -142,11 +145,14 @@ void stop_on_error(int code)
       case CL_INVALID_QUEUE_PROPERTIES:
          sprintf(msg, "%s (%d)", "CL_INVALID_QUEUE_PROPERTIES", code);
          break;
+      case CL_INVALID_VALUE:
+         sprintf(msg, "%s (%d)", "CL_INVALID_VALUE", code);
+         break;
       case CL_INVALID_WORK_GROUP_SIZE:
          sprintf(msg, "%s (%d)", "CL_INVALID_WORK_GROUP_SIZE", code);
          break;
-      case CL_INVALID_VALUE:
-         sprintf(msg, "%s (%d)", "CL_INVALID_VALUE", code);
+      case CL_OUT_OF_RESOURCES:
+         sprintf(msg, "%s (%d)", "CL_OUT_OF_RESOURCES", code);
          break;
       default:
          sprintf(msg, "%s (%d)\n", "UNKNOWN_CODE", code);
