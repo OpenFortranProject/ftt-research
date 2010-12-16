@@ -60,6 +60,7 @@
 \usepackage{cite}
 \usepackage{graphicx}
 \usepackage[cmex10]{amsmath}
+\usepackage{amssymb}
 \usepackage{array}
 \usepackage{url}
 \usepackage{listings}
@@ -81,11 +82,22 @@
 %Portland, OR 97204\\
 Email: matt@galois.com}
 \and
-\IEEEauthorblockN{Craig E Rasmussen}
+\IEEEauthorblockN{Craig E Rasmussen,\\
+                  Wayne N. Weseloh,\\
+                  Robert W. Robey}
 \IEEEauthorblockA{Los Alamos National Laboratory\\
 %CCS-7, MS B287\\
 %Los Alamos, NM\\
 Email: rasmussn@lanl.gov}
+
+\and
+\IEEEauthorblockN{Daniel Quinlan}
+\IEEEauthorblockA{Lawrence Livermore\\ National Laboratory}
+
+\and
+\IEEEauthorblockN{Jeffrey Overbey}
+\IEEEauthorblockA{Indiana University}
+
 }
 
 \begin{document}
@@ -107,10 +119,8 @@ based on a mapping from Fortran 90 to C++ code with OpenCL extensions.
 \input{programming-model}
 \input{shallow-water}
 \input{source-to-source}
-\input{static-analysis}
-
-
-\section{Performance}
+%\input{static-analysis}
+\input{performance}
 
 \section{Conclusions}
 
@@ -137,9 +147,7 @@ architecture or to know OpenCL.
 % Summarize results
 
 
-\section{Junk}
-
-\cite{chamberlain04zpl, roth97stencils}
+%%TODO \cite{chamberlain04zpl, roth97stencils}
 
 \bibliographystyle{IEEEtran}
 \bibliography{IEEEabrv,foropencl}

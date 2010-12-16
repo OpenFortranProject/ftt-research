@@ -5,7 +5,7 @@ pure procedures as input and generate OpenCL kernels.
 
 \subsection{OpenCL}
 
-OpenCL~\cite{opencl:standard} is an open language standard for developing
+OpenCL~\cite{opencl08} is an open language standard for developing
 applications for accelerators.  The C-based language provides extensions for
 programming kernels that run on accelerator processing elements.  The kernels
 are run by calling a C runtime library from the OpenCL host (normally the
@@ -68,7 +68,7 @@ memory in a consistent state again.
 \subsection{ForOpenCL}
 
 This work describes transformations that automatically create OpenCL kernel
-functions from Fortran pure and elemental procedures.  These transformations
+functions from Fortran pure and elemental procedures.  At present, these transformations
 will not transform an entire program.  Users, for now, must explicitly replace
 calls to Fortran kernel procedures that run on the device, with calls to the
 OpenCL runtime that will run the kernel on the OpenCL host.  While these host
@@ -76,7 +76,7 @@ transformations are straightforward using ROSE, they are outside the scope of
 this paper.
 
 In addition to the Fortran to OpenCL transformations, the
-ForOpenCL~\cite{http:ofp} library provides programmers with the ability to
+ForOpenCL~\cite{ofp:sf} library provides programmers with the ability to
 call the C OpenCL runtime from Fortran.  ForOpenCL is a set of Fortran modules
 providing Fortran 2003 interface descriptions and classes that allow language
 interoperability with the OpenCL runtime.
@@ -143,35 +143,3 @@ where {\tt l = LX + LY*(NLX+halo(0)+halo(1)))} is a local index variable, {\tt
   get\_local\_size(0)} is the size of the thread group in the $x$ dimension, and
 the {\tt get\_local\_id} and {\tt get\_local\_size} functions are defined by the
 OpenCL compiler.
-
-
-\subsection{Performance measurements}
-
-Performance measurements were made comparing the transformed code with
-different versions of the serial shallow-water code.  The serial versions
-include the original written in C and two Fortran versions: one using copy
-semantics for the regions and one using reference semantics.  We also compare
-with a hand written OpenCL implementation that was optimized for local memory
-usage (no array temporaries).  The measurments were made using an NVIDIA Tesla C2050
-GPU (TODO - need model numbers) running at XXX Hz and an Intel XXX hexacore CPU
-running at XXX Hz with 2.56 GB of RAM.  The compilers were gfortran and gcc VERSIONS with
-optimization of -O3.
-
-The performance comparison is shown in Figure~\ref{fig:cl-performance} for
-varying array sizes (of the state variables).  The time represents an average
-of 100 iterations of the outer time-advance loop calling the OpenCL kernel.
-This tight loop keeps the OpenCL kernel supplied with threads to take
-advantage of potential latency hiding by the NVIDIA GPU.  Any serial code
-within this loop would reduce the measured values.
-
-As can be seen in Figure~\ref{fig:cl-performance}, the transformed get very
-good results of roughly 65 times speedup over the best Fortran code and YYY
-speedup over the original C code.  It comes with XXX \% of the hand coded
-OpenCL version.
-
-%\begin{figure}[!t]
-%\centering
-%\includegraphics[width=2.5in]{cl-performance.pdf}
-%\caption{Performance comparison for varying array size.}
-%\label{fig:cl-performance}
-%\end{figure}
