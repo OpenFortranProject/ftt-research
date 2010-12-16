@@ -57,7 +57,7 @@ program test_shift
    integer(c_size_t) :: global_ex_mem_size = (NX +2*NPAD)*(NY +2*NPAD) * SIZE_ELEMENT
    integer(c_size_t) :: local_ex_mem_size  = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_ELEMENT
 
-   type(CPUTimer) :: timer
+    type(CPUTimer) :: timer
    real(c_double) :: h_time
 
    integer :: nxGlobal=NX, nyGlobal=NY
