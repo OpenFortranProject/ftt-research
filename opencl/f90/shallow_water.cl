@@ -1,6 +1,10 @@
 #define DO_COMPUTATION
+#undef  AUTO_ARRAYS
 
-#define NPAD 1
+#define NPAD  1
+#define WSIZE 16
+
+#define LSIZE ((WSIZE+2*NPAD)*(WSIZE+2*NPAD))
 
 #define KXL get_local_id(0)
 #define KYL get_local_id(1)
@@ -60,8 +64,13 @@ __kernel void wave_advance (
           __global float * U,
           __global float * V,
           float dx,
+          float dy,
+#ifdef AUTO_ARRAYS
+          float dt)
+#else
           float dt,
           __local float * tiles )
+#endif
 {
    int k_lt, k_rt, k_up, k_dn;
    int4 halo, face_lt, face_rt, face_up, face_dn;
@@ -86,25 +95,28 @@ __kernel void wave_advance (
    //
    
    // explicit temporaries
+   //
+#ifdef AUTO_ARRAYS
+   __local float * H_tile, * U_tile, * V_tile;
+   __local float Hx[LSIZE], Hy[LSIZE], Ux[LSIZE], Uy[LSIZE], Vx[LSIZE], Vy[LSIZE];
+#else
    __local float * Hx, * Hy, * Ux, * Uy, * Vx, * Vy;
-
-   Hx = TILE_OFFSET(tiles, 0, t_size);
-   Hy = TILE_OFFSET(tiles, 1, t_size);
-   Ux = TILE_OFFSET(tiles, 2, t_size);
-   Uy = TILE_OFFSET(tiles, 3, t_size);
-   Vx = TILE_OFFSET(tiles, 4, t_size);
-   Vy = TILE_OFFSET(tiles, 5, t_size);
+   __local float * H_tile = TILE_OFFSET(tiles, 0, t_size);
+   __local float * U_tile = TILE_OFFSET(tiles, 1, t_size);
+   __local float * V_tile = TILE_OFFSET(tiles, 2, t_size);
+   Hx = TILE_OFFSET(tiles, 3, t_size);
+   Hy = TILE_OFFSET(tiles, 4, t_size);
+   Ux = TILE_OFFSET(tiles, 5, t_size);
+   Uy = TILE_OFFSET(tiles, 6, t_size);
+   Vx = TILE_OFFSET(tiles, 7, t_size);
+   Vy = TILE_OFFSET(tiles, 8, t_size);
+#endif
 
    // transfer data first
    //
 
-   __local float * H_tile = TILE_OFFSET(tiles, 6, t_size);
    iH = transfer_halo(H, halo, H_tile);
-
-   __local float * U_tile = TILE_OFFSET(tiles, 7, t_size);
    iU = transfer_halo(U, halo, U_tile);
-
-   __local float * V_tile = TILE_OFFSET(tiles, 8, t_size);
    iV = transfer_halo(V, halo, V_tile);
 
    barrier(CLK_LOCAL_MEM_FENCE);
