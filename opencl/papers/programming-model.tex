@@ -3,12 +3,10 @@
 The static analysis and source-to-source transformations used are very
 basic and only require the programmer to use a subset of Fortran that
 employs a data-parallel programming model.  In particular, it
-encourages use of language features that were introduced and
-standardized in the Fortran 90 language specification.  In this
-section we describe the set of four Fortran 90 features that our analysis
-and transformation method are based on.  From these language constructs,
-we are able to easily transform them to a lower-level CUDA or OpenCL
-implementation.
+encourages use of four language features introduced in Fortran 90 ---
+array notation, shift functions, elemental functions, and pure
+procedures.  From these language constructs, we are able to easily
+transform them to a lower-level CUDA or OpenCL implementation.
 
 %This paper uses four simple features of Fortran that form a language subset
 %that does not require any language extensions and can be easily transformed
@@ -24,24 +22,20 @@ high-level style that is closer to the original mathematical
 specification of the problem being solved.  More importantly from a
 compilation perspective, this defers decisions about how to implement
 these whole-array operations to a compilation tool.  Sophisticated
-loop analysis to identify parallelism within the loop are not
-necessary.  When faced with a novel architecture such as modern GPUs
-that are ideally suited to data parallel programming models, the fit
-between Fortran arrays and these systems is quite clean.
+loop analysis to identify parallelism within the sequential loop code
+are not necessary.  When faced with a novel architecture such as
+modern GPUs that are ideally suited to data parallel programming
+models, the fit between Fortran arrays and these systems is quite
+clean.
 
-%% NEW - CER
-Arrays are first class citizens in Fortran instead of a basic pointer
-to raw memory as in many other compiled languages.  A Fortran array
-contains metadata associated with it that describes the array's shape
-and size. It should be noted that other languages that provide rich
-array data types and whole array operations may also be suitable
-targets for the transformations described in this paper.  
-In addition to metadata about the structure of the arrays, operators
-are provided that allow programmers to write expressions based on the
-whole array instead of explicit indexing and application of operations
-to individual elements.  For example, if {\tt A}, {\tt B}, and {\tt C}
-are all arrays of the same rank and shape and {\tt s} is a scalar,
-then the statement
+A Fortran array combines a base pointer to memory with metadata that
+describes the array shape, stride and size. It should be noted that
+other languages that provide rich array data types and whole array
+operations may also be suitable targets for the transformations
+described in this paper.  Array variables can be used in expressions
+based on whole-array operations.  For example, if {\tt A}, {\tt B},
+and {\tt C} are all arrays of the same rank and shape and {\tt s} is a
+scalar, then the statement
 
 {\small
 \begin{verbatim}
@@ -49,14 +43,15 @@ then the statement
 \end{verbatim}
 }
 
-results in the element-wise sum of {\tt A} and {\tt s} times the elements of
-{\tt B} being stored in the corresponding elements of {\tt C}. The first
-element of {\tt C} will contain the value of the first element of {\tt A}
-added to the first element of {\tt c*B}.  Note that no explicit iteration over
-array indices is needed and that the individual operators, plus, times, and
-assignment are applied by the compiler to individual elements of the arrays
-independently.  Thus the compiler is able to spread the computation in the
-example across any hardware threads under its control.
+\noindent results in the element-wise sum of {\tt A} and {\tt s} times
+the elements of {\tt B} being stored in the corresponding elements of
+{\tt C}. The first element of {\tt C} will contain the value of the
+first element of {\tt A} added to the first element of {\tt c*B}.
+Note that no explicit iteration over array indices is needed and that
+the individual operators, plus, times, and assignment are applied by
+the compiler to individual elements of the arrays independently.  Thus
+the compiler is able to spread the computation in the example across
+any hardware threads under its control.
 
 %% NEW - CER
 %%% The use of array notation allows one to program in a data-parallel subset of Fortran. This style of programming makes use of array notation and pure and elemental functions to operate on array elements.
@@ -69,8 +64,8 @@ element of the array.  This allows programmers to avoid explicit looping and
 instead simply state that they intend a function to be applied to every
 element of an array in parallel, deferring the choice of implementation
 technique to the compiler.  Elemental functions are intended to be used for
-data parallel programming, and as a result must be side effect free (or,
-\emph{pure}).
+data parallel programming, and as a result must be side effect free and
+mandate an {\tt intent(in)} attribute for all arguments.
 
 %% NEW - CER
 %%% Because elemental functions return scalar values and are free from side effects, the compiler is free to distribute the computation over any hardware processing elements available to it, such as the multiple cores and vector units on an Intel or AMD processor or the Synergistic Processing Units on an IBM Cell processor.
@@ -102,7 +97,7 @@ may seem like a trivial example, such simple functions may be composed
 with other elemental functions to perform powerful computations,
 especially when applied to arrays.  Our prototype tool transforms
 elemental functions to inline OpenCL functions.  Thus there is no
-penalty for usage of elemental functions and provide a convient
+penalty for usage of elemental functions and they provide a convient
 mechanism to express algorithms in simpler segments.
 
 %Also note that the plus and times operators shown in the data-statement
@@ -284,13 +279,13 @@ programming).
 %%% The power in this notation is that the compiler is free to distribute the computation in these expressions over any hardware processing elements available to it, such as the vector units on an Intel or AMD processor or the Synergistic Processing Units on an IBM Cell processor.  If the arrays are declared as coarrays, this includes spreading the computation over \emph{all of the nodes in   a cluster as well.}  In this case, communication occurs within the \texttt{cshift} functions, though the compiler is free to overlap communication and computation by scheduling the communication early and performing the computation on the interior of the arrays while waiting for the communication to complete.
 
 %% NEW - CER
-Complete and very concise and elegant programs can be built with procedures
-similar to the example shown above. To aid this effort, Fortran
-supplies intrinsic functions like the array constructors (\texttt{CSHIFT},
-\texttt{EOSHIFT}, \texttt{MERGE}, \texttt{TRANSPOSE}, ...), the array location
-functions (\texttt{MAXLOC} and \texttt{MINLOC}), and the array reduction
-functions (\texttt{ANY}, \texttt{COUNT}, \texttt{MINVAL}, \texttt{SUM},
-\texttt{PRODUCT}, ...).  To this set we add region functions described above.
+%Complete and very concise and elegant programs can be built with procedures
+%similar to the example shown above. To aid this effort, Fortran
+%supplies intrinsic functions like the array constructors (\texttt{CSHIFT},
+%\texttt{EOSHIFT}, \texttt{MERGE}, \texttt{TRANSPOSE}, ...), the array location
+%functions (\texttt{MAXLOC} and \texttt{MINLOC}), and the array reduction
+%functions (\texttt{ANY}, \texttt{COUNT}, \texttt{MINVAL}, \texttt{SUM},
+%\texttt{PRODUCT}, ...).  To this set we add region functions described above.
 
 %% NEW - CER
 This style of programming meets the requirements we have set for a programming
