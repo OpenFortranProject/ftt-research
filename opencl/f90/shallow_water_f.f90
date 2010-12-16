@@ -97,11 +97,11 @@ subroutine wave_advance(H, U, V, dx, dt)
 
    integer, dimension(4) :: halo, face_lt, face_rt, face_up, face_dn
 
-   ! explicit temporaries
-   real, allocatable, dimension(:,:) :: Hx, Hy, Ux, Uy, Vx, Vy
-
    ! pointers for interior and shifted regions
    real, pointer, dimension(:,:) :: iH, iU, iV
+
+   ! explicit temporaries
+   real, allocatable, dimension(:,:) :: Hx, Hy, Ux, Uy, Vx, Vy
 
    ! scalar quantities
    real :: cs, gs, dtdx, dtdx2
