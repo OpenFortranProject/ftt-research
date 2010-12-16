@@ -5,16 +5,18 @@ program shallow_water
 
    integer :: status
 
+   integer, parameter :: G_WIDTH = 1280
+
    integer,           parameter :: NPAD = 1
-   integer(c_size_t), parameter :: NX  = 1280
-   integer(c_size_t), parameter :: NY  = 1280
+   integer(c_size_t), parameter :: NX  = G_WIDTH
+   integer(c_size_t), parameter :: NY  = G_WIDTH
    integer(c_size_t), parameter :: NXL = 16
    integer(c_size_t), parameter :: NYL = 16
 
    integer(c_size_t), parameter :: SIZE_ELEMENT = 4
 
    real(c_float), target, dimension(NX+2*NPAD,NY+2*NPAD) :: H, U, V
-   real(c_float) :: dx, dt
+   real(c_float) :: dx, dy, dt
 
    type(CLDevice) :: device
    type(CLKernel) :: kernel
@@ -47,7 +49,7 @@ program shallow_water
    ! initialize memory
    !
 
-   dx = 1.0;  dt = 0.01;
+   dx = 1.0;  dy = 1.0;  dt = 0.01;
 
    H = 1.0;  U = 0.0;  V = 0.0;
 
@@ -69,8 +71,10 @@ program shallow_water
    status = setKernelArgMem (kernel, 1, clMemObject(d_U))
    status = setKernelArgMem (kernel, 2, clMemObject(d_V))
    status = setKernelArgReal(kernel, 3, dx)
-   status = setKernelArgReal(kernel, 4, dt)
-   status = setKernelArgLoc (kernel, 5, 9*tile_mem_size)
+   status = setKernelArgReal(kernel, 4, dy)
+   status = setKernelArgReal(kernel, 5, dt)
+   status = setKernelArgLoc (kernel, 6, 9*tile_mem_size)
+!   status = setKernelArgLoc (kernel, 6, 1*tile_mem_size)
 
 print*, "warmup"
    ! warmup the kernel
