@@ -76,9 +76,9 @@ program shallow_water_f
 
    ! warmup the kernel
    !
-   print *, "warmup"
+   print *, "warmup, nx==", NX, " ny==", NY
    do i = 1, nWarm
-      call wave_advance_loops(H, U, V, dx, dy, dt)
+      call wave_advance(H, U, V, dx, dy, dt)
    end do
 
    print *
@@ -87,7 +87,7 @@ program shallow_water_f
    call init(timer)
    call start(timer)
    do i = 1, nLoops
-      call wave_advance_loops(H, U, V, dx, dy, dt)
+      call wave_advance(H, U, V, dx, dy, dt)
    end do
    call stop(timer)
    h_time = elapsed_time(timer)
