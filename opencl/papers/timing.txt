@@ -4,21 +4,26 @@ neuro.newmexicoconsortium.org      10.1.35.50
 portal.newmexicoconsortium.org     10.1.35.1
 neuro: 
 
-array width       f90 pointer       _loops        _copy            GPU
------------       -----------      --------      -------          --------
-16                   .025 ms        0.022 ms                       0.018 ms
-32                   .086           0.087                          0.018
-64                   .20            0.19                           0.023
-128                  .76            0.71                           0.038
-256                 3.02            2.82                           0.11
-512                12.1            11.2                            0.38
-1024               49.5            45.0                            1.49
-1280               77.7            70.1                            2.32
-2048              199.1           178.7                            5.94
-4096              794.7           714.1                           23.74
+I believe we are faster than Robey's code because we store flux values
+on the faces.  This requires more memory to store the values at the face,
+however it has roughly 1/2 the floating point operations.  If you don't
+store values at cell faces interior flux quantities are calculated twice.
+
+array width       f90 pointer       _loops        GPU(16x8)       GPU(16x16)    GPU(16x8)-robey
+-----------       -----------      --------      -------          --------      ---------------
+16                   .025 ms        0.022 ms      0.017 ms         0.018 ms
+32                   .086           0.087         0.020            0.018
+64                   .20            0.19          0.020            0.023
+128                  .76            0.71          0.036            0.038
+256                 3.02            2.82          0.092            0.11
+512                12.1            11.2           0.32             0.38
+1024               49.5            45.0           1.22             1.49
+1280               77.7            70.1           1.89             2.32           3.43 ms
+2048              199.1           178.7           4.82             5.94
+4096              794.7           714.1          19.29             23.74
 
 
-DO NOT USE BELOW FOR PAPER
+%%%%%%%%%%%%%% DO NOT USE BELOW FOR PAPER %%%%%%%%%%%%%%%
 
 these tests all on neuro (Soren was loading the system, so redone above)
 
