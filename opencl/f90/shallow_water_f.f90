@@ -43,8 +43,10 @@ program shallow_water_f
 
    interface
       subroutine wave_advance(H, U, V, dx, dy, dt)
+         use :: shallow_water_mod
          implicit none
-         real, target, dimension(:,:) :: H, U, V
+!         real, target, dimension(:,:) :: H, U, V
+         real, target, dimension(NX+2*NPAD,NY+2*NPAD) :: H, U, V
          real, intent(in) :: dx, dy, dt
       end subroutine wave_advance
       subroutine wave_advance_loops(H, U, V, dx, dy, dt)
@@ -106,7 +108,8 @@ subroutine wave_advance(H, U, V, dx, dy, dt)
    use :: regions
    use :: shallow_water_mod
    implicit none
-   real, dimension(:,:)  :: H, U, V
+!   real, dimension(:,:)  :: H, U, V
+   real, target, dimension(NX+2*NPAD,NY+2*NPAD) :: H, U, V
    real, intent(in) :: dx, dy, dt
 
    integer, dimension(4) :: halo, face_lt, face_rt, face_up, face_dn
@@ -114,29 +117,20 @@ subroutine wave_advance(H, U, V, dx, dy, dt)
    ! pointers for interior and shifted regions
    real, pointer, dimension(:,:) :: iH, iU, iV
 
-   ! explicit temporaries
-   real, allocatable, dimension(:,:) :: Hx, Hy, Ux, Uy, Vx, Vy
+   ! explicit automatic temporaries
+   real, dimension(NX+1,NY) :: Hx, Ux, Vx
+   real, dimension(NX,NY+1) :: Hy, Uy, Vy
 
    ! scalar quantities
    real :: cs, gs, dtdx, dtdy, dtdx2, dtdy2
 
    ! transfer data first
    !
-   halo = [NPAD, NPAD, NPAD, NPAD]
+   halo = [1, 1, 1, 1]
 
    iH => transfer_halo(H, halo)
    iU => transfer_halo(U, halo)
    iV => transfer_halo(V, halo)
-
-   ! allocate memory for temporary arrays
-   !
-   allocate( Hx(NX+NPAD,NY) )
-   allocate( Ux(NX+NPAD,NY) )
-   allocate( Vx(NX+NPAD,NY) )
-
-   allocate( Hy(NX,NY+NPAD) )
-   allocate( Uy(NX,NY+NPAD) )
-   allocate( Vy(NX,NY+NPAD) )
 
    ! first half step
    !
@@ -204,10 +198,6 @@ subroutine wave_advance(H, U, V, dx, dy, dt)
            + dtdy * ( region(Vy, face_lt)**2 / region(Hy, face_lt) + gs*region(Hy, face_lt)**2 ) &
            - dtdy * ( region(Vy, face_rt)**2 / region(Hy, face_rt) + gs*region(Hy, face_rt)**2 )
 
-   ! clean up memory
-   !
-   deallocate( Hx, Ux, Vx, Hy, Uy, Vy)
-
 end subroutine wave_advance
 
 
@@ -224,14 +214,9 @@ subroutine wave_advance_loops(H, U, V, dx, dy, dt)
 
    integer :: i, j, ils, ile, jls, jle
 
-   integer, dimension(4) :: halo, face_lt, face_rt, face_up, face_dn
-
-   ! pointers for interior and shifted regions
-   real :: iH, iU, iV
-
    ! explicit automatic temporaries
-   real, dimension(NX+NPAD,NY) :: Hx, Ux, Vx
-   real, dimension(NX,NY+NPAD) :: Hy, Uy, Vy
+   real, dimension(NX+1,NY) :: Hx, Ux, Vx
+   real, dimension(NX,NY+1) :: Hy, Uy, Vy
 
    ! scalar quantities
    real :: cs, gs, dtdx, dtdy, dtdx2, dtdy2
@@ -245,11 +230,6 @@ subroutine wave_advance_loops(H, U, V, dx, dy, dt)
    dtdx2 = 0.5 * dt/dx
    dtdy2 = 0.5 * dt/dy
 
-   face_lt = [0,1,1,1]
-   face_rt = [1,0,1,1]
-   face_dn = [1,1,0,1]
-   face_up = [1,1,1,0]
-
    ! interior indices
    !   i = 1:NX+2  j = 1:NY+2
    !
@@ -261,7 +241,7 @@ subroutine wave_advance_loops(H, U, V, dx, dy, dt)
    !   face_rt = (i+1, j+1)
    !
    do j = 1, NY                   ! interior j = 2:NY+1
-      do i = 1, NX+NPAD           ! interior i = 1:NX+1, 2:NX+2
+      do i = 1, NX+1           ! interior i = 1:NX+1, 2:NX+2
          ! height
          Hx(i,j) =     0.5 * ( H(i,j+1) + H(i+1,j+1) )  &
                    + dtdx2 * ( U(i,j+1) - U(i+1,j+1) )
@@ -280,7 +260,7 @@ subroutine wave_advance_loops(H, U, V, dx, dy, dt)
    !   face_dn = (i+1, j)
    !   face_up = (i+1, j+1)
    !
-   do j = 1, NY+NPAD              ! interior j = 1:NY+1, 2:NY+2
+   do j = 1, NY+1                 ! interior j = 1:NY+1, 2:NY+2
       do i = 1, NX                ! interior i = 2:NX+1
          ! height
          Hy(i,j) =     0.5 * ( H(i+1,j) + H(i+1,j+1) )  &
