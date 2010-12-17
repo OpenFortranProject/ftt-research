@@ -5,6 +5,7 @@ program shallow_water
 
    integer :: status
 
+!   integer, parameter :: G_WIDTH = 1280
    integer, parameter :: G_WIDTH = 1280
 
    integer,           parameter :: NPAD = 1
@@ -45,6 +46,8 @@ program shallow_water
    device_id = 1
    status = init(device, device_id)
    call limitLocalSize(device, nxLocal, nyLocal)
+   print *, "device_id  ==", device_id
+   print *, "local size ==", nxLocal, nyLocal
 
    ! initialize memory
    !
