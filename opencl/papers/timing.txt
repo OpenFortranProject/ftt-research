@@ -1,0 +1,107 @@
+Timing results for shallow water code
+
+neuro.newmexicoconsortium.org      10.1.35.50
+portal.newmexicoconsortium.org     10.1.35.1
+neuro: 
+
+array width       f90 pointer       _loops        _copy            GPU
+-----------       -----------      --------      -------          --------
+16                   .025 ms        0.022 ms                       0.018 ms
+32                   .086           0.087                          0.018
+64                   .20            0.19                           0.023
+128                  .76            0.71                           0.038
+256                 3.02            2.82                           0.11
+512                12.1            11.2                            0.38
+1024               49.5            45.0                            1.49
+1280               77.7            70.1                            2.32
+2048              199.1           178.7                            5.94
+4096              794.7           714.1                           23.74
+
+
+DO NOT USE BELOW FOR PAPER
+
+these tests all on neuro (Soren was loading the system, so redone above)
+
+array width       f90 pointer
+-----------       -----------      --------      -----
+16                   .024           .039 ms         .019 ms
+32                   .087           .08             .019
+64                   .33            .16             .024
+128                 1.46            .36             .04
+256                 6.32            .87             .11
+512                25.8            3.23            .38
+1024               83.1            13.0           1.49
+1280                           20.2           2.32    (.73 ms NO_COMPUTATION)
+2048                           51.2           5.94
+4096                                              8.48
+
+
+these tests run on mac except for last on loaded neuro
+
+array width       MacBook Air      Mac Pro       neuro
+-----------       -----------      --------      -----
+16                   .036 ms       .039 ms         .019 ms
+32                   .13           .08             .019
+64                   .36           .16             .024
+128                 1.27           .36             .04
+256                 5.01           .87             .11
+512                19.7            3.23            .38
+1024               92.7            13.0           1.49
+1280              189.             20.2           2.32    (.73 ms NO_COMPUTATION)
+2048              474              51.2           5.94
+4096                                              8.48
+8192                                             95.6
+
+
+EZCL_DEVTYPE_INIT: 1 opencl platform(s) detected
+EZCL_DEVICE_MEMORY_ADD: DEBUG -- host memory pointer is 0xb0a070
+  Platform 1:
+    CL_PLATFORM_VERSION    : OpenCL 1.0 CUDA 3.2.1
+    CL_PLATFORM_NAME       : NVIDIA CUDA
+    CL_PLATFORM_VENDOR     : NVIDIA Corporation
+
+EZCL_DEVTYPE_INIT: 2 opencl devices(s) detected
+EZCL_DEVICE_MEMORY_ADD: DEBUG -- host memory pointer is 0xb0a0b0
+  Device 1:
+    CL_DEVICE_TYPE                       : CL_DEVICE_TYPE_GPU
+    CL_DEVICE_AVAILABLE                  : TRUE
+    CL_DEVICE_VENDOR                     : NVIDIA Corporation
+    CL_DEVICE_NAME                       : Tesla C2050
+    CL_DRIVER_VERSION                    : 260.24
+    CL_DEVICE_VERSION                    : OpenCL 1.0 CUDA
+    CL_DEVICE_MAX_COMPUTE_UNITS          : 14
+    CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS   : 3
+    CL_DEVICE_MAX_WORK_ITEM_SIZES        : 140174180617880 140174180617880 4294967295
+    CL_DEVICE_MAX_WORK_GROUP_SIZE        : 1024
+    CL_DEVICE_MAX_CLOCK_FREQUENCY        : 1147
+    CL_DEVICE_MAX_MEM_ALLOC_SIZE         : 1147
+    CL_DEVICE_GLOBAL_MEM_SIZE            : 2817720320
+    CL_DEVICE_GLOBAL_MEM_CACHE_SIZE      : 229376
+    CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE  : 128
+    CL_DEVICE_GLOBAL_MAX_CONSTANT_ARGS   : 9
+    CL_DEVICE_ERROR_CORRECTION_SUPPORT   : TRUE
+    CL_DEVICE_PROFILING_TIMER_RESOLUTION : 1000 nanosecs
+    CL_DEVICE_QUEUE PROFILING            : AVAILABLE
+    CL_DEVICE_EXTENSIONS                 : cl_khr_byte_addressable_store cl_khr_icd cl_khr_gl_sharing cl_nv_compiler_options cl_nv_device_attribute_query cl_nv_pragma_unroll  cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64 
+
+  Device 2:
+    CL_DEVICE_TYPE                       : CL_DEVICE_TYPE_GPU
+    CL_DEVICE_AVAILABLE                  : TRUE
+    CL_DEVICE_VENDOR                     : NVIDIA Corporation
+    CL_DEVICE_NAME                       : Tesla C2050
+    CL_DRIVER_VERSION                    : 260.24
+    CL_DEVICE_VERSION                    : OpenCL 1.0 CUDA
+    CL_DEVICE_MAX_COMPUTE_UNITS          : 14
+    CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS   : 3
+    CL_DEVICE_MAX_WORK_ITEM_SIZES        : 0 140174180617880 4294967295
+    CL_DEVICE_MAX_WORK_GROUP_SIZE        : 1024
+    CL_DEVICE_MAX_CLOCK_FREQUENCY        : 1147
+    CL_DEVICE_MAX_MEM_ALLOC_SIZE         : 1147
+    CL_DEVICE_GLOBAL_MEM_SIZE            : 2817982464
+    CL_DEVICE_GLOBAL_MEM_CACHE_SIZE      : 229376
+    CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE  : 128
+    CL_DEVICE_GLOBAL_MAX_CONSTANT_ARGS   : 9
+    CL_DEVICE_ERROR_CORRECTION_SUPPORT   : TRUE
+    CL_DEVICE_PROFILING_TIMER_RESOLUTION : 1000 nanosecs
+    CL_DEVICE_QUEUE PROFILING            : AVAILABLE
+    CL_DEVICE_EXTENSIONS                 : cl_khr_byte_addressable_store cl_khr_icd cl_khr_gl_sharing cl_nv_compiler_options cl_nv_device_attribute_query cl_nv_pragma_unroll  cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64
