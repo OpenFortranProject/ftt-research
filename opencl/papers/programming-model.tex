@@ -88,7 +88,7 @@ may seem like a trivial example, such simple functions may be composed
 with other elemental functions to perform powerful computations,
 especially when applied to arrays.  Our prototype tool transforms
 elemental functions to inline OpenCL functions.  Thus there is no
-penalty for usage of elemental functions and they provide a convient
+penalty for usage of elemental functions and they provide a convenient
 mechanism to express algorithms in simpler segments.
 
 %Also note that the plus and times operators shown in the data-statement
@@ -300,7 +300,7 @@ elemental functions.
 
 A kernel procedure (specified by the {\tt \!\$OFP KERNEL} directive) must be
 pure and all array variables must be declared as contiguous.  A kernel
-procedure may not call other procedures except for limited intrisic
+procedure may not call other procedures except for limited intrinsic
 functions (primarily math), user-defined elemental function, and the
 {\tt interior} and {\tt region} functions.  We plan to address
 non-contiguous arrays (such as those that result from strided access)

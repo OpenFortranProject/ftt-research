@@ -15,7 +15,7 @@ interfaces to the C runtime are described later.
 An important concept in OpenCL is that of a thread and a thread group.  Thread
 groups are used to run an OpenCL kernel concurrently on several processor
 elements on the OpenCL device (often a GPU).  Consider a data-parallel
-statement written in terms of an elemental fuction as discussed above.  The
+statement written in terms of an elemental function as discussed above.  The
 act of running an OpenCL kernel can be thought of as having a particular
 thread assigned to each instance of the call to the elemental function as it
 is mapped across the arrays in the data-parallel statement.  In practice,
@@ -88,7 +88,7 @@ This sections outlines the OpenCL equivalent syntax for portions of
 the Fortran shallow-water code described in
 Section~\ref{sec:shallow-water}.  The notation uses uppercase for
 arrays and lowercase for scalar quantities.  Interior variables are
-denoted by an {\tt i} preceeding the array name.  For example, {\tt iH =
+denoted by an {\tt i} preceding the array name.  For example, {\tt iH =
   interior(H, halo)} is a local copy of interior region of array {\tt
   H} (representing height) in the shallow water model.
 
