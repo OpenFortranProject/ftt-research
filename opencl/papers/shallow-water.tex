@@ -1,17 +1,21 @@
 \section{Shallow Water Model}
+\label{sec:shallow-water}
 
-The numerical code used for this study is from a presentation at the
+The numerical code used for this work is from a presentation at the
 NM Supercomputing Challenge~\cite{Robey07}.
-The algorithm solves the standard 2D Shallow Water equations. This
+The algorithm solves the standard 2D shallow water equations. This
 algorithm is typical of a wide range of modeling equations based on
 conservation laws such as compressible fluid dynamics (CFD), elastic
 material waves, acoustics, electromagnetic waves and even traffic
 flow~\cite{Leveque02}. For the shallow water problem there are
 three equations with one based on conservation of mass and the other
-two on conservation of momentum.\begin{eqnarray*}
+two on conservation of momentum.
+
+\begin{eqnarray*}
 h_{t}+(hu)_{x}+(hv)_{y} & = & 0\quad\mbox{(mass)}\\
 (hu)_{t}+(h{u}^{2}+\tfrac{1}{2}gh^{2})_{x}+(huv)_{y} & = & 0\mbox{\quad($x$-momentum)}\\
-(hv)_{t}+(huv)_{x}+(h{v}^{2}+\tfrac{1}{2}gh^{2})_{y} & = & 0\mbox{\quad($y$-momentum)}\end{eqnarray*}
+(hv)_{t}+(huv)_{x}+(h{v}^{2}+\tfrac{1}{2}gh^{2})_{y} & = & 0\mbox{\quad($y$-momentum)}
+\end{eqnarray*}
 
 
 %h_{t}+(hu)_{x}+(hv)_{y} & = & 0\qquad\mbox{(conservation of mass)}\\
@@ -25,7 +29,8 @@ because of the simplification of a unit cell size and a uniform water
 density. Another simplifying assumption is that the water depth is
 small in comparison to length and width and so velocities in the z-direction
 can be ignored. A fixed time step is used for simplicity though it
-must be less than $dt \leqq dx / (\sqrt{gh}+|u|)$.
+must be less than $dt \leqq dx / (\sqrt{gh}+|u|)$ to fulfil the CFL
+condition.
 
 The numerical method is a two-step Lax-Wendroff scheme. The method
 has some numerical oscillations with sharp gradients but is adequate

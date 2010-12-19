@@ -40,25 +40,25 @@ low-level code generation.
 %6. Data parallel constructs in Fortran 90 are chosen.
 %7. Up to 65 times speed up measured on automatically transformed code.
 
-At the Los Alamos National Laboratory (LANL), as with many supercomputing
-facilities today, users have a wide variety of computer platforms from
-which to choose.  The most common platform is made up of clusters of
-compute nodes with standard multi-core processors.  An increasingly
-common feature is that some nodes also have accelerators that range
-from the IBM Cell processor (such as the LANL Roadrunner system) to a
-variety of GPUs from NVIDIA and AMD.  Some nodes have hardware with
-vector instructions and others do not.  The peak performance of these
-accelerated nodes often resides in the hundreds of gigaflops.
+%At the Los Alamos National Laboratory (LANL), as with many supercomputing
+%facilities today, users have a wide variety of computer platforms from
+%which to choose.  The most common platform is made up of clusters of
+%compute nodes with standard multi-core processors.  An increasingly
+%common feature is that some nodes also have accelerators that range
+%from the IBM Cell processor (such as the LANL Roadrunner system) to a
+%variety of GPUs from NVIDIA and AMD.  Some nodes have hardware with
+%vector instructions and others do not.  The peak performance of these
+%accelerated nodes often resides in the hundreds of gigaflops.
 
 %The peak performance of the
 %accelerated nodes range from 200+ GFlops for the IBM Cell/B.E.
 %processor to XXX for NVIDIA Fermi. %% Fermi has another name
 
-However, the performance that these accelerator architectures offer
-comes at a cost, as processor architectures are trending toward
-multiple cores with instances of integrated accelerator units (with
-user managed memory) and less of a reliance on superscalar instruction
-level parallelism and hardware managed memory hierarchies (such as
+The performance that new accelerator architectures offer comes at a
+cost, as processor architectures are trending toward multiple cores
+with instances of integrated accelerator units (with user managed
+memory) and less of a reliance on superscalar instruction level
+parallelism and hardware managed memory hierarchies (such as
 traditional caches).  These changes place a heavy burden on
 application programmers as they are forced to adapt to the new
 systems.  An especially challenging problem faced by application
@@ -66,9 +66,11 @@ programmers is not only how to program to these new architectures
 (considering the massive scale of concurrency available), but also how
 to design programs that are portable across the changing landscape of
 computer architectures with unique memory systems and programming
-models.  The fundamental question we address is what programming model
-and language constructs are best suited to span this set of new
-hardware designs.
+models.  Can a programmer easily write one program that can run on a
+conventional multicore CPU, graphics processing unit, Cell processor,
+and one of many emerging many core architectures?  The fundamental
+question we address is what programming model and language constructs
+are best suited to span this set of new hardware designs.
 
 %% NEW - CER
 %%%We will examine how the existing data-parallel constructs in Fortran can be combined with coarrays or MPI to provide effectively a new parallel programming language, one that is evolutionary in nature and provides complete compatibility with existing applications and libraries.  Data parallelism is a high-level abstraction that is, at the same time, both easier to program and gives the compiler more leeway (if fully exploited) in retargeting a program to different computer architectures.
@@ -146,7 +148,7 @@ nodes.
 %  Furthermore, the Fortran array syntax maps directly to one,
 %two, and three-dimensional thread groups in OpenCL.
 
-Transformations for general Fortran procedures are not attempted.
+Transformations for arbitrary Fortran procedures are not attempted.
 Furthermore, a mechanism to transform the calling site to
 automatically invoke OpenCL kernels is not provided at this time.
 While it is possible to accomplish this task within ROSE, it is
@@ -183,19 +185,20 @@ use since its introduction, and was developed to facilitate the
 translation of math formulae into machine code. Fortran was the first
 major language to use a compiler to translate from a high-level
 program representation to assembly language. Due to its age, it
-carries certain arcane baggage.  However
-with the introduction of Fortran 90 (and later revisions to the
-standard), Fortran became a truly modern programming language. 
-It is now modular and has many
+carries certain arcane baggage.  However with the introduction of
+Fortran 90 (and later revisions to the standard), Fortran became a
+truly modern programming language.  It is now modular and has many
 object-oriented features.  Most importantly for this work, it now
 includes a type system in which rich first-class array data types and
 corresponding syntax are part of the language, something that
-languages like C continue to lack.  Furthermore, Fortran should be of
-interest to those studying parallel programming because of its
-functional and data parallel constructs and because of the coarray
-notation introduced in Fortran 2008. Unlike languages like C and C++,
-Fortran has become a truly
-parallel language with features added to recent language standards.
+languages like C continue to lack\footnote{The recent Intel 12.0 C/C++
+  compiler supports extensions that provide array notation for C/C++
+  code, as detailed here: http://intel.ly/g454zp}.  Furthermore,
+Fortran should be of interest to those studying parallel programming
+because of its functional and data parallel constructs and because of
+the coarray notation introduced in Fortran 2008. Unlike languages like
+C and C++, Fortran has become a truly parallel language with features
+added to recent language standards.
 
 %% - deleted by CER
 %% that later programming languages have evolved away from. As a result, Fortran has fallen into disfavor in certain programming circles.  Modern versions of the language standardized in 1990, 1995, 2003, and 2008 have removed much of this legacy baggage, but these changes are not widely known.  Modern Fortran exhibits features that are similar to other modern programming languages, and does not mandate the use of legacy features from decades old, deprecated versions of the language.  Compilers for Fortran (like those for other languages that have removed features over time) can prohibit the use of archaic features such as fixed format code or constructs that have been removed from the language.
@@ -226,12 +229,13 @@ vanish tomorrow?
 
 
 %% NEW - CER
-History has also shown that an investment in rewriting code does not guarantee
-success either, as seen in an effort at LANL to modernize a legacy Fortran
-code with the the newer C++ POOMA framework.  This massive overhaul effort led
-to a code that was both slower and less flexible than the original Fortran
-\cite{basili08hpc}.  Similar experiences have occurred in the past, notably during the
-devlopment of the Sisal language.
+History has also shown that an investment in rewriting code does not
+guarantee success either, as seen in an effort at LANL to modernize a
+legacy Fortran code with the the newer C++ POOMA framework.  This
+massive overhaul effort led to a code that was both slower and less
+flexible than the original Fortran \cite{basili08hpc}.  Similar
+experiences have occurred in the past, notably during the devlopment
+of the functional SISAL language in the early 1990s.
 
 Fortran is unique in that it has contained language features that are
 well suited to modern architectures for a number of years.  This

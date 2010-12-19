@@ -84,12 +84,13 @@ interoperability with the OpenCL runtime.
 
 \section{Transformation examples}
 
-This sections outlines the OpenCL equivalent syntax for portions of the
-Fortran shallow-water code described previously.  The notation
-uses uppercase for arrays and lowercase for scalar quantities.  Interior
-variables are denoted by an i preceeding the array name.  For
-example, {\tt iH = interior(H, halo)} is a local copy of interior region of
-array {\tt H} (representing height) in the shallow water model.
+This sections outlines the OpenCL equivalent syntax for portions of
+the Fortran shallow-water code described in
+Section~\ref{sec:shallow-water}.  The notation uses uppercase for
+arrays and lowercase for scalar quantities.  Interior variables are
+denoted by an {\tt i} preceeding the array name.  For example, {\tt iH =
+  interior(H, halo)} is a local copy of interior region of array {\tt
+  H} (representing height) in the shallow water model.
 
 \subsubsection{interior and region functions}
 
