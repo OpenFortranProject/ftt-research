@@ -2,16 +2,18 @@
 \label{sec:intro}
 
 This paper presents a compiler-level approach for targeting a single
-program to multiple fundamentally different low-level execution and
-programming models while allowing the application programmer to adopt
-a single high-level programming model.  We show that features of
-Fortran 90 for data parallel programming are well suited to automatic
+program to multiple, fundamentally different low-level execution
+models.  This technique allows the application programmer to adopt
+a single high-level programming model without sacrificing performance.
+We show that features of
+Fortran 90 for data-parallel programming are well suited to automatic
 transformation to generate code specifically tuned for different
-low-level programming models such as OpenCL and CUDA.  For algorithms
-that can be easily expressed in terms of whole array, data parallel
-operations, writing code in Fortran and transforming it automatically
-to specific low-level implementations removes the burden from the
-programmer of working with tedious, error prone, low-level tools.
+hardware architectures using low-level programming models such as
+OpenCL and CUDA.  For algorithms that can be easily expressed in terms
+of whole array, data-parallel operations, writing code in Fortran and
+transforming it automatically to specific low-level implementations
+removes the burden from the programmer of working with tedious, error
+prone, low-level tools.
 
 In the ideal situation, application programmers would like to adopt a
 programming model in which they write their application once and use
@@ -25,7 +27,7 @@ being solved --- in this instance, the abstraction that we care about
 are mathematical formulae.  It should not be corrupted with details of
 specific target architectures solely for the purpose of single-system
 performance.  For certain classes of applications, specifically those
-that map well onto a data-parallel programming model, we show that
+that map onto a data-parallel programming model, we show that
 Fortran 90 contains language features that encourage high-level
 programming abstractions without sacrificing performance during
 low-level code generation.
@@ -53,9 +55,9 @@ accelerated nodes often resides in the hundreds of gigaflops.
 %processor to XXX for NVIDIA Fermi. %% Fermi has another name
 
 However, the performance that these accelerator architectures offer
-comes at a cost as processor architectures are trending toward
-multiple cores with instances of integrated accelerator units with
-user managed memory and less of a reliance on superscalar instruction
+comes at a cost, as processor architectures are trending toward
+multiple cores with instances of integrated accelerator units (with
+user managed memory) and less of a reliance on superscalar instruction
 level parallelism and hardware managed memory hierarchies (such as
 traditional caches).  These changes place a heavy burden on
 application programmers as they are forced to adapt to the new
@@ -74,13 +76,13 @@ hardware designs.
 A common theme amongst new processors is the emphasis on data parallel
 programming.  This model is well suited to emerging architectures that
 are based on either vector processing or massively parallel
-collections of simple cores.  A proposed approach for programming that
-is well suited to legacy applications and languages are language
-extensions or libraries that allow programmers to avoid adopting
-entirely new languages.  The recent OpenCL specification is intended
-to support this programming model, as are directive-based methods such
-as OpenMP or the Accelerator programming model from the Portland
-Group~\cite{pgi10accelerator}.
+collections of simple cores.  The recent CUDA and OpenCL programming
+languages are are intended to support this programming model, as are
+directive-based methods such as OpenMP or the Accelerator programming
+model from the Portland Group~\cite{pgi10accelerator}.
+
+%% Deleted by CER
+%%A proposed approach for programming that is well suited to legacy applications and languages are language extensions or libraries that allow programmers to avoid adopting entirely new languages.  
 
 The problem with many of these choices is that they expose too much
 detail about the machine architecture to the programmer.  This is
@@ -88,7 +90,7 @@ particularly true of CUDA and OpenCL.  In CUDA, programmers must adapt
 their codes to fit the threading model used by NVidia GPUs, while
 OpenCL requires programmers to provide specially tuned versions of
 their code for different classes of machine.  In both cases, the
-programmer is also responsible for explicitly managing memory,
+programmer is responsible for explicitly managing memory,
 including staging of data back and forth from the host CPU and the
 accelerator device memory.  While these models have been attractive as
 a method for early adopters to utilize these new architectures, they
@@ -144,7 +146,7 @@ nodes.
 %  Furthermore, the Fortran array syntax maps directly to one,
 %two, and three-dimensional thread groups in OpenCL.
 
-Transformations for general Fortran procedures are not provided.
+Transformations for general Fortran procedures are not attempted.
 Furthermore, a mechanism to transform the calling site to
 automatically invoke OpenCL kernels is not provided at this time.
 While it is possible to accomplish this task within ROSE, it is
@@ -170,16 +172,9 @@ data-parallel Fortran.  We investigated automatically transforming
 this code to run on LANL's Petaflop Roadrunner computer (a hybrid
 mixture of AMD Opterons and IBM Cell processors).  We demonstrated that a
 source-to-source compiler can automatically vectorize and parallelize
-(both within the Cell processor and across nodes) a small section of
-this code.  Preliminary results showed a 12 times performance gain on
-the Cell processor over a traditional single core processor.  A factor
-of 9 is gained from vectorizing and parallelizing the code to run on
-the Cell and the rest is gained from automatically overlapping
-inter-node communication MPI with computation on the Cell.
-
-%%We study automatic transformations of Fortran for two applications examples.  The first is a simple shallow water model in two dimensions using finite volume methods with .... for time update.  The second is based on the primary compute kernels from PetaVision, a high-performance, neural science framework that is used in models of visual cortex.
-
-%% To simplify things, lets save PetaVision for the local stuff as it requires convolutions
+a small section of this code for the Cell processor.  Preliminary results
+showed a 9 times performance gain of the transformed code when compared
+with the original serial version on a traditional single-core processor.
 
 \subsection{Why Fortran?}
 
@@ -188,23 +183,10 @@ use since its introduction, and was developed to facilitate the
 translation of math formulae into machine code. Fortran was the first
 major language to use a compiler to translate from a high-level
 program representation to assembly language. Due to its age, it
-carries certain arcane baggage that later programming languages have
-evolved away from. As a result, Fortran has fallen into disfavor in
-certain programming circles.  Modern versions of the language
-standardized in 1990, 1995, 2003, and 2008 have removed much of this
-legacy baggage, but these changes are not widely known.  Modern
-Fortran exhibits features that are similar to other modern programming
-languages, and does not mandate the use of legacy features from
-decades old, deprecated versions of the language.  Compilers for
-Fortran (like those for other languages that have removed features
-over time) can prohibit the use of archaic features such as fixed
-format code or constructs that have been removed from the language.
-
-With the introduction of Fortran 90 (and later revisions to the
-standard), Fortran became a truly modern programming language. Much of
-the arcane baggage associated with it is actually no longer part of
-the language used by modern programmers, and exists in a deprecated
-form simply to support legacy codes. It is now modular and has many
+carries certain arcane baggage.  However
+with the introduction of Fortran 90 (and later revisions to the
+standard), Fortran became a truly modern programming language. 
+It is now modular and has many
 object-oriented features.  Most importantly for this work, it now
 includes a type system in which rich first-class array data types and
 corresponding syntax are part of the language, something that
@@ -212,8 +194,11 @@ languages like C continue to lack.  Furthermore, Fortran should be of
 interest to those studying parallel programming because of its
 functional and data parallel constructs and because of the coarray
 notation introduced in Fortran 2008. Unlike languages like C and C++,
-which are considered to be more modern, Fortran has become a truly
+Fortran has become a truly
 parallel language with features added to recent language standards.
+
+%% - deleted by CER
+%% that later programming languages have evolved away from. As a result, Fortran has fallen into disfavor in certain programming circles.  Modern versions of the language standardized in 1990, 1995, 2003, and 2008 have removed much of this legacy baggage, but these changes are not widely known.  Modern Fortran exhibits features that are similar to other modern programming languages, and does not mandate the use of legacy features from decades old, deprecated versions of the language.  Compilers for Fortran (like those for other languages that have removed features over time) can prohibit the use of archaic features such as fixed format code or constructs that have been removed from the language.
 
 Yet, a likely question that one may pose is ``\emph{Why Fortran and
   not a more modern language like X?}''  The recent rise in interest
@@ -222,7 +207,7 @@ multicore CPUs and manycore accelerators has driven a number of new
 language developments, both as novel languages and extensions on
 existing ones.  For scientific users, new languages and language
 extensions to use novel new architectures present a challenge: how do
-developers effectively use them while avoiding rewriting their code
+developers effectively use them while avoiding rewriting code
 and potentially growing dependent on a transient technology that will
 vanish tomorrow?
 
@@ -262,7 +247,7 @@ relevant.
 \subsection{Comparison to Other Languages}
 
 A number of previous efforts have exploited data parallel programming
-at the language level to utilize novel architectuers, particularly in
+at the language level to utilize novel architectures, particularly in
 previous decades during the reign of vector and massively parallel
 computers in the high performance computing world.  The origin of the
 array syntax that was adopted in Fortran 90 can be found in the APL

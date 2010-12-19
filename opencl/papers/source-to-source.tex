@@ -25,8 +25,8 @@ hardware.
 Device memory is separated hierarchically.  A thread instance has access to
 its own memory, thread groups to OpenCL local memory, and all thread groups
 have access to OpenCL global memory.  When multiple members of a thread group
-access the same memory elements, for example if {\tt region} or {\tt shift}
-functions are called, for performance reasons it is often best if global
+access the same memory elements (if {\tt region} or {\tt shift}
+functions are called), for performance reasons it is often best if global
 memory accessed by a thread group is copied into local memory.
 
 The \emph{region} and \emph{halo} constructs easily map onto the OpenCL memory
@@ -85,11 +85,11 @@ interoperability with the OpenCL runtime.
 \section{Transformation examples}
 
 This sections outlines the OpenCL equivalent syntax for portions of the
-Fortran shallow-water code described in the previous section.  The notation
-uses uppercase for arrays and lowercase for scalar quantities.  Interior and
-region array copies are denoted by an i or an r preceeding the array.  For
+Fortran shallow-water code described previously.  The notation
+uses uppercase for arrays and lowercase for scalar quantities.  Interior
+variables are denoted by an i preceeding the array name.  For
 example, {\tt iH = interior(H, halo)} is a local copy of interior region of
-array {\tt H} (representing height) in the shallow water code.
+array {\tt H} (representing height) in the shallow water model.
 
 \subsubsection{interior and region functions}
 
@@ -107,12 +107,12 @@ Fortran kernel procedures have direct correspondence with OpenCL equivalents.
 For example, {\tt wave\_advance} is transformed as {\tt \_\_kernel void
   wave\_advance(\_\_ global float * H, ..., float dt);}.  The global state
 variables have local equivalents, e.g., {\tt \_\_local float
-  H\_local[MAX\_LOCAL\_SIZE]}, declared with the appropriate size and are copied
-to local memory by the compiler with inlined library functions.  The flux
-array temporaries (region variables) are declared similarly but initialized to
-zero with inlined library functions.  Interior variables are simple scalars,
-e.g., {\tt float iH;}.  Region variables cannot be scalar objects because
-regions are shifted and thus \emph{shared} by threads within a thread group.
+  H\_local[MAX\_LOCAL\_SIZE]}, declared with the appropriate size and are
+copied to local memory by the compiler with inlined library functions.  The
+array temporaries defined on cell faces are declared similarly while interior
+variables are simple scalars, e.g., {\tt float iH;}.  Region variables cannot
+be scalar objects because regions may be shifted and thus \emph{shared} by
+threads within a thread group.
 
 \subsubsection{array syntax}
 
@@ -129,6 +129,7 @@ iH = iH + (dt/dx) * (region(Ux, face_lt) -
 \end{verbatim}
 }
 
+\noindent
 Region variables are more complicated because they are arrays.
 
 {\small
@@ -137,6 +138,7 @@ Hx[l] = 0.5 * (region(H_local, face_lt)+ ...);
 \end{verbatim}
 }
 
+\noindent
 where {\tt l = LX + LY*(NLX+halo(0)+halo(1)))} is a local index variable, {\tt
   LX = get\_local\_id(0)} is the local thread id in the $x$ dimension, {\tt LY =
   get\_local\_id(1)} is the local thread id in the $y$ dimension, {\tt NLX =

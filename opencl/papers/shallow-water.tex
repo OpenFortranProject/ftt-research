@@ -18,14 +18,14 @@ h_{t}+(hu)_{x}+(hv)_{y} & = & 0\quad\mbox{(mass)}\\
 %(hu)_{t}+(h{u}^{2}+\tfrac{1}{2}gh^{2})_{x}+(huv)_{y} & = & 0\mbox{\qquad(conservation of x-momentum)}\\
 %(hv)_{t}+(huv)_{x}+(h{v}^{2}+\tfrac{1}{2}gh^{2})_{y} & = & 0\mbox{\qquad(conservation of y-momentum)}\end{eqnarray*}
 
-
+\noindent
 where h = height of water column (mass), $u$ = x velocity, $v$ =
 y velocity, and $g$ = gravity. The height $h$ can be used for mass
 because of the simplification of a unit cell size and a uniform water
 density. Another simplifying assumption is that the water depth is
 small in comparison to length and width and so velocities in the z-direction
 can be ignored. A fixed time step is used for simplicity though it
-must be less than $dt\leqq(\sqrt{gh}+|u|)/dx$.
+must be less than $dt \leqq dx / (\sqrt{gh}+|u|)$.
 
 The numerical method is a two-step Lax-Wendroff scheme. The method
 has some numerical oscillations with sharp gradients but is adequate
@@ -50,7 +50,8 @@ U_{i,j}^{n+1}=U_{i,j}^{n}-\frac{\triangle t}{\triangle x}(F_{i+\frac{1}{2},j}^{n
 
 \subsection{Serial code examples}
 
-The Fortran kernel procedure {\tt wave\_advance} for the shallow water code
+The coding style to implement the serial version of the shallow water model
+is now shown.  The Fortran kernel procedure {\tt wave\_advance} 
 is declared as:
 
 {\small
@@ -64,13 +65,14 @@ end subroutine
 \end{verbatim}
 }
 
+\noindent
 where {\tt H, U}, and {\tt V} are state variables for height and
 $x$ and $y$ momentum respectively.  The \emph{OFP} compiler directives
 {\tt CONTIGUOUS} and {\tt KERNEL} are added because contiguous is Fortran
 2008 syntax (not in current compilers) and kernel is an \emph{OFP} extension.
 
 Temporary arrays are required for the interior copies {\tt iH, iU}, and
-{\tt iV} of the state variables and for the flux quantities {\tt Hx, Hy, Ux,
+{\tt iV} of the state variables and for the quantities {\tt Hx, Hy, Ux,
 Vx}, and {\tt Vy} defined on cell faces.  These temporary arrays are declared as,
 
 {\small
@@ -81,7 +83,7 @@ real, allocatable, dimension(:,:) :: Uy,Vx,Vy
 \end{verbatim}
 }
 
-Halos variables for the interior and cell faces are defined as
+Halo variables for the interior and cell faces are
 
 {\small
 \begin{verbatim}
@@ -93,15 +95,15 @@ face_dn = [1,1,0,1]; face_up = [1,1,1,0]
 \end{verbatim}
 }
 
+\noindent
 Note that the halos for the four faces each have a 0 in the
 definition. Thus the returned array copy will have size that is larger
 than the interior regions that use {\tt [1,1,1,1]}.  This is because
 there is one more cell face quantity than there are cells in a given
 direction.
 
-The Lax-Wendroff update algorithm for the shallow-water model has
-two steps.  The fluxes are first updated on cell faces, for
-example,
+The first Lax-Wendroff step updates state variables on the cell
+faces, for example,
 
 {\small
 \begin{verbatim}
@@ -113,10 +115,8 @@ Hx = 0.5*(region(H,face_lt)+ &
 }
 
 \noindent
-updates the $x$-direction flux for the height state variable.
-
-Then second step uses these fluxes to update the interior regions for
-the state variables.  For example,
+updates the $x$-direction height variable.  The second step then uses
+these face variables to update the interior region, for example,
 
 {\small
 \begin{verbatim}
@@ -131,12 +131,12 @@ iH = iH + (dt/dx) * ( region(Ux, face_lt) - &
 
 \noindent
 Note that face halos have been redefined so that the array copy
-returned by now has the same size as the interior region.
+returned has the same size as the interior region.
 
 These simple code segments show how the shallow water model is
 implemented in standard Fortran (2003) using the data-parallel
 programming model described above.  The resulting code is simple,
-consise, and easy to understand.  However it does \emph{not}
+concise, and easy to understand.  However it does \emph{not}
 necessarily perform well because of the temporary array variables,
 especially those produced by the {\tt region} function.  This is
 generally true of algorithms that use Fortran shift functions as well,

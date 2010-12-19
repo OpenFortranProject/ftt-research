@@ -70,8 +70,10 @@
 \lstdefinestyle{NoFloatCLike}{frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
 
 
+%% Changed by CER
+%%\title{Exploiting First-Class Arrays in Fortran for Accelerator Programming}
 
-\title{Exploiting First-Class Arrays in Fortran for Accelerator Programming}
+\title{Exploiting Array Syntax in Fortran for Accelerator Programming}
 
 %%
 %% reorder appropriately later
@@ -105,14 +107,16 @@ Email: rasmussn@lanl.gov}
 \maketitle
 
 \begin{abstract}
-Emerging architectures for high performance computing often are well
-suited to a data parallel programming model.  This paper presents a
-simple programming methodology based on existing languages and compiler
-tools that allows programmers to take advantage of these systems.
-We will work with the array features of Fortran 90 to show how this
+Emerging architectures for high performance computing are well suited
+to a data-parallel programming model.  This paper presents a simple
+programming methodology that allows programmers to take advantage of
+these systems.  We use array constructs in Fortran 90 to show how this
 infrequently exploited, standardized language feature is easily
-transformed to lower level accelerator code.  Our transformations are
-based on a mapping from Fortran 90 to C++ code with OpenCL extensions.
+transformed to lower-level accelerator code.  These transformations
+are based on a simple mapping from Fortran 90 to OpenCL.  We
+demonstrate, using a shallow-water code, that an acceleration up to 40
+times can be achieved on GPU hardware with these compiler-generated
+transformations.
 \end{abstract}
 
 \input{intro}
@@ -124,9 +128,6 @@ based on a mapping from Fortran 90 to C++ code with OpenCL extensions.
 
 \section{Conclusions}
 
-%% Explain what we have accomplished (copied from proposal)
-
-%% NEW - CER
 The sheer complexity of programming for clusters of many or multi-core
 processors with tens of millions threads of execution make the simplicity of
 the data parallel model attractive.  Furthermore, the increasing complexity of
@@ -135,7 +136,6 @@ of the hardware) and the need for portability across hardware architectures
 make a higher-level and simpler programming model like data parallel
 attractive.
 
-%% NEW - CER
 The goal of this work has been to exploit source-to-source transformations that
 allow programmers to develop and maintain programs at a high-level of
 abstraction, without coding to a specific hardware architecture.
@@ -143,9 +143,6 @@ Furthermore these transformations allow multiple hardware architectures
 to be targeted without changing the high-level source.  It also removes the
 necessity for application programmers to understand details of the accelerator
 architecture or to know OpenCL.
-
-% Summarize results
-
 
 %%TODO \cite{chamberlain04zpl, roth97stencils}
 
