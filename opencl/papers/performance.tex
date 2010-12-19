@@ -2,9 +2,10 @@
 
 Performance measurements were made comparing the transformed code with
 different versions of the serial shallow-water code.  The serial
-versions include the original written in C and two Fortran versions:
-one using copy semantics for the regions and one using reference
-semantics.  We also compare with a hand written OpenCL implementation
+versions include two separate Fortran versions:
+one using data-parallel notation and the other using explicit looping
+constructs.
+We also compare with a hand-written OpenCL implementation
 that was optimized for local memory usage (no array temporaries).  The
 accelerated measurments were made using an NVIDIA Tesla C2050 (Fermi) cGPU with
 2.625 GB GDDR5 memory, and 448 processor cores.  The serial
@@ -23,10 +24,9 @@ This tight loop keeps the OpenCL kernel supplied with threads to take
 advantage of potential latency hiding by the NVIDIA GPU.  Any serial code
 within this loop would reduce the measured values.
 
-As can be seen in Figure~\ref{fig:cl-performance}, the transformed get very
-good results of roughly 65 times speedup over the best Fortran code and YYY
-speedup over the original C code.  It comes with XXX \% of the hand coded
-OpenCL version.
+As can be seen in Figure~\ref{fig:cl-performance}, the transformed code achieves very
+good results.  It is up to 40 times faster than the best serial Fortran code.
+
 
 \begin{figure}[!t]
 \centering
