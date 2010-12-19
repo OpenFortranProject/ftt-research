@@ -114,7 +114,7 @@ programming model that emerges.
 
 \subsection{Approach}
 
-%This paper addresses the accelerator programmign problem by examining
+%This paper addresses the accelerator programming problem by examining
 %features in Fortran that allow programmers to express algorithms at a
 %very high level that can be easily transformed by a compiler to run
 %efficiently on a wide variety of platforms.  In particular we consider
@@ -234,7 +234,7 @@ guarantee success either, as seen in an effort at LANL to modernize a
 legacy Fortran code with the the newer C++ POOMA framework.  This
 massive overhaul effort led to a code that was both slower and less
 flexible than the original Fortran \cite{basili08hpc}.  Similar
-experiences have occurred in the past, notably during the devlopment
+experiences have occurred in the past, notably during the development
 of the functional SISAL language in the early 1990s.
 
 Fortran is unique in that it has contained language features that are
@@ -312,7 +312,7 @@ around, explicit indexing will result in a loop such as:
 
 Similar whole array shifting was used in higher dimensions for finite
 different codes within the computational physics community, especially
-at Los Alamos for codes targetting the CM-5 system that resided there until the
+at Los Alamos for codes targeting the CM-5 system that resided there until the
 late 1990s.  
 
 The whole-array model was attractive because it deferred
@@ -341,7 +341,7 @@ storage.
 
 An interesting line of language research that grew out of the early work
 with HPF was that associated with the ZPL language work at the University
-of Washington~\ref{chamberlain04zpl}.  In ZPL, programmers adopt a simimlar
+of Washington~\ref{chamberlain04zpl}.  In ZPL, programmers adopt a similar
 global view of computation over arrays, but define their computations based
 on the local view of indices that participate in the update of each element of
 an array.  For example, in the 1D averaging case stated above, a programmer would
