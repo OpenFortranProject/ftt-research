@@ -25,12 +25,13 @@ advantage of potential latency hiding by the NVIDIA GPU.  Any serial code
 within this loop would reduce the measured values.
 
 As can be seen in Figure~\ref{fig:cl-performance}, the transformed code achieves very
-good results.  It is up to 40 times faster than the best serial Fortran code.
+good results.  It is up to 40 times faster than the best serial Fortran code and
+within 25\% of the hand-optimized OpenCL kernel.
 
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=2.5in]{cl-performance.pdf}
+\includegraphics[width=3in]{cl-performance.pdf}
 \caption{Performance comparison for varying array size.}
 \label{fig:cl-performance}
 \end{figure}
