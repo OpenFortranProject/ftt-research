@@ -75,7 +75,7 @@ are best suited to span this set of new hardware designs.
 %% NEW - CER
 %%%We will examine how the existing data-parallel constructs in Fortran can be combined with coarrays or MPI to provide effectively a new parallel programming language, one that is evolutionary in nature and provides complete compatibility with existing applications and libraries.  Data parallelism is a high-level abstraction that is, at the same time, both easier to program and gives the compiler more leeway (if fully exploited) in retargeting a program to different computer architectures.
 
-A common theme amongst new processors is the emphasis on data parallel
+A common theme amongst new processors is the emphasis on data-parallel
 programming.  This model is well suited to emerging architectures that
 are based on either vector processing or massively parallel
 collections of simple cores.  The recent CUDA and OpenCL programming
@@ -89,7 +89,7 @@ model from the Portland Group~\cite{pgi10accelerator}.
 The problem with many of these choices is that they expose too much
 detail about the machine architecture to the programmer.  This is
 particularly true of CUDA and OpenCL.  In CUDA, programmers must adapt
-their codes to fit the threading model used by NVidia GPUs, while
+their codes to fit the threading model used by NVIDIA GPUs, while
 OpenCL requires programmers to provide specially tuned versions of
 their code for different classes of machine.  In both cases, the
 programmer is responsible for explicitly managing memory,
@@ -130,7 +130,7 @@ processing elements, such as nodes employing GPU acceleration,
   program.}  In addition the program uses entirely standard Fortran so
 it can be compiled for and executed on a single core without concurrency.
 This work also is applicable to vendor-specific languages similar to
-OpenCL such as the NVidia CUDA language.
+OpenCL such as the NVIDIA CUDA language.
 
 %We provide (via Fortran interfaces in the ForOpenCL library) a
 %mechanism to call the C OpenCL runtime and enable Fortran programmers
@@ -195,7 +195,7 @@ languages like C continue to lack\footnote{The recent Intel 12.0 C/C++
   compiler supports extensions that provide array notation for C/C++
   code, as detailed here: http://intel.ly/g454zp}.  Furthermore,
 Fortran should be of interest to those studying parallel programming
-because of its functional and data parallel constructs and because of
+because of its functional and data-parallel constructs and because of
 the coarray notation introduced in Fortran 2008. Unlike languages like
 C and C++, Fortran has become a truly parallel language with features
 added to recent language standards.
@@ -231,7 +231,7 @@ vanish tomorrow?
 %% NEW - CER
 History has also shown that an investment in rewriting code does not
 guarantee success either, as seen in an effort at LANL to modernize a
-legacy Fortran code with the the newer C++ POOMA framework.  This
+legacy Fortran code with the newer C++ POOMA framework.  This
 massive overhaul effort led to a code that was both slower and less
 flexible than the original Fortran \cite{basili08hpc}.  Similar
 experiences have occurred in the past, notably during the development
@@ -250,7 +250,7 @@ relevant.
 
 \subsection{Comparison to Other Languages}
 
-A number of previous efforts have exploited data parallel programming
+A number of previous efforts have exploited data-parallel programming
 at the language level to utilize novel architectures, particularly in
 previous decades during the reign of vector and massively parallel
 computers in the high performance computing world.  The origin of the
@@ -276,9 +276,9 @@ in order to allow parallel execution.  Interestingly, the parallelism
 features introduced in HPF did not exploit the new array features
 introduced in 1990 in any significant way, relying instead on explicit
 loop-based parallelism.  This was likely in order to support parallel
-programming that wasn't easily mapped onto a pure data parallel model.
+programming that wasn't easily mapped onto a pure data-parallel model.
 
-In some instances though, a purely data parallel model is appropriate
+In some instances though, a purely data-parallel model is appropriate
 for part or all of the major computations within a program.  One of
 the systems where programmers relied heavily on higher level
 operations instead of explicit looping constructs was the Thinking
@@ -289,7 +289,7 @@ are expressed in terms of operations over the entire array instead of
 a single local index.  The use of the array shift intrinsic functions
 (like {\tt CSHIFT}) were used to build computations in which arrays
 were combined by shifting the entire arrays instead of working based
-on local offsets from singe indices.  A simple 1D example is one in
+on local offsets from single indices.  A simple 1D example is one in
 which an element is replaced with the average of its own value with
 that of its two direct neighbors.  Ignoring boundary indices that wrap
 around, explicit indexing will result in a loop such as:
@@ -341,18 +341,9 @@ storage.
 
 An interesting line of language research that grew out of the early work
 with HPF was that associated with the ZPL language work at the University
-of Washington~\ref{chamberlain04zpl}.  In ZPL, programmers adopt a similar
+of Washington~\cite{chamberlain04zpl}.  In ZPL, programmers adopt a similar
 global view of computation over arrays, but define their computations based
 on the local view of indices that participate in the update of each element of
 an array.  For example, in the 1D averaging case stated above, a programmer would
 define the computation in terms of the update that occurs at each index in terms
 of relative offsets from that index:
-
-%%TODO
-%%\begin{verbatim}
-%%Write some ZPL
-%%\end{verbatim}
-%%
-%%This would then be executed over the entire array. {\bf more...}
-%%
-%%Stuff on stencil compilers?  No?

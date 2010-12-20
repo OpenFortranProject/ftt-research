@@ -136,7 +136,7 @@ explicit loops, programmers must maintain this temporary storage manually.
 
 \subsection{New Procedures}
 
-Unlike OpenCL, we require limited use of compiler directives, although
+Unlike OpenMP, we require \emph{limited} use of compiler directives, although
 two are used to enforce the semantics required by the programming
 model.  These directives are:
 
@@ -153,7 +153,7 @@ model.  These directives are:
 Borrowing ideas from ZPL, we introduce a concept of a region to
 Fortran with a set of functions that allow programmers to work with
 subarrays in expressions.  In Fortran, these functions return a copy
-of an existing array or array section.  This is unlike ZPL where
+of an existing array or array section.  This is unlike ZPL, where
 regions are analogous to index sets and are used primarily for address
 resolution within an array without dictating storage related behavior.
 The functions that we propose are similar in that they allow a
@@ -239,10 +239,12 @@ syntax, shifts, regions, and pure and elemental functions:
 
 %%This example is a solution to Maxwell's equations for the $z$ component of the magnetic field using Fortran array syntax.  Note that there are no explicit loops in this example.  The operators {\tt +}, {\tt -}, and {\tt *} are applied to all of the elements of the three-dimensional arrays {\tt Bz}, {\tt Ex}, and {\tt Ey}, individually.
 
-Data parallelism has been called
-collection-oriented programming by
-Blelloch~\cite{blelloch90,rajopadhye93}.  As the {\tt cshift}
-function and the array-valued expressions all semantically returns a
+Blelloch~\cite{blelloch90,rajopadhye93}.
+
+
+Data parallelism has been called collection-oriented programming by
+Blelloch~\cite{blelloch90}.  As the {\tt cshift}
+function and the array-valued expressions all semantically return a
 value, this style of programming is also similar to functional
 programming (or value-oriented programming). 
 
@@ -294,14 +296,13 @@ programmer must copy memory to and from the device.  In addition,
 array size (neglecting ghost cell regions) must be multiples of the
 global OpenCL kernel size.
 
-Only elemental functions may be called from kernel functions.  These
-include Fortran functions that have an OpenCL analog and user-defined
-elemental functions.
+%% Duplicated CER
+%%Only elemental functions may be called from kernel functions.  These include Fortran functions that have an OpenCL analog and user-defined elemental functions.
 
 A kernel procedure (specified by the {\tt \!\$OFP KERNEL} directive) must be
 pure and all array variables must be declared as contiguous.  A kernel
 procedure may not call other procedures except for limited intrinsic
-functions (primarily math), user-defined elemental function, and the
+functions (primarily math), user-defined elemental functions, and the
 {\tt interior} and {\tt region} functions.  We plan to address
 non-contiguous arrays (such as those that result from strided access)
 by mapping array strides to gather/scatter-style memory accessors.

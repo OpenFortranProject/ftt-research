@@ -70,9 +70,6 @@
 \lstdefinestyle{NoFloatCLike}{frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
 
 
-%% Changed by CER
-%%\title{Exploiting First-Class Arrays in Fortran for Accelerator Programming}
-
 \title{Exploiting Array Syntax in Fortran for Accelerator Programming}
 
 %%
@@ -90,7 +87,7 @@ Email: matt@galois.com}
 \IEEEauthorblockA{Los Alamos National Laboratory\\
 %CCS-7, MS B287\\
 %Los Alamos, NM\\
-Email: rasmussn@lanl.gov}
+Email: crasmussen@lanl.gov}
 
 \and
 \IEEEauthorblockN{Daniel Quinlan}
@@ -110,11 +107,11 @@ Email: rasmussn@lanl.gov}
 Emerging architectures for high performance computing are well suited
 to a data-parallel programming model.  This paper presents a simple
 programming methodology that allows programmers to take advantage of
-these systems.  We use array constructs in Fortran 90 to show how this
+these emerging systems.  We use array constructs in Fortran 90 to show how this
 infrequently exploited, standardized language feature is easily
 transformed to lower-level accelerator code.  These transformations
 are based on a simple mapping from Fortran 90 to OpenCL.  We
-demonstrate, using a shallow-water code, that an acceleration up to 40
+demonstrate, using a shallow-water code, that an acceleration of up to 40
 times can be achieved on GPU hardware with these compiler-generated
 transformations.
 \end{abstract}
@@ -130,10 +127,10 @@ transformations.
 
 The sheer complexity of programming for clusters of many or multi-core
 processors with tens of millions threads of execution make the simplicity of
-the data parallel model attractive.  Furthermore, the increasing complexity of
+the data-parallel model attractive.  Furthermore, the increasing complexity of
 todays applications (especially when convolved with the increasing complexity
 of the hardware) and the need for portability across hardware architectures
-make a higher-level and simpler programming model like data parallel
+make a higher-level and simpler programming model like data-parallel
 attractive.
 
 The goal of this work has been to exploit source-to-source transformations that

@@ -84,7 +84,7 @@ interoperability with the OpenCL runtime.
 
 \section{Transformation examples}
 
-This sections outlines the OpenCL equivalent syntax for portions of
+This section outlines the OpenCL equivalent syntax for portions of
 the Fortran shallow-water code described in
 Section~\ref{sec:shallow-water}.  The notation uses uppercase for
 arrays and lowercase for scalar quantities.  Interior variables are
@@ -145,4 +145,4 @@ where {\tt l = LX + LY*(NLX+halo(0)+halo(1)))} is a local index variable, {\tt
   get\_local\_id(1)} is the local thread id in the $y$ dimension, {\tt NLX =
   get\_local\_size(0)} is the size of the thread group in the $x$ dimension, and
 the {\tt get\_local\_id} and {\tt get\_local\_size} functions are defined by the
-OpenCL compiler.
+OpenCL language standard.
