@@ -137,13 +137,14 @@ OpenCL such as the NVIDIA CUDA language.
 %to access OpenCL kernels.  
 Transformations are supplied that provide a mechanism for converting
 Fortran procedures written in the Fortran subset described in this
-paper to OpenCL kernels.  We use the ROSE compiler infrastructure
-\cite{rose-web} to develop these transformations.  ROSE uses the Open
-Fortran Parser \cite{ofp:sf} to parse Fortran 2008 syntax and can
-generate C-based OpenCL.  Since ROSE's intermediate representation
-(IR) was constructed to represent multiple languages, it is relatively
-straightforward to transform high-level Fortran IR nodes to C OpenCL
-nodes.
+paper to OpenCL kernels.  We use the ROSE compiler
+infrastructure\footnote{\url{http://www.rosecompiler.org/}} to
+develop these transformations.  ROSE uses the Open Fortran
+Parser\footnote{\url{http://fortran-parser.sf.net/}} to parse
+Fortran 2008 syntax and can generate C-based OpenCL.  Since ROSE's
+intermediate representation (IR) was constructed to represent multiple
+languages, it is relatively straightforward to transform high-level
+Fortran IR nodes to C OpenCL nodes.
 
 %  Furthermore, the Fortran array syntax maps directly to one,
 %two, and three-dimensional thread groups in OpenCL.
@@ -315,7 +316,9 @@ around, explicit indexing will result in a loop such as:
 Similar whole array shifting was used in higher dimensions for finite
 different codes within the computational physics community, especially
 at Los Alamos for codes targeting the CM-5 system that resided there until the
-late 1990s.  
+late 1990s.  A body of research in compilation of stencil-based codes
+that use shift operators targeting these systems is related to the
+work we present here~\cite{stencil-compiler}.
 
 The whole-array model was attractive because it deferred
 responsibility for optimally implementing the computations to the

@@ -6,8 +6,8 @@ pure procedures as input and generate OpenCL kernels.
 \subsection{OpenCL}
 
 OpenCL~\cite{opencl08} is an open language standard for developing
-applications for accelerators.  The C-based language provides extensions for
-programming kernels that run on accelerator processing elements.  The kernels
+applications for accelerators.
+The kernels
 are run by calling a C runtime library from the OpenCL host (normally the
 CPU).  Efforts to standardize a C++ runtime are underway and Fortran
 interfaces to the C runtime are described later.
@@ -65,21 +65,21 @@ thread can read from the cache.  On exit from a kernel, the local memory cache
 is copied back to global memory for all \emph{interior} regions leaving global
 memory in a consistent state again.
 
-\subsection{ForOpenCL}
+%\subsection{ForOpenCL}
 
-This work describes transformations that automatically create OpenCL kernel
-functions from Fortran pure and elemental procedures.  At present, these transformations
-will not transform an entire program.  Users, for now, must explicitly replace
-calls to Fortran kernel procedures that run on the device, with calls to the
-OpenCL runtime that will run the kernel on the OpenCL host.  While these host
-transformations are straightforward using ROSE, they are outside the scope of
-this paper.
+%This work describes transformations that automatically create OpenCL kernel
+%functions from Fortran pure and elemental procedures.  At present, these transformations
+%will not transform an entire program.  Users, for now, must explicitly replace
+%calls to Fortran kernel procedures that run on the device, with calls to the
+%OpenCL runtime that will run the kernel on the OpenCL host.  While these host
+%transformations are straightforward using ROSE, they are outside the scope of
+%this paper.
 
-In addition to the Fortran to OpenCL transformations, the
-ForOpenCL~\cite{ofp:sf} library provides programmers with the ability to
-call the C OpenCL runtime from Fortran.  ForOpenCL is a set of Fortran modules
-providing Fortran 2003 interface descriptions and classes that allow language
-interoperability with the OpenCL runtime.
+%In addition to the Fortran to OpenCL transformations, the
+%ForOpenCL library available from the Open Fortran Parser web page provides programmers with the ability to
+%call the C OpenCL runtime from Fortran.  ForOpenCL is a set of Fortran modules
+%providing Fortran 2003 interface descriptions and classes that allow language
+%interoperability with the OpenCL runtime.
 
 
 \section{Transformation examples}
@@ -92,7 +92,7 @@ denoted by an {\tt i} preceding the array name.  For example, {\tt iH =
   interior(H, halo)} is a local copy of interior region of array {\tt
   H} (representing height) in the shallow water model.
 
-\subsubsection{interior and region functions}
+\subsubsection{Interior and region functions}
 
 While the serial versions of the interior and regions functions return an
 array copy, in OpenCL, these functions return a scalar quantity based on the
@@ -102,7 +102,7 @@ element in the interior, the array index is just the thread index adjusted for
 the halo.  Thus {\tt interior} and {\tt region} are just inline OpenCL
 functions provided by the ForOpenCL library.
 
-\subsubsection{function and variable declarations}
+\subsubsection{Function and variable declarations}
 
 Fortran kernel procedures have direct correspondence with OpenCL equivalents.
 For example, {\tt wave\_advance} is transformed as {\tt \_\_kernel void
@@ -115,7 +115,7 @@ variables are simple scalars, e.g., {\tt float iH;}.  Region variables cannot
 be scalar objects because regions may be shifted and thus \emph{shared} by
 threads within a thread group.
 
-\subsubsection{array syntax}
+\subsubsection{Array syntax}
 
 Array syntax transforms nearly directly to OpenCL code.  For example, interior
 variables are particularly straightforward as they are scalar quantities in
@@ -135,12 +135,12 @@ arrays.
 
 {\small
 \begin{verbatim}
-Hx[l] = 0.5 * (region(H_local, face_lt)+ ...);
+Hx[i] = 0.5 * (region(H_local, face_lt)+ ...);
 \end{verbatim}
 }
 
 \noindent
-where {\tt l = LX + LY*(NLX+halo(0)+halo(1)))} is a local index variable, {\tt
+where {\tt i = LX + LY*(NLX+halo(0)+halo(1)))} is a local index variable, {\tt
   LX = get\_local\_id(0)} is the local thread id in the $x$ dimension, {\tt LY =
   get\_local\_id(1)} is the local thread id in the $y$ dimension, {\tt NLX =
   get\_local\_size(0)} is the size of the thread group in the $x$ dimension, and
