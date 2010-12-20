@@ -115,7 +115,8 @@ subroutine wave_advance(H, U, V, dx, dy, dt)
    integer, dimension(4) :: halo, face_lt, face_rt, face_up, face_dn
 
    ! pointers for interior and shifted regions
-   real, pointer, dimension(:,:) :: iH, iU, iV
+   real, pointer, dimension(:,:) :: ipH, ipU, ipV
+   real, dimension(NX,NY) :: iH, iU, iV
 
    ! explicit automatic temporaries
    real, dimension(NX+1,NY) :: Hx, Ux, Vx
@@ -128,9 +129,13 @@ subroutine wave_advance(H, U, V, dx, dy, dt)
    !
    halo = [1, 1, 1, 1]
 
-   iH => transfer_halo(H, halo)
-   iU => transfer_halo(U, halo)
-   iV => transfer_halo(V, halo)
+   ipH => transfer_halo(H, halo)
+   ipU => transfer_halo(U, halo)
+   ipV => transfer_halo(V, halo)
+
+   iH = ipH
+   iU = ipU
+   iV = ipV
 
    ! first half step
    !
@@ -183,17 +188,17 @@ subroutine wave_advance(H, U, V, dx, dy, dt)
    face_up = [0,0,1,0]
 
    ! height
-   iH = iH + dtdx * ( region(Ux, face_lt) - region(Ux, face_rt) ) &
+   ipH = iH + dtdx * ( region(Ux, face_lt) - region(Ux, face_rt) ) &
            + dtdy * ( region(Vy, face_dn) - region(Vy, face_up) )
 
    ! x momentum
-   iU = iU + dtdx * ( region(Ux, face_lt)**2 / region(Hx, face_lt) + gs*region(Hx, face_lt)**2 ) &
+   ipU = iU + dtdx * ( region(Ux, face_lt)**2 / region(Hx, face_lt) + gs*region(Hx, face_lt)**2 ) &
            - dtdx * ( region(Ux, face_rt)**2 / region(Hx, face_rt) + gs*region(Hx, face_rt)**2 ) &
            + dtdy * ( region(Uy, face_dn) * region(Vy, face_dn) / region(Hy, face_dn) )          &
            - dtdy * ( region(Uy, face_up) * region(Vy, face_up) / region(Hy, face_up) )
 
    ! y momentum
-   iV = iV + dtdx * ( region(Ux, face_dn) * region(Vx, face_dn) / region(Hx, face_dn) )          &
+   ipV = iV + dtdx * ( region(Ux, face_dn) * region(Vx, face_dn) / region(Hx, face_dn) )          &
            - dtdx * ( region(Ux, face_up) * region(Vx, face_up) / region(Hx, face_up) )          &
            + dtdy * ( region(Vy, face_lt)**2 / region(Hy, face_lt) + gs*region(Hy, face_lt)**2 ) &
            - dtdy * ( region(Vy, face_rt)**2 / region(Hy, face_rt) + gs*region(Hy, face_rt)**2 )
