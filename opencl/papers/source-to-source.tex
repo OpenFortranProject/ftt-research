@@ -40,7 +40,7 @@ in local memory are shown in light gray.
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=2.5in]{cl-memory.pdf}
+\includegraphics[width=1.75in]{cl-memory.pdf}
 \caption{A schematic of global memory for an array and its copy stored in local memory
 for four thread groups.}
 \label{fig:cl-memory}
@@ -118,7 +118,7 @@ threads within a thread group.
 \subsubsection{array syntax}
 
 Array syntax transforms nearly directly to OpenCL code.  For example, interior
-variables are particularly straightforward as they as scalar quantities in
+variables are particularly straightforward as they are scalar quantities in
 OpenCL,
 
 {\small
@@ -130,8 +130,8 @@ iH = iH + (dt/dx) * (region(Ux, face_lt) -
 \end{verbatim}
 }
 
-\noindent
-Region variables are more complicated because they are arrays.
+\noindent Region variables are more complicated because they are
+arrays.
 
 {\small
 \begin{verbatim}
