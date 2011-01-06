@@ -1,0 +1,49 @@
+/*******************************************************************
+ *                                                                 *
+ *                        ForOpenCL                                *
+ *                      Version 0.8.2                              *
+ *                                                                 *
+ *  README - a brief description and pointers to more information  *
+ *                                                                 *
+ *******************************************************************
+
+
+                          DESCRIPTION
+                          -----------
+
+ForOpenCL provides Fortran interfaces to the OpenCL runtime.  It also
+provides a number of wrapper classes that make using the runtime easier.
+It is pretty immature at this stage.
+
+ForOpenCL is part of the Open Fortran Parser (OFP) project.
+
+                            RESOURCES
+                            ---------
+
+Installation instructions:
+
+  - Edit the Makefile to provide the path to the NVIDIA SDK for Linux
+    installations.  Then run make.  On Mac OSX, just run make.  Make will
+    build the ForOpenCL objects and an example application, elemental_add.
+
+Documentation:
+
+  - None at the moment (sorry).
+
+Running the example:
+
+  - After running make, run the example by typing,
+
+        ./elemental_add
+
+Help:
+
+  - Please send requests and suggestions for improvement to Craig Rasmussen
+    <crasmussen@lanl.gov>.
+
+TODO:
+
+  - a configure script to build the ForOpenCL library
+  - documentation
+  - further simplification of the ForOpenCL API (the memory buffer usage
+    is clumsy)
