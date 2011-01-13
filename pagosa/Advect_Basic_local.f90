@@ -94,7 +94,9 @@ BLOCK
    flux = dFlux * (Don + Upw)
 
    !... Update Array cell values (boundaries fixed later in set_ghosts)
-   if (local(Maskc))  local(Array) = TmpB * (l_Array(0) * TmpA + (flux(0) - flux(1)))
+   if (Maskc(i,j,k)) then
+      Array(i,j,k) = TmpB * (l_Array(0) * TmpA + (flux(0) - flux(1)))
+   end if
 
 END BLOCK
 END DO CONCURRENT
