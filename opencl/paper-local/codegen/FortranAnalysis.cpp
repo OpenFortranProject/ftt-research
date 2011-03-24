@@ -46,7 +46,42 @@ void HaloRefSearch::visit(SgNode * node)
 }
 
 
-FortranAnalysis::FortranAnalysis(SgGlobal * scope)
+static int split_string(const char * arg, char *** list)
+{
+   int i = 0;
+   int count = 0;
+
+   char * str = strdup(arg);
+   char * chrp = str;
+
+   if (*chrp != '\0') count = 1;
+
+   // count the number of strings in the list
+   while (*chrp != '\0') {
+      if (*chrp++ == ' ') count += 1;
+   } 
+
+   if (count == 0) return count;
+
+   *list = new char * [count];
+         
+   chrp = str;
+   (*list)[i++] = str;
+
+   // replace ' ' by '\0' to terminate strings in place
+   while (*chrp != '\0') {
+      if (*chrp == ' ') {
+         *chrp = '\0';
+         (*list)[i++] = chrp + 1;
+      } 
+      chrp += 1;
+   } 
+
+   return count;
+}
+
+
+FortranAnalysis::FortranAnalysis(int argc, char * argv[], SgGlobal * scope)
 {
    this->src_global_scope = scope;
    this->last_halo_symbol = NULL;
@@ -54,40 +89,21 @@ FortranAnalysis::FortranAnalysis(SgGlobal * scope)
 
    this->num_arrays = 0;
    this->array_list = NULL;
-}
 
-FortranAnalysis::FortranAnalysis(SgGlobal * scope, const char * arrays)
-{
-   int i = 0;
-   num_arrays = 0;
+   this->num_descs = 0;
+   this->desc_list = NULL;
 
-   this->src_global_scope = scope;
-   this->last_halo_symbol = NULL;
-   this->first_array_dummy_ref = NULL;
+   for (int i = 0; i < argc; i++) {
+      char * str = argv[i];
 
-   if (strncmp(arrays, "-ofp:", 5) == 0) {
-      char * str = strdup(&arrays[5]);
-      char * chrp = str;
+      if (strncmp(str, "-ofp:", 5) != 0) continue;
 
-      if (*chrp != '\0') num_arrays = 1;
-      while (*chrp != '\0') {
-         if (*chrp++ == ' ') num_arrays += 1;
-      } 
-
-      array_list = new char * [num_arrays];
-
-      chrp = str;
-      array_list[i++] = str;
-      while (*chrp != '\0') {
-         if (*chrp == ' ') {
-            *chrp = '\0';
-            array_list[i++] = chrp + 1;
-         } 
-         chrp += 1;
-      } 
-   }
-   else {
-      array_list = NULL;
+      if (strncmp(&str[5], "arrays", 6) == 0) {
+         num_arrays = split_string(&str[11], &array_list);
+      }
+      else if (strncmp(&str[5], "descs", 5) == 0) {
+         num_descs = split_string(&str[10], &desc_list);
+      }
    }
 }
 
@@ -135,14 +151,24 @@ void FortranAnalysis::visit(SgFunctionDefinition * func_def)
                 func_arg->get_name().getString().c_str());
       }
       else if (isSgArrayType(type) != NULL) {
-         sym->setAttribute("dummy_attr", new AstTextAttribute("DUMMY_ARRAY_ARG"));
+         printf("WARNING: arg %s must be a scalar\n", func_arg->get_name().str());
+         sym->setAttribute("dummy_attr", new AstTextAttribute("DUMMY_ARRAY_TYPE_ARG"));
+      }
+      else if (isSgNamedType(type)) {
+         sym->setAttribute("dummy_attr", new AstTextAttribute("DUMMY_NAMED_TYPE_ARG"));
       }
       else {
          sym->setAttribute("dummy_attr", new AstTextAttribute("DUMMY_ARG"));
       }
 
       if (sym != NULL && isElementalArrayType(func_arg)) {
-         sym->setAttribute("extended_attr", new AstTextAttribute("EXTENDED_ARRAY"));
+         sym->setAttribute("elemental_attr", new AstTextAttribute("ELEMENTAL_ARRAY"));
+         sym->setAttribute("index_attr", new AstTextAttribute("idx"));
+      }
+
+      if (sym != NULL && hasArrayDescriptor(func_arg)) {
+         sym->setAttribute("descriptor_attr", new AstTextAttribute("desc_"+func_arg->get_name()));
+         sym->setAttribute("index_attr", new AstTextAttribute("idx_"+func_arg->get_name()));
       }
    }
 }
@@ -218,7 +244,7 @@ bool FortranAnalysis::matchRegionAssignment(SgExprStatement * expr_stmt)
       if (var == NULL) return false;
       AstTextAttribute * attr = (AstTextAttribute *) var->get_symbol()->getAttribute("dummy_attr");
       if (attr == NULL) return false;
-      if (attr->toString() != "DUMMY_ARRAY_ARG") return false;
+      if (attr->toString() != "DUMMY_ARRAY_TYPE_ARG") return false;
    }
    return true;
 }
@@ -286,4 +312,52 @@ bool FortranAnalysis::isElementalArrayType(SgInitializedName * iname)
 bool FortranAnalysis::isElementalArrayType(SgFunctionDeclaration * func_decl)
 {
    return true;
+}
+
+bool FortranAnalysis::hasArrayDescriptor(SgInitializedName * iname)
+{
+   for (int i = 0; i < num_descs; i++) {
+      if (strcmp(iname->get_name().str(), desc_list[i]) == 0) {
+         return true;
+      }
+   }
+   return false;
+}
+
+/**
+ * Return true if this symbol represents a dummy variable
+ */
+bool FortranAnalysis::isDummyVariable(SgSymbol * sym)
+{
+   bool isDummy = false;
+   if (sym != NULL) {
+      AstAttribute * attr = sym->getAttribute("dummy_attr");
+      if (attr != NULL) isDummy = true;
+   }
+   return isDummy;
+}
+
+/**
+ * Return true if the variable declaration statement has a local variable (non-dummy)
+ */
+bool FortranAnalysis::hasLocalVariable(SgVariableDeclaration * var_decl, SgFunctionDefinition * func_def)
+{
+   bool hasLocalVar = true;
+
+   SgInitializedNamePtrList & vars = var_decl->get_variables();
+   SgInitializedNamePtrList::iterator var = vars.begin();
+
+   while (var != vars.end()) {
+      std::string name = (*var++)->get_name();
+      if (isDummyVariable(func_def->lookup_symbol(name))) hasLocalVar = false;
+   }
+
+   return hasLocalVar;
+}
+
+const char * FortranAnalysis::getAttributeValue(SgSymbol * sym, std::string attr_name)
+{
+   AstTextAttribute * attr = (AstTextAttribute *) sym->getAttribute(attr_name);
+   if (attr == NULL) return NULL;
+   return attr->toString().c_str();
 }

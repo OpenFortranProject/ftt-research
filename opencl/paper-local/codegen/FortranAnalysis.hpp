@@ -8,8 +8,7 @@ class FortranAnalysis : public AstSimpleProcessing
 
 public:
    
-   FortranAnalysis(SgGlobal * scope);
-   FortranAnalysis(SgGlobal * scope, const char * arrays);
+   FortranAnalysis(int argc, char * argv[], SgGlobal * scope);
    virtual ~FortranAnalysis();
 
    virtual void visit(SgNode * node);
@@ -32,6 +31,13 @@ public:
    bool isElementalArrayType(SgInitializedName * iname);
    bool isElementalArrayType(SgFunctionDeclaration * func_decl);
 
+   bool hasArrayDescriptor(SgInitializedName * iname);
+
+   static bool isDummyVariable(SgSymbol * sym);
+   static bool hasLocalVariable(SgVariableDeclaration * var_decl, SgFunctionDefinition * func_def);
+
+   static const char * getAttributeValue(SgSymbol * sym, std::string attr_name);
+
    // accessor function
    //
 
@@ -47,4 +53,7 @@ protected:
 
    int num_arrays;
    char ** array_list;
+
+   int num_descs;
+   char ** desc_list;
 };

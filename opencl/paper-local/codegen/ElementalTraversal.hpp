@@ -8,19 +8,25 @@ class ElementalTraversal : public FortranTraversal
 
 public:
    
-   ElementalTraversal(const char * filename);
-   ElementalTraversal(const char * filename, const char * array_list);
-   virtual ~ElementalTraversal();
+   ElementalTraversal(int argc, char * argv[], const char * filename);
 
    virtual void visit(SgNode * node);
 
    void open(const char * filename);
 
-   void visit(SgInterfaceBody * ibody);
-   void visit(SgFunctionDeclaration * func_decl);
+   //   void visit(SgInterfaceBody * ibody);
+   //   void visit(SgFunctionDeclaration * func_decl);
    void visit(SgFunctionDefinition  * func_def);
 
-   void unparseVarDecl(SgVariableDeclaration * var_decl, bool isLocal=false);
+   void unparseStmt(SgStatement * stmt);
+
+   void unparseExpr(SgExpression * expr);
+   void unparseBinaryOp(SgBinaryOp * op);
+   void unparseUnaryOp(SgUnaryOp * op);
+   void unparseFuncCallExpr(SgFunctionCallExp * expr);
+   void unparseVarRefExpr(SgVarRefExp * var);
+
+   void unparseVarDecl(SgVariableDeclaration * var_decl, SgFunctionDefinition * func_def);
    void unparseVarDef(SgVariableDeclaration * var_decl, bool isLocal=false);
    void unparseParamDef(SgVariableDeclaration * var_decl);
    void unparseFunctionCall(SgFunctionDefinition * func_def);
@@ -34,10 +40,14 @@ public:
 
    void unparseType(SgType *);
 
-   bool isElementalArrayType(SgInitializedName * iname);
-   bool isElementalArrayType(SgFunctionDeclaration * func_decl);
+   void unparseArrayDescs(SgFunctionDeclaration * func_decl);
+   void unparseIndexVars(SgFunctionDeclaration * func_decl);
+
 
 protected:
+
+   int line;
+   int num_dims;
 
    int num_arrays;
    char ** array_list;
