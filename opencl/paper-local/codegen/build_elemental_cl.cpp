@@ -9,7 +9,7 @@ int main(int argc, char ** argv)
 
    if (argc < 2) {
       printf("usage: build_elemental_cl -c -rose:skip_syntax_check elemental_add.f90 ");
-      printf("<array_list>\n");
+      printf("-ofp:<array_list>\n");
    }      
 
    SgProject* project = frontend(argc, argv);
@@ -18,15 +18,11 @@ int main(int argc, char ** argv)
    SgSourceFile * src_file = isSgSourceFile((*project)[0]);
    ROSE_ASSERT(src_file);
 	
-   if (argc == 5) {
-      analysis = new FortranAnalysis(src_file->get_globalScope(), argv[4]);
-      traversal = new ElementalTraversal("template.c", argv[4]);
-   }
-   else {
-      analysis = new FortranAnalysis(src_file->get_globalScope());
-      traversal = new ElementalTraversal("template.c");
-   }
+   analysis = new FortranAnalysis(argc, argv, src_file->get_globalScope());
+   traversal = new ElementalTraversal(argc, argv, "template.c");
 
+   //src_file->set_outputFormat(SgFile::e_free_form_output_format);
+   //src_file->set_outputLanguage(SgFile::e_C_output_language);
 
    SgDeclarationStatementPtrList & decls = src_file->get_globalScope()->get_declarations();
    SgDeclarationStatementPtrList::iterator it_decls;
