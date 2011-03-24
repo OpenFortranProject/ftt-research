@@ -1,7 +1,15 @@
-pure elemental function elemental_add(a, b)
-!   real :: elemental_add
-   real, intent(in) :: a, b
+pure subroutine elemental_add(A, B, C)
+   real, intent(in)  :: A, B
+   real, intent(out) :: C
 
-   elemental_add = a + b   
+   !
+   ! Add compiler directives that will be turned into syntax
+   ! 
+   !$OFP thread elemental :: elemental_add
+   !$OFP intent(COPYIN)   :: A, B
+   !$OFP intent(COPYOUT)  :: C
+   !
 
-end function elemental_add
+   C = A + B   
+
+end subroutine elemental_add
