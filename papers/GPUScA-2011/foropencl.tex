@@ -106,16 +106,15 @@ overbey2@illinois.edu}
 \maketitle
 
 \begin{abstract}
-Emerging architectures for high performance computing are well suited
-to a data-parallel programming model.  This paper presents a simple
-programming methodology that allows programmers to take advantage of
-these emerging systems.  We use array constructs in Fortran 90 to show how this
-infrequently exploited, standardized language feature is easily
-transformed to lower-level accelerator code.  These transformations
-are based on a simple mapping from Fortran 90 to OpenCL.  We
-demonstrate, using a shallow-water code, that an acceleration of up to 40
-times can be achieved on GPU hardware with these compiler-generated
-transformations.
+Emerging GPU architectures for high performance computing are well suited to a
+data-parallel programming model.  This paper presents a simple programming
+methodology that allows programmers to take advantage of these emerging systems.
+We use array constructs in Fortran 90 to show how this infrequently exploited,
+standardized language feature is easily transformed to lower-level accelerator
+code.  These transformations are based on a simple mapping from Fortran 90 to
+OpenCL.  We demonstrate, using a stencil code solving the shallow-water fluid
+equations, that the performance of our compiler-generated transformations is
+comparable with that of hand-optimized OpenCL code.
 \end{abstract}
 
 \input{intro}

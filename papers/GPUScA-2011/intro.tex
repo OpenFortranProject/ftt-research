@@ -1,36 +1,19 @@
 \section{Introduction}
 \label{sec:intro}
 
-This paper presents a compiler-level approach for targeting a single
-program to multiple, fundamentally different low-level execution
-models.  This technique allows the application programmer to adopt
-a single high-level programming model without sacrificing performance.
-We show that features of
-Fortran 90 for data-parallel programming are well suited to automatic
-transformation to generate code specifically tuned for different
-hardware architectures using low-level programming models such as
-OpenCL and CUDA.  For algorithms that can be easily expressed in terms
-of whole array, data-parallel operations, writing code in Fortran and
-transforming it automatically to specific low-level implementations
-removes the burden from the programmer of working with tedious, error
-prone, low-level tools.
+This paper presents a compiler-level approach for targeting a single program to
+multiple and possibly fundamentally different processor architectures.  This
+technique allows the application programmer to adopt a single, high-level
+programming model without sacrificing performance.  We suggest that existing
+data-parallel features in Fortran are well suited to applying automatic
+transformations that generate code specifically tuned for different hardware
+architectures using low-level programming models such as OpenCL.  For algorithms
+that can be easily expressed in terms of whole array, data-parallel operations,
+writing code in Fortran and transforming it automatically to specific low-level
+implementations removes the burden of creating and maintaining multiple versions
+of architecuture specific code.
 
-In the ideal situation, application programmers would like to adopt a
-programming model in which they write their application once and use
-automated tools to retarget it to many architectures.  This has proven
-to be very challenging historically due to the subtle balance between
-high-level expressiveness of code and the performance of the
-lower-level code that is emitted by a compiler.  This ideal high-level
-model that programmers work with should emphasize readability,
-maintainability, and close proximity in abstraction to the problem
-being solved --- in this instance, the abstraction that we care about
-are mathematical formulae.  It should not be corrupted with details of
-specific target architectures solely for the purpose of single-system
-performance.  For certain classes of applications, specifically those
-that map onto a data-parallel programming model, we show that
-Fortran 90 contains language features that encourage high-level
-programming abstractions without sacrificing performance during
-low-level code generation.
+%%%In the ideal situation, application programmers would like to adopt a programming model in which they write their application once and use automated tools to retarget it to many architectures.  This has proven to be very challenging historically due to the subtle balance between high-level expressiveness of code and the performance of the lower-level code that is emitted by a compiler.  This ideal high-level model that programmers work with should emphasize readability, maintainability, and close proximity in abstraction to the problem being solved --- in this instance, the abstraction that we care about are mathematical formulae.  It should not be corrupted with details ofspecific target architectures solely for the purpose of single-system performance.  For certain classes of applications, specifically those that map onto a data-parallel programming model, we show that Fortran 90 contains language features that encourage high-level programming abstractions without sacrificing performance during low-level code generation.
 
 %1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
 %2. Goal is to code for readability and maintainability, not performance
@@ -54,51 +37,44 @@ low-level code generation.
 %accelerated nodes range from 200+ GFlops for the IBM Cell/B.E.
 %processor to XXX for NVIDIA Fermi. %% Fermi has another name
 
-The performance that new accelerator architectures offer comes at a
-cost, as processor architectures are trending toward multiple cores
-with instances of integrated accelerator units (with user managed
-memory) and less of a reliance on superscalar instruction level
-parallelism and hardware managed memory hierarchies (such as
-traditional caches).  These changes place a heavy burden on
-application programmers as they are forced to adapt to the new
-systems.  An especially challenging problem faced by application
-programmers is not only how to program to these new architectures
-(considering the massive scale of concurrency available), but also how
-to design programs that are portable across the changing landscape of
-computer architectures with unique memory systems and programming
-models.  Can a programmer easily write one program that can run on a
-conventional multicore CPU, graphics processing unit, Cell processor,
-and one of many emerging many core architectures?  The fundamental
-question we address is what programming model and language constructs
-are best suited to span this set of new hardware designs.
+Unfortunately the performance that the new accelerator architectures offer comes
+at a cost.  Architectural changes are trending toward multiple heterogeneous
+cores and less of a reliance on superscalar instruction level parallelism and
+hardware managed memory hierarchies (such as traditional caches).  These changes
+place a heavy burden on application programmers as they are forced to adapt to
+these new systems.  An especially challenging problem is not only how to program
+to these new architectures (considering the massive scale of concurrency
+available), but also how to design programs that are portable across the
+changing landscape of computer architectures with unique memory systems and
+programming models.  How can a programmer easily write one program that can
+perform well on both a conventional multicore CPU and a GPU (or one of the
+emerging many-core architectures)?  A directive-based approach, such as OpenMP
+or the Accelerator programming model from the Portland
+Group~\cite{pgi10accelerator}, is one solution to this problem.
+
+%%%The fundamental question we address is what programming model and language constructs are best suited to span this set of new hardware designs.
 
 %% NEW - CER
 %%%We will examine how the existing data-parallel constructs in Fortran can be combined with coarrays or MPI to provide effectively a new parallel programming language, one that is evolutionary in nature and provides complete compatibility with existing applications and libraries.  Data parallelism is a high-level abstraction that is, at the same time, both easier to program and gives the compiler more leeway (if fully exploited) in retargeting a program to different computer architectures.
 
-A common theme amongst new processors is the emphasis on data-parallel
-programming.  This model is well suited to emerging architectures that
-are based on either vector processing or massively parallel
-collections of simple cores.  The recent CUDA and OpenCL programming
-languages are are intended to support this programming model, as are
-directive-based methods such as OpenMP or the Accelerator programming
-model from the Portland Group~\cite{pgi10accelerator}.
+In this paper we take a somewhat different approach.  A common theme amongst the new
+processors is the emphasis on data-parallel programming.  This model is well
+suited to the emerging architectures that are based on either vector processing
+or massively parallel collections of simple cores.  The recent CUDA and OpenCL
+programming languages are are intended to support this programming model,
 
 %% Deleted by CER
 %%A proposed approach for programming that is well suited to legacy applications and languages are language extensions or libraries that allow programmers to avoid adopting entirely new languages.  
 
-The problem with many of these choices is that they expose too much
-detail about the machine architecture to the programmer.  This is
-particularly true of CUDA and OpenCL.  In CUDA, programmers must adapt
-their codes to fit the threading model used by NVIDIA GPUs, while
-OpenCL requires programmers to provide specially tuned versions of
-their code for different classes of machine.  In both cases, the
-programmer is responsible for explicitly managing memory,
-including staging of data back and forth from the host CPU and the
-accelerator device memory.  While these models have been attractive as
-a method for early adopters to utilize these new architectures, they
-are less attractive to programmers who do not have the time or
-resources to manually port their code to every new architecture and
-programming model that emerges.
+The problem with OpenCL and CUDA is that they expose too much detail about the
+machine architecture to the programmer.  The programmer is responsible for
+explicitly managing memory (including the staging of data back and forth between
+the host CPU and the accelerator device) and specifically taking into account
+architectural differences (such as whether the architecture contains vector
+units).  While these languages have been attractive as a method for early
+adopters to utilize these new architectures, they are less attractive to
+programmers who do not have the time or resources to manually port their code to
+every new architecture and programming model that emerges.
 
 %At this point in time it is not really possible to write once and run
 %efficiently on the wide variety of computer platforms we have
@@ -120,10 +96,14 @@ programming model that emerges.
 %efficiently on a wide variety of platforms.  In particular we consider
 %computers based on GPUs and related accelerator processors.
 
-We demonstrate that the array syntax of Fortran maps surprisingly well
-onto GPUs when transformed to OpenCL kernels.  These Fortran language
-features include pure and elemental functions and array constructs
-like {\tt where} and {\tt cshift}.  In addition we add a few functions
+We demonstrate that the data-parallel features of Fortran map surprisingly well
+onto GPUs when transformed to OpenCL kernels.  These features include: array syntax
+employing binary operators, array constructs like {\tt WHERE} and {\tt DO CONCURRENT},
+and the use of pure and elemental functions.
+In addition we add functions that explicitly take advantage of the
+stencil geometry.
+
+
 that enable a program to be deployed on machines with a hierarchy of
 processing elements, such as nodes employing GPU acceleration,
 \emph{without requiring explicit declaration of parallelism within the
