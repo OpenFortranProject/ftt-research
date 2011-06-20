@@ -1,0 +1,59 @@
+This is BibTeX, Version 0.99d (TeX Live 2010)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: foropencl.aux
+The style file: IEEEtran.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: IEEEabrv.bib
+Database file #2: foropencl.bib
+-- IEEEtran.bst version 1.13 (2008/09/30) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+Warning--missing institution in pgi10accelerator
+
+Done.
+You've used 10 entries,
+            4039 wiz_defined-function locations,
+            1262 strings with 16672 characters,
+and the built_in function-call counts, 4552 in all, are:
+= -- 335
+> -- 122
+< -- 4
++ -- 58
+- -- 29
+* -- 212
+:= -- 799
+add.period$ -- 19
+call.type$ -- 10
+change.case$ -- 7
+chr.to.int$ -- 0
+cite$ -- 11
+duplicate$ -- 375
+empty$ -- 421
+format.name$ -- 35
+if$ -- 978
+int.to.chr$ -- 0
+int.to.str$ -- 10
+missing$ -- 89
+newline$ -- 57
+num.names$ -- 10
+pop$ -- 219
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 2
+skip$ -- 343
+stack$ -- 0
+substring$ -- 7
+swap$ -- 248
+text.length$ -- 4
+text.prefix$ -- 0
+top$ -- 5
+type$ -- 10
+warning$ -- 1
+while$ -- 10
+width$ -- 12
+write$ -- 109
+(There was 1 warning)
