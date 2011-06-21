@@ -507,7 +507,13 @@ void ElementalTraversal::unparseFuncParam(SgInitializedName * iname, SgFunctionD
    fprintf(fp, "    ");
    if (isArrayType || isSgNamedType(type)) fprintf(fp, "__global ");
 
-   unparseType(type);
+   attr = sym->getAttribute("generic_type_attr");
+   if (attr != NULL) {
+      fprintf(fp, "%s",attr->toString().c_str());
+   }
+   else {
+      unparseType(type);
+   }
    fprintf(fp, " ");
 
    if (isArrayType || isSgNamedType(type)) {
