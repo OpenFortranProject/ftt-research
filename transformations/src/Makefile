@@ -1,0 +1,49 @@
+# Example Makefile
+
+# Location of ROSE directory
+ROSE_DIR = /Users/rasmussn/ROSE/install-tree
+ROSE_BUILD_DIR = /Users/rasmussn/ROSE/build-tree
+
+# Location of ROSE include directory 
+ROSE_INCLUDE_DIR = $(ROSE_DIR)/include 
+
+# Location of ROSE library directory
+ROSE_LIB_DIR = $(ROSE_DIR)/lib
+ROSE_LIBS = $(ROSE_LIB_DIR)/librose.la
+
+# Location of ROSE libtool
+ROSE_LIBTOOL = $(ROSE_BUILD_DIR)/libtool
+
+# Location of fortran-parser/transformations source directory
+SPU_SOURCE_DIR = .
+
+# Location of SPU include files
+SPU_INCLUDES = -I$(SPU_SOURCE_DIR) -I$(SPU_SOURCE_DIR)/cell
+
+# Default make rule to use
+all: SPU_app_gen
+
+SPUProgramAnalyzer.lo:
+	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPUProgramAnalyzer.lo $(SPU_SOURCE_DIR)/cell/SPUProgramAnalyzer.cpp
+
+SPUProgramTranslator.lo:
+	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPUProgramTranslator.lo $(SPU_SOURCE_DIR)/cell/SPUProgramTranslator.cpp
+
+SPUAnalyzer.lo:
+	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPUAnalyzer.lo $(SPU_SOURCE_DIR)/cell/SPUAnalyzer.cpp
+
+SPUBuilder.lo:
+	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPUBuilder.lo $(SPU_SOURCE_DIR)/cell/SPUBuilder.cpp
+
+FTTBuilder.lo:
+	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o FTTBuilder.lo $(SPU_SOURCE_DIR)/FTTBuilder.cpp 
+
+SPU_app_gen.lo: SPU_app_gen.cpp
+	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPU_app_gen.lo  $(SPU_SOURCE_DIR)/SPU_app_gen.cpp
+
+SPU_app_gen: SPU_app_gen.lo SPUProgramTranslator.lo SPUProgramAnalyzer.lo SPUAnalyzer.lo SPUBuilder.lo FTTBuilder.lo
+	$(ROSE_LIBTOOL) --mode=link g++ -o SPU_app_gen SPU_app_gen.lo SPUProgramTranslator.lo SPUProgramAnalyzer.lo SPUAnalyzer.lo SPUBuilder.lo FTTBuilder.lo $(ROSE_LIBS)
+
+clean:
+	rm -f SPU_app_gen SPU_app_gen.lo SPUProgramTranslator.lo SPUProgramAnalyzer.lo SPUAnalyzer.lo SPUBuilder.lo FTTBuilder.lo
+
