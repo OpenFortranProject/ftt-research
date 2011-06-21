@@ -1,0 +1,37 @@
+I've gone round the horn on this problem and I think I've finally discovered something.  First I'll describe the possible solutions we've considered.  To remind everyone the problem under consideration is what features of Fortran can be used to program GPUs and still make it easy on the compiler to generate code.  It is assumed that we start with array syntax.
+
+1. Use shift routines.  Shifts are used by Wayne in the PAGOSA code.
+
+Advantages:
+  - They are part of Fortran 90 so are readily available.
+
+Disadvantages:
+  - Use of array temporaries makes them slow without a good compiler.
+  - As I though about generating code on GPUs it seemed more natural to explicitly use halo regions.
+  - somewhat unnatural to think in terms of shifted regions instead of indexing (e.g., i-1).
+
+2. Use explicit halo regions with region selector functions that return pointers into the interior region (for example).  This method uses the function region() to return a pointer to some region in the interior of the array.
+
+Advantages:
+  - Work like shifts (just different syntax and semantics (pointer rather than copy))
+  - They are part of Fortran 90 so are readily available.
+  - They are faster than shift routines (on gfortran at least).
+  - Explicit halos seem natural for multiple levels of processors (nodes plus GPUs).
+
+Disadvantages:
+  - They break some compilers (Intel?)
+  - somewhat unnatural to think in terms of shifted regions instead of indexing (e.g., i-1).
+
+3. A purely local orientation.
+
+Advantages:
+  - directly follows most algorithms
+  - very powerful (at first glance at least)
+  - easily defined, precise, and simple extension to language
+
+Disadvantages:
+  - not expressible in standard Fortran (might be possible to get standards committee to adopt)
+
+I just talked to Matt and he think we should proceed with the original paper with no extensions and consider a second paper.
+
+
