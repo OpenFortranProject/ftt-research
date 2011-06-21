@@ -115,4 +115,8 @@ program shallow_water
    flops = (1.0e-9 * 1000) * nLoops * (100*NX*NY/h_time)
    print *, "   flops        ==    ", flops, "GFlops"
 
+   ! get the results
+   !
+   status = readBuffer(d_H, c_loc(H), global_ex_mem_size)
+
 end program shallow_water
