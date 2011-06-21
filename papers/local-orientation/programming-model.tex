@@ -231,14 +231,6 @@ and synchronization points.
 Programming Models
 ------------------
 
-
-
-
-
-
-
-
-
 Fortran currently supports:
 
 1. Array syntax: e.g., C = A + B, where A, B, C are arrays.  Note that this is implicitly a loop structure, but that no loop indices need be provided.  Also the programmer need not specify where in memory these arrays reside.  Thus this high level syntax allows the compiler more freedom in both memory placement (even across distributed memory nodes) and in runtime code execution (individual array element may be computed by different hardward threads).  This is a simple example and it is a research question as to what compiler directives would be useful for memory placement and other directions to the compiler for efficient code generation.
