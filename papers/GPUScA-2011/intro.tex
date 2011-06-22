@@ -2,7 +2,7 @@
 \label{sec:intro}
 
 This paper presents a compiler-level approach for targeting a single program to
-multiple and possibly fundamentally different processor architectures.  This
+multiple, and possibly fundamentally different, processor architectures.  This
 technique allows the application programmer to adopt a single, high-level
 programming model without sacrificing performance.  We suggest that existing
 data-parallel features in Fortran are well suited to applying automatic
@@ -13,320 +13,82 @@ writing code in Fortran and transforming it automatically to specific low-level
 implementations removes the burden of creating and maintaining multiple versions
 of architecuture specific code.
 
-%%%In the ideal situation, application programmers would like to adopt a programming model in which they write their application once and use automated tools to retarget it to many architectures.  This has proven to be very challenging historically due to the subtle balance between high-level expressiveness of code and the performance of the lower-level code that is emitted by a compiler.  This ideal high-level model that programmers work with should emphasize readability, maintainability, and close proximity in abstraction to the problem being solved --- in this instance, the abstraction that we care about are mathematical formulae.  It should not be corrupted with details ofspecific target architectures solely for the purpose of single-system performance.  For certain classes of applications, specifically those that map onto a data-parallel programming model, we show that Fortran 90 contains language features that encourage high-level programming abstractions without sacrificing performance during low-level code generation.
+The peak performance of the newer accelerator architectures can be substantial.
+Intel expects a teraflop for the SGEMM benchmark with their Knights Ferry
+processor while the performance of the M2090 NVIDIA Tesla processor is in the
+same neighborhood~\cite{hpcwire11manycore}.  Unfortunately the performance that
+many of the new accelerator architectures offer comes at a cost.
+Architectural changes are trending toward multiple heterogeneous cores and less
+of a reliance on superscalar instruction level parallelism and hardware managed
+memory hierarchies (such as traditional caches).  These changes place a heavy
+burden on application programmers as they are forced to adapt to these new
+systems.  An especially challenging problem is not only how to program to these
+new architectures (considering the massive scale of concurrency available), but
+also how to design programs that are portable across the changing landscape of
+computer architectures with unique memory systems and programming models.  How
+can a programmer easily write one program that can perform well on both a
+conventional multicore CPU and a GPU (or one of the emerging many-core
+architectures)?  A directive-based approach, such as OpenMP or the Accelerator
+programming model from the Portland Group~\cite{pgi10accelerator}, is one
+solution to this problem.
 
-%1. Goal is to write once, transform many. Otherwise potentially reprogram for every architecture.
-%2. Goal is to code for readability and maintainability, not performance
-%3. This goal requires expression in a high-level language.
-%4. But language must be simple enough for compiler to analyze.
-%5. Thus ideal if language maps well to accelerator architectures.
-%6. Data parallel constructs in Fortran 90 are chosen.
-%7. Up to 65 times speed up measured on automatically transformed code.
-
-%At the Los Alamos National Laboratory (LANL), as with many supercomputing
-%facilities today, users have a wide variety of computer platforms from
-%which to choose.  The most common platform is made up of clusters of
-%compute nodes with standard multi-core processors.  An increasingly
-%common feature is that some nodes also have accelerators that range
-%from the IBM Cell processor (such as the LANL Roadrunner system) to a
-%variety of GPUs from NVIDIA and AMD.  Some nodes have hardware with
-%vector instructions and others do not.  The peak performance of these
-%accelerated nodes often resides in the hundreds of gigaflops.
-
-%The peak performance of the
-%accelerated nodes range from 200+ GFlops for the IBM Cell/B.E.
-%processor to XXX for NVIDIA Fermi. %% Fermi has another name
-
-Unfortunately the performance that the new accelerator architectures offer comes
-at a cost.  Architectural changes are trending toward multiple heterogeneous
-cores and less of a reliance on superscalar instruction level parallelism and
-hardware managed memory hierarchies (such as traditional caches).  These changes
-place a heavy burden on application programmers as they are forced to adapt to
-these new systems.  An especially challenging problem is not only how to program
-to these new architectures (considering the massive scale of concurrency
-available), but also how to design programs that are portable across the
-changing landscape of computer architectures with unique memory systems and
-programming models.  How can a programmer easily write one program that can
-perform well on both a conventional multicore CPU and a GPU (or one of the
-emerging many-core architectures)?  A directive-based approach, such as OpenMP
-or the Accelerator programming model from the Portland
-Group~\cite{pgi10accelerator}, is one solution to this problem.
-
-%%%The fundamental question we address is what programming model and language constructs are best suited to span this set of new hardware designs.
-
-%% NEW - CER
-%%%We will examine how the existing data-parallel constructs in Fortran can be combined with coarrays or MPI to provide effectively a new parallel programming language, one that is evolutionary in nature and provides complete compatibility with existing applications and libraries.  Data parallelism is a high-level abstraction that is, at the same time, both easier to program and gives the compiler more leeway (if fully exploited) in retargeting a program to different computer architectures.
-
-In this paper we take a somewhat different approach.  A common theme amongst the new
-processors is the emphasis on data-parallel programming.  This model is well
+In this paper we take a somewhat different approach.  A common theme amongst the
+new processors is the emphasis on data-parallel programming.  This model is well
 suited to the emerging architectures that are based on either vector processing
 or massively parallel collections of simple cores.  The recent CUDA and OpenCL
 programming languages are are intended to support this programming model,
 
-%% Deleted by CER
-%%A proposed approach for programming that is well suited to legacy applications and languages are language extensions or libraries that allow programmers to avoid adopting entirely new languages.  
-
 The problem with OpenCL and CUDA is that they expose too much detail about the
-machine architecture to the programmer.  The programmer is responsible for
-explicitly managing memory (including the staging of data back and forth between
-the host CPU and the accelerator device) and specifically taking into account
-architectural differences (such as whether the architecture contains vector
-units).  While these languages have been attractive as a method for early
-adopters to utilize these new architectures, they are less attractive to
-programmers who do not have the time or resources to manually port their code to
-every new architecture and programming model that emerges.
-
-%At this point in time it is not really possible to write once and run
-%efficiently on the wide variety of computer platforms we have
-%available.  For some classes of applications, we believe that this
-%goal is possible using language constructs already present in a
-%popular mainstream scientific programming language -- Fortran.  A
-%common, long-standing tongue-in-cheek response to new language
-%developments in the scientific and high performance computing
-%community is that a new language will arise to answer the needs of new
-%systems, and it will be called Fortran.  We believe that the work
-%presented in this paper validates that notion -- we need a new
-%language to work with, and that language is Fortran.
+machine architecture to the programmer~\cite{wolfeSC10}.  The programmer is
+responsible for explicitly managing memory (including the staging of data back
+and forth between the host CPU and the accelerator device) and specifically
+taking into account architectural differences (such as whether the architecture
+contains vector units).  While these languages have been attractive as a method
+for early adopters to utilize these new architectures, they are less attractive
+to programmers who do not have the time or resources to manually port their code
+to every new architecture and programming model that emerges.
 
 \subsection{Approach}
 
-%This paper addresses the accelerator programming problem by examining
-%features in Fortran that allow programmers to express algorithms at a
-%very high level that can be easily transformed by a compiler to run
-%efficiently on a wide variety of platforms.  In particular we consider
-%computers based on GPUs and related accelerator processors.
-
 We demonstrate that the data-parallel features of Fortran map surprisingly well
-onto GPUs when transformed to OpenCL kernels.  These features include: array syntax
-employing binary operators, array constructs like {\tt WHERE} and {\tt DO CONCURRENT},
-and the use of pure and elemental functions.
-In addition we add functions that explicitly take advantage of the
-stencil geometry.
+onto GPUs when transformed to OpenCL kernels.  These features include: array
+syntax (e.g., assignment and binary operators), array constructs like {\tt
+  WHERE} and {\tt DO CONCURRENT}, and the use of pure and elemental functions.
+In addition, we provide new functions that explicitly take advantage of the
+stencil geometry of the problem domain we are addressing.  Note that this subset
+of the Fortran language is implicitly parallel.  This programming model
+\emph{does not require explicit declaration of parallelism within the program.}
+In addition, programs are expressed using entirely standard Fortran so it can be
+compiled for and executed on a single core without concurrency.
 
-
-that enable a program to be deployed on machines with a hierarchy of
-processing elements, such as nodes employing GPU acceleration,
-\emph{without requiring explicit declaration of parallelism within the
-  program.}  In addition the program uses entirely standard Fortran so
-it can be compiled for and executed on a single core without concurrency.
-This work also is applicable to vendor-specific languages similar to
-OpenCL such as the NVIDIA CUDA language.
-
-%We provide (via Fortran interfaces in the ForOpenCL library) a
-%mechanism to call the C OpenCL runtime and enable Fortran programmers
-%to access OpenCL kernels.  
-Transformations are supplied that provide a mechanism for converting
-Fortran procedures written in the Fortran subset described in this
-paper to OpenCL kernels.  We use the ROSE compiler
-infrastructure\footnote{\url{http://www.rosecompiler.org/}} to
-develop these transformations.  ROSE uses the Open Fortran
-Parser\footnote{\url{http://fortran-parser.sf.net/}} to parse
-Fortran 2008 syntax and can generate C-based OpenCL.  Since ROSE's
-intermediate representation (IR) was constructed to represent multiple
-languages, it is relatively straightforward to transform high-level
-Fortran IR nodes to C OpenCL nodes.
-
-%  Furthermore, the Fortran array syntax maps directly to one,
-%two, and three-dimensional thread groups in OpenCL.
+Transformations are supplied that provide a mechanism for converting Fortran
+procedures written in the Fortran subset described in this paper to OpenCL
+kernels.  We use the ROSE compiler
+infrastructure\footnote{\url{http://www.rosecompiler.org/}} to develop these
+transformations.  ROSE uses the Open Fortran
+Parser\footnote{\url{http://fortran-parser.sf.net/}} to parse Fortran 2008
+syntax and can generate C-based OpenCL.  Since ROSE's intermediate
+representation (IR) was constructed to represent multiple languages, it is
+relatively straightforward to transform high-level Fortran IR nodes to C OpenCL
+nodes.  This work is also applicable to transformations to vendor-specific
+languages, similar to OpenCL, such as the NVIDIA CUDA language.
 
 Transformations for arbitrary Fortran procedures are not attempted.
-Furthermore, a mechanism to transform the calling site to
-automatically invoke OpenCL kernels is not provided at this time.
-While it is possible to accomplish this task within ROSE, it is
-considered outside the scope of this paper.
+Furthermore, a mechanism to transform the calling site to automatically invoke
+OpenCL kernels is not provided at this time.  While it is possible to accomplish
+this task within ROSE, it is considered outside the scope of this paper.
+However, we do provide (via Fortran interfaces) a mechanism to call the C OpenCL
+runtime and enable Fortran programmers to access OpenCL kernels generated by the
+automatic transformations.
 
-We examine the performance of the Fortran data-parallel abstraction
-when transformed to OpenCL to run on GPU architectures.  Since single
-node performance is often given as a reason for not using
-data-parallel constructs within Fortran, we consider the performance
-of serial data-parallel codes compared with the usage of explicit loop
-constructs.
+We study the automatic transformations for an application example that is
+typical of stencil codes that update array elements according to a fixed
+pattern.  Stencil codes are often employed in applications based on
+finite-difference or finite-volume methods in computational fluid dynamics
+(CFD).  The example described later in this paper is a simple shallow-water
+model in two dimensions using finite volume methods.
 
-We study automatic transformations and the performance for an
-application example that is typical of many applications that are
-based on finite-difference or finite-volume methods in computational
-fluid dynamics (CFD).  The example described later in this paper is a
-simple shallow water model in two dimensions using finite volume
-methods.
-
-An initial study was made for an important procedure in PAGOSA, a
-non-research, production-grade code at LANL completely written in
-data-parallel Fortran.  We investigated automatically transforming
-this code to run on LANL's Petaflop Roadrunner computer (a hybrid
-mixture of AMD Opterons and IBM Cell processors).  We demonstrated that a
-source-to-source compiler can automatically vectorize and parallelize
-a small section of this code for the Cell processor.  Preliminary results
-showed a 9 times performance gain of the transformed code when compared
-with the original serial version on a traditional single-core processor.
-
-\subsection{Why Fortran?}
-
-Fortran is the oldest high-level programming language in continuous
-use since its introduction, and was developed to facilitate the
-translation of math formulae into machine code. Fortran was the first
-major language to use a compiler to translate from a high-level
-program representation to assembly language. Due to its age, it
-carries certain arcane baggage.  However with the introduction of
-Fortran 90 (and later revisions to the standard), Fortran became a
-truly modern programming language.  It is now modular and has many
-object-oriented features.  Most importantly for this work, it now
-includes a type system in which rich first-class array data types and
-corresponding syntax are part of the language, something that
-languages like C continue to lack\footnote{The recent Intel 12.0 C/C++
-  compiler supports extensions that provide array notation for C/C++
-  code, as detailed here: http://intel.ly/g454zp}.  Furthermore,
-Fortran should be of interest to those studying parallel programming
-because of its functional and data-parallel constructs and because of
-the coarray notation introduced in Fortran 2008. Unlike languages like
-C and C++, Fortran has become a truly parallel language with features
-added to recent language standards.
-
-%% - deleted by CER
-%% that later programming languages have evolved away from. As a result, Fortran has fallen into disfavor in certain programming circles.  Modern versions of the language standardized in 1990, 1995, 2003, and 2008 have removed much of this legacy baggage, but these changes are not widely known.  Modern Fortran exhibits features that are similar to other modern programming languages, and does not mandate the use of legacy features from decades old, deprecated versions of the language.  Compilers for Fortran (like those for other languages that have removed features over time) can prohibit the use of archaic features such as fixed format code or constructs that have been removed from the language.
-
-Yet, a likely question that one may pose is ``\emph{Why Fortran and
-  not a more modern language like X?}''  The recent rise in interest
-in concurrency and parallelism at the language level driven by
-multicore CPUs and manycore accelerators has driven a number of new
-language developments, both as novel languages and extensions on
-existing ones.  For scientific users, new languages and language
-extensions to use novel new architectures present a challenge: how do
-developers effectively use them while avoiding rewriting code
-and potentially growing dependent on a transient technology that will
-vanish tomorrow?
-
-
-%% NEW - CER
-%So perhaps it is time to replace Fortran with yet another computer language.  The
-%problems with replacing Fortran with an entirely new language are two fold:
-%the economics of replacing the existing application base and the difficulty in
-%obtaining programmer acceptance.  It is estimated that replacing a major
-%production application at Los Alamos National Laboratory would cost between 50
-%and 150 million dollars.  In terms of programmer acceptance, there is always
-%the "chicken and egg problem": programmers won't use a new language until they
-%can expect good performance across a variety of platforms, and compiler
-%vendors can't afford to produce quality compilers until there is a reasonable
-%expectation of a market.
-
-
-%% NEW - CER
-History has also shown that an investment in rewriting code does not
-guarantee success either, as seen in an effort at LANL to modernize a
-legacy Fortran code with the newer C++ POOMA framework.  This
-massive overhaul effort led to a code that was both slower and less
-flexible than the original Fortran \cite{basili08hpc}.  
-
-%Similar
-%experiences have occurred in the past, notably during the development
-%of the functional SISAL language in the early 1990s.
-
-Fortran is unique in that it has contained language features that are
-well suited to modern architectures for a number of years.  This
-should be unsurprising --- Fortran was a primary language used to
-target systems such as the vector supercomputers and massively
-parallel systems of the 1970s and 1980s.  These are the systems in
-which architectural features were developed that have led to single
-chip high performance architectures of interest today.  Given that
-these new systems have features very similar to their predecessors, it
-is clear that the language features within Fortran for them are still
-relevant.
-
-\subsection{Comparison to Other Languages}
-
-A number of previous efforts have exploited data-parallel programming
-at the language level to utilize novel architectures, particularly in
-previous decades during the reign of vector and massively parallel
-computers in the high performance computing world.  The origin of the
-array syntax that was adopted in Fortran 90 can be found in the APL
-language.  Fortran 90 differed from previous % \cite{iverson79apl}
-extensions of Fortran in that parallelism within whole-array
-operations was expressed at the expression level instead of via
-parallelism within explicit DO-loops (such as within IVTRAN for the
-Illiac IV).
-
-The High Performance Fortran (HPF) extension of Fortran 90 was
-proposed to add features to the language that would enhance the
-ability of compilers to emit fast parallel code for distributed and
-shared memory parallel computers\cite{koelbel94hpf}.  One of the
-notable additions to the language in HPF was syntax to specify the
-distribution of data structures amongst a set of parallel processors.
-HPF also introduced an alternative looping construct to the
-traditional DO-loop called {\tt FORALL} that was better suited for
-parallel compilation.  An additional keyword, {\tt INDEPENDENT}, was
-added to allow the programmer to indicate when the order of execution
-of the program (such as a sequence of loop iterations) can be flexible
-in order to allow parallel execution.  Interestingly, the parallelism
-features introduced in HPF did not exploit the new array features
-introduced in 1990 in any significant way, relying instead on explicit
-loop-based parallelism.  This was likely in order to support parallel
-programming that wasn't easily mapped onto a pure data-parallel model.
-
-In some instances though, a purely data-parallel model is appropriate
-for part or all of the major computations within a program.  One of
-the systems where programmers relied heavily on higher level
-operations instead of explicit looping constructs was the Thinking
-Machines Connection Machine 5 (CM-5).  A common programming pattern
-used on the CM-5 that we exploit in this paper was to write
-whole-array operations from a global perspective in which computations
-are expressed in terms of operations over the entire array instead of
-a single local index.  The use of the array shift intrinsic functions
-(like {\tt CSHIFT}) were used to build computations in which arrays
-were combined by shifting the entire arrays instead of working based
-on local offsets from single indices.  A simple 1D example is one in
-which an element is replaced with the average of its own value with
-that of its two direct neighbors.  Ignoring boundary indices that wrap
-around, explicit indexing will result in a loop such as:
-
-{\small
-\begin{verbatim}
-  do i = 2,(n-1)
-    X(i) = (X(i-1) + X(i) + X(i+1)) / 3
-  end do
-\end{verbatim}
-}
-
-\noindent When shifts are employed, this can be expressed as:
-
-{\small
-\begin{verbatim}
-  X = (cshift(X,-1) + X + cshift(X,1)) / 3
-\end{verbatim}
-}
-
-Similar whole array shifting was used in higher dimensions for finite
-difference codes within the computational physics community, especially
-at Los Alamos for codes targeting the CM-5 system that resided there until the
-late 1990s.  A body of research in compilation of stencil-based codes
-that use shift operators targeting these systems is related to the
-work we present here~\cite{stencil-compiler}.
-
-The whole-array model was attractive because it deferred
-responsibility for optimally implementing the computations to the
-compiler.  Instead of relying on a compiler to infer parallelism from
-a set of explicit loops, the choice for how to implement loops was
-left entirely up to the tool.  Unfortunately, this had two side
-effects that have limited broad acceptance of the whole-array
-programming model in Fortran.  First, programmers must translate their
-algorithms into a set of global operations.  Finite difference
-stencils and similar computations are traditionally defined in terms
-of offsets from some central index.  Shifting, while conceptually
-analogous, can be awkward to think about for high dimensional stencils
-with many points.  Second, the semantics of these operations are such
-that all elements of an array operation are updated as if they were
-updated simultaneously.  In a program where the programmer explicitly
-manages arrays and loops, double buffering techniques and user managed
-temporaries are used to maintain these semantics.  When the compiler
-is responsible for managing this intermediate storage, it has
-historically proven that they are inefficient and generate code that
-requires far more temporary storage than really necessary.  This is
-not a flaw of the language constructs, but a sign of the lack of
-sophistication of the compilers with respect to their internal
-analysis to determine how to optimally generate this intermediate
-storage.
-
-An interesting line of language research that grew out of the early work
-with HPF was that associated with the ZPL language work at the University
-of Washington~\cite{chamberlain04zpl}.  In ZPL, programmers adopt a similar
-global view of computation over arrays, but define their computations based
-on the local view of indices that participate in the update of each element of
-an array.
+Finally, we examine the performance of the Fortran data-parallel abstraction
+when transformed to OpenCL to run on GPU architectures.  The performance of
+automatically transformed code is compared with a hand-optimized OpenCL
+version of the shallow-water code.
