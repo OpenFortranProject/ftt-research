@@ -55,13 +55,13 @@
 %
 
 
-\documentclass[10pt, conference, compsocconf]{IEEEtran}
+\documentclass{acm_proc_article-sp}
 
 \usepackage{cite}
 \usepackage{graphicx}
-\usepackage[cmex10]{amsmath}
-\usepackage{amssymb}
-\usepackage{array}
+%\usepackage[cmex10]{amsmath}
+%\usepackage{amssymb}
+%\usepackage{array}
 \usepackage{url}
 \usepackage{listings}
 
@@ -69,39 +69,53 @@
 \lstdefinestyle{CLike}{float,frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
 \lstdefinestyle{NoFloatCLike}{frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
 
+\begin{document}
 
 \title{Exploiting Array Syntax in Fortran for Accelerator Programming}
 
-%%
-%% reorder appropriately later
-%%
-\author{\IEEEauthorblockN{Matthew J. Sottile}
-\IEEEauthorblockA{Galois, Inc.\\
-%421 SW 6th Ave. Suite 300 \\
-%Portland, OR 97204\\
-matt@galois.com}
-\and
-\IEEEauthorblockN{Craig E Rasmussen,\\
-                  Wayne N. Weseloh,\\
-                  Robert W. Robey}
-\IEEEauthorblockA{Los Alamos National Laboratory\\
-%CCS-7, MS B287\\
-%Los Alamos, NM\\
-\{crasmussen, weseloh, brobey\}@lanl.gov}
+\numberofauthors{6}
 
-\and
-\IEEEauthorblockN{Daniel Quinlan}
-\IEEEauthorblockA{Lawrence Livermore\\ National Laboratory\\
-dquinlan@llnl.gov}
-
-\and
-\IEEEauthorblockN{Jeffrey Overbey}
-\IEEEauthorblockA{University of Illinois\\at Urbana-Champaign\\
-overbey2@illinois.edu}
-
+\author{
+% 1st. author
+\alignauthor
+Matthew J. Sottile\\
+       \affaddr{Galois, Inc.}\\
+       \affaddr{421 SW 6th Ave. Suite 300}\\
+       \affaddr{Portland, OR 97204}\\
+       \email{matt@galois.com}
+% 2nd. author
+\alignauthor
+Craig E Rasmussen\\
+       \affaddr{Los Alamos National Laboratory}\\
+       \affaddr{CCS-7, MS B287}\\
+       \affaddr{Los Alamos, NM 87545}\\
+       \email{crasmussen@lanl.gov}
+% 3rd. author
+\alignauthor
+Wayne N. Weseloh\\
+       \affaddr{Los Alamos National Laboratory}\\
+       \affaddr{XTD-1, MS T082}\\
+       \affaddr{Los Alamos, NM 87545}\\
+       \email{weseloh@lanl.gov}
+\and  % use '\and' if you need 'another row' of author names
+% 4th. author
+\alignauthor
+Robert W. Robey\\
+       \affaddr{Los Alamos National Laboratory}\\
+       \affaddr{XCP-2, MS T086}\\
+       \affaddr{Los Alamos, NM 87545}\\
+       \email{brobey@lanl.gov}
+% 5th. author
+\alignauthor
+Daniel Quinlan\\
+       \affaddr{Lawrence Livermore National Laboratory}\\
+       \email{dquinlan@llnl.gov}
+% 6th. author
+\alignauthor
+Jeffrey Overbey\\
+       \affaddr{University of Illinois at Urbanna-Champaign}\\
+       \email{overbey2@illinois.edu}
 }
-
-\begin{document}
 
 \maketitle
 
@@ -116,6 +130,9 @@ OpenCL.  We demonstrate, using a stencil code solving the shallow-water fluid
 equations, that the performance of our compiler-generated transformations is
 comparable with that of hand-optimized OpenCL code.
 \end{abstract}
+
+% A category with the (minimum) three required fields
+\category{H.4}{Information Systems Applications}{Miscellaneous}
 
 \input{intro}
 \input{programming-model}
@@ -142,9 +159,19 @@ to be targeted without changing the high-level source.  It also removes the
 necessity for application programmers to understand details of the accelerator
 architecture or to know OpenCL.
 
+%ACKNOWLEDGMENTS are optional
+\section{Acknowledgments}
+This section is optional; it is a location for you
+to acknowledge grants, funding, editing assistance and
+what have you.  In the present case, for example, the
+authors would like to thank Gerald Murray of ACM for
+his help in codifying this \textit{Author's Guide}
+and the \textbf{.cls} and \textbf{.tex} files that it describes.
+
 %%TODO \cite{chamberlain04zpl, roth97stencils}
 
-\bibliographystyle{IEEEtran}
-\bibliography{IEEEabrv,foropencl}
+\bibliographystyle{abbrv}
+\bibliography{foropencl}
 
+\balancecolumns
 \end{document}
