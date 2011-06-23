@@ -1,15 +1,20 @@
 \section{Programming Model}
 
-A question that one may pose is ``\emph{Why Fortran and
-  not a more modern language like X?}''  The recent rise in interest
-in concurrency and parallelism at the language level driven by
-multicore CPUs and manycore accelerators has driven a number of new
-language developments, both as novel languages and extensions on
-existing ones.  For scientific users, new languages and language
-extensions to use novel new architectures present a challenge: how do
-developers effectively use them while avoiding rewriting code
-and potentially growing dependent on a transient technology that will
-vanish tomorrow?
+A question that one may pose is ``\emph{Why Fortran and not a more modern
+  language like X?}''  The recent rise in interest in concurrency and
+parallelism at the language level driven by multicore CPUs and manycore
+accelerators has driven a number of new language developments, both as novel
+languages and extensions on existing ones.  For many scientific users familiar
+with Fortran, new languages and language extensions to use novel new
+architectures present a challenge: how do they effectively use them while
+avoiding rewriting code and potentially growing dependent on a transient
+technology that will vanish tomorrow?
+
+In this section we present the Fortran subset employed in this paper.  This
+subsetting language will allow scientific programmers to stay within the Fortran
+language and yet have direct access to GPU hardware.  We first examine how this
+programming model relates to work in other languages.
+
 
 \subsection{Comparison to Other Languages}
 
