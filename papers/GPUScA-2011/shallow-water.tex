@@ -78,7 +78,7 @@ end subroutine
 where {\tt dx, dy, dt} are differential quantities in space $x, y$ and time $t$,
 {\tt H, U}, and {\tt V} are state variables for the height and $x$ and $y$
 momentum respectively, and {\tt oH, oU, oV} are corresponding output arrays used
-in the double buffering scheme.  The \emph{OFP} compiler directive attributes
+in the double buffering scheme.  The \emph{OFP} compiler-directive attributes
 {\tt PURE} and {\tt KERNEL} indicate that the procedure {\tt wave\_advance} is
 to be transformed as an OpenCL kernel and that it must be pure, other than for any
 pointers used to reference interior regions of the output arrays.

@@ -1,31 +1,33 @@
 \section{Programming Model}
 
-A question that one may pose is ``\emph{Why Fortran and not a more modern
-  language like X?}''  The recent rise in interest in concurrency and
-parallelism at the language level driven by multicore CPUs and manycore
-accelerators has driven a number of new language developments, both as novel
-languages and extensions on existing ones.  For many scientific users familiar
-with Fortran, new languages and language extensions to use novel new
-architectures present a challenge: how do they effectively use them while
-avoiding rewriting code and potentially growing dependent on a transient
-technology that will vanish tomorrow?
+A question that one may pose is ``\emph{Why choose Fortran and not a more modern
+  language like X for programming accelerator architectures?}''  The recent rise
+in interest in concurrency and parallelism at the language level driven by
+multicore CPUs and manycore accelerators has driven a number of new language
+developments, both as novel languages and extensions on existing ones.  However,
+for many scientific users with existing codes written in Fortran, new languages
+and language extensions to use novel new architectures present a challenge: how
+do they effectively use them while avoiding rewriting code and potentially
+growing dependent on a transient technology that will vanish tomorrow?
+In this paper we explore the constructs in Fortran that are particularly
+relevant to GPU architecures.
 
 In this section we present the Fortran subset employed in this paper.  This
 subsetting language will allow scientific programmers to stay within the Fortran
-language and yet have direct access to GPU hardware.  We first examine how this
-programming model in Fortran relates to developments in other languages.
+language and yet have direct access to GPU hardware.  We start by examining how this
+programming model relates to developments in other languages.
 
 
 \subsection{Comparison to Other Languages}
 
 A number of previous efforts have exploited data-parallel programming at the
-language level to utilize novel architectures, particularly in previous decades
-during the reign of vector and massively parallel computers in high performance
-computing (HPC).  The origin of the array syntax adopted by Fortran in the 1990
+language level to utilize novel architectures.
+%%, particularly in previous decades during the reign of vector and massively parallel computers in high performance computing (HPC). 
+The origin of the array syntax adopted by Fortran in the 1990
 standard can be found in the APL language~\cite{iverson79apl}.  These additions
 to Fortran allowed parallelism to be expressed with whole-array operations at
-the expression level, instead of via parallelism within explicit DO-loops (such
-as within IVTRAN for the Illiac IV).
+the expression level, instead of via parallelism within explicit DO-loops (e.g.,
+IVTRAN for the Illiac IV).
 
 The High Performance Fortran (HPF) extension of Fortran was proposed to add
 features to the language that would enhance the ability of compilers to emit
@@ -73,17 +75,19 @@ wrap around, explicit indexing will result in a loop such as:
 \end{verbatim}
 }
 
-Similar whole array shifting was used in higher dimensions for finite
-difference codes within the computational physics community, especially
-at Los Alamos for codes targeting the CM-5 system that resided there until the
-late 1990s.  A body of research in compilation of stencil-based codes
-that use shift operators targeting these systems is related to the
-work we present here~\cite{stencil-compiler}.
+\noindent
+Similar whole array shifting was used in higher dimensions for finite difference
+codes within the computational physics community for codes targeting the CM-5
+system.  Research in compilation of stencil-based codes that use shift operators
+targeting these systems is related to the work presented
+here~\cite{stencil-compiler}.
 
 The whole-array model was attractive because it deferred responsibility for
 optimally implementing the computations to the compiler.  Instead of relying on
 a compiler to infer parallelism from a set of explicit loops, the choice for how
-to implement loops was left entirely up to the tool.  Unfortunately, this had
+to implement loops was left entirely up to the tool.
+
+Unfortunately, this had
 two side effects that have limited broad acceptance of the whole-array
 programming model in Fortran.  First, programmers must translate their
 algorithms into a set of global operations.  Finite difference stencils and
@@ -101,28 +105,27 @@ but a sign of the lack of sophistication of the compilers with respect to their
 internal analysis to determine how to optimally generate this intermediate
 storage.
 
-An interesting line of language research that grew out of the early work with
-HPF was that associated with the ZPL language work at the University of
-Washington~\cite{chamberlain04zpl}.  In ZPL, programmers adopt a similar global
-view of computation over arrays, but define their computations based on regions,
+An interesting line of language research that grew out of HPF was that
+associated with the ZPL language at the University of
+Washington~\cite{chamberlain04zpl} and Chapel, an HPCS language developed by
+Cray~\cite{chamberlain_chapel}.  In ZPL, programmers adopt a similar global view
+of computation over arrays, but define their computations based on regions,
 which provide a local view of the set of indices that participate in the update
-of each element of an array.  The Chapel parallel programming language being
-developed by Cray is directly influenced by HPF and
-ZPL~\cite{chamberlain_chapel}.
+of each element of an array.
 
 \subsection{Fortran Language Subset}
 
-The static analysis and source-to-source transformations used in this work are
-very basic and only require the programmer to use a language subset that employs
-a data-parallel programming model.  In particular, it encourages the use of
-array notation, elemental functions, and pure procedures.  From these language
-constructs, we are able to easily transform Fortran procedures to a lower-level
-OpenCL kernel implementation.
+The static analysis and source-to-source transformations used in this work
+require the programmer to use a language subset that employs a data-parallel
+programming model.  In particular, it encourages the use of array notation,
+elemental functions, and pure procedures.  From these language constructs, we
+are able to easily transform Fortran procedures to a lower-level OpenCL kernel
+implementation.
 
 \subsubsection*{Array notation}
 
 Fortran has a rich array syntax that allows programmers to write statements in
-terms of whole arrays or subarrays, with data parallel operators to compute on
+terms of whole arrays or subarrays, with data-parallel operators to compute on
 the arrays.  Array variables can be used in expressions based on whole-array
 operations.  For example, if {\tt A}, {\tt B}, and {\tt C} are all arrays of the
 same rank and shape and {\tt s} is a scalar, then the statement
@@ -133,7 +136,8 @@ same rank and shape and {\tt s} is a scalar, then the statement
 \end{verbatim}
 }
 
-\noindent results in the element-wise sum of {\tt A} and {\tt s} times the
+\noindent
+results in the element-wise sum of {\tt A} and the product of {\tt s} times the
 elements of {\tt B} being stored in the corresponding elements of {\tt C}. The
 first element of {\tt C} will contain the value of the first element of {\tt A}
 added to the first element of {\tt c*B}.  Note that no explicit iteration over
@@ -149,7 +153,7 @@ variables of array type such that the function is applied to each and every
 element of the array.  This allows programmers to avoid explicit looping and
 instead simply state that they intend a function to be applied to every element
 of an array in parallel, deferring the choice of implementation technique to the
-compiler.  Elemental functions are intended to be used for data parallel
+compiler.  Elemental functions are intended to be used for data-parallel
 programming, and as a result must be side effect free and mandate an {\tt
 intent(in)} attribute for all arguments.
 
@@ -194,35 +198,34 @@ to emit parallel code automatically due to their suitability for compiler-level
 analysis.
 
 Since pure procedures don't have side effects they are candidates for running on
-accelerators in OpenCL.  Currently our prototype tool transforms pure procedures
+accelerators in OpenCL.  Currently our prototype tool only transforms pure procedures
 to OpenCL kernels that \emph{do not} call other procedures, except for elemental
-functions.
+functions, either defined by the user or intrinsic to Fortran.
 
 \subsection{New Procedures}
 
 Borrowing ideas from ZPL, we introduce a concept of a region to Fortran with a
 set of functions that allow programmers to work with subarrays in expressions.
-In Fortran, these functions return a copy of an existing array or array section.
+In Fortran, these functions return a copy of or a pointer to an existing array or array section.
 This is unlike ZPL, where regions are analogous to index sets and are used
 primarily for address resolution within an array without dictating storage
 related behavior.  The functions that we propose are similar in that they allow
 a programmer to deal with index regions that are meaningful to their algorithm,
 and automatically induce a halo (or ghost) cell pattern as needed in the
 implementation generated by the compiler, where the size of an array is
-increased to provide extra array elements surrounding the interior portion of
-the array.  This is critical to reducing the amount of code that the programmer
-is forced to write, as the halo cells are often where boundary errors and
-off-by-one errors may occur in code that is manually generated.
+explicitly increased to provide extra array elements surrounding the interior portion of
+the array.
+%%%This is critical to reducing the amount of code that the programmer is forced to write, as the halo cells are often where boundary errors and off-by-one errors may occur in code that is manually generated.
 
 Region functions are similar to the shift operator as they can be used to
 reference portions of the array that are shifted with respect to the interior
 portion.  However, unlike the shift operator, regions are not expressed in terms
-of boundary conditions and thus don't explicitly \emph{require} a knowledge of
-nor the application of boundary conditions locally.  Thus, as will be shown
+of boundary conditions and thus don't explicitly \emph{require} a knowledge of,
+nor the application of, boundary conditions locally.  Thus, as will be shown
 below, regions are more suitable for usage by OpenCL thread groups which access
 only local subsections of an array stored in global memory.
 
-ForOpenCL provides two new procedures that are defined in Fortran and are used
+ForOpenCL provides two new functions that are defined in Fortran and are used
 in array-syntax operations.  Each procedure takes a integer array halo argument
 that specifies the number of ghost cells on either side of a region, for each
 dimension.  For example {\tt halo = [left, right, down, up]} specifies a halo
@@ -230,27 +233,31 @@ for a two-dimensional region.  These functions are:
 
 \begin{itemize}
 
-\item {\tt interior(array, halo)}: a pure function that returns a copy of
+\item {\tt region\_cpy(array, halo)}: a pure function that returns a copy of
   the interior portion of the array specified by halo.
 
-\item {\tt region(array, halo)}: a pure function that returns a copy of
-  the portion of the array specified by halo.
+\item {\tt region\_ptr(array, halo)}: an impure function that returns a pointer 
+  to the portion of the array specified by halo.
 
 \end{itemize}
 
-It should be noted that the two functions {\tt interior} and {\tt region} are
-pure and thus can be called from within a pure kernel procedure.  These two
-functions are part of the language recognized by the compiler and though the two
-functions return a copy of a portion of an array \emph{semantically}, the
-compiler is not forced to actually make a copy and is free to enforce copy
-semantics through other means.  In addition to these two new functions,
-ForOpenCL provides the compiler directive, {\tt \!\$OFP KERNEL}, which specifies
-that a pure subroutine can be transformed to an OpenCL kernel.
+It should be noted that the function {\tt region\_cpy} is pure and thus can be
+called from within a pure kernel procedure, though it should be noted that {\tt
+region\_ptr} is impure because it aliases the array parameter.  However as will
+be shown below, the usage of {\tt region\_ptr} is constrained so that it does not
+introduce side effects in the functions that call it.  These two functions are
+part of the language recognized by the compiler and though {\tt region\_cpy}
+returns a copy of a portion of an array \emph{semantically}, the compiler is not
+forced to actually make a copy and is free to enforce copy semantics through
+other means.  In addition to these two new functions, ForOpenCL provides the
+compiler directive, {\tt \!\$OFP PURE, KERNEL}, which specifies that a pure subroutine
+can be transformed to an OpenCL kernel and that the subroutine is pure
+except for calls to {\tt region\_ptr}.
 
 \subsection{Advantages}
 
 There are several advantages to this style of programming using array
-syntax, shifts, regions, and pure and elemental functions:
+syntax, regions, and pure and elemental functions:
 
 \begin{itemize}
 \item There are no loops or index variables to keep track of.  Off by
@@ -267,24 +274,27 @@ syntax, shifts, regions, and pure and elemental functions:
 Data parallelism has been called collection-oriented programming by
 Blelloch~\cite{blelloch90}.  As the {\tt cshift} function and the array-valued
 expressions all semantically return a value, this style of programming is also
-similar to functional programming (or value-oriented programming).
+similar to functional programming (or value-oriented programming).  It should be
+noted that the subsetting language we employ goes beyond pure data parallelism
+by the use of pure (other than calls to {\tt region\_ptr}) subroutines and
+not just elemental functions.
 
 Unfortunately, this style of programming has never really caught on because when
-array syntax was first introduced in Fortran, performance of these features was
+array syntax was first introduced in Fortran, performance of codes using these features was
 relatively poor and thus programmers shied away from using array syntax (even
 recently, some are actively counseling against its usage because of performance
 issues~\cite{Levesque:SC08}).  Thus the Fortran community was caught in a
 classic ``chicken-and-egg'' conundrum: (1) programmers didn't use it because it
 was slow; and (2) compilers vendors didn't improve it because programmers didn't
 use it.  A goal of this paper is to demonstrate that parallel programs written
-in this style of Fortran are maintainable and can achieve good performance on
-accelerator architectures.
+in this style of Fortran can achieve good performance on accelerator architectures.
 
 \subsection{Restrictions}
 
-Only pure Fortran procedures are transformed into OpenCL kernels.  The
-programmer must explicitly call these kernels from Fortran using the ForOpenCL
-library described below.  It is also possible, using ROSE, to modify the calling
+Only pure Fortran procedures are transformed into OpenCL kernels.  This restriction
+is lifted slightly to allow calls to {\tt region\_ptr} from within a kernel procedure.  The
+programmer must explicitly call these kernels using Fortran interfaces in the ForOpenCL
+library (described below).  It is also possible, using ROSE, to modify the calling
 site so that the entire program can be transformed, but this functionality is
 outside the scope of this paper.  Here we specifically examine transforming
 Fortran procedures to OpenCL kernels.  Because OpenCL support is relatively new
@@ -295,10 +305,17 @@ It is assumed that memory for all arrays reside on the device.  The programmer
 must copy memory to and from the device.  In addition, array size (neglecting
 ghost cell regions) must be multiples of the global OpenCL kernel size.
 
-A kernel procedure (specified by the {\tt \!\$OFP KERNEL} directive) must be
-pure and all array variables must be declared as contiguous.  A kernel procedure
-may not call other procedures except for limited intrinsic functions (primarily
-math), user-defined elemental functions, and the {\tt interior} and {\tt region}
-functions.  Future work will address non-contiguous arrays (such as those that result
-from strided access) by mapping array strides to gather/scatter-style memory
-accessors.
+Array variables within a kernel procedure (specified by the {\tt \!\$OFP PURE,
+  KERNEL} directive) must be declared as contiguous.  A kernel procedure may not
+call other procedures except for limited intrinsic functions (primarily math),
+user-defined elemental functions, and the {\tt region\_cpy} and {\tt region\_ptr}
+functions.  Future work will address non-contiguous arrays (such as those that
+result from strided access) by mapping array strides to gather/scatter-style
+memory accessors.
+
+Array parameters to a kernel procedure must be declared as either intent(in) or
+intent(out); they cannot be intent(inout).  A thread may read from an extended
+region about its local element (using the {\tt region\_cpy} function, but can
+only write to the single array element it owns.  If a variable were intent(inout),
+a thread could update its array element before another thread had read from that
+element.  This restriction requires double buffering techniques.

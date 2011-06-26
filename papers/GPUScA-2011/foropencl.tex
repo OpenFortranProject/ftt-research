@@ -71,7 +71,7 @@
 
 \begin{document}
 
-\title{Exploiting Array Syntax in Fortran for Accelerator Programming}
+\title{ForOpenCL: Transformations Exploiting Array Syntax in Fortran for Accelerator Programming}
 
 \numberofauthors{6}
 
@@ -94,16 +94,16 @@ Craig E Rasmussen\\
 \alignauthor
 Wayne N. Weseloh\\
        \affaddr{Los Alamos National Laboratory}\\
-       \affaddr{XTD-1, MS T082}\\
-       \affaddr{Los Alamos, NM 87545}\\
+       %\affaddr{XTD-1, MS T082}\\
+       %\affaddr{Los Alamos, NM 87545}\\
        \email{weseloh@lanl.gov}
 \and  % use '\and' if you need 'another row' of author names
 % 4th. author
 \alignauthor
 Robert W. Robey\\
        \affaddr{Los Alamos National Laboratory}\\
-       \affaddr{XCP-2, MS T086}\\
-       \affaddr{Los Alamos, NM 87545}\\
+       %\affaddr{XCP-2, MS T086}\\
+       %\affaddr{Los Alamos, NM 87545}\\
        \email{brobey@lanl.gov}
 % 5th. author
 \alignauthor
@@ -120,19 +120,20 @@ Jeffrey Overbey\\
 \maketitle
 
 \begin{abstract}
-Emerging GPU architectures for high performance computing are well suited to a
-data-parallel programming model.  This paper presents a simple programming
-methodology that allows programmers to take advantage of these emerging systems.
-We use array constructs in Fortran 90 to show how this infrequently exploited,
-standardized language feature is easily transformed to lower-level accelerator
-code.  These transformations are based on a simple mapping from Fortran 90 to
-OpenCL.  We demonstrate, using a stencil code solving the shallow-water fluid
-equations, that the performance of our compiler-generated transformations is
-comparable with that of hand-optimized OpenCL code.
+  Emerging GPU architectures for high performance computing are well suited to a
+  data-parallel programming model.  This paper presents preliminary work
+  examining a programming methodology that provides Fortran programmers with access
+  to these emerging systems.  We use array constructs in Fortran to
+  show how this infrequently exploited, standardized language feature is easily
+  transformed to lower-level accelerator code.  The transformations in ForOpenCL are based
+  on a simple mapping from Fortran to OpenCL.  We demonstrate, using a
+  stencil code solving the shallow-water fluid equations, that the performance
+  of the ForOpenCL compiler-generated transformations is comparable with that of
+  hand-optimized OpenCL code.
 \end{abstract}
 
 % A category with the (minimum) three required fields
-\category{H.4}{Information Systems Applications}{Miscellaneous}
+\category{D.3.3}{Language Constructs and Features}{Concurrent programming structures}
 
 \input{intro}
 \input{programming-model}
@@ -161,12 +162,7 @@ architecture or to know OpenCL.
 
 %ACKNOWLEDGMENTS are optional
 \section{Acknowledgments}
-This section is optional; it is a location for you
-to acknowledge grants, funding, editing assistance and
-what have you.  In the present case, for example, the
-authors would like to thank Gerald Murray of ACM for
-his help in codifying this \textit{Author's Guide}
-and the \textbf{.cls} and \textbf{.tex} files that it describes.
+This research was supported by the Departement of Energy, Office of Science.
 
 %%TODO \cite{chamberlain04zpl, roth97stencils}
 
