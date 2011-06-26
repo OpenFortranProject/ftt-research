@@ -35,9 +35,9 @@ condition.
 The numerical method is a two-step Lax-Wendroff scheme. The method
 has some numerical oscillations with sharp gradients but is adequate
 for simulating smooth shallow-water flows. In the following explanation,
-$U$ is the conserved state variable at the center of the cell . This
-state variable, $U=(h,hu,hv)$ in the first term in the equations
-above. $F$ is the flux quantity that crosses the boundary of the cell
+$U$ is the conserved state variable at the center of the cell. This
+state variable, $U$ $=(h,hu,hv)$ in the first term in the equations
+below. $F$ is the flux quantity that crosses the boundary of the cell
 and is subtracted from one cell and added to the other. The remaining
 terms after the first term are the flux terms in the equations above
 with one term for the flux in the x-direction and the next term for
@@ -53,84 +53,100 @@ values at the next time step in a dimensionally unsplit loop.\[
 U_{i,j}^{n+1}=U_{i,j}^{n}-\frac{\triangle t}{\triangle x}(F_{i+\frac{1}{2},j}^{n+\frac{1}{2}}-F_{i-\frac{1}{2},j}^{n+\frac{1}{2}})-\frac{\triangle t}{\triangle y}(F_{i,j+\frac{1}{2}}^{n+\frac{1}{2}}-F_{i,j-\frac{1}{2}}^{n+\frac{1}{2}})\]
 
 
-\subsection{Serial code examples}
+\subsection{Fortran implementation}
 
-The coding style to implement the serial version of the shallow water model
-is now shown.  The Fortran kernel procedure {\tt wave\_advance} 
-is declared as:
+Selected portions of the data-parallel implementation of the shallow water model
+are now shown.  This code serves as input to the ForOpenCL transformations
+described in the next section.  The interface for the Fortran kernel procedure {\tt
+  wave\_advance} is declared as:
 
 {\small
 \begin{verbatim}
-pure subroutine wave_advance(H,U,V,dx,dy,dt)
-  real, dimension(:,:),intent(inout):: H,U,V
-  real, intent(in) :: dx,dy,dt
-  !$OFP CONTIGUOUS :: H,U,V
-  !$OFP KERNEL :: wave_advance
+subroutine wave_advance(dx,dy,dt,H,U,V,oH,oU,oV)
+  !$OFP PURE, KERNEL   :: wave_advance
+  real, intent(in)     :: dx,dy,dt
+  real, dimension(:,:) :: H,U,V,oH,oU,oV
+  contiguous  :: H,U,V,oH,oU,oV
+  intent(in)  :: H,U,V
+  intent(out) :: oH,oU,oV
+  target      :: oH,oU,oV
 end subroutine
 \end{verbatim}
 }
 
 \noindent
-where {\tt H, U}, and {\tt V} are state variables for height and
-$x$ and $y$ momentum respectively.  The \emph{OFP} compiler directives
-{\tt CONTIGUOUS} and {\tt KERNEL} are added because contiguous is Fortran
-2008 syntax (not in current compilers) and kernel is an \emph{OFP} extension.
+where {\tt dx, dy, dt} are differential quantities in space $x, y$ and time $t$,
+{\tt H, U}, and {\tt V} are state variables for the height and $x$ and $y$
+momentum respectively, and {\tt oH, oU, oV} are corresponding output arrays used
+in the double buffering scheme.  The \emph{OFP} compiler directive attributes
+{\tt PURE} and {\tt KERNEL} indicate that the procedure {\tt wave\_advance} is
+to be transformed as an OpenCL kernel and that it must be pure, other than for any
+pointers used to reference interior regions of the output arrays.
 
-Temporary arrays are required for the interior copies {\tt iH, iU}, and
-{\tt iV} of the state variables and for the quantities {\tt Hx, Hy, Ux,
-Vx}, and {\tt Vy} defined on cell faces.  These temporary arrays are declared as,
+Temporary arrays are required for the quantities {\tt Hx, Hy, Ux, Vx}, and {\tt
+  Vy,} that are defined on cell faces.  Also, the pointer variables, {\tt pH,
+  pU,} and {\tt pV}, are needed to access and update interior regions of the
+output arrays.  As these pointers are assigned to the arrays {\tt oH, oU, oV},
+these output arrays must have the target attribute, as shown in the interface
+above.  The temporary arrays and array pointers are declared as,
 
 {\small
 \begin{verbatim}
-real, allocatable, dimension(:,:) :: iH,iU,iV
-real, allocatable, dimension(:,:) :: Hx,Hy,Ux
-real, allocatable, dimension(:,:) :: Uy,Vx,Vy
+real, allocatable, dimension(:,:) :: Hx, Hy, Ux
+real, allocatable, dimension(:,:) :: Uy, Vx, Vy
+real, pointer,     dimension(:,:) :: pH, pU, pV
 \end{verbatim}
 }
 
-Halo variables for the interior and cell faces are
+Halo variables for the interior and the cell faces are declared and defined as
 
 {\small
 \begin{verbatim}
-integer, dimension(4) :: halo,face_lt,face_rt
-integer, dimension(4) :: face_up,face_dn
+integer, dimension(4) :: face_lt, face_rt, halo
+integer, dimension(4) :: face_up, face_dn
+
 halo    = [1,1,1,1]
-face_lt = [0,1,1,1]; face_rt = [1,0,1,1]
-face_dn = [1,1,0,1]; face_up = [1,1,1,0]
+face_lt = [0,1,1,1];  face_rt = [1,0,1,1]
+face_dn = [1,1,0,1];  face_up = [1,1,1,0]
 \end{verbatim}
 }
 
 \noindent
-Note that the halos for the four faces each have a 0 in the
-definition. Thus the returned array copy will have size that is larger
-than the interior regions that use {\tt [1,1,1,1]}.  This is because
-there is one more cell face quantity than there are cells in a given
+Note that the halo definitions for the four faces each have a 0 in the
+initialization. Thus the returned array copy will have a size that is larger
+than any interior region that uses the full halo {\tt [1,1,1,1]}.  This is
+because there is one more cell face quantity than there are cells in a given
 direction.
 
-The first Lax-Wendroff step updates state variables on the cell
-faces, for example,
+The first Lax-Wendroff step updates state variables on the cell faces.  Assignment
+statements like the following,
 
 {\small
 \begin{verbatim}
-Hx = 0.5*(region(H,face_lt)+ &
-          region(H,face_rt)) &
-   + (0.5*dt/dx) &
-   * (region(U,face_lt)-region(U,face_rt))
+Hx = 0.5*( region_cpy(H,face_lt) +   &
+           region_cpy(H,face_rt) )   &
+     + (0.5*dt/dx)                   &
+     * (region_cpy(U,face_lt) - region_cpy(U,face_rt))
 \end{verbatim}
 }
 
 \noindent
-updates the $x$-direction height variable.  The second step then uses
-these face variables to update the interior region, for example,
+are used to calculate these quantities.  This equation updates the array for the
+height in the $x$-direction.  The second step then uses these face quantities to
+update the interior region, for example,
 
 {\small
 \begin{verbatim}
 face_lt = [0,1,0,0];  face_rt = [1,0,0,0]
 face_dn = [0,0,0,1];  face_up = [0,0,1,0]
-iH = iH + (dt/dx) * ( region(Ux, face_lt) - &
-                      region(Ux, face_rt) ) &
-        + (dt/dy) * ( region(Vy, face_dn) - &
-                      region(Vy, face_up) )
+
+pH = region_ptr(oH, halo)
+
+pH = region_cpy(H, halo)
+       + (dt/dx) * ( region_cpy(Ux, face_lt) -   &
+                     region_cpy(Ux, face_rt) )   &
+       + (dt/dy) * ( region_cpy(Vy, face_dn) -   &
+                     region_cpy(Vy, face_up) )
 \end{verbatim}
 }
 
@@ -138,15 +154,14 @@ iH = iH + (dt/dx) * ( region(Ux, face_lt) - &
 Note that face halos have been redefined so that the array copy
 returned has the same size as the interior region.
 
-These simple code segments show how the shallow water model is
-implemented in standard Fortran (2003) using the data-parallel
-programming model described above.  The resulting code is simple,
-concise, and easy to understand.  However it does \emph{not}
-necessarily perform well because of the temporary array variables,
-especially those produced by the {\tt region} function.  This is
-generally true of algorithms that use Fortran shift functions as well,
-as some Fortran compilers (e.g., gfortran) do not generate optimal
-code for shifts.  We note (as shown below) that these temporary array
-copies are replaced by scalars in the transformed Fortran code so
-there is no performance penalty for using data-parallel statements as
-outlined.
+These simple code segments show how the shallow water model is implemented in
+standard Fortran using the data-parallel programming model described above.  The
+resulting code is simple, concise, and easy to understand.  However it does
+\emph{not} necessarily perform well because of the temporary array variables,
+especially those produced by the function {\tt region\_cpy}.  This is generally true
+of algorithms that use Fortran shift functions as well, as some Fortran
+compilers (e.g., gfortran) do not generate optimal code for shifts.  We note (as
+shown below) that these temporary array copies are replaced by scalars in the
+transformed Fortran code so there are no performance penalties for using
+data-parallel statements as outlined.  However, there is an increased memory
+cost due to the double buffering required by the kernel execution semantics.
