@@ -11,9 +11,9 @@ architectures using low-level programming models such as OpenCL.  For algorithms
 that can be easily expressed in terms of whole array, data-parallel operations,
 writing code in Fortran and transforming it automatically to specific low-level
 implementations removes the burden of creating and maintaining multiple versions
-of architecuture specific code.
+of architecture specific code.
 
-The peak performance of the newer accelerator architectures can be substantial.
+The peak performance of these newer accelerator architectures can be substantial.
 Intel expects a teraflop for the SGEMM benchmark with their Knights Ferry
 processor while the performance of the M2090 NVIDIA Tesla processor is in the
 same neighborhood~\cite{hpcwire11manycore}.  Unfortunately the performance that
@@ -33,13 +33,13 @@ A directive-based approach, such as OpenMP or the Accelerator programming model
 from the Portland Group~\cite{pgi10accelerator}, is one solution to this
 problem.  However, in this paper we take a somewhat different approach.  A
 common theme amongst the new processors is the emphasis on data-parallel
-programming.  This model is well suited to the emerging architectures that are
+programming.  This model is well suited to architectures that are
 based on either vector processing or massively parallel collections of simple
 cores.  The recent CUDA and OpenCL programming languages are are intended to
 support this programming model.
 
 The problem with OpenCL and CUDA is that they expose too much detail about the
-machine architecture to the programmer~\cite{wolfeSC10}.  The programmer is
+machine architecture to the programmer~\cite{wolfe08gpgpu}.  The programmer is
 responsible for explicitly managing memory (including the staging of data back
 and forth between the host CPU and the accelerator device) and specifically
 taking into account architectural differences (such as whether the architecture
