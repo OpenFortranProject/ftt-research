@@ -54,6 +54,9 @@ device shown in Figure~\ref{fig:cl-memory} is similar to the distribution of
 memory across MPI nodes in an MPI application.  In the case of MPI, the
 virtual global array is represented by the background layer (with its halo) and
 partitions of the global array are stored in the 4 MPI nodes shown in the foreground.
+Our current and future work on this effort includes source-to-source transformations
+to generate MPI code in addition to OpenCL in order to deal with clusters of 
+nodes containing accelerators.  This work is outside the scope of this paper.
 
 Halo regions obtained via the {\tt region\_cpy} function (used with intent(in)
 arrays) are constrained semantically so that they can not be written to by an

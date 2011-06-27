@@ -18,7 +18,7 @@ language and yet have direct access to GPU hardware.  We start by examining how 
 programming model relates to developments in other languages.
 
 
-\subsection{Comparison to Other Languages}
+\subsection{Comparison to Prior Fortran Work}
 
 A number of previous efforts have exploited data-parallel programming at the
 language level to utilize novel architectures.
@@ -112,7 +112,10 @@ Washington~\cite{chamberlain04zpl} and Chapel, an HPCS language developed by
 Cray~\cite{chamberlain_chapel}.  In ZPL, programmers adopt a similar global view
 of computation over arrays, but define their computations based on regions,
 which provide a local view of the set of indices that participate in the update
-of each element of an array.
+of each element of an array.  A similar line of research in the functional
+language community has investigated array abstractions for expressing
+whole-array operations in the Haskell language in the REPA (regular, shape-polymorphic,
+parallel array) library~\cite{keller10repa}.
 
 \subsection{Fortran Language Subset}
 
@@ -253,7 +256,11 @@ forced to actually make a copy and is free to enforce copy semantics through
 other means.  In addition to these two new functions, ForOpenCL provides the
 compiler directive, {\tt \!\$OFP PURE, KERNEL}, which specifies that a pure subroutine
 can be transformed to an OpenCL kernel and that the subroutine is pure
-except for calls to {\tt region\_ptr}.
+except for calls to {\tt region\_ptr}.  These directives are not strictly
+necessary for the technique described in this paper, but aid in automated
+identification of specific kernels to be transformed to OpenCL.  A directive-free
+implementation would require the transformation tool be provided the set of 
+kernels to work via a user defined list.
 
 \subsection{Advantages}
 

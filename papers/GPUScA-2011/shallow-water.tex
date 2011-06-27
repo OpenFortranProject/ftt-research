@@ -157,7 +157,8 @@ returned has the same size as the interior region.
 These simple code segments show how the shallow water model is implemented in
 standard Fortran using the data-parallel programming model described above.  The
 resulting code is simple, concise, and easy to understand.  However it does
-\emph{not} necessarily perform well because of the temporary array variables,
+\emph{not} necessarily perform well when compiled for a traditional sequential
+system because of suboptimal use of temporary array variables,
 especially those produced by the function {\tt region\_cpy}.  This is generally true
 of algorithms that use Fortran shift functions as well, as some Fortran
 compilers (e.g., gfortran) do not generate optimal code for shifts.  We note (as
