@@ -12,8 +12,8 @@ OpenCL~\cite{opencl08} is an open-language standard for developing applications
 targeted for GPUs, as well as for multi-threaded applications targeted for
 multi-core CPUs.  The kernels are run by calling a C runtime library from the
 OpenCL host (normally the CPU).  Efforts to standardize a C++ runtime are
-underway and Fortran interfaces to the C runtime (distributed in the ForOpenCL
-library).
+underway and Fortran interfaces to the C runtime are distributed in the ForOpenCL
+library.
 
 An important concept in OpenCL is that of a thread and a thread group.  Thread
 groups are used to run an OpenCL kernel concurrently on several processor
@@ -102,6 +102,8 @@ in Fortran) are denoted by a {\tt p} preceding the array name.  For example, the
 Fortran statement {\tt pH = region\_ptr(oH, halo)} is transformed as a scalar
 variable declaration representing a single element in the output array {\tt oH}.
 
+\vskip .4in
+
 \subsubsection{Region function}
 
 While the Fortran version of the {\tt region\_cpy} function semantically returns
@@ -116,14 +118,13 @@ OpenCL function and is provided by the ForOpenCL library.
 
 Fortran kernel procedures have direct correspondence with OpenCL equivalents.
 For example, the {\tt wave\_advance} interface declaration is transformed as
-
 {\small
 \begin{verbatim}
 __kernel void
 wave_advance(float dx, ..., __global float * H, ...);
 \end{verbatim}
 }
-
+\noindent
 The intent(in) arrays have local equivalents that are stored in local memory
 and are declared by, for example,
 {\small
