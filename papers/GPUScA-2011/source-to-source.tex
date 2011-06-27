@@ -29,7 +29,7 @@ own thread memory (normally a set of registers), threads in a thread group to
 OpenCL local memory, and all thread groups have access to OpenCL global memory.
 When multiple members of a thread group access the same memory elements (for
 example in the use of the {\tt region\_cpy} function in the calculation of face
-variable quantites shown above), for performance reasons it is often best that
+variable quantities shown above), for performance reasons it is often best that
 global memory accessed and shared by a thread group be copied into local memory.
 
 The \emph{region} and \emph{halo} constructs easily map onto the OpenCL memory
