@@ -1,64 +1,76 @@
 \section{Programming Model}
 
-A question that one may pose is ``\emph{Why choose Fortran and not a more modern
-  language like X for programming accelerator architectures?}''  The recent rise
-in interest in concurrency and parallelism at the language level driven by
-multicore CPUs and many-core accelerators has driven a number of new language
-developments, both as novel languages and extensions on existing ones.  However,
-for many scientific users with existing codes written in Fortran, new languages
-and language extensions to use novel new architectures present a challenge: how
-do programmers effectively use them while avoiding rewriting code and potentially
-growing dependent on a transient technology that will vanish tomorrow?
-In this paper we explore the constructs in Fortran that are particularly
-relevant to GPU architectures.
+A question that one may pose is ``\emph{Why choose Fortran and not a
+  more modern language like X for programming accelerator
+  architectures?}''  The recent rise in interest in concurrency and
+parallelism at the language level driven by multicore CPUs and
+many-core accelerators has driven a number of new language
+developments, both as novel languages and extensions on existing ones.
+However, for many scientific users with existing codes written in
+Fortran, new languages and language extensions to use novel new
+architectures present a challenge: how do programmers effectively use
+them while avoiding rewriting code and potentially growing dependent
+on a transient technology that will vanish tomorrow?  In this paper we
+explore the constructs in Fortran that are particularly relevant to
+GPU architectures.
 
-In this section we present the Fortran subset employed in this paper.  This
-sub-setting language will allow scientific programmers to stay within the Fortran
-language and yet have direct access to GPU hardware.  We start by examining how this
-programming model relates to developments in other languages.
+In this section we present the Fortran subset employed in this paper.
+This sub-setting language will allow scientific programmers to stay
+within the Fortran language and yet have direct access to GPU
+hardware.  We start by examining how this programming model relates to
+developments in other languages.
 
 
 \subsection{Comparison to Prior Fortran Work}
 
-A number of previous efforts have exploited data-parallel programming at the
-language level to utilize novel architectures.
-%%, particularly in previous decades during the reign of vector and massively parallel computers in high performance computing (HPC). 
-The origin of the array syntax adopted by Fortran in the 1990
-standard can be found in the APL language~\cite{iverson79apl}.  These additions
-to Fortran allowed parallelism to be expressed with whole-array operations at
-the expression level, instead of via parallelism within explicit DO-loops, as
-implemented in earlier variants of the language (e.g.,
-IVTRAN for the Illiac IV).
 
-The High Performance Fortran (HPF) extension of Fortran was proposed to add
-features to the language that would enhance the ability of compilers to emit
-fast parallel code for distributed and shared memory parallel
-computers\cite{koelbel94hpf}.  One of the notable additions to the language in
-HPF was syntax to specify the distribution of data structures amongst a set of
-parallel processors.  HPF also introduced an alternative looping construct to
-the traditional DO-loop called {\tt FORALL} that was better suited for parallel
-compilation.  An additional keyword, {\tt INDEPENDENT}, was added to allow the
-programmer to indicate when the loop contained no loop-order dependencies that
-allowed for parallel execution.  These constructs are similar to {\tt DO
-  CONCURRENT}, an addition to Fortran in 2008.  Interestingly, the parallelism
-features introduced in HPF did not exploit the new array features introduced in
-1990 in any significant way, relying instead on explicit loop-based parallelism.
-This restriction allowed the language to support parallel programming that
-wasn't easily mapped onto a pure data-parallel model.
 
-In some instances though, a purely data-parallel model is appropriate for part
-or all of the major computations within a program.  One of the systems where
-programmers relied heavily on higher level operations instead of explicit
-looping constructs was the Thinking Machines Connection Machine 5 (CM-5).  A
-common programming pattern used on the CM-5 (that we exploit in this paper) was to
-write whole-array operations from a global perspective in which computations are
-expressed in terms of operations over the entire array instead of a single local
-index.  The use of the array shift intrinsic functions (like {\tt CSHIFT}) were
-used to build computations in which arrays were combined by shifting the entire
-arrays instead of working on local offsets based on single indices.  A simple
-1D example is one in which an element is replaced with the average of its own
-value and that of its two direct neighbors.  Ignoring boundary indices that
-wrap around, explicit indexing will result in a loop such as:
+A number of previous efforts have exploited data-parallel programming
+at the language level to utilize novel architectures.  The origin of
+the array syntax adopted by Fortran in the 1990 standard can be found
+in the APL language~\cite{iverson79apl}.  These additions to Fortran
+allowed parallelism to be expressed with whole-array operations at the
+expression level, instead of via parallelism within explicit DO-loops,
+as implemented in earlier variants of the language (e.g., IVTRAN for the
+Illiac IV).
+
+The High Performance Fortran (HPF) extension of Fortran was proposed
+to add features to the language that would enhance the ability of
+compilers to emit fast parallel code for distributed and shared memory
+parallel computers\cite{koelbel94hpf}.  One of the notable additions
+to the language in HPF was syntax to specify the distribution of data
+structures amongst a set of parallel processors.  HPF also introduced
+an alternative looping construct to the traditional DO-loop called
+{\tt FORALL} that was better suited for parallel compilation.  An
+additional keyword, {\tt INDEPENDENT}, was added to allow the
+programmer to indicate when the loop contained no loop-order
+dependencies that allowed for parallel execution.  These constructs
+are similar to {\tt DO CONCURRENT}, an addition to Fortran in 2008.
+
+Interestingly, the parallelism features introduced in HPF did not
+exploit the new array features introduced in 1990 in any significant
+way, relying instead on explicit loop-based parallelism.  This
+restriction allowed the language to support parallel programming that
+wasn't easily mapped onto a pure data-parallel model.  The {\tt SHADOW}
+directive introduced in HPF-2, and the {\tt HALO} in HPF+~\cite{benkner99hpf}
+bear some similarity to the halo region concept that we discuss in this 
+paper.
+
+In some instances though, a purely data-parallel model is appropriate
+for part or all of the major computations within a program.  One of
+the systems where programmers relied heavily on higher level
+operations instead of explicit looping constructs was the Thinking
+Machines Connection Machine 5 (CM-5).  A common programming pattern
+used on the CM-5 (that we exploit in this paper) was to write
+whole-array operations from a global perspective in which computations
+are expressed in terms of operations over the entire array instead of
+a single local index.  The use of the array shift intrinsic functions
+(like {\tt CSHIFT}) were used to build computations in which arrays
+were combined by shifting the entire arrays instead of working on
+local offsets based on single indices.  A simple 1D example is one in
+which an element is replaced with the average of its own value and
+that of its two direct neighbors.  Ignoring boundary indices that wrap
+around, explicit indexing will result in a loop such as:
 
 {\small
 \begin{verbatim}
@@ -88,23 +100,29 @@ optimally implementing the computations to the compiler.  Instead of relying on
 a compiler to infer parallelism from a set of explicit loops, the choice for how
 to implement loops was left entirely up to the tool.
 
-Unfortunately, this had
-two side effects that have limited broad acceptance of the whole-array
-programming model in Fortran.  First, programmers must translate their
-algorithms into a set of global operations.  Finite difference stencils and
-similar computations are traditionally defined in terms of offsets from some
-central index.  Shifting, while conceptually analogous, can be awkward to think
-about for high dimensional stencils with many points.  Second, the semantics of
-these operations are such that all elements of an array operation are updated as
-if they were updated simultaneously.  In a program where the programmer
-explicitly manages arrays and loops, double buffering techniques and user
-managed temporaries are used to maintain these semantics.  When the compiler is
-responsible for managing this intermediate storage, it has historically proven
-that they are inefficient and generate code that requires far more temporary
-storage than really necessary.  This is not a flaw of the language constructs,
-but a sign of the lack of sophistication of the compilers with respect to their
-internal analysis to determine how to optimally generate this intermediate
-storage.
+Unfortunately, this had two side effects that have limited broad
+acceptance of the whole-array programming model in Fortran.  First,
+programmers must translate their algorithms into a set of global
+operations.  Finite difference stencils and similar computations are
+traditionally defined in terms of offsets from some central index.
+Shifting, while conceptually analogous, can be awkward to think about
+for high dimensional stencils with many points.  Second, the semantics
+of these operations are such that all elements of an array operation
+are updated as if they were updated simultaneously.  In a program
+where the programmer explicitly manages arrays and loops, double
+buffering techniques and user managed temporaries are used to maintain
+these semantics.  Limited attention to optimizing memory usage due to
+this intermediate storage by compilers has led to these constructs seeing
+little adoption by programmers.
+
+%When the compiler is responsible for managing this
+%intermediate storage, it has historically proven that they are
+%inefficient and generate code that requires far more temporary storage
+%than really necessary.  
+%This is not a flaw of the language constructs,
+%but a sign of the lack of sophistication of the compilers with respect
+%to their internal analysis to determine how to optimally generate this
+%intermediate storage.
 
 An interesting line of language research that grew out of HPF was that
 associated with the ZPL language at the University of
