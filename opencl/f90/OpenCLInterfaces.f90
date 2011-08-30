@@ -171,7 +171,7 @@ interface
    !                       size_t *              /* param_value_size_ret */);
    function clGetProgramBuildInfo(program, device, param_name, &
                                   param_value_size, param_value, param_value_size_ret) &
-            result(status) bind(C, name="clGetProgramBuildInfo_test")
+            result(status) bind(C, name="clGetProgramBuildInfo")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
@@ -387,7 +387,7 @@ interface
    !                    cl_int *         /* errcode_ret */);
    function clEnqueueMapBuffer(command_queue, buffer, blocking_map, map_flags, offset, &
                                cb, num_events_in_wait_list, event_wait_list, event, errcode_ret) &
-            result(host_ptr_ret) bind(C, name="clEnqueueMapBuffer_test")
+            result(host_ptr_ret) bind(C, name="clEnqueueMapBuffer")
       use, intrinsic :: ISO_C_BINDING
       use :: OpenCLTypes
       implicit none
