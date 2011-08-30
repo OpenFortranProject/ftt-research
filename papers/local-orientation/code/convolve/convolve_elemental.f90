@@ -1,9 +1,9 @@
-   CONCURRENT elemental subroutine convolve(S, Image, F, N)
-      real, intent(out) :: S
+   CONCURRENT elemental subroutine convolve(SmoothedImage, Image, F, N)
+      real, intent(out) :: SmoothedImage
       real, intent(in), EXTEND(0) :: Image(-N:N,-N:N)
       real, intent(in), NON_ELEMENTAL :: F(-N:N,-N:N)
       integer, intent(in) :: N
 
-      S = sum(F*Image)
+      SmoothedImage = sum(F*Image)
 
    end subroutine convolve
