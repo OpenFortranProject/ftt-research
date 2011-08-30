@@ -3,7 +3,7 @@
 A question that one may pose is ``\emph{Why choose Fortran and not a
   more modern language like X for programming accelerator
   architectures?}''  The recent rise in interest in concurrency and
-parallelism at the language level driven by multicore CPUs and
+parallelism at the language level due to multicore CPUs and
 many-core accelerators has driven a number of new language
 developments, both as novel languages and extensions on existing ones.
 However, for many scientific users with existing codes written in
@@ -82,7 +82,7 @@ around, explicit indexing will result in a loop such as:
 }
 
 \noindent In this loop, it is necessary to manually implement a double buffering scheme
-in order to avoid mixing values computed in the current loop with values from a 
+in order to avoid mixing values computed in the current execution of the loop with values from a 
 prior execution of the loop. When shifts are employed, this can be expressed as:
 
 {\small
@@ -145,7 +145,7 @@ parallel array) library~\cite{keller10repa}.
 The static analysis and source-to-source transformations used in this work
 require the programmer to use a language subset that employs a data-parallel
 programming model.  In particular, it encourages the use of array notation,
-elemental functions, and pure procedures.  From these language constructs, we
+pure elemental functions, and pure procedures.  From these language constructs, we
 are able to easily transform Fortran procedures to a lower-level OpenCL kernel
 implementation.
 
@@ -214,7 +214,7 @@ mechanism to express algorithms in simpler segments.
 
 It should be noted that in Fortran 2008,
 the concept of impure elemental functions was introduced.  This requires that
-elemental functions now need to be explicitly labelled as pure to ensure that they
+elemental functions now need to be explicitly labeled as pure to indicate that they
 are side effect free.
 
 \subsubsection*{Pure procedures}
@@ -277,7 +277,7 @@ for a two-dimensional region.  These functions are:
 \end{itemize}
 
 It should be noted that the function {\tt region\_cpy} is pure and thus can be
-called from within a pure kernel procedure, though it should be noted that {\tt
+called from within a pure kernel procedure, and {\tt
 region\_ptr} is impure because it aliases the array parameter.  However as will
 be shown below, the usage of {\tt region\_ptr} is constrained so that it does not
 introduce side effects in the functions that call it.  These two functions are

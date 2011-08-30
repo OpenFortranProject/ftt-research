@@ -50,7 +50,7 @@ kernel.  Most of the extra performance of the hand-optimized code can be
 attributed to the absence of array temporaries and to packing the three state
 variables {\tt H, U}, and {\tt V} into a single vector datatype.
 
-While we did not have an OpenMP code for multi-core comparisons, the transformed
+While we did not have an OpenMP code for multicore comparisons, the transformed
 OpenCL code on the NVIDIA C2050 was up to 40 times faster than the best serial
 Fortran code executing on the host CPU.
 
