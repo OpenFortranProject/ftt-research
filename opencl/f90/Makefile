@@ -45,6 +45,10 @@ endif
 CC     := gcc
 LINK   := $(FC) -fPIC
 
+AR = ar
+ARFLAGS = cr
+RANLIB = ranlib
+
 # Includes
 ifeq ($(DARWIN),)
    INCLUDES += -I$(INCDIR) -I$(OCLCOMMONDIR)/inc -I$(SHAREDDIR)/inc
@@ -103,38 +107,44 @@ CFLAGS   += $(INCLUDES) $(COMMONFLAGS)
 FCFLAGS  += $(COMMONFLAGS)
 
 OBJS = Timer.o OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
-       OpenCL.o opencl_utils.o opencl_test.o test_shift_impl.o
+       OpenCL.o opencl_utils.o opencl_test.o
 
-LIBS += $(OBJS)
+FOCL_LIB = libforopencl.a
 
-APPS = elemental_add test_shift update_weights bandwidth transpose \
+LIBS += -L./ -lforopencl
+
+APPS = test_shift update_weights bandwidth transpose \
        shallow_water shallow_water_f
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
 	$(FC) -c $(FCFLAGS) -o $@ $<
 
-all: $(OBJS) $(APPS)
+all: $(FOCL_LIB) $(APPS)
 
-elemental_add: elemental_add.o $(OBJS)
+libforopencl.a: $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(RANLIB) $@
+
+elemental_add: elemental_add.o $(FOCL_LIB)
+	$(LINK) $(FCFLAGS) -o $@ elemental_add.o $(LIBS)
+
+shallow_water: shallow_water.o $(FOCL_LIB)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
-shallow_water: shallow_water.o $(OBJS)
+shallow_water_f: shallow_water_f.o $(FOCL_LIB)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
-shallow_water_f: shallow_water_f.o $(OBJS)
+test_shift: test_shift.o $(FOCL_LIB)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
-test_shift: test_shift.o $(OBJS)
-	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
-
-update_weights: update_weights.o $(OBJS)
+update_weights: update_weights.o $(FOCL_LIB)
 	$(LINK) -o $@ $< $(LIBS)
 
-bandwidth: bandwidth.o $(OBJS)
+bandwidth: bandwidth.o $(FOCL_LIB)
 	$(LINK) -o $@ $< $(LIBS)
 
-transpose: transpose.o $(OBJS)
+transpose: transpose.o $(FOCL_LIB)
 	$(LINK) -o $@ $< $(LIBS)
 
 opencl_utils.o: ../c/opencl_utils.c
@@ -145,6 +155,8 @@ opencl_test.o: ../c/opencl_test.c
 
 # dependencies
 #
+
+elemental_add.o : elemental_add.f90
 
 test_shift.o: test_shift.f90 $(OBJS)
 
@@ -171,4 +183,5 @@ OpenCLInterfaces.o: OpenCLTypes.o
 clean:
 	rm -f $(OBJS) test_shift.o update_weights.o bandwidth.o
 	rm -f *.mod
+	rm -f $(FOCL_LIB)
 	rm -f $(APPS)
