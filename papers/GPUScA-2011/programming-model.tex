@@ -75,12 +75,15 @@ around, explicit indexing will result in a loop such as:
 {\small
 \begin{verbatim}
   do i = 2,(n-1)
-    X(i) = (X(i-1) + X(i) + X(i+1)) / 3
+    Xnew(i) = (X(i-1) + X(i) + X(i+1)) / 3
   end do
+  PTR_SWAP(Xnew, X, tmp_ptr)
 \end{verbatim}
 }
 
-\noindent When shifts are employed, this can be expressed as:
+\noindent In this loop, it is necessary to manually implement a double buffering scheme
+in order to avoid mixing values computed in the current loop with values from a 
+prior execution of the loop. When shifts are employed, this can be expressed as:
 
 {\small
 \begin{verbatim}
@@ -89,6 +92,8 @@ around, explicit indexing will result in a loop such as:
 }
 
 \noindent
+The semantics of the shift intrinsic and operators like {\tt +} applied to the whole array make it
+unnecessary to manually implement the double buffering scheme found in the loop above.
 Similar whole array shifting was used in higher dimensions for finite difference
 codes within the computational physics community for codes targeting the CM-5
 system.  Research in compilation of stencil-based codes that use shift operators
@@ -168,18 +173,18 @@ assignment are applied by the compiler to individual elements of the arrays
 independently.  Thus the compiler is able to spread the computation in the
 example across any hardware threads under its control.
 
-\subsubsection*{Elemental functions}
+\subsubsection*{Pure elemental functions}
 
 An elemental function consumes and produces scalar values, but can be applied to
 variables of array type such that the function is applied to each and every
 element of the array.  This allows programmers to avoid explicit looping and
 instead simply state that they intend a function to be applied to every element
 of an array in parallel, deferring the choice of implementation technique to the
-compiler.  Elemental functions are intended to be used for data-parallel
+compiler.  Pure elemental functions are intended to be used for data-parallel
 programming, and as a result must be side effect free and mandate an {\tt
-intent(in)} attribute for all arguments.
+intent(in)} attribute for all arguments. 
 
-For example, the basic array operation shown above could be refactored into an
+For example, the basic array operation shown above could be refactored into a pure
 elemental function,
 
 {\small
@@ -203,14 +208,19 @@ Note that while {\tt foo} is defined in terms of purely scalar quantities, it
 can be \emph{applied} to arrays as shown.  While this may seem like a trivial
 example, such simple functions may be composed with other elemental functions to
 perform powerful computations, especially when applied to arrays.  Our prototype
-tool transforms elemental functions to inline OpenCL functions.  Thus there is
-no penalty for usage of elemental functions and they provide a convenient
+tool transforms pure elemental functions to inline OpenCL functions.  Thus there is
+no penalty for usage of pure elemental functions and they provide a convenient
 mechanism to express algorithms in simpler segments.
+
+It should be noted that in Fortran 2008,
+the concept of impure elemental functions was introduced.  This requires that
+elemental functions now need to be explicitly labelled as pure to ensure that they
+are side effect free.
 
 \subsubsection*{Pure procedures}
 
-Pure procedures, like elemental functions, must be free of side effects.  Unlike
-elemental functions that require arguments to have an {\tt intent(in)}
+Pure procedures, like pure elemental functions, must be free of side effects.  Unlike
+pure elemental functions that require arguments to have an {\tt intent(in)}
 attribute, they may change the contents of array arguments that are passed to
 them.  The absence of side effects removes ordering constraints that could
 restrict the freedom of the compiler to invoke pure functions out of order and
@@ -221,7 +231,7 @@ analysis.
 
 Since pure procedures don't have side effects they are candidates for running on
 accelerators in OpenCL.  Currently our prototype tool only transforms pure procedures
-to OpenCL kernels that \emph{do not} call other procedures, except for elemental
+to OpenCL kernels that \emph{do not} call other procedures, except for pure elemental
 functions, either defined by the user or intrinsic to Fortran.
 
 \subsection{New Procedures}
@@ -296,7 +306,7 @@ syntax, regions, and pure and elemental functions:
   understand, and is usually substantially shorter.
 \item Semantically the intrinsic function {\tt region\_cpy} returns an array by value.
   This is usually what the algorithm requires.
-\item Pure and elemental functions are free from side effects, so it is
+\item Pure elemental functions are free from side effects, so it is
   easier for a compiler to schedule the work to be done in parallel.
 \end{itemize}
 
