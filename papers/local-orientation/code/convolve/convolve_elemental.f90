@@ -1,4 +1,4 @@
-   CONCURRENT elemental subroutine convolve(SmoothedImage, Image, F, N)
+   CONCURRENT pure elemental subroutine convolve(SmoothedImage, Image, F, N)
       real, intent(out) :: SmoothedImage
       real, intent(in), EXTEND(0) :: Image(-N:N,-N:N)
       real, intent(in), NON_ELEMENTAL :: F(-N:N,-N:N)
