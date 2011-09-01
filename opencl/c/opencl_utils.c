@@ -112,6 +112,9 @@ void stop_on_error(int code)
       case CL_INVALID_ARG_VALUE:
          sprintf(msg, "%s (%d)", "CL_INVALID_ARG_VALUE", code);
          break;
+      case CL_INVALID_BUFFER_SIZE:
+         sprintf(msg, "%s (%d)", "CL_INVALID_BUFFER_SIZE", code);
+         break;
       case CL_INVALID_COMMAND_QUEUE:
          sprintf(msg, "%s (%d)", "CL_INVALID_COMMAND_QUEUE", code);
          break;
@@ -150,6 +153,9 @@ void stop_on_error(int code)
          break;
       case CL_INVALID_WORK_GROUP_SIZE:
          sprintf(msg, "%s (%d)", "CL_INVALID_WORK_GROUP_SIZE", code);
+         break;
+      case CL_OUT_OF_HOST_MEMORY:
+         sprintf(msg, "%s (%d)", "CL_OUT_HOST_MEMORY", code);
          break;
       case CL_OUT_OF_RESOURCES:
          sprintf(msg, "%s (%d)", "CL_OUT_OF_RESOURCES", code);
