@@ -1,4 +1,6 @@
-#define NPAD  7
+#include "/Users/rasmussn/ofp-research/papers/local-orientation/code/convolve/npad.h"
+
+#define NPAD  PADDING_SIZE
 #define WSIZE 16
 
 #define LSIZE ((WSIZE+2*NPAD)*(WSIZE+2*NPAD))

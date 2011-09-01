@@ -1,37 +1,22 @@
 module convolve_mod
-   use ISO_C_BINDING
-
-   integer, parameter :: G_WIDTH = 1280
-
-   ! WARNING, must also change in convolve.cl
-   integer(c_int), parameter :: NPAD = 7
-
-   integer(c_int), parameter :: NXP = 1 + 2*NPAD
-   integer(c_int), parameter :: NYP = NXP
-
-   integer(c_size_t), parameter :: NX   = G_WIDTH
-   integer(c_size_t), parameter :: NY   = G_WIDTH
-   integer(c_size_t), parameter :: NXEX = NX + 2*NPAD
-   integer(c_size_t), parameter :: NYEX = NY + 2*NPAD
-   integer(c_size_t), parameter :: NXL  = 16
-   integer(c_size_t), parameter :: NYL  = 16
-
-   integer(c_size_t), parameter :: SIZE_ELEMENT = 4
+   use FilterParams
+   use FilterType
 
 contains
 
    subroutine convolve(S, Image, F)
       implicit none
-      real :: S(NX,NY), Image(NXEX,NYEX), F(NXP,NYP)
+      real :: S(NX,NY), Image(NXEX,NYEX)
+      type(FilterPatch) :: F
       real :: val
       integer :: i, j, ip, jp
 
       do j = 1, NY
          do i = 1, NX
             val = 0.0
-            do jp = 1, NYP
-               do ip = 1, NXP
-                  val = val + F(ip, jp)*Image(i+NPAD,j+NPAD)
+            do jp = -NPAD, NPAD
+               do ip = -NPAD, NPAD
+                  val = val + F%p(ip,jp)*Image(i+NPAD,j+NPAD)
                end do
             end do
             S(i,j) = val
@@ -41,13 +26,19 @@ contains
 
    subroutine init_filter(F)
       implicit none
-      real :: F(NXP,NYP)
+      type(FilterPatch) :: F
       integer :: i
 
-      F = 0.0
-      F(:,NYP/2) = 1
-      F(NXP/2,:) = 1
-      F = F/sum(F)
+      F%p = 0.0
+      F%p(:,0) = 1
+      F%p(0,:) = 1
+      F%p = F%p/sum(F%p)         
+
+      print *, nxp, nyp, NPAD
+      do i = -1, 1
+         print *, "F==", F%p(i,-1:1)
+      end do
+      print *, F
 
     end subroutine init_filter
 
@@ -62,15 +53,16 @@ program test_convolve
 
    integer :: status
 
-   real(c_float), target, dimension(NX+2*NPAD,NY+2*NPAD) :: I  ! image
-   real(c_float), target, dimension(NX,NY)               :: S  ! smoothed image
-   real(c_float), target, dimension(NXP,NYP)             :: F  ! filter
+   real(c_float),     target  :: I(NXEX,NYEX)  ! image
+   real(c_float),     target  :: S(NX,NY)      ! smoothed image
+   type(FilterPatch), target  :: F             ! filter
 
    type(CLDevice) :: device
    type(CLKernel) :: kernel
    type(CLBuffer) :: d_I, d_S, d_F
 
    integer(c_size_t) :: nxLocal=NXL, nyLocal=NXL
+   integer(c_size_t) :: filter_mem_size    = NXP*NYP * SIZE_ELEMENT
    integer(c_size_t) :: global_mem_size    = NX*NY*SIZE_ELEMENT
    integer(c_size_t) :: global_ex_mem_size = NXEX*NYEX*SIZE_ELEMENT
    integer(c_size_t) :: tile_mem_size      = (NXL+2*NPAD)*(NYL+2*NPAD) * SIZE_ELEMENT
@@ -108,9 +100,9 @@ program test_convolve
 
    ! create memory buffers
    !
-   d_I = createBuffer(device, CL_MEM_READ_ONLY  + CL_MEM_COPY_HOST_PTR, global_ex_mem_size,   c_loc(I))
-   d_S = createBuffer(device, CL_MEM_WRITE_ONLY + CL_MEM_COPY_HOST_PTR, global_mem_size,      c_loc(S))
-   d_F = createBuffer(device, CL_MEM_READ_ONLY  + CL_MEM_COPY_HOST_PTR, NXP*NYP*SIZE_ELEMENT, c_loc(F))
+   d_I = createBuffer(device, CL_MEM_READ_ONLY  + CL_MEM_COPY_HOST_PTR, global_ex_mem_size, c_loc(I))
+   d_S = createBuffer(device, CL_MEM_WRITE_ONLY + CL_MEM_COPY_HOST_PTR, global_mem_size,    c_loc(S))
+   d_F = createBuffer(device, CL_MEM_READ_ONLY  + CL_MEM_COPY_HOST_PTR, filter_mem_size,    c_loc(F))
 
    ! create the kernel
    !

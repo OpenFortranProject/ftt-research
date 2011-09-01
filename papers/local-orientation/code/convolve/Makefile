@@ -106,29 +106,34 @@ endif
 CFLAGS   += $(INCLUDES)  $(COMMONFLAGS)
 FCFLAGS  += $(FINCLUDES) $(COMMONFLAGS)
 
-LIBOBJS = Timer.o OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
-          OpenCL.o opencl_utils.o
+OBJS = filter_params.o filter_type.o
 
-OBJS = $(LIBOBJS) opencl_test.o test_shift_impl.o
+LIBS += $(OBJS) -L$(FOCL_DIR) -lforopencl
 
-LIBS += -L$(FOCL_DIR) -lforopencl
-
-APPS = convolve
+APPS = convolve variable_filter
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
 	$(FC) -c $(FCFLAGS) -o $@ $<
 
-all: $(APPS)
+all: $(OBJS) $(APPS)
 
-elemental_add: elemental_add.o $(OBJS)
+convolve: convolve.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
-convolve: convolve.o
+variable_filter: variable_filter.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
+
+filter_params.o: filter_params.F90 npad.h
+	@echo 'Building for OS $(OSUPPER) file: $<'
+	$(FC) -c $(FCFLAGS) -o $@ $<
 
 # dependencies
 #
+
+convolve.o: npad.h convolve.f90 filter_params.o filter_type.f90
+variable_filter.o: npad.h variable_filter.f90 filter_params.o filter_type.f90
+filter_type.o: filter_params.o filter_type.f90
 
 clean:
 	rm -f *.mod *.o
