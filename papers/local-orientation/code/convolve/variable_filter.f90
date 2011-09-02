@@ -24,6 +24,27 @@ contains
       end do
    end subroutine convolve
 
+   subroutine filter_bandwidth(S, Image, F)
+      implicit none
+      real :: S(NX,NY), Image(NXEX,NYEX)
+      type(FilterPatch) :: F(NX,NY)
+      real :: val
+      integer :: i, j, ip, jp
+
+      do j = 1, NY
+         do i = 1, NX
+            val = 0.0
+            do jp = -NPAD, NPAD
+               do ip = -NPAD, NPAD
+                  F(i,j)%p(ip,jp) = 1
+               end do
+            end do
+            S(i,j) = 1.0
+         end do
+      end do
+   end subroutine filter_bandwidth
+
+
    subroutine init_filter(F)
       implicit none
       type(FilterPatch) :: F(NX,NY)
@@ -112,12 +133,14 @@ program test_variable_filter
    d_I = createBuffer(device, CL_MEM_READ_ONLY  + CL_MEM_COPY_HOST_PTR, global_ex_mem_size, c_loc(I))
    d_S = createBuffer(device, CL_MEM_WRITE_ONLY + CL_MEM_COPY_HOST_PTR, global_mem_size,    c_loc(S))
    d_F = createBuffer(device, CL_MEM_READ_ONLY  + CL_MEM_COPY_HOST_PTR, filter_mem_size,    c_loc(F(1,1)))
+!   d_F = createBuffer(device,                    + CL_MEM_COPY_HOST_PTR, filter_mem_size,    c_loc(F(1,1)))
 
    ! create the kernel
    !
    kernel = createKernel(device, &
                          "variable_filter.cl" // C_NULL_CHAR, &
                          "convolve"           // C_NULL_CHAR)
+!                         "filter_bandwidth"   // C_NULL_CHAR)
 
    ! add arguments
    !
@@ -155,7 +178,7 @@ program test_variable_filter
    print *, "   host time    ==   ", real(gpu_time)/nLoops, " msec (avg)"
 
    ! 1.0e-9 -> GB, 1000 -> ms, 2 -> to/fro
-   throughput = (1.0e-9 * 1000) * nLoops * (2*global_mem_size / gpu_time)
+   throughput = (1.0e-9 * 1000) * nLoops * ((2*global_mem_size+filter_mem_size) / gpu_time)
    print *, "   throughput   ==    ", throughput, "GB/s"
 
    ! 1.0e-9 -> GFlop, 1000 -> ms, 5 -> 4 sums / 1 div
@@ -175,6 +198,9 @@ program test_variable_filter
          endif
       end do
    end do
+
+!  warmup
+   call convolve(S, I, F)
 
    call init(timer)
    call start(timer)
