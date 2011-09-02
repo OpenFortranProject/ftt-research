@@ -38,7 +38,6 @@ contains
       do i = -1, 1
          print *, "F==", F%p(i,-1:1)
       end do
-      print *, F
 
     end subroutine init_filter
 
@@ -166,6 +165,9 @@ program test_convolve
          endif
       end do
    end do
+
+   ! warmup
+   call convolve(S, I, F)
 
    call init(timer)
    call start(timer)
