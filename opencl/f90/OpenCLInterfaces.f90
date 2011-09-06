@@ -500,6 +500,14 @@ interface
      type(c_ptr), value :: addr
    end subroutine
 
+   function query_device_info(id, device) bind(C, name="query_device_info")
+      use, intrinsic :: ISO_C_BINDING
+      implicit none
+      integer(c_int), value :: id
+      type(c_ptr), value :: device
+      integer(c_int) :: query_device_info
+   end function
+
 end interface
 
 end module OpenCLInterfaces
