@@ -1,13 +1,12 @@
-#include "/Users/rasmussn/ofp-research/papers/local-orientation/code/convolve/npad.h"
+//#include "/Users/rasmussn/ofp-research/papers/local-orientation/code/convolve/npad.h"
 
 #define USE_LOCAL_MEM 1
-#define DO_COMPUTATION 0
 
 #if USE_LOCAL_MEM < 1
-#include <stdio.h>
+//#include <stdio.h>
 #endif
 
-//#define PADDING 7
+#define PADDING 1
 #define WSIZE 16
 
 #define LSIZE ((WSIZE+2*PADDING)*(WSIZE+2*PADDING))
@@ -101,8 +100,6 @@ __kernel void convolve (
    // allocate memory
    //
    
-#if DO_COMPUTATION
-
 #if USE_LOCAL_MEM
    // explicit temporaries
    //
@@ -193,12 +190,78 @@ __kernel void convolve (
 #endif
 
    S[k] = val;
+}
 
-#else
-   int f_idx += nxp*nyp * (KXL + KYL*NX);
 
-   S[k] = F[f_idx];
+/**
+ * filter bandwidth
+ */
+__kernel void filter_bandwidth (
+          int nxp,
+          int nyp,
+          __global float * I,
+          __global float * S,
+          __global float * F,
+          __local  float * tiles )
+{
+   int k_lt, k_rt, k_up, k_dn;
+   int4 halo;
 
+   // pointers for interior and shifted regions
+   float iI;
+
+   // scalar quantities
+
+   // these will likely be needed by all kernels
+   const int2 t_size = {get_local_size(0) + 2*PADDING, get_local_size(1) + 2*PADDING};
+
+   const int k   = KX + KY*NX;
+   const int kex = (KX + PADDING) + (KY + PADDING)*(NX + 2*PADDING);
+   
+   // where will this come from
+   const int kl   = KXL + KYL*t_size.s0;
+   const int klex = (KXL + PADDING) + (KYL + PADDING)*t_size.s0;
+
+   halo = (int4) (PADDING,PADDING,PADDING,PADDING);
+
+   // allocate memory
+   //
+   
+   const int gStride = get_global_size(0) + halo.s0 + halo.s1;
+   float val = 0.0;
+   int f_idx = 0;
+
+   f_idx += nxp*nyp * (KXL + KYL*NX);
+
+   for (int j = 0; j < nyp; j++) {
+      F[f_idx++] = 1;
+      F[f_idx++] = 1;
+      F[f_idx++] = 1;
+#if PADDING > 1
+      F[f_idx++] = 1;
+      F[f_idx++] = 1;
 #endif
+#if PADDING > 2
+      F[f_idx++] = 1;
+      F[f_idx++] = 1;
+#endif
+#if PADDING > 3
+      F[f_idx++] = 1;
+      F[f_idx++] = 1;
+#endif
+#if PADDING > 4
+      F[f_idx++] = 1;
+      F[f_idx++] = 1;
+#endif
+#if PADDING > 5
+      F[f_idx++] = 1;
+      F[f_idx++] = 1;
+#endif
+#if PADDING > 6
+      F[f_idx++] = 1;
+      F[f_idx++] = 1;
+#endif
+   }
 
+   S[k] = 1;
 }

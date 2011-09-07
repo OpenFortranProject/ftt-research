@@ -14,6 +14,12 @@
 #include <string.h>
 #include <sys/stat.h>
 
+
+// guess at maximum work item dimensions
+//
+#define MAX_WORK_ITEM_DIMENSIONS (3)
+
+
 uint64_t get_cpu_time() {
 #ifdef USE_MACH_TIME
    return mach_absolute_time();
@@ -167,3 +173,98 @@ void stop_on_error(int code)
    printf("ERROR_CODE==%s\n", msg);
    exit(code);
 }
+
+
+int query_device_info(int id, cl_device_id device)
+{
+   const int str_size = 2048;
+   const int vals_len = MAX_WORK_ITEM_DIMENSIONS;
+
+   long long val;
+   size_t vals[vals_len];
+   unsigned int max_dims, i;
+
+   int    status;
+   char   param_value[str_size];
+   size_t param_value_size;
+
+   status = clGetDeviceInfo(device, CL_DEVICE_NAME, str_size, param_value, &param_value_size);
+   param_value[str_size-1] = '\0';
+
+   printf("OpenCL Device # %d == %s  status==%d\n", id, param_value, status);
+
+   status = clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(val), &val, NULL);
+
+   if (status == CL_SUCCESS) {
+      printf("\tdevice[%p]: Type: ", device);
+
+      if (val & CL_DEVICE_TYPE_DEFAULT) {
+         val &= ~CL_DEVICE_TYPE_DEFAULT;
+         printf("Default ");
+      }
+
+      if (val & CL_DEVICE_TYPE_CPU) {
+         val &= ~CL_DEVICE_TYPE_CPU;
+         printf("CPU ");
+      }
+
+      if (val & CL_DEVICE_TYPE_GPU) {
+         val &= ~CL_DEVICE_TYPE_GPU;
+         printf("GPU ");
+      }
+
+      if (val & CL_DEVICE_TYPE_ACCELERATOR) {
+         val &= ~CL_DEVICE_TYPE_ACCELERATOR;
+         printf("Accelerator ");
+      }
+
+      if (val != 0) {
+         printf("Unknown (0x%llx) ", val);
+      }
+   }
+   else {
+      printf("\tdevice[%p]: Unable to get TYPE: %s!\n", device, "CLErrString(status)");
+      stop_on_error(status);
+   }
+
+   status = clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(val), &val, &param_value_size);
+   printf("with %u units/cores", (unsigned int) val);
+
+   status = clGetDeviceInfo(device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(val), &val, &param_value_size);
+   printf(" at %u MHz\n", (unsigned int) val);
+
+   status = clGetDeviceInfo(device, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT, sizeof(val), &val, &param_value_size);
+   printf("\tfloat vector width == %u\n", (unsigned int) val);
+   
+   status = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(val), &val, &param_value_size);
+   printf("\tMaximum work group size == %lu\n", (size_t) val);
+   
+   status = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(max_dims), &max_dims, &param_value_size);
+   printf("\tMaximum work item dimensions == %u\n", max_dims);
+   
+   status = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, vals_len*sizeof(size_t), vals, &param_value_size);
+   printf("\tMaximum work item sizes == (");
+   for (i = 0; i < max_dims; i++) printf(" %ld", vals[i]);
+   printf(" )\n");
+   
+   status = clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(val), &val, &param_value_size);
+   printf("\tLocal mem size == %u\n", (unsigned int) val);
+
+   status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(val), &val, &param_value_size);
+   printf("\tGlobal mem size == %u\n", (unsigned int) val);
+
+   status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(val), &val, &param_value_size);
+   printf("\tGlobal mem cache size == %u\n", (unsigned int) val);
+
+   status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE, sizeof(val), &val, &param_value_size);
+   printf("\tGlobal mem cache line size == %u\n", (unsigned int) val);
+
+   status = clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, str_size, param_value, &param_value_size);
+   param_value[str_size-1] = '\0';
+   printf("\tExtensions == %s size==%d status=%d\n", param_value, param_value_size, status);
+
+   printf("\n");
+
+   return status;
+}
+

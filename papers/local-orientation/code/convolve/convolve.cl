@@ -1,6 +1,8 @@
-#include "/Users/rasmussn/ofp-research/papers/local-orientation/code/convolve/npad.h"
+//#include "/Users/rasmussn/ofp-research/papers/local-orientation/code/convolve/npad.h"
 
-#define NPAD  PADDING_SIZE
+#define USE_LOCAL_MEM 1
+
+#define NPAD  7
 #define WSIZE 16
 
 #define LSIZE ((WSIZE+2*NPAD)*(WSIZE+2*NPAD))
@@ -94,8 +96,6 @@ __kernel void convolve (
    // allocate memory
    //
    
-#define USE_LOCAL_MEM 1
-
 #if USE_LOCAL_MEM
    // explicit temporaries
    //
