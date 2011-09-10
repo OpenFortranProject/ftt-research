@@ -261,7 +261,7 @@ int query_device_info(int id, cl_device_id device)
 
    status = clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, str_size, param_value, &param_value_size);
    param_value[str_size-1] = '\0';
-   printf("\tExtensions == %s size==%d status=%d\n", param_value, param_value_size, status);
+   printf("\tExtensions == %s size==%ld status=%d\n", param_value, param_value_size, status);
 
    printf("\n");
 
