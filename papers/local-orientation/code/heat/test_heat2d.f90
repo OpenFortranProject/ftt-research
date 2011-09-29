@@ -1,5 +1,5 @@
 !
-! -----  Fortran Programming Language with local extensions -----
+!-----  Fortran Programming Language with local extensions -----
 !
 ! This file is distributed under an open source license by Los Alamos
 ! National Security, LCC.  See the file License.txt (located in the
@@ -28,24 +28,6 @@ module heat_transfer
       end function adv_time
    end interface
 
-contains
-
-!------------------------
-! Proposed syntax for the concurrent function adv_time
-!------------------------
-!
-!   pure elemental function adv_time(T)
-!      real, EXTEND, intent(in)  :: T(-1:1,-1:1)
-!      real :: adv_time
-!      real :: lhs1, lhs2
-!
-!       lhs1 = ( T(-1,0) - 2.0*T(0,0) + T(+1,0) ) / (dx*dx)
-!       lhs2 = ( T(0,-1) - 2.0*T(0,0) + T(0,+1) ) / (dy*dy)
-!
-!      adv_time = (alpha * dt * (lhs2 + lhs2)) + T(0,0)
-!
-!   end function adv_time
-    
 end module heat_transfer
 
 
