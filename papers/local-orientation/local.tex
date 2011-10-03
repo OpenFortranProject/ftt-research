@@ -1,0 +1,104 @@
+\documentclass{acm_proc_article-sp}
+
+\usepackage{cite}
+\usepackage{graphicx}
+%\usepackage[cmex10]{amsmath}
+%\usepackage{amssymb}
+%\usepackage{array}
+\usepackage{url}
+\usepackage{listings}
+
+\lstdefinestyle{FortranLike}{float,frame=lines,language=Fortran,commentstyle=\ttfamily,basicstyle=\ttfamily}
+\lstdefinestyle{CLike}{float,frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
+\lstdefinestyle{NoFloatCLike}{frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
+
+\begin{document}
+
+\title{Locally-Oriented Programming: A stunningly simple programming model for GPU programming in Fortran and C++}
+
+\numberofauthors{4}
+
+\author{
+% 1st. author
+\alignauthor
+Craig E Rasmussen\\
+       \affaddr{Los Alamos National Laboratory}\\
+%       \affaddr{CCS-7, MS B287}\\
+       \affaddr{Los Alamos, NM 87545}\\
+       \email{crasmussen@lanl.gov}
+% 2nd. author
+\alignauthor
+Matthew J. Sottile\\
+       \affaddr{Galois, Inc.}\\
+%       \affaddr{421 SW 6th Ave. Suite 300}\\
+       \affaddr{Portland, OR 97204}\\
+       \email{mjsottile@computer.org}
+% 3rd. author
+\alignauthor
+Dan Nagle\\
+       \email{dannagle@verizon.net}
+% 4th. author
+\alignauthor
+Daniel Quinlan\\
+       \affaddr{Lawrence Livermore National Laboratory}\\
+       \email{dquinlan@llnl.gov}
+}
+
+\maketitle
+
+\begin{abstract}
+Emerging GPU architectures for high performance computing are well suited to a
+data-parallel programming model.  However, programming for these architectures
+currently requires learning a new language, e.g., OpenCL or CUDA, or employing
+OpenMP compiler directives.  This paper presents preliminary work examining how
+programming with a local orientation can be employed in Fortran (or using a
+special array library in C++) to provide simple access GPU architectures.  A
+locally-oriented programming model is especially useful for stencil-based codes
+or algorithms requiring the application of convolution kernels.  In this
+programming model, a programmer codes the algorithm {\it only} for a single
+array element, but has read-only access to a small sub-array surrounding the
+given array element, so that a stencil can be applied.  We demonstrate how a
+locally-oriented programming model can be adopted using source-to-source program
+transformations in conjuction with a compiler-based infrastructure like ROSE.
+\end{abstract}
+
+% A category with the (minimum) three required fields
+%\category{D.3.3}{Language Constructs and Features}{Concurrent programming structures}
+
+\input{intro}
+\input{programming-model}
+\input{shallow-water}
+\input{source-to-source}
+%\input{static-analysis}
+\input{performance}
+
+\section{Conclusions}
+
+The sheer complexity of programming for clusters of many or multi-core
+processors with tens of millions threads of execution makes the simplicity of
+the data-parallel model attractive.  The increasing complexity of
+today's applications (especially in light of the increasing complexity
+of the hardware) and the need for portability across architectures
+make a higher-level and simpler programming model like data-parallel
+attractive.
+
+The goal of this work has been to exploit source-to-source transformations that
+allow programmers to develop and maintain programs at a high-level of
+abstraction, without coding to a specific hardware architecture.
+Furthermore these transformations allow multiple hardware architectures
+to be targeted without changing the high-level source.  It also removes the
+necessity for application programmers to understand details of the accelerator
+architecture or to know OpenCL.
+
+%ACKNOWLEDGMENTS are optional
+\section{Acknowledgments}
+This work was supported in part by the Department of Energy Office of Science,
+Advanced Scientific Computing Research.
+
+%%TODO \cite{chamberlain04zpl, roth97stencils}
+
+\bibliographystyle{abbrv}
+\bibliography{local}
+
+\balancecolumns
+\end{document}
