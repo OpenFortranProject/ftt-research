@@ -6,6 +6,10 @@
 !
 ! Try to handle in extend
 !
+!   call Advect_Basic(1, Density, ...)
+!   call Advect_Basic(2, Density, ...)
+!   call Advect_Basic(3, Density, ...)
+!
 !   EXTEND(DIM=id, BOUNDARY=0)
 !
 !==============================================================================
@@ -51,6 +55,7 @@ Integer(kind=kint),  intent(in) :: id    !  advection sweep direction id
 
 !... Arrays:
 !----------------------------------------------------------------------------
+!Real(kind=kreal),  dimension(-1:mx, 0:my, 0:mz), intent(inout) :: Array ! advection array section
 !Real(kind=kreal),  dimension(0:mx, 0:my, 0:mz), intent(inout) :: Array ! advection array section
 !Real(kind=kreal),  dimension(0:mx, 0:my, 0:mz)  intent(in)    :: Eps   ! residual donor mass/volume fraction
 !Real(kind=kreal),  dimension(0:mx, 0:my, 0:mz)  intent(in)    :: dFlux ! cell face mass/volume flux
