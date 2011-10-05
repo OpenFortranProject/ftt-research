@@ -103,7 +103,7 @@ dVar = dFlux * ( Don + Upw)
 Tmp = global_eoshift(dVar, SHIFT=1, BOUNDARY=zero, DIM=id)
 
 ! . . . Update Array cell values (boundaries fixed later in set_ghosts)
-Where (Maskc)  Array( : , : , : ) = TmpB * (Array( : , :  , : ) * TmpA + (dVar - Tmp))
+Where (Maskc)  Array(:,:,:) = TmpB * (Array(:,:,:) * TmpA + (dVar - Tmp))
 
 ! . . . Unset performace diagnostic
 Call F_PERF_UPDATE('advect_basic", .false.)
