@@ -94,6 +94,6 @@ program convolve_image
 
    ! output local data (including coarrays)
    !
-  call output_image
+   call output_image
 
 end program convolve_image
