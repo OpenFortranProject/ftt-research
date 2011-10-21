@@ -8,7 +8,7 @@ module Convolve_LOPe
    ! This should be a command line argument somehow
    integer, parameter :: PROC_ROWS = 4
 
-   real, allocatable, HALO(:,:) :: Image(:,:) [PROC_ROWS,*]
+   real, allocatable, HALO(:,:) :: Image(:,:) [*,*]    ! [*,*] is new syntax
    real, allocatable            :: Filter(:,:)
 
 contains
@@ -33,7 +33,7 @@ contains
 !===========================================================================
 
    subroutine initialize
-      allocate( Image(N,M)[PROC_ROWS,*] HALO(H:H,H:H) )
+      allocate( Image(N,M)[*,*] HALO([H,H],[H,H]) )
       allocate( Filter(-H:H,-H:H) )
 
       ! initialize filter and image arrays
@@ -58,18 +58,12 @@ contains
 !
 !===========================================================================
 
-pure CONCURRENT subroutine convolve(Image, Filter, indices)
+pure CONCURRENT subroutine convolve(Image, Filter)
 
-   real, intent(in out), HALO(:,:) :: Image(:,:)
+   real, intent(in out), HALO(:,:) :: Image(0:,0:)
    real, intent(in)                :: Filter(-H:H,-H:H)
-   integer, intent(in)             :: indices(2)
 
-   ! local variables
-   integer :: i, j
-   i = indices(1)
-   j = indices(2)
-
-   Image(i,j) = sum(Filter * Image(i-H:i+H,j-H:j+H))
+   Image(0,0) = sum(Filter * Image(-H:+H,-H:+H))
 
 end subroutine convolve
 
@@ -89,7 +83,7 @@ program convolve_image
    call exchange_halo(Image)
 
    do concurrent (i=1:N, j=1:M)
-      call convolve(Image, Filter)   ! indices supplied by compiler
+      call convolve(Image(i,j), Filter)
    end do
 
    ! output local data (including coarrays)
