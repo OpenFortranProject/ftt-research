@@ -8,7 +8,7 @@
 #include "rose.h"
 #include "compass.h"
 
-extern const Compass::Checker* const noCastChecker;
+extern const Compass::Checker* const implicitCastChecker;
 
 // DQ (1/17/2009): Added declaration to match external defined in file:
 // rose/projects/compass/extensions/prerequisites/ProjectPrerequisite.h
@@ -18,11 +18,11 @@ Compass::ProjectPrerequisite Compass::projectPrerequisite;
 
 namespace CompassAnalyses
    { 
-     namespace NoCast
+     namespace ImplicitCast
         { 
         /*! \brief No Cast: Add your description here 
          */
-           extern const std::string checkerName= "NoCast";
+           extern const std::string checkerName= "ImplicitCast";
            extern const std::string shortDescription= "Implicit cast in Fortran code found: ";
            extern const std::string longDescription= "Finding statement with implicit cast in a Fortran code :";
 
@@ -61,23 +61,23 @@ namespace CompassAnalyses
         }
    }
 
-CompassAnalyses::NoCast::
+CompassAnalyses::ImplicitCast::
 CheckerOutput::CheckerOutput ( SgNode* node, const std::string & reason )
    : OutputViolationBase(node,checkerName,shortDescription+reason)
    {}
 
-CompassAnalyses::NoCast::Traversal::
+CompassAnalyses::ImplicitCast::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
    : output(output)
    {
   // Initalize checker specific parameters here, for example: 
-  // YourParameter = Compass::parseInteger(inputParameters["NoCast.YourParameter"]);
+  // YourParameter = Compass::parseInteger(inputParameters["ImplicitCast.YourParameter"]);
 
 
    }
 
 void
-CompassAnalyses::NoCast::Traversal::
+CompassAnalyses::ImplicitCast::Traversal::
 visit(SgNode* node)
    { 
   // Implement your traversal here.  
@@ -147,20 +147,20 @@ visit(SgNode* node)
 // Checker main run function and metadata
 
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
-  CompassAnalyses::NoCast::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+  CompassAnalyses::ImplicitCast::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
 // Remove this function if your checker is not an AST traversal
 static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
-  return new CompassAnalyses::NoCast::Traversal(params, output);
+  return new CompassAnalyses::ImplicitCast::Traversal(params, output);
 }
 
-extern const Compass::Checker* const noCastChecker =
+extern const Compass::Checker* const implicitCastChecker =
   new Compass::CheckerUsingAstSimpleProcessing(
-        CompassAnalyses::NoCast::checkerName,
+        CompassAnalyses::ImplicitCast::checkerName,
      // Descriptions should not include the newline character "\n".
-        CompassAnalyses::NoCast::shortDescription,
-        CompassAnalyses::NoCast::longDescription,
+        CompassAnalyses::ImplicitCast::shortDescription,
+        CompassAnalyses::ImplicitCast::longDescription,
         Compass::C | Compass::Cpp,
         Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
         run,
