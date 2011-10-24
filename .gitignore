@@ -1,0 +1,4 @@
+*.orig
+*.o
+*.so
+a.out
