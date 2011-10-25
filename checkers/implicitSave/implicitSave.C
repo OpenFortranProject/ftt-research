@@ -144,11 +144,11 @@ visit(SgNode* node) { // this visit is to set attribute
   int return_flag = 0;
   switch(node->variantT()) {
   case V_SgAssignInitializer: {
-    SgAssignInitializer* ainit = isSgAssignInitializer(node);
-    SgInitializedName* var_init = isSgInitializedName(ainit->get_parent());
+    const SgAssignInitializer* const ainit = isSgAssignInitializer(node);
+    const SgInitializedName* const var_init = isSgInitializedName(ainit->get_parent());
     if (var_init != NULL ) {
       //mark the node SgVariableSymbol by setting attribute  value to  2
-      SgVariableSymbol* var_sym = isSgVariableSymbol(var_init->get_symbol_from_symbol_table());
+      SgVariableSymbol* const var_sym = isSgVariableSymbol(var_init->get_symbol_from_symbol_table());
       if (var_sym != NULL ) {
         var_sym->setAttribute("att_assign_init",new myAstAttribute(2));
       }
@@ -156,38 +156,38 @@ visit(SgNode* node) { // this visit is to set attribute
   }
   break;
   case V_SgFunctionCallExp: {
-    SgFunctionCallExp*   fc    = isSgFunctionCallExp(node);
-    SgExprListExp* arg_list = fc->get_args();
-    SgExpressionPtrList arg = arg_list->get_expressions();
+    const SgFunctionCallExp* const fc    = isSgFunctionCallExp(node);
+    const SgExprListExp* const arg_list = fc->get_args();
+    const SgExpressionPtrList arg = arg_list->get_expressions();
     int num_arg = 0;
-    for (SgExpressionPtrList::iterator i = arg.begin(); i != arg.end(); i++) {
-      num_arg = num_arg + 1;
-      SgVarRefExp* arg_var = isSgVarRefExp(*i);
+    for (SgExpressionPtrList::const_iterator i = arg.begin(); i != arg.end(); i++) {
+      num_arg++;
+      const SgVarRefExp* const arg_var = isSgVarRefExp(*i);
       if (arg_var != NULL ) {
         //check whether argument symbol has att set
-        SgVariableSymbol* arg_var_sym_g = arg_var->get_symbol();
+        const SgVariableSymbol* const arg_var_sym_g = arg_var->get_symbol();
 
         // check if attribute "att_assign_init" is set
-        AstAttribute* arg_att = arg_var_sym_g->getAttribute("att_assign_init");
+        const AstAttribute* const arg_att = arg_var_sym_g->getAttribute("att_assign_init");
         if ( arg_att != NULL ) {
 #ifdef _DEBUG_
           std::cout << "\tFound arg which has been set implicit_save attribute:" <<
-                    dynamic_cast<myAstAttribute*>(arg_att)->implicit_save_flag <<  std::endl;
+            dynamic_cast<myAstAttribute*>(arg_att)->implicit_save_flag <<  std::endl;
 #endif
 
           // check if argument is inout/out
-          SgFunctionRefExp* fc_ref_exp = isSgFunctionRefExp(fc->get_function());
-          SgFunctionSymbol* fc_sym     = fc_ref_exp->get_symbol();
-          SgFunctionDeclaration* fc_dec = fc_sym->get_declaration();
-          SgInitializedNamePtrList fc_dummy = fc_dec->get_args();
+          const SgFunctionRefExp* const fc_ref_exp = isSgFunctionRefExp(fc->get_function());
+          const SgFunctionSymbol* const fc_sym     = fc_ref_exp->get_symbol();
+          const SgFunctionDeclaration* const fc_dec = fc_sym->get_declaration();
+          const SgInitializedNamePtrList fc_dummy = fc_dec->get_args();
           int num_dummy = 0;
-          for (SgInitializedNamePtrList::iterator j = fc_dummy.begin();
-               j != fc_dummy.end(); j++) {
+          for (SgInitializedNamePtrList::const_iterator j = fc_dummy.begin();
+              j != fc_dummy.end(); j++) {
             int dummy_intent_flag = 0 ;
-            num_dummy = num_dummy + 1;
+            num_dummy++;
             // check the dummy in the same position with argument
             if (num_arg == num_dummy) {
-              SgInitializedName* dummy_init = isSgInitializedName(*j);
+              SgInitializedName* const dummy_init = isSgInitializedName(*j);
 
               if (dummy_init != NULL) {
                 dummy_intent_flag = checkModifierIntent(dummy_init);
@@ -196,7 +196,7 @@ visit(SgNode* node) { // this visit is to set attribute
                 // SgTypeModifier::e_intent_out =    9
                 // SgTypeModifier::e_intent_inout = 10
                 if ( (dummy_intent_flag == 9) || (dummy_intent_flag == 10)) {
-                  SgVariableSymbol* dummy_sym =
+                  SgVariableSymbol* const dummy_sym =
                     isSgVariableSymbol(dummy_init->get_symbol_from_symbol_table());
                   if (dummy_sym != NULL ) {
                     dummy_sym->setAttribute("att_assign_init",new myAstAttribute(2));
@@ -211,11 +211,11 @@ visit(SgNode* node) { // this visit is to set attribute
         } // end arg_att
       }  // end arg_var
     } // end for loop i
-  }
-  break;
+                            }
+                            break;
   default:
-    return_flag = 1;
-    break;
+                            return_flag = 1;
+                            break;
   } //  end switch
   if (return_flag == 1) {
     return;
@@ -228,7 +228,7 @@ visit(SgNode* node) { // this visit is to set attribute
 CompassAnalyses::ImplicitSave::Traversal2::
 Traversal2(Compass::Parameters inputParameters, Compass::OutputObject* output)
   : Traversal(inputParameters,output),output(output) {
-}
+  }
 
 void
 CompassAnalyses::ImplicitSave::Traversal2::
@@ -239,17 +239,17 @@ visit(SgNode* node) { // this visit is to get attribute
   std::string   reason = "";
   //  to find assign op like   I = I + 1
   if (isSgAssignOp(node)) {
-    SgAssignOp* aop = isSgAssignOp(node);
+    const SgAssignOp* const aop = isSgAssignOp(node);
     // check if lhs is I
     if (isSgVarRefExp(aop->get_lhs_operand())) {
-      SgVariableSymbol* var_sym_g = isSgVarRefExp(aop->get_lhs_operand())->get_symbol();
+      const SgVariableSymbol* const var_sym_g = isSgVarRefExp(aop->get_lhs_operand())->get_symbol();
 
       // check if attribute "att_assign_init" is set
-      AstAttribute* att = var_sym_g->getAttribute("att_assign_init");
+      const AstAttribute* const att = var_sym_g->getAttribute("att_assign_init");
       if ( att != NULL ) {
 #ifdef _DEBUG_
         std::cout << "\t=> Find a node SgVariableSymbol with the attribute value:"
-                  << dynamic_cast<myAstAttribute*>(att)->implicit_save_flag <<  std::endl;
+          << dynamic_cast<myAstAttribute*>(att)->implicit_save_flag <<  std::endl;
 #endif
         reason = "expression '"+node->unparseToString()  + "' value re-assigned" ;
         output->addOutput(new CheckerOutput(node,reason));
@@ -260,39 +260,39 @@ visit(SgNode* node) { // this visit is to get attribute
 
   // check whether a "inout/out" argument in a functional call is implicit save
   if (isSgFunctionCallExp(node)) {
-    SgFunctionCallExp*   fc    = isSgFunctionCallExp(node);
-    SgExprListExp* arg_list = fc->get_args();
-    SgExpressionPtrList arg = arg_list->get_expressions();
+    const SgFunctionCallExp* const fc    = isSgFunctionCallExp(node);
+    const SgExprListExp* const arg_list = fc->get_args();
+    const SgExpressionPtrList arg = arg_list->get_expressions();
     int num_arg = 0;
     int isImplicitFound = 0;
-    for (SgExpressionPtrList::iterator i = arg.begin(); i != arg.end(); i++) {
-      num_arg = num_arg + 1;
-      SgVarRefExp* arg_var = isSgVarRefExp(*i);
-      if (arg_var != NULL ) {
+    for (SgExpressionPtrList::const_iterator i = arg.begin(); i != arg.end(); i++) {
+      num_arg++;
+      const SgVarRefExp* const arg_var = isSgVarRefExp(*i);
+      if ( arg_var != NULL ) {
         //check whether argument symbol has att set
-        SgVariableSymbol* arg_var_sym_g = arg_var->get_symbol();
+        const SgVariableSymbol* const arg_var_sym_g = arg_var->get_symbol();
 
         //check if attribute "att_assign_init" is set
-        AstAttribute* arg_att = arg_var_sym_g->getAttribute("att_assign_init");
+        const AstAttribute* const arg_att = arg_var_sym_g->getAttribute("att_assign_init");
         if ( arg_att != NULL ) {
 #ifdef _DEBUG_
           std::cout << "\tFound arg which has been set implicit_save attribute:" <<
-                    dynamic_cast<myAstAttribute*>(arg_att)->implicit_save_flag <<  std::endl;
+            dynamic_cast<myAstAttribute*>(arg_att)->implicit_save_flag <<  std::endl;
 #endif
 
           //check if argument is inout/out
-          SgFunctionRefExp* fc_ref_exp = isSgFunctionRefExp(fc->get_function());
-          SgFunctionSymbol* fc_sym     = fc_ref_exp->get_symbol();
-          SgFunctionDeclaration* fc_dec = fc_sym->get_declaration();
-          SgInitializedNamePtrList fc_dummy = fc_dec->get_args();
+          const SgFunctionRefExp* const fc_ref_exp  = isSgFunctionRefExp(fc->get_function());
+          const SgFunctionSymbol* const fc_sym      = fc_ref_exp->get_symbol();
+          const SgFunctionDeclaration* const fc_dec = fc_sym->get_declaration();
+          const SgInitializedNamePtrList fc_dummy   = fc_dec->get_args();
           int num_dummy = 0;
-          for (SgInitializedNamePtrList::iterator j = fc_dummy.begin();
-               j != fc_dummy.end(); j++) {
+          for (SgInitializedNamePtrList::const_iterator j = fc_dummy.begin();
+              j != fc_dummy.end(); j++) {
             int dummy_intent_flag = 0 ;
-            num_dummy = num_dummy + 1;
+            num_dummy++;
             //check the dummy in the same position with argument
             if (num_arg == num_dummy) {
-              SgInitializedName* dummy_init = isSgInitializedName(*j);
+              SgInitializedName* const dummy_init = isSgInitializedName(*j);
 
               if (dummy_init != NULL) {
                 dummy_intent_flag = checkModifierIntent(dummy_init);
