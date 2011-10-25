@@ -79,36 +79,36 @@ void
 CompassAnalyses::ImplicitCast::Traversal::
 visit(SgNode* node) {
   // Implement your traversal here.
-  SgBinaryOp* b_node = isSgBinaryOp(node);
+  SgBinaryOp const * const b_node = isSgBinaryOp(node);
 
   if ( b_node == NULL) {
     return;
   }
 
   // check operand in a binary operator
-  if ( ( isSgAssignOp(b_node) ) || (isSgAddOp(b_node)) || (isSgSubtractOp(b_node)) || (isSgDivideOp(b_node)) || (isSgMultiplyOp(b_node)) ) {
-    SgType* type = b_node->get_type();
-    std::string type_operator_string = type->unparseToString();
+  if ( isSgAssignOp(b_node) || isSgAddOp(b_node) || isSgSubtractOp(b_node)
+       || isSgDivideOp(b_node) || isSgMultiplyOp(b_node) ) {
+    SgType const * const type = b_node->get_type();
+    const std::string type_operator_string = type->unparseToString();
 
-    SgExpression* l_operand =  b_node->get_lhs_operand();
-    SgExpression* r_operand =  b_node->get_rhs_operand();
+    SgExpression * const l_operand = b_node->get_lhs_operand();
+    SgExpression * const r_operand = b_node->get_rhs_operand();
 
-    SgType* type_l_operand = l_operand->get_type();
-    SgType* type_r_operand = r_operand->get_type();
-    std::string type_l_operand_string = type_l_operand->unparseToString();
-    std::string type_r_operand_string = type_r_operand->unparseToString();
+    SgType const * const type_l_operand = l_operand->get_type();
+    SgType const * const type_r_operand = r_operand->get_type();
+    const std::string type_l_operand_string = type_l_operand->unparseToString();
+    const std::string type_r_operand_string = type_r_operand->unparseToString();
 
     std::string reason = "" ;
-    if ( type_r_operand_string != type_l_operand_string) {
-      SgFunctionType* ftype_l = isSgFunctionType(type_l_operand);
-      SgFunctionType* ftype_r = isSgFunctionType(type_r_operand);
+    if ( type_r_operand != type_l_operand) {
+      SgFunctionType const * const ftype_l = isSgFunctionType(type_l_operand);
+      SgFunctionType const * const ftype_r = isSgFunctionType(type_r_operand);
       // if the child node is SgFunctionType
       if (ftype_l != NULL ) {
         if (ftype_l->get_return_type()->unparseToString() == type_r_operand_string) {
           return;
         }
       }
-
 
       if (ftype_r != NULL ) {
         if (ftype_r->get_return_type()->unparseToString()  == type_l_operand_string) {
@@ -118,20 +118,18 @@ visit(SgNode* node) {
 
       // the child node is SgFunctionType and its type different from operator type
       if (type_r_operand_string != type_operator_string) {
-        reason = " expr '" + r_operand->unparseToString()+"' from "+ type_r_operand_string + " to " + type_operator_string ;
+        reason = " expr '" + r_operand->unparseToString()+"' from "
+               + type_r_operand_string + " to " + type_operator_string ;
         output->addOutput(new CheckerOutput(r_operand,reason));
-        // std::cout << "===>" << checkerName << ":" << b_node->get_file_info()->get_filenameString()<< ": Implicit type conversion from " << type_r_operand_string << " to " << type_operator_string << " on line " <<  b_node->get_file_info()->get_line() << "." << r_operand->get_file_info()->get_col()  << std::endl;
 
       }
       if (type_l_operand_string != type_operator_string) {
-        reason = " expr '" + l_operand->unparseToString()+"' from "+ type_l_operand_string + " to " + type_operator_string ;
+        reason = " expr '" + l_operand->unparseToString()+"' from "
+               + type_l_operand_string + " to " + type_operator_string ;
         output->addOutput(new CheckerOutput(l_operand,reason));
-        // std::cout << "===>" << checkerName << ":" << b_node->get_file_info()->get_filenameString()<< ": Implicit type conversion from " << type_l_operand_string << " to " << type_operator_string << " on line " <<  b_node->get_file_info()->get_line() << "." << l_operand->get_file_info()->get_col()  << std::endl;
       }
 
-      //std::cout << "===>" << checkerName << ":" << b_node->get_file_info()->get_filenameString()<< ": Implicit type conversion from " << type_r_operand_string << " to " << type_l_operand_string << " on line " <<  b_node->get_file_info()->get_line() << "." << l_operand->get_file_info()->get_col()  << std::endl;
     }
-
 
   }
 
