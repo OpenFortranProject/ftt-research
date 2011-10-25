@@ -92,18 +92,18 @@ namespace CompassAnalyses {
       return ss.str();
     }
 
-    int findArraySize(SgArrayType* atype,std::string array_name) {
+    int findArraySize(const SgArrayType* const atype, const std::string array_name) {
       int array_dimension = 0;  // IF array size cannot be determinded, return 0 as default
       int array_dimension_lowerbound, array_dimension_upperbound;  // DIMENSION(-2:3)
       if (atype) {
-        SgExprListExp* dim = atype->get_dim_info();
-        SgExpressionPtrList sig = dim->get_expressions();
-        for (SgExpressionPtrList::iterator i = sig.begin(); i != sig.end(); i++) {
+        const SgExprListExp* const dim = atype->get_dim_info();
+        const SgExpressionPtrList sig = dim->get_expressions();
+        for (SgExpressionPtrList::const_iterator i = sig.begin(); i != sig.end(); i++) {
           switch((*i)->variantT()) {
           case V_SgIntVal:
             // DIMENSION(3) :: X
           {
-            SgIntVal* dim_value = isSgIntVal(*i);
+            const SgIntVal* const dim_value = isSgIntVal(*i);
             array_dimension = dim_value->get_value();
           }
           break;
@@ -111,14 +111,14 @@ namespace CompassAnalyses {
           case V_SgVarRefExp:
             // DIMENSION(N) :: X
           {
-            SgVarRefExp* var_exp = isSgVarRefExp(*i);
-            SgVariableSymbol* var_sym = var_exp->get_symbol();
-            SgInitializedName* var_init = var_sym->get_declaration();
-            SgInitializer* init = var_init->get_initializer();
-            SgAssignInitializer* ainit = isSgAssignInitializer(init);
+            const SgVarRefExp*         const var_exp  = isSgVarRefExp(*i);
+            const SgVariableSymbol*    const var_sym  = var_exp->get_symbol();
+            const SgInitializedName*   const var_init = var_sym->get_declaration();
+            const SgInitializer*       const init     = var_init->get_initializer();
+            const SgAssignInitializer* const ainit    = isSgAssignInitializer(init);
             if (ainit) {
               // find initialized  value (array dimension value)
-              SgIntVal* int_value = isSgIntVal(ainit->get_operand());
+              const SgIntVal* const int_value = isSgIntVal(ainit->get_operand());
               if (int_value) {
                 array_dimension = int_value->get_value();
               }
@@ -129,27 +129,27 @@ namespace CompassAnalyses {
           // DIMENSION(-2:2) :: X
           // TBD : modify for SgMinusOp , operand is 2, but need to show value -2
           case V_SgSubscriptExpression: {
-            SgSubscriptExpression* subscript = isSgSubscriptExpression(*i);
-            SgExpression* l_exp = subscript->get_lowerBound();
-            SgExpression* u_exp = subscript->get_upperBound();
+            const SgSubscriptExpression* const subscript = isSgSubscriptExpression(*i);
+            const SgExpression* const l_exp = subscript->get_lowerBound();
+            const SgExpression* const u_exp = subscript->get_upperBound();
             // the lower bound could be negative like A(-2:2)
             if (isSgUnaryOp(l_exp)) {
-              SgUnaryOp* l_bound = isSgUnaryOp(l_exp);
-              SgIntVal* l_bound_operand = isSgIntVal(l_bound->get_operand());
+              const SgUnaryOp* const l_bound = isSgUnaryOp(l_exp);
+              const SgIntVal* const l_bound_operand = isSgIntVal(l_bound->get_operand());
               array_dimension_lowerbound = l_bound_operand->get_value();
 
             } else if (isSgIntVal(l_exp)) {
-              SgIntVal* l_val = isSgIntVal(l_exp);
+              const SgIntVal* const l_val = isSgIntVal(l_exp);
               array_dimension_lowerbound = l_val->get_value();
 
             }
             if (isSgUnaryOp(u_exp)) {
-              SgUnaryOp* u_bound = isSgUnaryOp(u_exp);
-              SgIntVal* u_bound_operand = isSgIntVal(u_bound->get_operand());
+              const SgUnaryOp* const u_bound = isSgUnaryOp(u_exp);
+              const SgIntVal* const u_bound_operand = isSgIntVal(u_bound->get_operand());
               array_dimension_upperbound = u_bound_operand->get_value();
 
             } else if (isSgIntVal(u_exp)) {
-              SgIntVal* u_val = isSgIntVal(u_exp);
+              const SgIntVal* const u_val = isSgIntVal(u_exp);
               array_dimension_upperbound = u_val->get_value();
 
             }
@@ -180,22 +180,22 @@ namespace CompassAnalyses {
         std::string  warn;
         std::string  var_name;
         //        int  var_line_number;
-        CheckLevel(int init_check, int init_level, std::string init_var_name) {
+        CheckLevel(const int init_check, const int init_level, const std::string init_var_name) {
           check_flag = init_check;
           level      = init_level;
           warn       = "";
           var_name   = init_var_name;
           //             var_line_number = init_var_line_number;
         }
-        void setFlag(int s_check_flag, int s_level) {
+        void setFlag(const int s_check_flag, const int s_level) {
           check_flag = s_check_flag;
           level      = s_level;
         }
     };
     // backCFG is try to find if var_node is assigned as SIZE()
-    CheckLevel* backCFG(SgVarRefExp* var_node,CheckLevel* cl) {
-      std::string  var_name        = var_node->get_symbol()->get_name().getString();
-      int          var_line_number = var_node->get_file_info()->get_line();
+    CheckLevel* backCFG(SgVarRefExp* const var_node, CheckLevel* const cl) {
+      const std::string  var_name        = var_node->get_symbol()->get_name().getString();
+      const int          var_line_number = var_node->get_file_info()->get_line();
       int          return_flag     = 0;
 
       // traverse cfg
@@ -212,18 +212,18 @@ namespace CompassAnalyses {
         source = worklist.front();
         worklist.erase(worklist.begin());
 
-        SgNode* next = source.getNode(); // get underlying AST node while walk back CFG
+        const SgNode* const next = source.getNode(); // get underlying AST node while walk back CFG
         // check if current node is a assign
 
-        SgAssignOp* aop       = isSgAssignOp(next);
+        const SgAssignOp* const aop       = isSgAssignOp(next);
         if (aop != NULL ) {
-          int line_number_assign= aop->get_file_info()->get_line();
-          SgVarRefExp* lhs_var = isSgVarRefExp(aop->get_lhs_operand());
+          const int line_number_assign= aop->get_file_info()->get_line();
+          const SgVarRefExp* const lhs_var = isSgVarRefExp(aop->get_lhs_operand());
           if (lhs_var) {
-            SgVariableSymbol* lhs_var_symbol = lhs_var->get_symbol();
-            std::string lhs_var_symbol_name = lhs_var_symbol->get_name().getString();
+            const SgVariableSymbol* const lhs_var_symbol = lhs_var->get_symbol();
+            const std::string lhs_var_symbol_name = lhs_var_symbol->get_name().getString();
             if (lhs_var_symbol_name.compare(var_name) == 0 ) {
-              SgExpression* rhs_operand = isSgExpression(aop->get_rhs_operand());
+              SgExpression* const rhs_operand = isSgExpression(aop->get_rhs_operand());
               switch(rhs_operand->variantT()) {
               case V_SgIntVal: {
                 // level 2
@@ -232,15 +232,15 @@ namespace CompassAnalyses {
               break;
               case V_SgVarRefExp: {
                 // need to go down further, recursive
-                SgVarRefExp* next_var_node = isSgVarRefExp(rhs_operand);
+                SgVarRefExp* const next_var_node = isSgVarRefExp(rhs_operand);
                 backCFG(next_var_node, cl);
                 return_flag = 1;
               }
               break;
               case V_SgFunctionCallExp: {
                 // need to check if function call is a SIZE()
-                SgFunctionCallExp* func_call_exp = isSgFunctionCallExp(rhs_operand);
-                SgFunctionRefExp* func_ref = isSgFunctionRefExp(func_call_exp->get_function());
+                const SgFunctionCallExp* const func_call_exp = isSgFunctionCallExp(rhs_operand);
+                const SgFunctionRefExp* const func_ref = isSgFunctionRefExp(func_call_exp->get_function());
                 if (func_ref != NULL) {
                   // check if func is size()
                   if (func_ref->get_symbol()->get_name().getString().compare("SIZE") == 0 ||
@@ -257,8 +257,8 @@ namespace CompassAnalyses {
               break;
               case V_SgSubtractOp: {
                 // get SgVarRefExp and go down further, recursive
-                SgSubtractOp* subtract_op = isSgSubtractOp(rhs_operand);
-                SgVarRefExp* subtract_var_node = isSgVarRefExp(subtract_op->get_lhs_operand());
+                const SgSubtractOp* const subtract_op = isSgSubtractOp(rhs_operand);
+                SgVarRefExp* const subtract_var_node = isSgVarRefExp(subtract_op->get_lhs_operand());
                 if (subtract_var_node != NULL) {
                   backCFG(subtract_var_node,cl);
                 }
@@ -291,12 +291,12 @@ namespace CompassAnalyses {
 
 
         // find next CFG node to add into worklist
-        vector<FilteredCFGEdge < IsDFAFilter > > in_edges = source.inEdges();
+        const vector<FilteredCFGEdge < IsDFAFilter > > in_edges = source.inEdges();
         for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = in_edges.begin(); i != in_edges.end(); ++i) {
-          FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
-          FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.source();
+          const FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
+          const FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.source();
 
-          SgNode* inedge_source_node = filterNode.getNode();
+          const SgNode* const inedge_source_node = filterNode.getNode();
 #ifdef _DEBUG
           std::cout << "debug:backCFG:inedge source node is "
                     << inedge_source_node->class_name() << std::endl;
@@ -323,15 +323,17 @@ namespace CompassAnalyses {
 
 
     // checkRHS does not necessary check rhs operand, it can check against any operand
-    CheckLevel* checkRHS(SgExpression* switch_exp,int d_check_flag, int d_level,  int array_size,CheckLevel* cl,std::string a_name ) {
-      int c_check_flag ;
+    CheckLevel* checkRHS(SgExpression* const switch_exp, const int d_check_flag,
+                         const int d_level,  const int array_size, CheckLevel * const cl,
+                         const std::string a_name ) {
+      int c_check_flag;
       int c_level;
       c_check_flag  = d_check_flag;
       c_level = d_level;
 
       switch(switch_exp->variantT()) {
       case V_SgIntVal: {  //  IF ( I < 5 ) , rhs_node is SgIntVal
-        SgIntVal* int_val = isSgIntVal(switch_exp);
+        const SgIntVal* const int_val = isSgIntVal(switch_exp);
         c_check_flag = 1;
         c_level      = 1;
         if (int_val->get_value() <= array_size) {
@@ -347,25 +349,25 @@ namespace CompassAnalyses {
         c_check_flag = 1;
         c_level      = 2;
         cl->setFlag(c_check_flag,c_level);
-        SgVarRefExp* var_node        = isSgVarRefExp(switch_exp);
-        backCFG(  var_node, cl);
+        SgVarRefExp* const var_node = isSgVarRefExp(switch_exp);
+        backCFG(var_node, cl);
       }
       break;
       case V_SgFunctionCallExp: { // IF ( I < SIZE(A)) , then rhs_node is SgFunctionCallExp
-        SgFunctionCallExp* rhs_func_call_exp = isSgFunctionCallExp(switch_exp);
-        SgFunctionRefExp* rhs_func = isSgFunctionRefExp(rhs_func_call_exp->get_function());
+        const SgFunctionCallExp* const rhs_func_call_exp = isSgFunctionCallExp(switch_exp);
+        const SgFunctionRefExp* const rhs_func = isSgFunctionRefExp(rhs_func_call_exp->get_function());
         if (rhs_func) {
           // check if func is size()
           if (rhs_func->get_symbol()->get_name().getString().compare("SIZE") == 0 ||
               rhs_func->get_symbol()->get_name().getString().compare("size") == 0) {
             // check if the array name is size() is correct
-            SgExprListExp* args_list = isSgExprListExp((rhs_func_call_exp)->get_args());
-            SgExpressionPtrList list = args_list->get_expressions();
-            for (SgExpressionPtrList::iterator i = list.begin(); i != list.end(); i++) {
+            const SgExprListExp* const args_list = isSgExprListExp((rhs_func_call_exp)->get_args());
+            const SgExpressionPtrList list = args_list->get_expressions();
+            for (SgExpressionPtrList::const_iterator i = list.begin(); i != list.end(); i++) {
               if (isSgVarRefExp(*i)) {
                 //std::string fun_array_name;
-                SgInitializedName* init_name = isSgVarRefExp(*i)->get_symbol()->get_declaration();
-                std::string fun_array_name = init_name->get_name().getString();
+                const SgInitializedName* const init_name = isSgVarRefExp(*i)->get_symbol()->get_declaration();
+                const std::string fun_array_name = init_name->get_name().getString();
                 if (fun_array_name == a_name) {
                   c_check_flag = 1;
                   c_level      = 3;
@@ -394,8 +396,8 @@ namespace CompassAnalyses {
       return cl;
     }
 
-    void checkIndex(SgNode* node, std::string index_name, int check_flag, int level,
-                    int array_dimension,std::string array_name,Compass::OutputObject* output ) {
+    void checkIndex(SgNode* const node, const std::string index_name, int check_flag, int level,
+                    const int array_dimension, const std::string array_name, Compass::OutputObject* const output ) {
       //std::cout << "   Start to walk backward CFG..." << std::endl;
 
       //traverse cfg BK  and find next assign node involving index i
@@ -407,7 +409,7 @@ namespace CompassAnalyses {
         FilteredCFGNode < IsDFAFilter > (node->cfgForBeginning());
       worklist.push_back(source);
 
-      int line_number_array = node->get_file_info()->get_line();
+      const int line_number_array = node->get_file_info()->get_line();
       int line_number_cfg   = 0;  //line number of the associated code for this current cfg node
       int line_number_check = 0;  // line number that index variable may be checked
       std::string   reason    = "";
@@ -417,13 +419,13 @@ namespace CompassAnalyses {
         source = worklist.front();
         worklist.erase(worklist.begin());
 
-        SgNode* next = source.getNode();
+        const SgNode* const next = source.getNode();
 
         // Find previous IF statement or WHILE statement
-        SgIfStmt* ifstmt            = isSgIfStmt(next);
-        SgWhileStmt* whilestmt	= isSgWhileStmt(next);
-        SgFortranDo* dostmt         = isSgFortranDo(next);
-        SgAssignOp* assignop       = isSgAssignOp(next);
+        const SgIfStmt*    const ifstmt    = isSgIfStmt(next);
+        const SgWhileStmt* const whilestmt = isSgWhileStmt(next);
+        const SgFortranDo* const dostmt    = isSgFortranDo(next);
+        const SgAssignOp*  const assignop  = isSgAssignOp(next);
 
         // debug
 #ifdef _DEBUG
@@ -438,10 +440,10 @@ namespace CompassAnalyses {
         //    J = I - 1
         //    A(J) = ...
         if (assignop != NULL ) {
-          SgVarRefExp* assignop_lhs_var = isSgVarRefExp(assignop->get_lhs_operand());
+          const SgVarRefExp* const assignop_lhs_var = isSgVarRefExp(assignop->get_lhs_operand());
           if (assignop_lhs_var) {
-            SgVariableSymbol* assignop_lhs_var_symbol = assignop_lhs_var->get_symbol();
-            std::string assignop_lhs_var_symbol_name = assignop_lhs_var_symbol->get_name().getString();
+            const SgVariableSymbol* const assignop_lhs_var_symbol = assignop_lhs_var->get_symbol();
+            const std::string assignop_lhs_var_symbol_name = assignop_lhs_var_symbol->get_name().getString();
             if (assignop_lhs_var_symbol_name.compare(index_name) == 0 ) {
 
               line_number_check = assignop->get_file_info()->get_line();
@@ -457,8 +459,6 @@ namespace CompassAnalyses {
           }
         }
 
-
-
         // Get condition in IF or WHILE
         SgStatement* condition = NULL;
         if (ifstmt) {
@@ -471,16 +471,16 @@ namespace CompassAnalyses {
         // Check whether index been checked in the condition
         if (condition ) {
           // query subtree of node ifstmt_cond for SgVarRefExp
-          Rose_STL_Container<SgNode*> returns = NodeQuery::querySubTree (condition,V_SgVarRefExp);
+          const Rose_STL_Container<SgNode*> returns = NodeQuery::querySubTree (condition,V_SgVarRefExp);
           if (!returns.empty()) {
-            for (Rose_STL_Container<SgNode*>::iterator i = returns.begin(); i != returns.end(); i++) {
+            for (Rose_STL_Container<SgNode*>::const_iterator i = returns.begin(); i != returns.end(); i++) {
               // for "IF (I < XXX )", lhs of condition is SgVarRefExp
-              SgVarRefExp* var_ref_exp = isSgVarRefExp(*i);
+              const SgVarRefExp* const var_ref_exp = isSgVarRefExp(*i);
 
               line_number_check = var_ref_exp->get_file_info()->get_line();
 
-              SgVariableSymbol* var_symbol = var_ref_exp->get_symbol();
-              std::string var_symbol_name = var_symbol->get_name().getString();
+              const SgVariableSymbol* const var_symbol = var_ref_exp->get_symbol();
+              const std::string var_symbol_name = var_symbol->get_name().getString();
 
               // variable name in IF is the same as index name
               if (var_symbol_name.compare(index_name) == 0 ) {
@@ -489,22 +489,22 @@ namespace CompassAnalyses {
                 //   1. SgIntVal , like ( I <5 ), or
                 //   2. SgVarRefExp , like (I < IMAX) ,or
                 //   3. SgFunctionCallExp, like (I < SIZE(A))
-                SgNode* parent = var_ref_exp->get_parent();
-                SgBinaryOp* parent_binary_op = isSgBinaryOp(parent);
+                const SgNode* const parent = var_ref_exp->get_parent();
+                const SgBinaryOp* const parent_binary_op = isSgBinaryOp(parent);
                 if (isSgBinaryOp(parent)) {
                   SgExpression* exp_check = NULL;
 
-                  SgExpression* rhs_operand = parent_binary_op->get_rhs_operand();
-                  SgVarRefExp* rhs_operand_var = isSgVarRefExp(rhs_operand);
+                  const SgExpression* const rhs_operand = parent_binary_op->get_rhs_operand();
+                  const SgVarRefExp* const rhs_operand_var = isSgVarRefExp(rhs_operand);
 
                   if (( rhs_operand_var != NULL ) && (rhs_operand_var == var_ref_exp ))   // i in rhs , then we need check lhs
                     exp_check = parent_binary_op->get_lhs_operand();
                   else   // i in lhs like I<5, then we need to check RHS
                     exp_check = parent_binary_op->get_rhs_operand();
 
-                  CheckLevel* cl = new CheckLevel(check_flag, level, index_name);
+                  CheckLevel* const cl = new CheckLevel(check_flag, level, index_name);
                   // Check operand expression is a value, var , or size()
-                  CheckLevel* return_cl = checkRHS(exp_check,check_flag,level, array_dimension,cl,array_name);
+                  const CheckLevel* const return_cl = checkRHS(exp_check,check_flag,level, array_dimension,cl,array_name);
                   check_flag = return_cl->check_flag;
                   level      = return_cl->level;
 
@@ -522,21 +522,21 @@ namespace CompassAnalyses {
         // SgFortranDo statement
         if (dostmt) {
           // examine DO init expression
-          SgAssignOp* do_init_exp = isSgAssignOp(dostmt->get_initialization());
+          const SgAssignOp* const do_init_exp = isSgAssignOp(dostmt->get_initialization());
           if (do_init_exp) {
-            SgVarRefExp* do_var = isSgVarRefExp(do_init_exp->get_lhs_operand());
+            const SgVarRefExp* const do_var = isSgVarRefExp(do_init_exp->get_lhs_operand());
             line_number_check = do_var->get_file_info()->get_line();
 
             if (do_var) {
-              SgVariableSymbol* do_var_symbol = do_var->get_symbol();
-              std::string do_var_symbol_name = do_var_symbol->get_name().getString();
+              const SgVariableSymbol* const do_var_symbol = do_var->get_symbol();
+              const std::string do_var_symbol_name = do_var_symbol->get_name().getString();
 
               // index appear in DO init expression
               if (do_var_symbol_name.compare(index_name) == 0 ) {
                 // examine DO bound expression
-                SgExpression* do_bound_exp = dostmt->get_bound();
-                CheckLevel* cl = new CheckLevel(check_flag, level, index_name);
-                CheckLevel* return_cl = checkRHS(do_bound_exp,check_flag, level, array_dimension,cl,array_name);
+                SgExpression* const do_bound_exp = dostmt->get_bound();
+                CheckLevel* const cl = new CheckLevel(check_flag, level, index_name);
+                const CheckLevel* const return_cl = checkRHS(do_bound_exp,check_flag, level, array_dimension,cl,array_name);
                 check_flag = return_cl->check_flag;
                 level      = return_cl->level;
                 reason = "level-"  + to_string(level) + " found for "+ node->unparseToString()
@@ -553,12 +553,12 @@ namespace CompassAnalyses {
         // Not found any check yet, keep looking next edge and node
         // Find the next  edge to walk backward
         if ( check_flag == 0 ) {
-          vector<FilteredCFGEdge < IsDFAFilter > > in_edges = source.inEdges();
+          const vector<FilteredCFGEdge < IsDFAFilter > > in_edges = source.inEdges();
           for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = in_edges.begin(); i != in_edges.end(); ++i) {
-            FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
-            FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.source();
+            const FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
+            const FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.source();
 
-            SgNode* inedge_source_node = filterNode.getNode();
+            const SgNode* const inedge_source_node = filterNode.getNode();
 
             // check if the node has been visited yet
             if (find(visited.begin(), visited.end(), filterNode)==visited.end()) {
@@ -608,17 +608,17 @@ void
 CompassAnalyses::ArrayIndex::Traversal::
 visit(SgNode* node) {
   // Implement your traversal here.
-  SgPntrArrRefExp* pntr = isSgPntrArrRefExp(node);
+  SgPntrArrRefExp* const pntr = isSgPntrArrRefExp(node);
 
   if ( pntr == NULL ) {
     return;
   }
 
-  SgInitializedName* init_l=NULL;
-  SgInitializedName* init_r=NULL;
+  const SgInitializedName* init_l=NULL;
+  const SgInitializedName* init_r=NULL;
 
-  SgVariableSymbol* var_l = NULL;
-  SgVariableSymbol* var_r = NULL;
+  const SgVariableSymbol* var_l = NULL;
+  const SgVariableSymbol* var_r = NULL;
   var_l = isSgVarRefExp(pntr->get_lhs_operand())->get_symbol();
 
 
@@ -638,7 +638,7 @@ visit(SgNode* node) {
     array_name = var_l->get_name().getString();
 
     // Find array size
-    SgArrayType* atype = isSgArrayType(init_l->get_type());
+    const SgArrayType* const atype = isSgArrayType(init_l->get_type());
     array_dimension = findArraySize(atype, array_name);
 
   }
@@ -662,9 +662,9 @@ visit(SgNode* node) {
   // for "A[I] = " or "A[I-1]", the rhs of SgPntrArrRefExp is SgExprListExp
   // - for A[I] , index SgVarRefExp is the direct child of SgExprListExp
   // - while for A[I-1] , need to go through its subtree to find index node SgVarRefExp
-  SgExprListExp* exp_r = isSgExprListExp(pntr->get_rhs_operand());
-  SgExpressionPtrList list = exp_r->get_expressions();
-  for (SgExpressionPtrList::iterator i = list.begin(); i != list.end(); i++) {
+  const SgExprListExp* const exp_r = isSgExprListExp(pntr->get_rhs_operand());
+  const SgExpressionPtrList list = exp_r->get_expressions();
+  for (SgExpressionPtrList::const_iterator i = list.begin(); i != list.end(); i++) {
     if (isSgVarRefExp(*i)) { // A[I]
       var_r = isSgVarRefExp(*i)->get_symbol();
 
@@ -684,9 +684,9 @@ visit(SgNode* node) {
         return;
       }
     } else { // A[I-1] or A(I,J,K), search subtree for SgVarRefExp
-      Rose_STL_Container<SgNode*> subtree = NodeQuery::querySubTree ((*i),V_SgVarRefExp);
+      const Rose_STL_Container<SgNode*> subtree = NodeQuery::querySubTree ((*i),V_SgVarRefExp);
       if (!subtree.empty()) {
-        for (Rose_STL_Container<SgNode*>::iterator j = subtree.begin(); j != subtree.end(); j++) {
+        for (Rose_STL_Container<SgNode*>::const_iterator j = subtree.begin(); j != subtree.end(); j++) {
           var_r = isSgVarRefExp(*j)->get_symbol();
 
           // Find index variable name
