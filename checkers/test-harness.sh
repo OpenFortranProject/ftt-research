@@ -47,7 +47,7 @@ function run_cases {
     popd > /dev/null
 
     # check the output
-    local result=$(diff -u ${expected} ${actual})
+    local result=$(diff -u ${expected} ${actual} ; echo $?)
     if [ "$result" == "0" ]
     then
       echo "successful"
