@@ -350,7 +350,7 @@ std::ifstream* Compass::openFile(std::string filename)
 
   return streamPtr;
 
-};
+}
 
 Compass::Parameters::Parameters(const std::string& filename) throw (Compass::ParseError)
 {
