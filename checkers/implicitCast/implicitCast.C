@@ -28,7 +28,7 @@ namespace CompassAnalyses {
 // Specification of Checker Output Implementation
     class CheckerOutput: public Compass::OutputViolationBase {
       public:
-        CheckerOutput(SgNode* node, const std::string &);
+        CheckerOutput(SgNode * const node, const std::string &);
     };
 
 // Specification of Checker Traversal Implementation
@@ -62,12 +62,12 @@ namespace CompassAnalyses {
 }
 
 CompassAnalyses::ImplicitCast::
-CheckerOutput::CheckerOutput ( SgNode* node, const std::string & reason )
+CheckerOutput::CheckerOutput ( SgNode * const node, const std::string & reason )
   : OutputViolationBase(node,checkerName,shortDescription+reason)
 {}
 
 CompassAnalyses::ImplicitCast::Traversal::
-Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
+Traversal(Compass::Parameters, Compass::OutputObject* output)
   : output(output) {
   // Initalize checker specific parameters here, for example:
   // YourParameter = Compass::parseInteger(inputParameters["ImplicitCast.YourParameter"]);
@@ -81,7 +81,7 @@ visit(SgNode* node) {
   // Implement your traversal here.
   SgBinaryOp const * const b_node = isSgBinaryOp(node);
 
-  if ( b_node == NULL) {
+  if (b_node == NULL) {
     return;
   }
 
@@ -96,36 +96,33 @@ visit(SgNode* node) {
 
     SgType const * const type_l_operand = l_operand->get_type();
     SgType const * const type_r_operand = r_operand->get_type();
-    const std::string type_l_operand_string = type_l_operand->unparseToString();
-    const std::string type_r_operand_string = type_r_operand->unparseToString();
 
-    std::string reason = "" ;
-    if ( type_r_operand != type_l_operand) {
+    if (type_r_operand != type_l_operand) {
       SgFunctionType const * const ftype_l = isSgFunctionType(type_l_operand);
       SgFunctionType const * const ftype_r = isSgFunctionType(type_r_operand);
       // if the child node is SgFunctionType
       if (ftype_l != NULL ) {
-        if (ftype_l->get_return_type()->unparseToString() == type_r_operand_string) {
+        if (ftype_l->get_return_type() == type_r_operand) {
           return;
         }
       }
 
       if (ftype_r != NULL ) {
-        if (ftype_r->get_return_type()->unparseToString()  == type_l_operand_string) {
+        if (ftype_r->get_return_type() == type_l_operand) {
           return;
         }
       }
 
       // the child node is SgFunctionType and its type different from operator type
-      if (type_r_operand_string != type_operator_string) {
-        reason = " expr '" + r_operand->unparseToString()+"' from "
-               + type_r_operand_string + " to " + type_operator_string ;
+      if (type_r_operand != type) {
+        const std::string reason = " expr '" + r_operand->unparseToString()+"' from "
+               + type_r_operand->unparseToString() + " to " + type_operator_string ;
         output->addOutput(new CheckerOutput(r_operand,reason));
 
       }
-      if (type_l_operand_string != type_operator_string) {
-        reason = " expr '" + l_operand->unparseToString()+"' from "
-               + type_l_operand_string + " to " + type_operator_string ;
+      if (type_l_operand != type) {
+        const std::string reason = " expr '" + l_operand->unparseToString()+"' from "
+               + type_l_operand->unparseToString() + " to " + type_operator_string ;
         output->addOutput(new CheckerOutput(l_operand,reason));
       }
 
