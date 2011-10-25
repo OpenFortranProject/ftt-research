@@ -83,14 +83,14 @@ namespace CompassAnalyses {
         myAstAttribute(int v):implicit_save_flag(v) {}
         int implicit_save_flag;
     };
-    int checkModifierIntent(SgInitializedName* var_init) {
+    int checkModifierIntent(const SgInitializedName* const var_init) {
       int intent_flag = 0;
       if (var_init != NULL) {
 
-        SgVariableDeclaration* var_decl = isSgVariableDeclaration(var_init->get_parent());
+        const SgVariableDeclaration* const var_decl = isSgVariableDeclaration(var_init->get_parent());
 
-        SgDeclarationModifier var_decl_mod = var_decl->get_declarationModifier();
-        SgTypeModifier        var_decl_mod_type = var_decl_mod.get_typeModifier();
+        const SgDeclarationModifier var_decl_mod = var_decl->get_declarationModifier();
+        const SgTypeModifier        var_decl_mod_type = var_decl_mod.get_typeModifier();
 #ifdef _DEBUG_
         std::cout << "\tIs argument intent_in:" << var_decl_mod_type.isIntent_in() << std::endl;
         std::cout << "\tIs argument intent_out:" << var_decl_mod_type.isIntent_out() << std::endl;
