@@ -1,0 +1,4 @@
+# ignore all compiler products
+#
+*.o
+*.mod
