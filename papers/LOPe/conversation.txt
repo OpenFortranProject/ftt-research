@@ -1,0 +1,52 @@
+!!
+!! The values for the dimensions can be chosen for the most efficient
+!! implementation on the multi-core running on
+!!
+
+!CER
+! I've modified the code so that the threads loop over k, i and
+! one thread will loop over j
+!
+
+!
+! Scalar assignments, not a problem as these scalars
+! will have local storage and will be calculated for each thread.
+! So logically they are within the loop which leads to compiler
+! warnings.
+!
+       gama = 1./(1.-akap)
+      rgrav = 1./grav
+        ptk = ptop ** akap
+
+
+!!
+!! A smart compiler would see that these calculations are loop invariant
+!! and move them outside of the loops
+!!
+
+!CER
+!  Yup, except for a kernel the loop is moved outside of the subroutine
+!  itself.  That's why I placed it where I did.
+
+!! Does each thread have to work on (i,j,k) points? Can you define a thread
+!! that stores (i,j,k) data but only computes on (i,k) points and loops over
+!! the j dimension?
+!! 
+
+!CER
+!  If I understand your question, the answer is yes.  The model would
+!  be to have a forall encompassing all of the kernel procedure with
+!  the loop over j inside the forall.  Don't know which is fastest:
+!  calling the kernel procedure repeatedly for j or looping over j
+!  within the kernel.  It is something we'd have to experiment with.
+!  Calling with j outside of the kernel provides more threads and
+!  the more threads the better as it hides latency (counter intuitive).
+!
+
+!
+! However, this is a problem as the arrays aren't the same size.
+! This means we have to rethink the problem.  We could treat
+! this as a 2D problem and call the kernel procedure for different
+! j values.
+!
+      dm(i,k) = delp(i,j,k)
