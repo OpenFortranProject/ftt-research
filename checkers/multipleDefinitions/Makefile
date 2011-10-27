@@ -28,7 +28,7 @@ BOOST_INCLUDE_PATH ?= /usr
 # **********  Users should NOT have to modify the makefile below this point **********
 # ************************************************************************************
 
-CHECKER_NAME := testChecker
+CHECKER_NAME := multipleDefinitions
 
 CXX_FLAGS := -g -fPIC -Wall -Werror -Wextra -pedantic -pedantic-errors -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH)
 
@@ -43,5 +43,5 @@ multipleDefinitions: multipleDefinitions.C multipleDefinitionsMain.C libcompass.
 	g++ -o multipleDefinitions multipleDefinitionsMain.C multipleDefinitions.C $(CXX_FLAGS) $(LINKER_FLAGS)
 
 clean:
-	-rm -f libcompass.so "multipleDefinitionsTest"
+	-rm -f libcompass.so "multipleDefinitions"
 
