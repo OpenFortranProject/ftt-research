@@ -1,0 +1,53 @@
+It has been hard historically to create parallel programs.  The responsibility
+(and difficulty) of creating \emph{correct} parallel programs can be viewed as
+being spread between the programmer and the compiler.
+Ideally we would like to have parallel languages that make it easy for the
+programmer to express correct parallel programs (and conversely it should be difficult to express
+incorrect parallel programs).  Unfortunately, many current languages and
+standards place all of the responsibility on the user.  The best example of this
+are programs written using MPI (Message Passing Interface), where the programmer
+expresses all parallelism in terms of calls to library routines and the serial C or Fortran
+compiler knows nothing about the parallel semantics of the combined language
+plus MPI library.
+
+For the purpose of discussion, we define a degree of difficulty term called the
+joint Parallel Complexity Product (PCP),
+
+    PCP = code\_complexity X compiler\_complexity
+
+and suggest that PCP is roughly a constant over time, say the level of
+complexity of writing an MPI program today, MPI\_PCP.
+
+Of course one would hope that over time code complexity goes down as better
+languages allow compilers to take on a greater share of the parallel complexity
+burden.  This is somewhat true of UPC and Coarray Fortran.  With the PGAS
+extensions, C and Fortran compilers are now aware of parallelism and now
+generate message passing code that had been handled by the MPI library.  In some
+instances the compiler is able to perform optimizations that it is not able to
+do with a library based scheme like MPI \cite{CrayPGASPaper}
+
+%%% Would like to say something here about HPC as a language based solution to reducing code complexity
+
+However, in large part these languages are largely syntatic sugar for message
+passing and do not provide a substatial decrease in code complexity
+\cite{CAF_MPI_PGAS_COMPARISON}.  Fortunately, skilled programmers in the HPC
+community have become accustomed to the level of complexity in an MPI program
+and are welcome to considering the simplifications of HPC and Coarray Fortran.
+
+The problem for programmers is that hardware is changing in ways that increase
+the level of on-chip parallelism.  For ultimate performance, programmers must now
+account for huge new levels of on-node parallelism at the same time they account
+for off-node parallelism.  Thus PCP has suddenly increased with PCP = PCP\_Multi\_Core >> PCP\_MPI.
+Since languages have not evolved that allow the compiler to take up this increase, unfortunately the
+complexity for a programmer has dramatically increased.
+
+A reasonable solution given todays language limitations is to use MPI (or a PGAS
+language) \emph{plus} OpenMP for on-chip parallelism.  This is the solution proposed
+by Cray and PGI \cite{BOF_SC10} (currently Chapel does not target GPUs\cite{Brad?}).
+Other choices for expressing on-chip parallelism are OpenCL\cite{OPENCL} and NVIDIA's CUDA.
+
+In this paper we examine a language-based paradigm that allows the compiler to
+take on a larger portion of the PCP burden.  Anyone programming in OpenCL or
+CUDA is aware that explicit loop structures over array elements in a serial
+program are removed and replaced by a kernel program that is run over all of
+the
