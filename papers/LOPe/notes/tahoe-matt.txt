@@ -1,0 +1,45 @@
+- memory model
+- execution model
+
+
+- show different transformed code examples
+-- OpenCL GPU
+--- vectorized code
+--- non-vectorized code
+-- OpenCL SMP
+--- vectorized code
+-- OpenMP
+-- serial
+-- Coarrays
+-- MPI
+
+- pseudo code
+-- FFT
+-- convolution filter over a cool picture
+-- neural convolution
+-- stencil
+-- AMR
+-- graph algorithms
+-- sudoku
+
+elemental/kernel subroutine average(a)
+  real, elemental_extended, intent(inout) :: a
+  real :: A(3) = a(-1:1)   ! extended a only in an initialization expression
+
+  ...
+
+  a = sum(A)/3.
+end subroutine average
+
+
+elemental/kernel subroutine average(a, func, indices)
+  real, elemental_extended, intent(inout) :: a
+  real :: A(3) = func(a, indices)
+end subroutine average
+
+elemental/kernel subroutine average(a, indices)
+  real, elemental_extended, intent(inout) :: a
+  real :: A(3) = a(indices)
+end subroutine average
+
+
