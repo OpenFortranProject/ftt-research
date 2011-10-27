@@ -4,12 +4,29 @@ module convolve_mod
 
 contains
 
-   subroutine convolve(S, Image, F)
+!... convolve kernel function using Locally Oriented Programming extensions
+!
+!   CONCURRENT subroutine convolve_lope(S, Image, F)
+!      implicit none
+!      real, intent(out) :: S(:,:)
+!      real, intent(in ) :: Image(:,:)
+!      HALO(NPAD:*:NPAD,NPAD:*:NPAD) :: Image
+!      real, intent(in ) :: F(-NPAD:NPAD,-NPAD:NPAD)
+!
+!      S(0,0) = sum( F*Image )
+!
+!   end subroutine convolve_lope
+!
+
+   subroutine convolve_cpu_loops(S, Image, F)
       implicit none
-      real :: S(NX,NY), Image(NXEX,NYEX)
+      real, intent(out) :: S(:,:)
+      real, intent(in ) :: Image(:,:)
       type(FilterPatch) :: F
       real :: val
       integer :: i, j, ip, jp
+
+print *, NX, NY
 
       do j = 1, NY
          do i = 1, NX
@@ -22,7 +39,53 @@ contains
             S(i,j) = val
          end do
       end do
-   end subroutine convolve
+   end subroutine convolve_cpu_loops
+
+   subroutine convolve_cpu_omp(S, Image, F)
+      implicit none
+      real, intent(out) :: S(:,:)
+      real, intent(in ) :: Image(:,:)
+      type(FilterPatch) :: F
+      real :: val
+      integer :: i, j, ip, jp
+
+!$OMP PARALLEL PRIVATE(val)
+!$OMP DO
+      do j = 1, NY
+         do i = 1, NX
+            val = 0.0
+            do jp = -NPAD, NPAD
+               do ip = -NPAD, NPAD
+                  val = val + F%p(ip,jp)*Image(i+NPAD,j+NPAD)
+               end do
+            end do
+            S(i,j) = val
+         end do
+      end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+   end subroutine convolve_cpu_omp
+
+   subroutine convolve_cpu_forall(S, Image, F)
+      implicit none
+      real :: S(:,:), Image(:,:)
+      type(FilterPatch) :: F
+      real :: val
+      integer :: i, j, ip, jp
+
+      forall (i=1:NX, j=1:NY)
+!            val = 0.0
+!            forall (ip=-NPAD:NPAD, jp=-NPAD:NPAD)
+!            do jp = -NPAD, NPAD
+!               do ip = -NPAD, NPAD
+!                   val = val + F%p(ip,jp)*Image(i+NPAD,j+NPAD)
+!               end do
+!            end do
+!            end forall
+            S(i,j) = 0.0
+      end forall
+   end subroutine convolve_cpu_forall
 
    subroutine init_filter(F)
       implicit none
@@ -30,8 +93,12 @@ contains
       integer :: i
 
       F%p = 0.0
+!      F%p(0,0) = 1
       F%p(:,0) = 1
       F%p(0,:) = 1
+
+      F%p = 1.0
+
       F%p = F%p/sum(F%p)         
 
       print *, nxp, nyp, NPAD
@@ -40,6 +107,32 @@ contains
       end do
 
     end subroutine init_filter
+
+   subroutine init_image(nxex, nyex, I)
+      use file_io
+      implicit none
+      integer, intent(in) :: nxex, nyex
+      real(C_FLOAT), intent(out) :: I(nxex,nyex)
+
+      print *, "will call read_image_file", nxex, nyex
+      call read_image_file("lena-sjooblom.jpg", nxex, nyex, I)
+
+      print *, "second row input image"
+      print *, I(2,1:5)
+      print *, I(1,1:5)
+
+    end subroutine init_image
+
+   subroutine write_image(filename, nx, ny, I)
+      use file_io
+      implicit none
+      character(C_CHAR) :: filename(*)
+      integer, intent(in) :: nx, ny
+      real(C_FLOAT), intent(in) :: I(nx,ny)
+
+      call write_image_file(filename, nx, ny, I)
+
+    end subroutine write_image
 
 end module convolve_mod
 
@@ -52,9 +145,9 @@ program test_convolve
 
    integer :: status
 
-   real(c_float),     target  :: I(NXEX,NYEX)  ! image
-   real(c_float),     target  :: S(NX,NY)      ! smoothed image
-   type(FilterPatch), target  :: F             ! filter
+   real(c_float),     target :: I(NXEX,NYEX)  ! image
+   real(c_float),     target :: S(NX,NY)      ! smoothed image
+   type(FilterPatch), target :: F             ! filter
 
    type(CLDevice) :: device
    type(CLKernel) :: kernel
@@ -71,11 +164,25 @@ program test_convolve
 
    integer :: nxGlobal=NX, nyGlobal=NY
    integer :: ii, jj
-   integer :: device_id, d_time, nLoops=100, nWarm=20
+   integer :: device_id, d_time, nLoops=1, nWarm=20
    logical :: check_results
    real :: bandwidth, throughput, flops
 
    check_results = .false.
+
+   ! initialize memory
+   !
+
+   I = 1.0;  S = 0.0;
+   call init_filter(F)
+   call init_image(NXEX, NYEX, I)
+
+   call write_image("lena-orig.tiff" // C_NULL_CHAR, NXEX, NYEX, I)
+
+   call convolve_cpu_loops(S, I, F)
+   call write_image("lena-new.tiff" // C_NULL_CHAR, NX, NY, S)
+
+   stop
 
    if (NXL < 2*NPAD .or. NYL < 2*NPAD) then
       print *, "thread work group size is too small, die!!!"
@@ -90,12 +197,6 @@ program test_convolve
    print *, "global size ==", NX, NY
    print *, "tile_mem_size   ==", tile_mem_size
    print *, "global_mem_size ==", global_mem_size
-
-   ! initialize memory
-   !
-
-   I = 1.0;  S = 0.0;
-   call init_filter(F)
 
    ! create memory buffers
    !
@@ -157,35 +258,52 @@ program test_convolve
    status = readBuffer(d_S, c_loc(S), global_mem_size)
    
    print *, S(1, 1:3)
-   do ii = 1, NX
-      do jj = 1, NY
-         if (abs(S(ii,jj) -1.0) > .000001) then
-            print *, "ERROR FOUND at", ii, jj, "=", S(ii,jj)
-            STOP
-         endif
-      end do
-   end do
+!   do ii = 1, NX
+!      do jj = 1, NY
+!         if (abs(S(ii,jj) -1.0) > .000001) then
+!            print *, "ERROR FOUND at", ii, jj, "=", S(ii,jj)
+!            goto 10
+!         endif
+!      end do
+!   end do
 
    ! warmup
-   call convolve(S, I, F)
+10 call convolve_cpu_loops(S, I, F)
 
+   print *
+   print *, "running convolve_cpu_loops on CPU"
    call init(timer)
    call start(timer)
-   call convolve(S, I, F)
+   call convolve_cpu_loops(S, I, F)
+   call stop(timer)
+
+   cpu_time = elapsed_time(timer)
+   print *, S(2, 1:3)
+   print *, "   host time    ==   ", real(cpu_time), " msec"
+   print *, "   SPEEDUP      ==", cpu_time/(gpu_time/nLoops)
+
+   ! warmup
+   call convolve_cpu_omp(S, I, F)
+
+   print *
+   print *, "running convolve_cpu_omp on CPU"
+   call init(timer)
+   call start(timer)
+   call convolve_cpu_omp(S, I, F)
    call stop(timer)
 
    cpu_time = elapsed_time(timer)
    print *, S(1, 1:3)
-   print *, "   host time    ==   ", real(cpu_time), " msec"
+   print *, "   host time omp==   ", real(cpu_time), " msec"
    print *, "   SPEEDUP      ==", cpu_time/(gpu_time/nLoops)
 
-   do ii = 1, NX
-      do jj = 1, NY
-         if (abs(S(ii,jj) -1.0) > .000001) then
-            print *, "ERROR FOUND at", ii, jj, "=", S(ii,jj)
-            STOP
-         endif
-      end do
-   end do
+!   do ii = 1, NX
+!      do jj = 1, NY
+!         if (abs(S(ii,jj) -1.0) > .000001) then
+!            print *, "ERROR FOUND at", ii, jj, "=", S(ii,jj)
+!            STOP
+!         endif
+!      end do
+!   end do
 
 end program test_convolve

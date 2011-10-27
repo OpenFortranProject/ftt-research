@@ -110,7 +110,7 @@ program test_variable_filter
       stop 1
    end if
 
-   print *, "size(F)==", c_sizeof(F(1,1)%p), size(F)
+!   print *, "size(F)==", c_sizeof(F(1,1)%p), size(F)
 
    device_id = 0  ! 0=GPU, 1=CPU
    status = init(device, device_id)

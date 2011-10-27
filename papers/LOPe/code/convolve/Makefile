@@ -12,7 +12,7 @@
 dbg := 0
 
 # fortran compiler flag
-intel_fortran := 0
+intel_fortran := 1
 
 # detect OS                                                                               
 OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
@@ -40,9 +40,13 @@ endif
 
 # Compilers
 ifeq ($(intel_fortran),1)
-   FC    := ifort
+   FC  := ifort
+   CC  := icc
+   CPP := icpc
 else
-   FC     := gfortran
+   FC  := gfortran
+   CC  := gcc
+   CPP := g++
 endif
 CC     := gcc
 LINK   := $(FC) -fPIC
@@ -106,11 +110,14 @@ endif
 CFLAGS   += $(INCLUDES)  $(COMMONFLAGS)
 FCFLAGS  += $(FINCLUDES) $(COMMONFLAGS)
 
-OBJS = filter_params.o filter_type.o
+OMPFLAGS += -openmp
+FCFLAGS  += $(OMPFLAGS)
 
-LIBS += $(OBJS) -L$(FOCL_DIR) -lforopencl
+OBJS = filter_params.o filter_type.o file_io_c.o file_io.o
 
-APPS = convolve variable_filter
+LIBS += $(OBJS) -L$(FOCL_DIR) -lforopencl -L/usr/local/lib -lgdal
+
+APPS = omp convolve variable_filter
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
@@ -121,6 +128,13 @@ all: $(OBJS) $(APPS)
 convolve: convolve.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
+omp: omp.o
+	$(LINK) $(FCFLAGS) -o $@ $< -L$(FOCL_DIR) -lforopencl -framework OpenCL
+
+omp.o: omp.f90
+	@echo 'Building for OS $(OSUPPER) file: $<'
+	$(FC) -c $(FCFLAGS) -o $@ $<
+
 variable_filter: variable_filter.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
@@ -128,12 +142,17 @@ filter_params.o: filter_params.F90 npad.h
 	@echo 'Building for OS $(OSUPPER) file: $<'
 	$(FC) -c $(FCFLAGS) -o $@ $<
 
+file_io_c.o: file_io_c.c
+	$(CC) -c -o $@ $<
+
 # dependencies
 #
 
-convolve.o: npad.h convolve.f90 filter_params.o filter_type.f90
+convolve.o: npad.h convolve.f90 filter_params.o file_io.o file_io_c.o filter_type.f90
 variable_filter.o: npad.h variable_filter.f90 filter_params.o filter_type.f90
 filter_type.o: filter_params.o filter_type.f90
+file_io.o: file_io.f90
+file_io_c.o: file_io_c.c
 
 clean:
 	rm -f *.mod *.o

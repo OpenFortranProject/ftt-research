@@ -1,3 +1,7 @@
+# ignore all compiler products
+#
+*.o
+*.mod
 *.orig
 *.o
 *.so
