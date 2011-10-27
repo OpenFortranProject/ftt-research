@@ -1,0 +1,66 @@
+NX=NY=4*512
+NPAD=1
+MacBook Air
+gfortran compiler -O3 optimization
+
+- full 5pt stencil on GPU
+ Measuring flops and effective bandwidth of computation
+    host time    ==      1272.2159      msec
+    device timer ==     1127893         usec
+    bandwidth    ==      0.29773000     GB/s
+    flops        ==      0.16484244     GFlops
+
+------------------ array notation --------------------
+
+- just load/store copy using array notation
+ Measuring flops and effective bandwidth on CPU for Fortran arrays
+    host time    ==      137.50500    
+    bandwidth    ==       2.4402335     GB/s
+    flops        ==       1.5251460     GFlops
+
+- full 5pt stencil
+ Measuring flops and effective bandwidth on CPU for Fortran arrays
+    host time    ==      5993.6519    
+    bandwidth    ==      5.59832826E-02 GB/s
+    flops        ==      3.49895507E-02 GFlops
+
+------------------- fortran loops -----------------------
+
+- just load/store copy
+ Measuring flops and effective bandwidth on CPU for Fortran loops
+    host time    ==      126.45800    
+    bandwidth    ==       2.6534052     GB/s
+    flops        ==       1.6583782     GFlops
+
+- full 5p stencil
+ Measuring flops and effective bandwidth on CPU for Fortran loops
+    host time    ==      245.04900    
+    bandwidth    ==       1.3692948     GB/s
+    flops        ==      0.85580921     GFlops
+
+- full 5p stencil (Intel compiler)
+ Measuring flops and effective bandwidth on CPU for Fortran loops
+    host time    ==      149.7020    
+    bandwidth    ==       2.241415     GB/s
+    flops        ==       1.400884     GFlops
+
+-------------------- C loop ------------------------
+
+- this was a memcpy (nx*ny*sizeof(float))
+ Measuring flops and effective bandwidth on CPU for C loops
+    host time    ==      79.432999    
+    bandwidth    ==       4.2242432     GB/s
+    flops        ==       2.6401520     GFlops
+
+- this was 2d loop just like Fortran loop above
+ Measuring flops and effective bandwidth on CPU for C loops
+    host time    ==      128.46800    
+    bandwidth    ==       2.6118903     GB/s
+    flops        ==       1.6324314     GFlops
+
+- this was full 5pt stencil (compare with first measurement, GPU)
+ Measuring flops and effective bandwidth on CPU for C loops
+    host time    ==      244.25301    
+    bandwidth    ==       1.3737571     GB/s
+    flops        ==      0.85859823     GFlops
+
