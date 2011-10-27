@@ -1,1 +1,1 @@
-#define PADDING 7
+#define PADDING 3

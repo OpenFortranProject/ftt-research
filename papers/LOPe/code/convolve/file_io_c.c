@@ -92,8 +92,6 @@ void read_image_file(const char * filename, int nx, int ny, float * image)
    }
    free(buf);
 
-   write_image_file("junk.tif", nx, ny, image);
-
 #ifdef NOTME
    //printf("buf=%f %f %f %f %f %f\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
 

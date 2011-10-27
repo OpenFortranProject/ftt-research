@@ -20,25 +20,36 @@ contains
 
    subroutine convolve_cpu_loops(S, Image, F)
       implicit none
-      real, intent(out) :: S(:,:)
-      real, intent(in ) :: Image(:,:)
+      real, intent(out) :: S(0:,0:)
+      real, intent(in ) :: Image(-NPAD:,-NPAD:)
       type(FilterPatch) :: F
       real :: val
-      integer :: i, j, ip, jp
+      integer :: row, col, ip, jp
 
-print *, NX, NY
+      print *, "shape================"
+      print *, NX, NY
+      print *, shape(S), shape(Image)
+      print *
 
-      do j = 1, NY
-         do i = 1, NX
+      S = 127.0
+
+      ! in Fortran the image is rotated by 90 degrees (image 'row' varies first)
+      !
+      do col = 0, NY-1
+         do row = 0, NX-1
             val = 0.0
             do jp = -NPAD, NPAD
                do ip = -NPAD, NPAD
-                  val = val + F%p(ip,jp)*Image(i+NPAD,j+NPAD)
+                  val = val + F%p(ip,jp)*Image(row+ip,col+jp)
                end do
             end do
-            S(i,j) = val
+            S(row,col) = val
+!            S(row,col) = Image(row+NPAD,col+NPAD)
          end do
       end do
+
+!      S = Image(0:NY-1,0:NX-1)
+
    end subroutine convolve_cpu_loops
 
    subroutine convolve_cpu_omp(S, Image, F)
@@ -90,21 +101,28 @@ print *, NX, NY
    subroutine init_filter(F)
       implicit none
       type(FilterPatch) :: F
-      integer :: i
+      integer :: i, j
+      real :: r2
+!      real, parameter :: sigma = 0.84089642
+      real, parameter :: sigma = 2.0
+      real, parameter :: pi    = 3.14159265
 
       F%p = 0.0
-!      F%p(0,0) = 1
-      F%p(:,0) = 1
-      F%p(0,:) = 1
 
-      F%p = 1.0
-
-      F%p = F%p/sum(F%p)         
-
-      print *, nxp, nyp, NPAD
-      do i = -1, 1
-         print *, "F==", F%p(i,-1:1)
+      do i = -NPAD, NPAD
+         do j = -NPAD, NPAD
+            r2 = i**2 + j**2
+            F%p(j,i) = exp(-r2/(2.0*sigma**2)) / (2.0*pi*sigma**2)
+         end do
       end do
+
+      ! fix roundoff error in normalization (if any)
+      F%p = F%p/sum(F%p)
+
+!      print *, nxp, nyp, NPAD
+!      do j = -NPAD, NPAD
+!         print '(7(f10.8, 2x))', F%p(j,-NPAD:NPAD)
+!      end do
 
     end subroutine init_filter
 
