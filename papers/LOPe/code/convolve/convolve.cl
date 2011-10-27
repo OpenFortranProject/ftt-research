@@ -2,7 +2,7 @@
 
 #define USE_LOCAL_MEM 1
 
-#define NPAD  7
+#define NPAD  3
 #define WSIZE 16
 
 #define LSIZE ((WSIZE+2*NPAD)*(WSIZE+2*NPAD))
