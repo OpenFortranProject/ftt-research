@@ -12,7 +12,7 @@
 dbg := 0
 
 # fortran compiler flag
-intel_fortran := 0
+intel_fortran := 1
 
 # detect OS                                                                               
 OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
