@@ -152,7 +152,7 @@ extern const Compass::Checker* const implicitCastChecker =
   // Descriptions should not include the newline character "\n".
   CompassAnalyses::ImplicitCast::shortDescription,
   CompassAnalyses::ImplicitCast::longDescription,
-  Compass::C | Compass::Cpp,
+  Compass::Fortran,
   Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
   run,
   createTraversal);

@@ -112,7 +112,7 @@ extern const Compass::Checker* const multipleDefinitionsChecker =
   // Descriptions should not include the newline character "\n".
   CompassAnalyses::MultipleDefinitions::shortDescription,
   CompassAnalyses::MultipleDefinitions::longDescription,
-  Compass::C | Compass::Cpp,
+  Compass::Fortran,
   Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
   run,
   createTraversal);
