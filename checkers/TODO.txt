@@ -1,0 +1,22 @@
+Ideas for new checkers.  The names of the checkers should be
+changed where a better name is appropriate.
+
+implicitInterface
+- Test to see if a procedure call has an implicit interface.
+
+targetVariableHiding
+- Test to see if a module variable is hidden when a variable
+  the same name is given the target attribute.  The problem is
+  that a new variable is created in the current scope masking
+  the original variable.
+
+variableRedeclaration
+- Test to see if a variable is declared that hides an existing
+  variable.  Example
+
+  real :: x
+  block
+    integer :: x
+  end block
+
+
