@@ -1,7 +1,32 @@
 Ideas for new checkers.  The names of the checkers should be
 changed where a better name is appropriate.
 
+-----------------------------------------
 see http://www.cs.rpi.edu/~szymansk/OOF90/bugs.html
+-----------------------------------------
+
+-----------------------------------------
+From Dan.txt in tutorials folder at j3-fortran.org
+-----------------------------------------
+Fortran.3.x.2 Description of the vulnerability
+
+The lower bound of every dimension of an array expression is 1.
+
+The index of the first character of a character expression is 1.
+
+Fortran.3.x.3 Avoiding and mitigating the vulnerability
+
+- Always offset the result of calculating an index within an array
+section by one less than the lower bound of the section.
+
+- Always offset the result of calculating the position of a character
+within a character string by the index of the first character in the
+string.
+
+=======================================================================
+
+XYH should be "Invalid pointer dereferencing"
+-----------------------------------------
 
 implicitInterface
 - Test to see if a procedure call has an implicit interface.
