@@ -49,5 +49,8 @@ Other choices for expressing on-chip parallelism are OpenCL\cite{OPENCL} and NVI
 In this paper we examine a language-based paradigm that allows the compiler to
 take on a larger portion of the PCP burden.  Anyone programming in OpenCL or
 CUDA is aware that explicit loop structures over array elements in a serial
-program are removed and replaced by a kernel program that is run over all of
-the
+program are removed and replaced by a kernel program that is run over all of the
+elements of the input arrays.  We propose Locally Orientated Programming
+extensions (LOPe) to the Fortran and C languages that formally adopt this
+programming model.
+

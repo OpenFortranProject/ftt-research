@@ -127,12 +127,9 @@ visit(SgNode* node) { // this visit is to set attribute
         var_sym->setAttribute("att_assign_init", new myAstAttribute(var_decl_mod_type));
       }
     }
-  }
+  } break;
   case V_SgFunctionCallExp: {
-    const SgFunctionCallExp* const fc = isSgFunctionCallExp(node);
-    if ( NULL == fc ) { // Bail when not a function call exp, may be a rose bug
-      return;
-    } 
+    const SgFunctionCallExp*       const fc         = isSgFunctionCallExp(node);
     const SgExprListExp*           const arg_list   = fc->get_args();
     const SgExpressionPtrList            arg        = arg_list->get_expressions();
     const SgFunctionRefExp*        const fc_ref_exp = isSgFunctionRefExp(fc->get_function());
@@ -273,7 +270,7 @@ extern const Compass::Checker* const implicitSaveChecker =
   // Descriptions should not include the newline character "\n".
   CompassAnalyses::ImplicitSave::shortDescription,
   CompassAnalyses::ImplicitSave::longDescription,
-  Compass::C | Compass::Cpp,
+  Compass::Fortran,
   Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
   run,
   createTraversal);

@@ -732,7 +732,7 @@ extern const Compass::Checker* const arrayIndexChecker =
   // Descriptions should not include the newline character "\n".
   CompassAnalyses::ArrayIndex::shortDescription,
   CompassAnalyses::ArrayIndex::shortDescription,
-  Compass::C | Compass::Cpp,
+  Compass::Fortran,
   Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
   run,
   createTraversal);
