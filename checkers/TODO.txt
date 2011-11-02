@@ -1,6 +1,8 @@
 Ideas for new checkers.  The names of the checkers should be
 changed where a better name is appropriate.
 
+see http://www.cs.rpi.edu/~szymansk/OOF90/bugs.html
+
 implicitInterface
 - Test to see if a procedure call has an implicit interface.
 
