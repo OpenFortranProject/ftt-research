@@ -1,0 +1,27 @@
+http://en.wikipedia.org/wiki/Stencil_codes
+
+Stencil codes are a class of iterative kernels[1] which update array elements according to some fixed pattern, called stencil[2]. They are most commonly found in the codes of computer simulations, e.g. for computational fluid dynamics in the context of scientific and engineering applications. Other notable examples include solving partial differential equations[1], the Jacobi kernel, the Gauss–Seidel method[2], image processing[1] and cellular automata.[3] The regular structure of the arrays sets stencil codes apart from other modeling methods such as the Finite element method. Most finite difference codes which operate on regular grids can be formulated as stencil codes.
+
+---------------------
+
+Good source to reference in the paper.
+
+http://books.google.com/books?id=mX-BCoP37BEC&pg=PA143&lpg=PA143&dq=parallel+patterns+halo&source=bl&ots=PJ4SkLzvAb&sig=RQPUBaDCeTBUOxtQ-5jDvFyTc4g&hl=en&ei=H8KpTp7YLMSWiAKQ7OnrCg&sa=X&oi=book_result&ct=result&resnum=6&ved=0CEQQ6AEwBQ#v=onepage&q&f=false
+
+Architectures, languages and patterns for parallel and distributed ...
+ By World Occam and Transputer User Group. Technical Meeting
+
+Architectures, Languages and Patterns for Parallel and Distributed Applications: WoTug 21 (Concurrent Systems Engineering Series) 
+
+P.H. Welch (Author), A.W.P. Bakkers (Author)   
+
+A.E. Lawrence/HCSP
+
+pg 143
+
+The halo is useful in three ways:
+
+- a terminating process passes the variable environment to a successor across ;.
+- communication between parallel processes canb e achieved when their "halos" overlap: this is the shared memory paradigm.
+- Parts of the "halo" can be used as a scratch pad.  These parts are of local use only, and can be hidden without changing the process in any significant way: only passive obervation of the internal behaviour is obscured.
+
