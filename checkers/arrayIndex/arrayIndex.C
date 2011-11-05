@@ -643,27 +643,32 @@ visit(SgNode* node) {
     // TODO: This next bit will skip over constants used in the indexes
     const Rose_STL_Container<SgNode*> varrefs =
                  NodeQuery::querySubTree(exp, V_SgVarRefExp);
-    foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type v, varrefs) {
-      const SgVariableSymbol* const var_r = isSgVarRefExp(v)->get_symbol();
+    foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type v, varrefs){
+      const SgVariableSymbol* const var = isSgVarRefExp(v)->get_symbol();
 
-      if (var_r) {
-        std::cout << "Sub-expression symbol: " << var_r->get_name().getString()
+      if (var) {
+        std::cout << "Sub-expression symbol: " << var->get_name().getString()
                   << std::endl;
-        const StaticSingleAssignment::NodeReachingDefTable & defTable = ssa->getReachingDefsAtNode_(v);
+        const StaticSingleAssignment::NodeReachingDefTable & defTable =
+                                               ssa->getReachingDefsAtNode_(v);
         std::cout << "DefTable: " << std::endl;
         // 3. Match the variables in the expression up with their definition
-        for(std::map<StaticSingleAssignment::VarName,StaticSingleAssignment::ReachingDefPtr>::const_iterator i = defTable.begin();
-            i != defTable.end();
-            i++) {
-          assert(i->first.size() == 1); // TODO: why is this always true?
+        // For example, in the expression A(x,y), we first want to score x, then
+        // separately score y, and not score A unless we had something like
+        // B(A(x,y)).  This means that scoring should be based on the
+        // "var" above.
+        foreach(StaticSingleAssignment::NodeReachingDefTable::const_iterator::
+                                                     value_type def, defTable) {
+          assert(def.first.size() == 1); // TODO: why is this always true?
           // TODO: a) Find the right def
           //       b) find all uses of that def
           //       c) check each of those uses to see if they are a conditional
           //       d) grade each conditional based on the array declaration
-          foreach(const SgInitializedName * const name, i->first) {
+          foreach(const SgInitializedName * const name, def.first) {
             std::cout << name->get_qualified_name().getString();
           }
-          std::cout << "[" << i->second->getRenamingNumber() << "]" << std::endl;
+          std::cout << "[" << def.second->getRenamingNumber() << "]"
+                    << std::endl;
         }
       }
     }  // end of for
