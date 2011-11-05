@@ -78,8 +78,7 @@ namespace CompassAnalyses {
             SgProject * const project = isSgProject(n);
             ssa = std::auto_ptr<StaticSingleAssignment>(new StaticSingleAssignment(project));
             ssa->run(true, true);
-            visit(n);
-            //this->traverse(n, preorder);
+            this->traverse(n, preorder);
           } else {
             // TODO: put something reasonable here
             abort();
@@ -629,52 +628,45 @@ Traversal(Compass::Parameters, Compass::OutputObject* output)
 void
 CompassAnalyses::ArrayIndex::Traversal::
 visit(SgNode* node) {
-  // 1. Get all function definitions in the program
-  const Rose_STL_Container<SgNode*> funDefs =
-               NodeQuery::querySubTree(node, V_SgFunctionDefinition);
-  foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type n, funDefs) {
-    // 2. For the body of each function, get all array references
-    const Rose_STL_Container<SgNode*> arrayRefs =
-               NodeQuery::querySubTree(n, V_SgPntrArrRefExp);
-    foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type a, arrayRefs) {
-      // 3. For each array reference, get all of the index expressions
-      const SgPntrArrRefExp & arrRef = *isSgPntrArrRefExp(a);
-      const SgExpressionPtrList exprs = getIndexExpressions(arrRef);
-      foreach(SgExpressionPtrList::const_iterator::value_type exp, exprs) {
-        // 4. score each index expression and report the score
-        std::cout << "Expression Type: " << exp->sage_class_name()
-                  << std::endl
-                  << "Expression: " << exp->unparseToString()
-                  << std::endl;
-        // TODO: This next bit will skip over constants used in the indexes
-        const Rose_STL_Container<SgNode*> varrefs =
-                     NodeQuery::querySubTree(exp, V_SgVarRefExp);
-        foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type v, varrefs) {
-          const SgVariableSymbol* const var_r = isSgVarRefExp(v)->get_symbol();
+  if (isSgPntrArrRefExp(node) == NULL) {
+    return;
+  }
+  // 1. For each array reference, get all of the index expressions
+  const SgPntrArrRefExp & arrRef = *isSgPntrArrRefExp(node);
+  const SgExpressionPtrList exprs = getIndexExpressions(arrRef);
+  foreach(SgExpressionPtrList::const_iterator::value_type exp, exprs) {
+    // 2. score each index expression and report the score
+    std::cout << "Expression Type: " << exp->sage_class_name()
+              << std::endl
+              << "Expression: " << exp->unparseToString()
+              << std::endl;
+    // TODO: This next bit will skip over constants used in the indexes
+    const Rose_STL_Container<SgNode*> varrefs =
+                 NodeQuery::querySubTree(exp, V_SgVarRefExp);
+    foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type v, varrefs) {
+      const SgVariableSymbol* const var_r = isSgVarRefExp(v)->get_symbol();
 
-          if (var_r) {
-            std::cout << "Sub-expression symbol: " << var_r->get_name().getString()
-                      << std::endl;
-            const StaticSingleAssignment::NodeReachingDefTable & defTable = ssa->getReachingDefsAtNode_(v);
-            std::cout << "DefTable: " << std::endl;
-            // 5. Match the variables in the expression up with their definition
-            for(std::map<StaticSingleAssignment::VarName,StaticSingleAssignment::ReachingDefPtr>::const_iterator i = defTable.begin();
-                i != defTable.end();
-                i++) {
-              assert(i->first.size() == 1); // TODO: why is this always true?
-              // TODO: a) Find the right def
-              //       b) find all uses of that def
-              //       c) check each of those uses to see if they are a conditional
-              //       d) grade each conditional based on the array declaration
-              foreach(const SgInitializedName * const name, i->first) {
-                std::cout << name->get_qualified_name().getString();
-              }
-              std::cout << "[" << i->second->getRenamingNumber() << "]" << std::endl;
-            }
+      if (var_r) {
+        std::cout << "Sub-expression symbol: " << var_r->get_name().getString()
+                  << std::endl;
+        const StaticSingleAssignment::NodeReachingDefTable & defTable = ssa->getReachingDefsAtNode_(v);
+        std::cout << "DefTable: " << std::endl;
+        // 3. Match the variables in the expression up with their definition
+        for(std::map<StaticSingleAssignment::VarName,StaticSingleAssignment::ReachingDefPtr>::const_iterator i = defTable.begin();
+            i != defTable.end();
+            i++) {
+          assert(i->first.size() == 1); // TODO: why is this always true?
+          // TODO: a) Find the right def
+          //       b) find all uses of that def
+          //       c) check each of those uses to see if they are a conditional
+          //       d) grade each conditional based on the array declaration
+          foreach(const SgInitializedName * const name, i->first) {
+            std::cout << name->get_qualified_name().getString();
           }
-        }  // end of for
+          std::cout << "[" << i->second->getRenamingNumber() << "]" << std::endl;
+        }
       }
-    }
+    }  // end of for
   }
 
   // From this point on we are dealing with an array reference.
