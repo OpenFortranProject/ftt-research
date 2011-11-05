@@ -665,10 +665,12 @@ visit(SgNode* node) {
           //       c) check each of those uses to see if they are a conditional
           //       d) grade each conditional based on the array declaration
           foreach(const SgInitializedName * const name, def.first) {
-            std::cout << name->get_qualified_name().getString();
+            if( var == name->get_symbol_from_symbol_table() ){
+              std::cout << "Found a match: " << var->get_name().getString()
+                        << "[" << def.second->getRenamingNumber() << "]"
+                        << std::endl;
+            }
           }
-          std::cout << "[" << def.second->getRenamingNumber() << "]"
-                    << std::endl;
         }
       }
     }  // end of for
