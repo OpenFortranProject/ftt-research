@@ -24,6 +24,7 @@
 #include "rose.h"
 #include "compass.h"
 #include <staticSingleAssignment.h>
+#include <backstrokeCFG.h>
 #include <boost/foreach.hpp>
 
 #define foreach BOOST_FOREACH
@@ -78,7 +79,8 @@ namespace CompassAnalyses {
             SgProject * const project = isSgProject(n);
             ssa = std::auto_ptr<StaticSingleAssignment>(new StaticSingleAssignment(project));
             ssa->run(true, true);
-            this->traverse(n, preorder);
+            this->visit(n);
+            //this->traverse(n, preorder);
           } else {
             // TODO: put something reasonable here
             abort();
@@ -628,54 +630,73 @@ Traversal(Compass::Parameters, Compass::OutputObject* output)
 void
 CompassAnalyses::ArrayIndex::Traversal::
 visit(SgNode* node) {
-  if (isSgPntrArrRefExp(node) == NULL) {
-    return;
-  }
-  // 1. For each array reference, get all of the index expressions
-  const SgPntrArrRefExp & arrRef = *isSgPntrArrRefExp(node);
-  const SgExpressionPtrList exprs = getIndexExpressions(arrRef);
-  foreach(SgExpressionPtrList::const_iterator::value_type exp, exprs) {
-    // 2. score each index expression and report the score
-    std::cout << "Expression Type: " << exp->sage_class_name()
-              << std::endl
-              << "Expression: " << exp->unparseToString()
-              << std::endl;
-    // TODO: This next bit will skip over constants used in the indexes
-    const Rose_STL_Container<SgNode*> varrefs =
-                 NodeQuery::querySubTree(exp, V_SgVarRefExp);
-    foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type v, varrefs){
-      const SgVariableSymbol* const var = isSgVarRefExp(v)->get_symbol();
-
-      if (var) {
-        std::cout << "Sub-expression symbol: " << var->get_name().getString()
+  const Rose_STL_Container<SgNode*> functionDefs =
+               NodeQuery::querySubTree(node, V_SgFunctionDefinition);
+  foreach(SgNode * const n, functionDefs) {
+    SgFunctionDefinition * const fd = isSgFunctionDefinition(n);
+    const Rose_STL_Container<SgNode*> arrayRefs =
+                 NodeQuery::querySubTree(n, V_SgPntrArrRefExp);
+    foreach(const SgNode * const a, arrayRefs) {
+      const SgPntrArrRefExp & arrRef = *isSgPntrArrRefExp(a);
+      // 1. For each array reference, get all of the index expressions
+      const SgExpressionPtrList exprs = getIndexExpressions(arrRef);
+      foreach(SgExpressionPtrList::const_iterator::value_type exp, exprs) {
+        // 2. score each index expression and report the score
+        std::cout << "Expression Type: " << exp->sage_class_name()
+                  << std::endl
+                  << "Expression: " << exp->unparseToString()
                   << std::endl;
-        const StaticSingleAssignment::NodeReachingDefTable & defTable =
-                                               ssa->getReachingDefsAtNode_(v);
-        std::cout << "DefTable: " << std::endl;
-        // 3. Match the variables in the expression up with their definition
-        // For example, in the expression A(x,y), we first want to score x, then
-        // separately score y, and not score A unless we had something like
-        // B(A(x,y)).  This means that scoring should be based on the
-        // "var" above.
-        foreach(StaticSingleAssignment::NodeReachingDefTable::const_iterator::
-                                                     value_type def, defTable) {
-          assert(def.first.size() == 1); // TODO: why is this always true?
-          // TODO: a) Find the right def
-          //       b) find all uses of that def
-          //       c) check each of those uses to see if they are a conditional
-          //       d) grade each conditional based on the array declaration
-          foreach(const SgInitializedName * const name, def.first) {
-            if( var == name->get_symbol_from_symbol_table() ){
-              std::cout << "Found a match: " << var->get_name().getString()
-                        << "[" << def.second->getRenamingNumber() << "]"
-                        << std::endl;
+        // TODO: This next bit will skip over constants used in the indexes
+        const Rose_STL_Container<SgNode*> varrefs =
+                     NodeQuery::querySubTree(exp, V_SgVarRefExp);
+        foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type v, varrefs){
+          const SgVariableSymbol* const var = isSgVarRefExp(v)->get_symbol();
+
+          if (var) {
+            std::cout << "Sub-expression symbol: " << var->get_name().getString()
+                      << std::endl;
+            const StaticSingleAssignment::NodeReachingDefTable & defTable =
+                                                   ssa->getReachingDefsAtNode_(v);
+            std::cout << "DefTable: " << std::endl;
+            // 3. Match the variables in the expression up with their definition
+            // For example, in the expression A(x,y), we first want to score x, then
+            // separately score y, and not score A unless we had something like
+            // B(A(x,y)).  This means that scoring should be based on the
+            // "var" above.
+            foreach(StaticSingleAssignment::NodeReachingDefTable::const_iterator::
+                                                         value_type def, defTable) {
+              assert(def.first.size() == 1); // TODO: why is this always true?
+              // TODO: a) Find the correct def
+              //       b) find all uses of def that dominate the use in the array
+              //       c) check each of those uses to see if they are a conditional
+              //       d) grade each conditional based on the array declaration
+              foreach(const SgInitializedName * const name, def.first) {
+                // Select mattching def for var
+                // TODO: Does this way of matching respect the renaming number?
+                //       that is, does it find the exact instance of the variable?
+                if( var == name->get_symbol_from_symbol_table() ){
+                  std::cout << "Found a match: " << var->get_name().getString()
+                            << "[" << def.second->getRenamingNumber() << "]"
+                            << std::endl;
+                  // Get all conditionals and check if they contain "name" (with
+                  // the correct renaming number)
+                  // Still have the issue of checking if the conditional
+                  // dominates the use we care about
+                  const Rose_STL_Container<SgNode*> dos =
+                               NodeQuery::querySubTree(node, V_SgFortranDo);
+                  const Rose_STL_Container<SgNode*> ifs =
+                               NodeQuery::querySubTree(node, V_SgIfStmt);
+                  Backstroke::CFG<ssa_private::DataflowCfgFilter> cfg(fd);
+                  const Backstroke::CFG<ssa_private::DataflowCfgFilter>::VertexVertexMap
+                           dominators = cfg.getDominatorTree();
+                }
+              }
             }
           }
         }
       }
-    }  // end of for
+    }
   }
-
   // From this point on we are dealing with an array reference.
 
 
