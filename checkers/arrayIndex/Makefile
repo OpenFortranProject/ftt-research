@@ -12,7 +12,7 @@ ROSE_INSTALL ?= $(HOME)/ftt/rose-trunk/compileTree
 LOCAL_COMPASS_LIB := -L`pwd` -Wl,-rpath `pwd` -lcompass 
 
 # Link syntax required for ROSE (using instaled version of ROSE)
-ROSE_LIB := -L$(ROSE_INSTALL)/lib -Wl,-rpath $(ROSE_INSTALL)/lib -lrose 
+ROSE_LIB := -L$(ROSE_INSTALL)/lib -Wl,-rpath $(ROSE_INSTALL)/lib -lrose
 
 # Specify specific path to find libstdc++.so (required when not using the default system compiler)
 # This is required at least on the LLNL computers using non-default versions of GNU compilers.
