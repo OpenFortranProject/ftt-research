@@ -636,10 +636,10 @@ visit(SgNode* node) {
     SgFunctionDefinition * const fd = isSgFunctionDefinition(n);
     const Rose_STL_Container<SgNode*> arrayRefs =
                  NodeQuery::querySubTree(n, V_SgPntrArrRefExp);
-    foreach(const SgNode * const a, arrayRefs) {
-      const SgPntrArrRefExp & arrRef = *isSgPntrArrRefExp(a);
+    foreach(SgNode * const a, arrayRefs) {
+      SgPntrArrRefExp * const arrRef = isSgPntrArrRefExp(a);
       // 1. For each array reference, get all of the index expressions
-      const SgExpressionPtrList exprs = getIndexExpressions(arrRef);
+      const SgExpressionPtrList exprs = getIndexExpressions(*arrRef);
       foreach(SgExpressionPtrList::const_iterator::value_type exp, exprs) {
         // 2. score each index expression and report the score
         std::cout << "Expression Type: " << exp->sage_class_name()
@@ -686,9 +686,18 @@ visit(SgNode* node) {
                                NodeQuery::querySubTree(node, V_SgFortranDo);
                   const Rose_STL_Container<SgNode*> ifs =
                                NodeQuery::querySubTree(node, V_SgIfStmt);
-                  Backstroke::CFG<ssa_private::DataflowCfgFilter> cfg(fd);
-                  const Backstroke::CFG<ssa_private::DataflowCfgFilter>::VertexVertexMap
-                           dominators = cfg.getDominatorTree();
+                  typedef ssa_private::DataflowCfgFilter CfgNodeT;
+                  typedef Backstroke::CFG<CfgNodeT> ControlFlowGraph;
+                  ControlFlowGraph cfg(fd);
+                  const ControlFlowGraph::VertexVertexMap
+                           dominatorTreeMap = cfg.getDominatorTree();
+                  foreach(const ControlFlowGraph::VertexVertexMap::value_type& nodeDominatorPair, dominatorTreeMap) {
+                    ControlFlowGraph::CFGNodeType node = *cfg[nodeDominatorPair.first];
+                    ControlFlowGraph::CFGNodePtr dominator = cfg[nodeDominatorPair.second];
+                    if( node.getNode() == arrRef ) {
+                      std::cout << dominator->getNode()->unparseToString() << std::endl;
+                    }
+                  }
                 }
               }
             }
