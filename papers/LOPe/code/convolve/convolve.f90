@@ -26,12 +26,10 @@ contains
       real :: val
       integer :: row, col, ip, jp
 
-      print *, "shape================"
-      print *, NX, NY
-      print *, shape(S), shape(Image)
-      print *
-
-      S = 127.0
+!      print *, "shape================"
+!      print *, NX, NY
+!      print *, shape(S), shape(Image)
+!      print *
 
       ! in Fortran the image is rotated by 90 degrees (image 'row' varies first)
       !
@@ -48,29 +46,29 @@ contains
          end do
       end do
 
-!      S = Image(0:NY-1,0:NX-1)
-
    end subroutine convolve_cpu_loops
 
    subroutine convolve_cpu_omp(S, Image, F)
       implicit none
-      real, intent(out) :: S(:,:)
-      real, intent(in ) :: Image(:,:)
+      real, intent(out) :: S(0:,0:)
+      real, intent(in ) :: Image(-NPAD:,-NPAD:)
       type(FilterPatch) :: F
       real :: val
-      integer :: i, j, ip, jp
+      integer :: row, col, ip, jp
 
 !$OMP PARALLEL PRIVATE(val)
 !$OMP DO
-      do j = 1, NY
-         do i = 1, NX
+      ! in Fortran the image is rotated by 90 degrees (image 'row' varies first)
+      !
+      do col = 0, NY-1
+         do row = 1, NX-1
             val = 0.0
             do jp = -NPAD, NPAD
                do ip = -NPAD, NPAD
-                  val = val + F%p(ip,jp)*Image(i+NPAD,j+NPAD)
+                  val = val + F%p(ip,jp)*Image(row+ip,col+jp)
                end do
             end do
-            S(i,j) = val
+            S(row,col) = val
          end do
       end do
 !$OMP END DO
@@ -132,12 +130,15 @@ contains
       integer, intent(in) :: nxex, nyex
       real(C_FLOAT), intent(out) :: I(nxex,nyex)
 
-      print *, "will call read_image_file", nxex, nyex
-      call read_image_file("lena-sjooblom.jpg", nxex, nyex, I)
+      print *, "Ignoring read from image without gdal"
+!      print *, "will call read_image_file", nxex, nyex
+!      call read_image_file("lena-sjooblom.jpg", nxex, nyex, I)
 
-      print *, "second row input image"
-      print *, I(2,1:5)
-      print *, I(1,1:5)
+!      print *, "second row input image"
+!      print *, I(2,1:5)
+!      print *, I(1,1:5)
+
+      I = 13.0
 
     end subroutine init_image
 
@@ -148,7 +149,8 @@ contains
       integer, intent(in) :: nx, ny
       real(C_FLOAT), intent(in) :: I(nx,ny)
 
-      call write_image_file(filename, nx, ny, I)
+      print *, "Ignoring write to image without gdal"
+!      call write_image_file(filename, nx, ny, I)
 
     end subroutine write_image
 
@@ -171,7 +173,7 @@ program test_convolve
    type(CLKernel) :: kernel
    type(CLBuffer) :: d_I, d_S, d_F
 
-   integer(c_size_t) :: nxLocal=NXL, nyLocal=NXL
+   integer(c_size_t) :: nxLocal=NXL, nyLocal=NYL
    integer(c_size_t) :: filter_mem_size    = NXP*NYP * SIZE_ELEMENT
    integer(c_size_t) :: global_mem_size    = NX*NY*SIZE_ELEMENT
    integer(c_size_t) :: global_ex_mem_size = NXEX*NYEX*SIZE_ELEMENT
@@ -181,8 +183,9 @@ program test_convolve
    real(c_double) :: cpu_time, gpu_time
 
    integer :: nxGlobal=NX, nyGlobal=NY
+   integer :: nxGlobalEx=NXEX, nyGlobalEx=NYEX
    integer :: ii, jj
-   integer :: device_id, d_time, nLoops=1, nWarm=20
+   integer :: device_id, d_time, nLoops=100, nWarm=20
    logical :: check_results
    real :: bandwidth, throughput, flops
 
@@ -200,8 +203,6 @@ program test_convolve
    call convolve_cpu_loops(S, I, F)
    call write_image("lena-new.tiff" // C_NULL_CHAR, NX, NY, S)
 
-   stop
-
    if (NXL < 2*NPAD .or. NYL < 2*NPAD) then
       print *, "thread work group size is too small, die!!!"
       stop 1
@@ -210,7 +211,11 @@ program test_convolve
    device_id = 0  ! 0=GPU, 1=CPU
    status = init(device, device_id)
    call limitLocalSize(device, nxLocal, nyLocal)
+
+   status = query(device)
+
    print *, "device_id   ==", device_id
+   print *, "padding     ==", NPAD
    print *, "local size  ==", nxLocal, nyLocal
    print *, "global size ==", NX, NY
    print *, "tile_mem_size   ==", tile_mem_size
@@ -239,6 +244,9 @@ program test_convolve
 
    ! warmup the kernel
    !
+   print *
+   print *
+   print *
    print *, "warmup"
    do ii = 1, nWarm
       status = run(kernel, NX, NY, nxLocal, nyLocal)
