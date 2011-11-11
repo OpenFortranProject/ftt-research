@@ -9,6 +9,17 @@
 #include "rose.h"
 #include "compass.h"
 
+static std::string intentToString(const SgTypeModifier & mod) {
+  if(mod.isIntent_in()) {
+    return "in";
+  } else if (mod.isIntent_out()) {
+    return "out";
+  } else if (mod.isIntent_inout()) {
+    return "inout";
+  }
+  return "";
+}
+
 extern const Compass::Checker* const implicitSaveChecker;
 
 // DQ (1/17/2009): Added declaration to match external defined in file:
@@ -22,8 +33,9 @@ namespace CompassAnalyses {
     /*! \brief Implicit Save: Add your description here
      */
     extern const std::string checkerName= "implicitSave";
-    extern const std::string shortDescription= "improper operation to an implicit saved variable:";
-    extern const std::string longDescription= "find statement assigning value to an implicit saved variable";
+    extern const std::string shortDescription= "improper operation to variable: ";
+    extern const std::string longDescription= "find statement assigning value to an implicit saved variable or intent mismatch";
+    extern const std::string att_assign_init_name = "att_assign_init";
 
     // Specification of Checker Output Implementation
     class CheckerOutput: public Compass::OutputViolationBase {
@@ -124,7 +136,7 @@ visit(SgNode* node) { // this visit is to set attribute
       //mark the node SgVariableSymbol by adding myAstAttribute
       SgVariableSymbol* const var_sym = isSgVariableSymbol(var_init->get_symbol_from_symbol_table());
       if (var_sym != NULL) {
-        var_sym->setAttribute("att_assign_init", new myAstAttribute(var_decl_mod_type));
+        var_sym->setAttribute(att_assign_init_name, new myAstAttribute(var_decl_mod_type));
       }
     }
   } break;
@@ -143,33 +155,24 @@ visit(SgNode* node) { // this visit is to set attribute
          i++, j++) {
       const SgVarRefExp* const arg_var = isSgVarRefExp(*i);
       if (arg_var != NULL ) {
-        //check whether argument symbol has att set
-        const SgVariableSymbol* const arg_var_sym_g = arg_var->get_symbol();
 
-        // check if attribute "att_assign_init" is set
-        const AstAttribute* const arg_att = arg_var_sym_g->getAttribute("att_assign_init");
-        if ( arg_att != NULL ) {
-          SgInitializedName* const init = isSgInitializedName(*j);
+        SgInitializedName* const init = isSgInitializedName(*j);
 
-          if (init != NULL) {
-            const SgVariableDeclaration* const var_decl          = isSgVariableDeclaration(init->get_parent());
-            const SgDeclarationModifier        var_decl_mod      = var_decl->get_declarationModifier();
-            const SgTypeModifier               var_decl_mod_type = var_decl_mod.get_typeModifier();
+        if (init != NULL) {
+          const SgVariableDeclaration* const var_decl          = isSgVariableDeclaration(init->get_parent());
+          const SgDeclarationModifier        var_decl_mod      = var_decl->get_declarationModifier();
+          const SgTypeModifier               var_decl_mod_type = var_decl_mod.get_typeModifier();
 
-            // check whether an argument is intent(out) or (inout)
-            if ( (var_decl_mod_type.isIntent_out() )
-                 || (var_decl_mod_type.isIntent_inout())) {
-              SgVariableSymbol* const sym =
-                isSgVariableSymbol(init->get_symbol_from_symbol_table());
-              if (sym != NULL ) {
-                sym->setAttribute("att_assign_init",new myAstAttribute(var_decl_mod_type));
+          // store the intent of the argument for later
+          SgVariableSymbol* const sym =
+            isSgVariableSymbol(init->get_symbol_from_symbol_table());
+          if (sym != NULL) {
+            sym->setAttribute(att_assign_init_name,new myAstAttribute(var_decl_mod_type));
 #ifdef _DEBUG_
-                std::cout << "\tSet attribute on node SgVariableSymbol for function argument.\n" << std::endl;
+            std::cout << "\tSet attribute on node SgVariableSymbol for function argument.\n" << std::endl;
 #endif
-              }
-            }
           }
-        } // end arg_att
+        }
       }  // end arg_var
     } // end for loop i,j
   }
@@ -198,14 +201,14 @@ visit(SgNode* node) { // this visit is to get attribute
       const SgVariableSymbol* const var_sym_g = isSgVarRefExp(aop->get_lhs_operand())->get_symbol();
 
       // check if attribute "att_assign_init" is set
-      const AstAttribute* const att = var_sym_g->getAttribute("att_assign_init");
+      const AstAttribute* const att = var_sym_g->getAttribute(att_assign_init_name);
       if ( att != NULL ) {
         const myAstAttribute * const myAtt = dynamic_cast<const myAstAttribute*>(att);
         if ( myAtt == NULL ) {
           abort(); // we should never get here
         }
-        if ( myAtt && !myAtt->getModifier().isSave() ) {
-          const std::string reason = "expression '" + node->unparseToString() + "' value re-assigned";
+        if ( !myAtt->getModifier().isSave() ) {
+          const std::string reason = "expression '" + node->unparseToString() + "' implicitly saved variable re-assigned";
           output->addOutput(new CheckerOutput(node,reason));
         }
       }
@@ -231,19 +234,42 @@ visit(SgNode* node) { // this visit is to get attribute
         const SgVariableSymbol* const arg_var_sym_g = arg_var->get_symbol();
 
         //check if attribute "att_assign_init" is set
-        const AstAttribute* const arg_att = arg_var_sym_g->getAttribute("att_assign_init");
+        const AstAttribute* const arg_att = arg_var_sym_g->getAttribute(att_assign_init_name);
         if ( arg_att != NULL ) {
+          const myAstAttribute * const myAtt = dynamic_cast<const myAstAttribute*>(arg_att);
+          if ( myAtt == NULL ) {
+            abort(); // we should never get here
+          }
           SgInitializedName* const init = isSgInitializedName(*j);
           if (init != NULL) {
             const SgVariableDeclaration* const var_decl          = isSgVariableDeclaration(init->get_parent());
             const SgDeclarationModifier        var_decl_mod      = var_decl->get_declarationModifier();
             const SgTypeModifier               var_decl_mod_type = var_decl_mod.get_typeModifier();
 
-            //check whether an argument is intent(out) or (inout)
-            if ( (var_decl_mod_type.isIntent_out())
-                 || (var_decl_mod_type.isIntent_inout())) {
-              const std::string reason = "expression '"+node->unparseToString()  +
-                                         "' passed implicit saved variables as inout/out argument " ;
+            // check for actual argument versus dummy argument mismatch on intent.
+            // var   | dummy var  | status
+            // in    | in         | ok
+            // in    | out        | error
+            // in    | inout      | warn?
+            // out   | in         | error
+            // out   | out        | ok
+            // out   | inout      | warn
+            // inout | in         | ok
+            // inout | out        | ok
+            // inout | inout      | ok
+            bool shouldWarn = false;
+            if ( myAtt->getModifier().isIntent_in() && !var_decl_mod_type.isIntent_in() ) {
+               shouldWarn = true;
+            }
+            if ( myAtt->getModifier().isIntent_out() && !var_decl_mod_type.isIntent_out() ) {
+               shouldWarn = true;
+            }
+            if( shouldWarn ) {
+              const std::string reason = "expression '" + node->unparseToString() +
+                                         "' intent mismatch " +
+                                         "[" + intentToString(myAtt->getModifier()) + "]" +
+                                         " and " +
+                                         "[" + intentToString(var_decl_mod_type) + "]";
               output->addOutput(new CheckerOutput(node,reason));
             }
           }
@@ -252,7 +278,6 @@ visit(SgNode* node) { // this visit is to get attribute
     } // end for loop i,j
   } // end if isSgFunctionCallExp
 } //End of the visit function.
-
 
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::ImplicitSave::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
