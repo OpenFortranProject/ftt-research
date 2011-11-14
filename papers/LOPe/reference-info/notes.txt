@@ -25,3 +25,9 @@ The halo is useful in three ways:
 - communication between parallel processes canb e achieved when their "halos" overlap: this is the shared memory paradigm.
 - Parts of the "halo" can be used as a scratch pad.  These parts are of local use only, and can be hidden without changing the process in any significant way: only passive obervation of the internal behaviour is obscured.
 
+
+URL's on multigrid
+
+http://www.kfunigraz.ac.at/imawww/borzi/mgintro.pdf
+
+http://software.intel.com/sites/products/documentation/hpc/composerxe/en-us/cpp/mac/optaps/common/optaps_par_cean_prog.htm
