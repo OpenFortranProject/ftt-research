@@ -1,0 +1,84 @@
+\begin{thebibliography}{10}
+
+\bibitem{benkner99hpf}
+S.~Benkner, G.~Lonsdale, and H.~Zima.
+\newblock {The HPF+ Project: Supporting HPF for Advanced Industrial
+  Applications}.
+\newblock In {\em Proceedings of Euro-Par'99}, 1999.
+
+\bibitem{blelloch90}
+G.~Blelloch and G.~W. Sabot.
+\newblock {Compiling collection oriented languages onto massively parallel
+  processors}.
+\newblock {\em Journal of Parallel and Distributed Computing}, 8(2), Feb 1990.
+
+\bibitem{stencil-compiler}
+R.~G. Brickner, K.~Holian, B.~Thiagarajan, and S.~L. Johnsson.
+\newblock Designing a stencil compiler for the connection machine model {CM}-5.
+\newblock Technical Report LA-UR-94-3152, LANL, 1994.
+
+\bibitem{chamberlain_chapel}
+B.~L. Chamberlain, D.~Callahan, and H.~P. Zima.
+\newblock {Parallel Programmability and the Chapel Language}.
+\newblock {\em {International Journal of High Performance Computing
+  Applications}}, 21(3):291--312, 2007.
+
+\bibitem{chamberlain04zpl}
+B.~L. Chamberlain, S.-E. Choi, S.~J. Deitz, and L.~Snyder.
+\newblock {The High-Level Parallel Language ZPL Improves Productivity and
+  Performance}.
+\newblock In {\em {Proceedings of the IEEE International Workshop on
+  Productivity and Performance in High-End Computing}}, 2004.
+
+\bibitem{iverson79apl}
+A.~D. Falkoff and K.~E. Iverson.
+\newblock {APL language summary}.
+\newblock {\em {SIGPLAN Notices}}, 14(4), 1979.
+
+\bibitem{hpcwire11manycore}
+M.~Feldman.
+\newblock Intel touts manycore coprocessor at supercomputing conference.
+\newblock {\em HPC-Wire}, 2011.
+
+\bibitem{keller10repa}
+G.~Keller, M.~M.~T. Chakravarty, R.~Leshchinskiy, S.~P. Jones, and
+  B.~Lippmeier.
+\newblock {Regular, shape-polymorphic, parallel arrays in Haskell}.
+\newblock In {\em Proceedings of ICFP 2010}, 2010.
+
+\bibitem{opencl08}
+{Khronos OpenCL Working Group}.
+\newblock {\em The OpenCL Specification, version 1.0.29}, 8 December 2008.
+
+\bibitem{koelbel94hpf}
+C.~H. Koelbel, D.~B. Loveman, R.~S. Schreiber, G.~L. Steele, and M.~E. Zosel.
+\newblock {\em The High Performance Fortran Handbook}.
+\newblock {The MIT Press}, 1994.
+
+\bibitem{Leveque02}
+R.~J. Le{V}eque.
+\newblock {\em Finite Volume Methods for Hyperbolic Problems}.
+\newblock {Cambridge Texts in Applied Mathematics}, 2002.
+
+\bibitem{Levesque:SC08}
+J.~Levesque.
+\newblock {Fifty Years of Fortran}.
+\newblock Panel Discussion, SuperComputing 2008, Reno, Nevada.
+
+\bibitem{Robey07}
+R.~W. Robey, R.~Roberts, and C.~Moler.
+\newblock Secrets of supercomputing: The conservation laws, supercomputing
+  challenge kickoff.
+\newblock {R}esearch {R}eport {LA-UR}-07-6793, LANL, 2007.
+
+\bibitem{pgi10accelerator}
+{The Portland Group}.
+\newblock {PGI Fortran \& C Accelerator Programming Model}.
+\newblock Technical report, March 2010.
+
+\bibitem{wolfe08gpgpu}
+M.~Wolfe.
+\newblock {How We Should Program GPGPUs}.
+\newblock {\em Linux Journal}, 2008.
+
+\end{thebibliography}

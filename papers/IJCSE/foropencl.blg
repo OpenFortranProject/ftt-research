@@ -1,0 +1,54 @@
+This is BibTeX, Version 0.99d (TeX Live 2011)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: foropencl.aux
+The style file: abbrv.bst
+Database file #1: foropencl.bib
+Warning--string name "november" is undefined
+--line 20 of file foropencl.bib
+Warning--string name "august" is undefined
+--line 27 of file foropencl.bib
+Warning--string name "june" is undefined
+--line 38 of file foropencl.bib
+Warning--empty institution in pgi10accelerator
+You've used 15 entries,
+            2118 wiz_defined-function locations,
+            576 strings with 5923 characters,
+and the built_in function-call counts, 4021 in all, are:
+= -- 363
+> -- 224
+< -- 2
++ -- 91
+- -- 74
+* -- 248
+:= -- 729
+add.period$ -- 44
+call.type$ -- 15
+change.case$ -- 80
+chr.to.int$ -- 0
+cite$ -- 16
+duplicate$ -- 159
+empty$ -- 311
+format.name$ -- 74
+if$ -- 807
+int.to.chr$ -- 0
+int.to.str$ -- 15
+missing$ -- 12
+newline$ -- 77
+num.names$ -- 30
+pop$ -- 99
+preamble$ -- 1
+purify$ -- 67
+quote$ -- 0
+skip$ -- 101
+stack$ -- 0
+substring$ -- 102
+swap$ -- 18
+text.length$ -- 2
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 56
+warning$ -- 1
+while$ -- 32
+width$ -- 17
+write$ -- 154
+(There were 4 warnings)

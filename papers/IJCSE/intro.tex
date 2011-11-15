@@ -1,0 +1,108 @@
+\section{Introduction}
+\label{sec:intro}
+
+This paper presents a compiler-level approach for targeting a single program to
+multiple, and possibly fundamentally different, processor architectures.  This
+technique allows the application programmer to adopt a single, high-level
+programming model without sacrificing performance.  We suggest that existing
+data-parallel features in Fortran are well-suited to applying automatic
+transformations that generate code specifically tuned for different hardware
+architectures using low-level programming models such as OpenCL.  For algorithms
+that can be easily expressed in terms of whole array, data-parallel operations,
+writing code in Fortran and transforming it automatically to specific low-level
+implementations removes the burden of creating and maintaining multiple versions
+of architecture specific code.
+
+The peak performance of these newer accelerator architectures can be substantial.
+Intel expects a teraflop for the SGEMM benchmark with their Knights Ferry
+processor while the performance of the M2090 NVIDIA Tesla processor is in the
+same neighborhood~\cite{hpcwire11manycore}.  Unfortunately the performance that
+many of the new accelerator architectures offer comes at a cost.  Architectural
+changes are trending toward multiple heterogeneous cores and less of a reliance
+on superscalar instruction level parallelism and hardware managed memory
+hierarchies (such as traditional caches).  
+
+These changes place a heavy burden on
+application programmers as they work to adapt to these new systems.  An
+especially challenging problem is not only how to program to these new
+architectures --- considering the massive scale of concurrency available --- but
+also how to design programs that are portable across the changing landscape of
+computer architectures.  How does a programmer write one program that can
+perform well on both a conventional multicore CPU \emph{and} a GPU (or any other emerging many-core architectures)?
+
+A directive-based approach, such as OpenMP or the Accelerator programming model
+from the Portland Group~\cite{pgi10accelerator}, is one solution to this
+problem.  However, in this paper we take a somewhat different approach.  A
+common theme amongst the new processors is the emphasis on data-parallel
+programming.  This model is well-suited to architectures that are
+based on either vector processing or massively parallel collections of simple
+cores.  The recent CUDA and OpenCL programming languages are intended to
+support this programming model.
+
+The problem with OpenCL and CUDA is that they expose too much detail about the
+machine architecture to the programmer~\cite{wolfe08gpgpu}.  The programmer is
+responsible for explicitly managing memory (including the staging of data back
+and forth between the host CPU and the accelerator device) and specifically
+taking into account architectural differences (such as whether the architecture
+contains vector units).  While these languages have been attractive as a method
+for early adopters to utilize these new architectures, they are less attractive
+to programmers who do not have the time or resources to manually port their code
+to every new architecture and programming model that emerges.
+
+\newpage
+
+\subsection{Approach}
+
+We demonstrate that a subset of Fortran map surprisingly well onto GPUs when
+transformed to OpenCL kernels.  This data-parallel subset includes: array syntax
+using assignment statements and binary operators, array constructs like {\tt
+  WHERE}, and the use of pure and elemental functions.  In addition, we provide
+new functions that explicitly take advantage of the stencil geometry of the
+problem domain we consider.  Note that this subset of the Fortran language is
+implicitly parallel.  This programming model \emph{does not require explicit
+  declaration of parallelism within the program.}  In addition, programs are
+expressed using entirely standard Fortran so it can be compiled for and executed
+on a single core without concurrency.
+
+Transformations are supplied that provide a mechanism for converting Fortran
+procedures written in the Fortran subset described in this paper to OpenCL
+kernels.  We use the ROSE compiler
+infrastructure\footnote{\url{http://www.rosecompiler.org/}} to develop these
+transformations.  ROSE uses the Open Fortran
+Parser\footnote{\url{http://fortran-parser.sf.net/}} to parse Fortran 2008
+syntax and can generate C-based OpenCL.  Since ROSE's intermediate
+representation (IR) was constructed to represent multiple languages, it is
+relatively straightforward to transform high-level Fortran IR nodes to C OpenCL
+nodes.  This work is also applicable to transformations to vendor-specific
+languages, similar to OpenCL, such as the NVIDIA CUDA language.
+
+Transformations for arbitrary Fortran procedures are not attempted.
+Furthermore, a mechanism to transform the calling site to automatically invoke
+OpenCL kernels is not provided at this time.  While it is possible to accomplish
+this task within ROSE, it is considered outside the scope of this paper.
+However, ForOpenCL provides via Fortran interfaces a mechanism to call the C OpenCL
+runtime and enable Fortran programmers to access OpenCL kernels generated by the
+supplied transformations.
+
+We study the automatic transformations for an application example that is
+typical of stencil codes that update array elements according to a fixed
+pattern.  Stencil codes are often employed in applications based on
+finite-difference or finite-volume methods in computational fluid dynamics
+(CFD).  The example described later in this paper is a simple shallow-water
+model in two dimensions using finite volume methods.  Stencil-like patterns
+appear in a number of other contexts as well.  In image processing, they appear
+in convolution-based algorithms in which small kernels are convolved with an image
+to implement denoising, edge detection, and other common operators.  Similar stencil
+operators appear in general signal processing applications as well.  
+%% more?
+
+Finally, we examine the performance of the Fortran data-parallel abstraction
+when transformed to OpenCL to run on GPU architectures.  The performance of
+automatically transformed code is compared with a hand-optimized OpenCL
+version of the shallow-water code.
+
+We do not perform any additional analysis of the code to identify
+parallelism beyond that present in the data parallel operations that we
+focus on in this paper.  Additional program
+analysis methods may be investigated to study their applicability
+in future versions of this work.
