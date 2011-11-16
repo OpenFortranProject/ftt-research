@@ -1,0 +1,18 @@
+\subsection{Kernel transformation}
+
+In addition to the transformation of the code at call sites to copy
+data back and forth from the device and invoke the OpenCL kernel, we
+must also provide transformations of the Fortran kernel logic to the
+equivalent OpenCL C code.  This transformation is fairly
+straightforward, and maps a restricted subset of Fortran directly to
+its C equivalent.  The transformation is based on a regular traversal
+of the ROSE Sage AST that represents the Fortran code.  The visitor
+used in the traversal handles five types of Sage AST Nodes: {\tt
+  SgAllocateStatment}, {\tt SgFunctionDeclaration},
+{\tt SgVariableDeclaration}, {\tt SgFunctionCallExp}, and
+{\tt SgExprStatement}.  These encompass the primary activities that are
+commonly encountered in computational kernels: allocation, function invocation,
+variable and function declaration, and expressions that correspond to
+arithmetic operations.
+
+
