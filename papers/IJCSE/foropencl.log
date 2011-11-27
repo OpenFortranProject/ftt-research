@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  27 NOV 2011 02:37
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  27 NOV 2011 03:09
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -358,157 +358,157 @@ e
 ))
 \c@lstlisting=\count118
 
-Overfull \hbox (3.0pt too wide) in paragraph at lines 117--117
+Overfull \hbox (3.0pt too wide) in paragraph at lines 136--136
  []  
  []
 
 
-Overfull \hbox (3.0pt too wide) in paragraph at lines 117--117
+Overfull \hbox (3.0pt too wide) in paragraph at lines 136--136
  [][]|  
  []
 
 
-Underfull \hbox (badness 3168) in paragraph at lines 120--130
+Underfull \hbox (badness 3168) in paragraph at lines 139--149
  \OT1/cmr/bx/n/9 Abstract: \OT1/cmr/m/n/9 Emerging
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 GPU architectures
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 computing are well
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 suited to a data-
  []
 
 
-Underfull \hbox (badness 1859) in paragraph at lines 120--130
+Underfull \hbox (badness 1859) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 parallel programming
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 model. This paper
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 presents preliminary
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 work examining
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 a programming
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 methodology that
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 provides Fortran
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 programmers with
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 access to these
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 emerging systems.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 We use array
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 to show how this
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 feature is easily
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 The transformations
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 in ForOpenCL are
  []
 
 
-Underfull \hbox (badness 6859) in paragraph at lines 120--130
+Underfull \hbox (badness 6859) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 based on a simple
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 to OpenCL. We
  []
 
 
-Underfull \hbox (badness 7116) in paragraph at lines 120--130
+Underfull \hbox (badness 7116) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 stencil code solving
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 the shallow-water
  []
 
 
-Underfull \hbox (badness 2460) in paragraph at lines 120--130
+Underfull \hbox (badness 2460) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 fluid equations, that
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 the performance
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 of the ForOpenCL
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 compiler-generated
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 transformations is
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 120--130
+Underfull \hbox (badness 10000) in paragraph at lines 139--149
  \OT1/cmr/m/n/9 of hand-optimized
  []
 
@@ -553,7 +553,21 @@ Underfull \hbox (badness 2027) in paragraph at lines 25--32
  []
 
 
-LaTeX Warning: Citation `pgi10accelerator' on page 1 undefined on input line 34
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 32.
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 32.
+ [1{/usr/local/texlive/2011/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+
+
+]
+
+LaTeX Warning: Citation `pgi10accelerator' on page 2 undefined on input line 34
 .
 
 
@@ -566,16 +580,6 @@ Underfull \hbox (badness 2426) in paragraph at lines 33--41
 \OT1/cmr/m/n/10 of simple cores. The recent CUDA and OpenCL
  []
 
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 41.
-(/usr/local/texlive/2011/texmf-dist/tex/latex/base/omscmr.fd
-File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
-)
-LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 41.
- [1{/usr/local/texlive/2011/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
-
-
-]
 
 LaTeX Warning: Citation `wolfe08gpgpu' on page 2 undefined on input line 43.
 
@@ -666,14 +670,6 @@ Underfull \hbox (badness 1881) in paragraph at lines 103--1
  []
 
 
-Underfull \hbox (badness 2521) in paragraph at lines 17--22
-[]\OT1/cmr/m/n/10 In this section we present the Fortran subset
- []
-
-
-LaTeX Warning: Citation `iverson79apl' on page 2 undefined on input line 31.
-
-
 Underfull \hbox (badness 10000) has occurred while \output is active
 \OT1/cmr/m/n/10 2| \OT1/cmr/m/it/10 M. Sottile et al.
  []
@@ -684,6 +680,13 @@ Overfull \hbox (3.33333pt too wide) has occurred while \output is active
  []
 
 [2]
+Underfull \hbox (badness 2521) in paragraph at lines 17--22
+[]\OT1/cmr/m/n/10 In this section we present the Fortran subset
+ []
+
+
+LaTeX Warning: Citation `iverson79apl' on page 3 undefined on input line 31.
+
 
 LaTeX Warning: Citation `koelbel94hpf' on page 3 undefined on input line 40.
 
@@ -752,6 +755,11 @@ LaTeX Warning: Citation `chamberlainchapel' on page 3 undefined on input line 1
 LaTeX Warning: Citation `keller10repa' on page 3 undefined on input line 141.
 
 
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[3]
 Underfull \hbox (badness 1342) in paragraph at lines 145--151
 \OT1/cmr/m/n/10 used in this work require the programmer to use
  []
@@ -767,14 +775,6 @@ Underfull \hbox (badness 2221) in paragraph at lines 154--159
  []
 
 
-Underfull \vbox (badness 7540) has occurred while \output is active []
-
-
-Overfull \hbox (3.33333pt too wide) has occurred while \output is active
-|[][]
- []
-
-[3]
 Underfull \hbox (badness 1325) in paragraph at lines 207--214
 \OT1/cmr/m/n/10 While this may seem like a trivial example, such
  []
@@ -790,11 +790,6 @@ Underfull \hbox (badness 1237) in paragraph at lines 232--236
  []
 
 
-Underfull \hbox (badness 2961) in paragraph at lines 263--268
-\OT1/cmr/m/n/10 defined in Fortran and are used in array-syntax
- []
-
-
 Underfull \hbox (badness 10000) has occurred while \output is active
 \OT1/cmr/m/n/10 4| \OT1/cmr/m/it/10 M. Sottile et al.
  []
@@ -805,6 +800,10 @@ Overfull \hbox (3.33333pt too wide) has occurred while \output is active
  []
 
 [4]
+Underfull \hbox (badness 2961) in paragraph at lines 263--268
+\OT1/cmr/m/n/10 defined in Fortran and are used in array-syntax
+ []
+
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 271.
 
@@ -854,12 +853,17 @@ Underfull \hbox (badness 3428) in paragraph at lines 347--354
 \OT1/cmr/m/n/10 as contiguous. A kernel procedure may not call
  []
 
-) (./shallow-water.tex
 
-LaTeX Warning: Citation `Robey07' on page 5 undefined on input line 5.
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[5]) (./shallow-water.tex
+
+LaTeX Warning: Citation `Robey07' on page 6 undefined on input line 5.
 
 
-LaTeX Warning: Citation `Leveque02' on page 5 undefined on input line 10.
+LaTeX Warning: Citation `Leveque02' on page 6 undefined on input line 10.
 
 
 Underfull \hbox (badness 1132) in paragraph at lines 4--13
@@ -867,11 +871,6 @@ Underfull \hbox (badness 1132) in paragraph at lines 4--13
  []
 
 
-Overfull \hbox (3.33333pt too wide) has occurred while \output is active
-|[][]
- []
-
-[5]
 Underfull \hbox (badness 10000) in paragraph at lines 35--46
 []\OT1/cmr/m/n/10 The numerical method is a two-step Lax-
  []
@@ -879,16 +878,6 @@ Underfull \hbox (badness 10000) in paragraph at lines 35--46
 
 Overfull \hbox (27.44684pt too wide) detected at line 53
 $ []$ 
- []
-
-
-Underfull \hbox (badness 1960) in paragraph at lines 121--123
-\OT1/cmr/m/n/10 on the cell faces. Assignment statements like the
- []
-
-
-Overfull \hbox (11.14703pt too wide) in paragraph at lines 130--130
-[]     \OT1/cmtt/m/n/9 * (region_cpy(U,face_lt) - region_cpy(U,face_rt))[] 
  []
 
 
@@ -901,7 +890,17 @@ Overfull \hbox (3.33333pt too wide) has occurred while \output is active
 |[][]
  []
 
-[6]) (./source-to-source.tex
+[6]
+Underfull \hbox (badness 1960) in paragraph at lines 121--123
+\OT1/cmr/m/n/10 on the cell faces. Assignment statements like the
+ []
+
+
+Overfull \hbox (11.14703pt too wide) in paragraph at lines 130--130
+[]     \OT1/cmtt/m/n/9 * (region_cpy(U,face_lt) - region_cpy(U,face_rt))[] 
+ []
+
+) (./source-to-source.tex
 Underfull \hbox (badness 5681) in paragraph at lines 3--9
 \OT1/cmr/m/n/10 This section provides an brief overview of the
  []
@@ -910,23 +909,126 @@ Underfull \hbox (badness 5681) in paragraph at lines 3--9
 LaTeX Warning: Citation `opencl08' on page 7 undefined on input line 12.
 
 
-Underfull \hbox (badness 1082) in paragraph at lines 19--27
+Underfull \hbox (badness 1082) in paragraph at lines 19--28
 []\OT1/cmr/m/n/10 An important concept in OpenCL is that of a
  []
 
 
-Underfull \hbox (badness 1436) in paragraph at lines 19--27
+Underfull \hbox (badness 1436) in paragraph at lines 19--28
 \OT1/cmr/m/n/10 to run an OpenCL kernel concurrently on several
  []
 
-<cl-memory.pdf, id=37, 216.81pt x 144.54pt>
+<cl-memory.pdf, id=38, 216.81pt x 144.54pt>
 File: cl-memory.pdf Graphic file (type pdf)
  <use cl-memory.pdf>
-Package pdftex.def Info: cl-memory.pdf used on input line 47.
+Package pdftex.def Info: cl-memory.pdf used on input line 51.
 (pdftex.def)             Requested size: 126.47249pt x 84.31624pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 62--78
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[7 <./cl-memory.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 68--86
 []\OT1/cmr/m/n/10 Halo regions obtained via the \OT1/cmtt/m/n/10 region[]cpy
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 130--133
+\OT1/cmr/m/n/10 with OpenCL equivalents. For example, the
+ []
+
+
+Underfull \vbox (badness 3019) has occurred while \output is active []
+
+
+Overfull \hbox (6.42209pt too wide) in paragraph at lines 136--136
+[]\OT1/cmtt/m/n/9 wave_advance(float dx, ..., __global float * H, ...);[] 
+ []
+
+
+Underfull \hbox (badness 3780) in paragraph at lines 156--160
+\OT1/cmr/m/n/10 code. For example, interior pointer variables are
+ []
+
+
+Underfull \hbox (badness 4805) in paragraph at lines 175--182
+\OT1/cmr/m/n/10 where \OT1/cmtt/m/n/10 i = LX + LY*(NLX+halo(0)+halo(1))) \OT1/
+cmr/m/n/10 is a
+ []
+
+
+Underfull \hbox (badness 1371) in paragraph at lines 175--182
+\OT1/cmr/m/n/10 is the local thread id in the $\OML/cmm/m/it/10 y$ \OT1/cmr/m/n
+/10 dimension, \OT1/cmtt/m/n/10 NLX =
+ []
+
+(./rose-transform.tex
+Underfull \hbox (badness 5460) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 Programmers using ForOpenCL write their code
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 in standard Fortran, and a sequence of code
+ []
+
+
+Underfull \hbox (badness 2318) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 transformations are applied to generate equivalent
+ []
+
+
+Underfull \hbox (badness 4647) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 code in C-based OpenCL. These transformations
+ []
+
+
+Underfull \hbox (badness 4954) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 are fairly straightforward, and map a restricted
+ []
+
+
+Underfull \hbox (badness 2213) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 transformation is based on a regular traversal of
+ []
+
+
+Underfull \hbox (badness 1748) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 the ROSE Sage AST that represents the Fortran
+ []
+
+
+Underfull \hbox (badness 4254) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 types of Sage AST Nodes: \OT1/cmtt/m/n/10 SgAllocateStatment\OT
+1/cmr/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3--16
+\OT1/cmtt/m/n/10 SgFunctionDeclaration\OT1/cmr/m/n/10 , \OT1/cmtt/m/n/10 SgVari
+ableDeclaration\OT1/cmr/m/n/10 ,
+ []
+
+
+Underfull \hbox (badness 5203) in paragraph at lines 3--16
+\OT1/cmtt/m/n/10 SgFunctionCallExp\OT1/cmr/m/n/10 , and \OT1/cmtt/m/n/10 SgExpr
+Statement\OT1/cmr/m/n/10 . These
+ []
+
+
+Underfull \hbox (badness 8113) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 encountered in computational kernels: allocation,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3--16
+\OT1/cmr/m/n/10 and expressions that correspond to arithmetic
+ []
+
+
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 8| \OT1/cmr/m/it/10 M. Sottile et al.
  []
 
 
@@ -934,31 +1036,34 @@ Overfull \hbox (3.33333pt too wide) has occurred while \output is active
 |[][]
  []
 
-[7 <./cl-memory.pdf>]
-Underfull \hbox (badness 10000) in paragraph at lines 120--123
-\OT1/cmr/m/n/10 with OpenCL equivalents. For example, the
+[8])) (./performance.tex
+Underfull \hbox (badness 4013) in paragraph at lines 17--1
+[]\OT1/cmr/m/n/10 In order to perform the language conversion,
  []
 
 
-Overfull \hbox (6.42209pt too wide) in paragraph at lines 126--126
-[]\OT1/cmtt/m/n/9 wave_advance(float dx, ..., __global float * H, ...);[] 
+Underfull \hbox (badness 1237) in paragraph at lines 17--1
+\OT1/cmr/m/n/10 corresponding to the input Fortran code, and one
  []
 
 
-Underfull \hbox (badness 3780) in paragraph at lines 146--150
-\OT1/cmr/m/n/10 code. For example, interior pointer variables are
- []
-
-) (./performance.tex
-Underfull \hbox (badness 4805) in paragraph at lines 165--1
-\OT1/cmr/m/n/10 where \OT1/cmtt/m/n/10 i = LX + LY*(NLX+halo(0)+halo(1))) \OT1/
-cmr/m/n/10 is a
+Underfull \hbox (badness 3919) in paragraph at lines 17--1
+\OT1/cmr/m/n/10 corresponding to the output OpenCL code. The
  []
 
 
-Underfull \hbox (badness 1371) in paragraph at lines 165--1
-\OT1/cmr/m/n/10 is the local thread id in the $\OML/cmm/m/it/10 y$ \OT1/cmr/m/n
-/10 dimension, \OT1/cmtt/m/n/10 NLX =
+Underfull \hbox (badness 3536) in paragraph at lines 17--1
+\OT1/cmr/m/n/10 transformation performs a traversal of the input
+ []
+
+
+Underfull \hbox (badness 1137) in paragraph at lines 17--1
+\OT1/cmr/m/n/10 into the OpenCL code to represent the equivalent
+ []
+
+
+Underfull \hbox (badness 2608) in paragraph at lines 17--1
+\OT1/cmr/m/n/10 code in the output language. The input Fortran
  []
 
 
@@ -981,28 +1086,18 @@ Underfull \hbox (badness 1152) in paragraph at lines 3--13
 \OT1/cmr/m/n/10 constructs. We also compared with a hand-written
  []
 
-
-Underfull \hbox (badness 10000) has occurred while \output is active
-\OT1/cmr/m/n/10 8| \OT1/cmr/m/it/10 M. Sottile et al.
- []
-
-
-Overfull \hbox (3.33333pt too wide) has occurred while \output is active
-|[][]
- []
-
-[8])
-Underfull \hbox (badness 1515) in paragraph at lines 152--159
+)
+Underfull \hbox (badness 1515) in paragraph at lines 171--178
 \OT1/cmr/m/n/10 develop and maintain programs at a high-level of
  []
 
 
-Underfull \hbox (badness 1394) in paragraph at lines 152--159
+Underfull \hbox (badness 1394) in paragraph at lines 171--178
 \OT1/cmr/m/n/10 abstraction, without coding to a specific hardware
  []
 
 
-Underfull \hbox (badness 1776) in paragraph at lines 152--159
+Underfull \hbox (badness 1776) in paragraph at lines 171--178
 \OT1/cmr/m/n/10 details of the accelerator architecture or to know
  []
 
@@ -1012,6 +1107,11 @@ Underfull \hbox (badness 1552) in paragraph at lines 9--14
  []
 
 
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[9]
 Underfull \hbox (badness 10000) in paragraph at lines 37--42
 []\OT1/cmr/m/n/9 keller10repa G. Keller, M. M. T. Chakravarty,
  []
@@ -1028,23 +1128,30 @@ Underfull \hbox (badness 2990) in paragraph at lines 52--56
  []
 
 ) AED: lastpage setting LastPage
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 10| \OT1/cmr/m/it/10 M. Sottile et al.
+ []
+
+
 Overfull \hbox (3.33333pt too wide) has occurred while \output is active
 |[][]
  []
 
-[9] (./foropencl.aux)
+[10
+
+] (./foropencl.aux)
 
 LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 4431 strings out of 493633
- 59584 string characters out of 3143378
- 134620 words of memory out of 3000000
+ 4434 strings out of 493633
+ 59636 string characters out of 3143378
+ 134621 words of memory out of 3000000
  7608 multiletter control sequences out of 15000+200000
  11861 words of font info for 46 fonts, out of 3000000 for 9000
  831 hyphenation exceptions out of 8191
- 38i,14n,32p,461b,408s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 38i,15n,32p,461b,370s stack positions out of 5000i,500n,10000p,200000b,50000s
 </usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></
@@ -1063,10 +1170,10 @@ e/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/
 texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2011/t
 exmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb></usr/local/texlive/2011/tex
 mf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on foropencl.pdf (9 pages, 445551 bytes).
+Output written on foropencl.pdf (10 pages, 450555 bytes).
 PDF statistics:
- 129 PDF objects out of 1000 (max. 8388607)
- 85 compressed objects within 1 object stream
+ 132 PDF objects out of 1000 (max. 8388607)
+ 87 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  6 words of extra memory for PDF output out of 10000 (max. 10000000)
 
