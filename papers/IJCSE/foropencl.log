@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.8.29)  29 AUG 2011 23:13
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  27 NOV 2011 02:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -349,7 +349,7 @@ Overfull \hbox (3.2468pt too wide) in paragraph at lines 145--151
 d
  []
 
-[3] [4]
+[3]
 Overfull \hbox (1.79797pt too wide) in paragraph at lines 313--320
 []\T1/aer/m/n/9 Data par-al-lelism has been called collection-oriented pro-gram
 -
@@ -361,7 +361,7 @@ Overfull \hbox (4.71431pt too wide) in paragraph at lines 313--320
 n/9 re-gion_ptr\T1/aer/m/n/9 )
  []
 
-
+[4]
 Overfull \hbox (2.55405pt too wide) in paragraph at lines 347--354
 \T1/aett/m/n/9 gion_ptr \T1/aer/m/n/9 func-tions. Fu-ture work will ad-dress no
 n-contiguous
@@ -399,8 +399,8 @@ Overfull \hbox (5.08365pt too wide) in paragraph at lines 155--162
 ] (./foropencl.aux) ) 
 Here is how much of TeX's memory you used:
  4167 strings out of 493633
- 55454 string characters out of 3143377
- 120834 words of memory out of 3000000
+ 55454 string characters out of 3143378
+ 121834 words of memory out of 3000000
  7354 multiletter control sequences out of 15000+200000
  53438 words of font info for 74 fonts, out of 3000000 for 9000
  831 hyphenation exceptions out of 8191
@@ -423,7 +423,7 @@ texlive/2011/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/local/texlive
 /2011/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/local/texlive/2011/t
 exmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2011/texmf-dist/
 fonts/type1/urw/times/utmri8a.pfb>
-Output written on foropencl.pdf (9 pages, 410107 bytes).
+Output written on foropencl.pdf (9 pages, 410056 bytes).
 PDF statistics:
  126 PDF objects out of 1000 (max. 8388607)
  83 compressed objects within 1 object stream

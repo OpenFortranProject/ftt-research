@@ -1,0 +1,947 @@
+Y&Y TeX 2.1.5 1999 Feb  4 16:12:51 SN 0
+Copyright (C) 1993--1999 Y&Y, Inc.  (978) 371-3286  http://www.YandY.com
+This is TeX, Version 3.14159 (Y&Y TeX 2.1.5) (format=latex 1998.10.15)  2009 JUL 30 14:10
+**+latex C:/Double-Column/Double-Column/IJSISE-1(3-4)-04Tuithungetal.tex
+(C:/yandy/YANDYTEX/FMT/latex.fmt)
+(C:/Double-Column/Double-Column/IJSISE-1(3-4)-04Tuithungetal.tex
+LaTeX2e <1998/06/01>
+(doublecol-new.cls
+
+LaTeX Warning: You have requested document class `doublecol-new',
+               but the document class provides `singlecol'.
+
+Document Class: singlecol 1998/05/05 v1.3y Standard LaTeX document class
+(c:/yandy/tex/latex2e/misc/revtex/epsf.sty
+\epsffilein=\read1
+\epsfxsize=\dimen102
+\epsfysize=\dimen103
+\epsftsize=\dimen104
+\epsfrsize=\dimen105
+\epsftmp=\dimen106
+\pspoints=\dimen107
+)
+(c:/yandy/tex/latex2e/contrib/other/misc/endnotes.sty
+\c@endnote=\count79
+\endnotesep=\dimen108
+\@enotes=\write3
+)
+(c:/yandy/tex/latex2e/base/ifthen.sty
+Package: ifthen 1997/11/02 v1.0n Standard LaTeX ifthen package (DPC)
+) (c:/yandy/tex/base/tools/dcolumn.sty
+Package: dcolumn 1996/09/23 v1.04 decimal alignment package (DPC)
+
+(c:/yandy/tex/base/tools/array.sty
+Package: array 1998/05/13 v2.3m Tabular extension package (FMi)
+\col@sep=\dimen109
+\extrarowheight=\dimen110
+\NC@list=\toks14
+\extratabsurround=\skip41
+\backup@length=\skip42
+)) (c:/yandy/tex/base/graphics/graphics.sty
+Package: graphics 1999/02/16 v1.0l Standard LaTeX Graphics (DPC,SPQR)
+
+(c:/yandy/tex/base/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+) (c:/yandy/tex/base/graphics/graphics.cfg)
+Package graphics Info: Driver file: dvipsone.def on input line 80.
+(c:/yandy/tex/base/graphics/dvipsone.def
+File: dvipsone.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+)) (c:/yandy/tex/latex2e/base/leqno.sty
+
+LaTeX Warning: inputting `leqno.clo' instead of obsolete `leqno.sty'.
+
+(c:/yandy/tex/latex2e/base/leqno.clo
+File: leqno.clo 1996/07/26 v1.1b Standard LaTeX option (left equation numbers)
+)) (c:/yandy/tex/base/tools/calc.sty
+Package: calc 1998/07/07 v4.1b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count80
+\calc@Bcount=\count81
+\calc@Adimen=\dimen111
+\calc@Bdimen=\dimen112
+\calc@Askip=\skip43
+\calc@Bskip=\skip44
+LaTeX Info: Redefining \setlength on input line 49.
+LaTeX Info: Redefining \addtolength on input line 50.
+\calc@denominator=\count82
+)
+(lastpage.sty
+Package: lastpage 1994/06/25 v0.1b LaTeX2e package for refs to last page number
+ (JPG)
+) (c:/yandy/tex/base/graphics/color.sty
+Package: color 1999/02/16 v1.0i Standard LaTeX Color (DPC)
+
+(c:/yandy/tex/base/graphics/color.cfg)
+Package color Info: Driver file: dvipsone.def on input line 125.
+)
+(c:/yandy/tex/base/amslatex/inputs/amsmath.sty
+Package: amsmath 1997/03/20 v1.2d AMS math features
+\@mathmargin=\skip45
+
+(c:/yandy/tex/base/amslatex/inputs/amstext.sty
+Package: amstext 1996/10/28 v1.2b
+
+(c:/yandy/tex/base/amslatex/inputs/amsgen.sty
+File: amsgen 1996/10/29 v1.2b
+\@emptytoks=\toks15
+\ex@=\dimen113
+))
+(c:/yandy/tex/base/amslatex/inputs/amsbsy.sty
+Package: amsbsy 1996/10/28 v1.2b
+\pmbraise@=\dimen114
+)
+(c:/yandy/tex/base/amslatex/inputs/amsopn.sty
+Package: amsopn 1996/10/28 v1.2b operator names
+)
+LaTeX Info: Redefining \frac on input line 188.
+\uproot@=\count83
+\leftroot@=\count84
+\classnum@=\count85
+\DOTSCASE@=\count86
+LaTeX Info: Redefining \dots on input line 335.
+LaTeX Info: Redefining \ldots on input line 418.
+LaTeX Info: Redefining \cdots on input line 422.
+\Mathstrutbox@=\box26
+\strutbox@=\box27
+\big@size=\dimen115
+LaTeX Font Info:    Redeclaring font encoding OML on input line 500.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 501.
+\skewcharcount@=\count87
+\familycount@=\count88
+\pointcount@=\count89
+\accentdimen@=\dimen116
+\accentmu@=\count90
+\minaw@=\dimen117
+\c@MaxMatrixCols=\count91
+\dotsspace@=\muskip10
+\c@parentequation=\count92
+\dspbrk@lvl=\count93
+\tag@help=\toks16
+\row@=\count94
+\column@=\count95
+\maxfields@=\count96
+\andhelp@=\toks17
+\eqnshift@=\dimen118
+\alignsep@=\dimen119
+\tagshift@=\dimen120
+\tagwidth@=\dimen121
+\totwidth@=\dimen122
+\lineht@=\dimen123
+\@envbody=\toks18
+\multlinegap=\skip46
+\multlinetaggap=\skip47
+)
+(c:/yandy/tex/base/amslatex/inputs/amsfonts.sty
+Package: amsfonts 1996/11/03 v2.2c
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 128.
+)
+(c:/yandy/tex/base/amslatex/inputs/amssymb.sty
+Package: amssymb 1996/11/03 v2.2b
+) (c:/yandy/tex/base/tools/bm.sty
+Package: bm 1998/12/10 v1.0f Bold Symbol Support (DPC/FMi)
+\symboldoperators=\mathgroup6
+\symboldletters=\mathgroup7
+\symboldsymbols=\mathgroup8
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 127.
+LaTeX Info: Redefining \bm on input line 185.
+) (c:/yandy/tex/latex2e/base/latexsym.sty
+Package: latexsym 1996/11/20 v2.2d Standard LaTeX package (lasy symbols)
+\symlasy=\mathgroup9
+LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
+(Font)                  U/lasy/m/n --> U/lasy/b/n on input line 85.
+)
+(c:/yandy/tex/latex2e/base/size10.clo
+File: size10.clo 1998/05/05 v1.3y Standard LaTeX file (size option)
+)
+\markwidth=\dimen124
+\blth=\dimen125
+\marklength=\dimen126
+\markdistance=\dimen127
+\trimwidth=\dimen128
+\trimheight=\dimen129
+\auxaaa=\dimen130
+\auxbbb=\dimen131
+\auxccc=\dimen132
+\auxddd=\dimen133
+\t@abstract=\box28
+\t@receivedname=\box29
+\temptbox=\box30
+\tempdime=\dimen134
+\t@bio=\box31
+ (c:/yandy/tex/base/tools/theorem.sty
+Package: theorem 1995/11/23 v2.2c Theorem extension package (FMi)
+\theorem@style=\toks19
+\theorem@bodyfont=\toks20
+\theorempreskipamount=\skip48
+\theorempostskipamount=\skip49
+
+(c:/yandy/tex/base/tools/thp.sty
+File: thp.sty 1995/11/23 v2.2c Theorem extension package (FMi)
+))
+\c@part=\count97
+\c@section=\count98
+\c@subsection=\count99
+\c@subsubsection=\count100
+\c@paragraph=\count101
+\c@subparagraph=\count102
+\mathindent=\dimen135
+\mathindent=\dimen136
+\c@figure=\count103
+\c@table=\count104
+\abovecaptionskip=\skip50
+\belowcaptionskip=\skip51
+\@tempboxb=\box32
+\boxH=\box33
+\boxHrunin=\box34
+\temptbox=\box35
+\temptboxA=\box36
+\tempdime=\dimen137
+\tempdimeA=\dimen138
+\rboxh=\dimen139
+\rboxw=\dimen140
+) (natbib.sty
+Package: natbib 2000/07/24 7.0a (PWD)
+\bibhang=\skip52
+\bibsep=\skip53
+LaTeX Info: Redefining \cite on input line 509.
+\c@NAT@ctr=\count105
+)
+(c:/yandy/tex/latex2e/contrib/supported/sttools/stfloats.sty
+Package: stfloats 1999/10/22
+\@dblbotnum=\count106
+\c@dblbotnumber=\count107
+)
+\c@lemma=\count108
+\c@theorem=\count109
+\c@corrolary=\count110
+\c@definition=\count111
+\c@question=\count112
+\c@remark=\count113
+\c@scheme=\count114
+\c@case=\count115
+
+(IJSISE-1(3-4)-04Tuithungetal.aux)
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 157.
+LaTeX Font Info:    ... okay on input line 157.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 157.
+LaTeX Font Info:    ... okay on input line 157.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 157.
+LaTeX Font Info:    ... okay on input line 157.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 157.
+LaTeX Font Info:    ... okay on input line 157.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 157.
+LaTeX Font Info:    ... okay on input line 157.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 157.
+LaTeX Font Info:    ... okay on input line 157.
+
+Underfull \hbox (badness 1584) in paragraph at lines 202--211
+ \OT1/cmr/bx/n/9 Abstract: \OT1/cmr/m/n/9 A new approach of Motion-Compensated 
+JPEG2000 (MCJ2K) video
+ []
+
+
+Underfull \hbox (badness 1097) in paragraph at lines 228--238
+ \OT1/cmr/m/n/9 Technology, Indian Institute of Technology, Kharagpur. Prior to
+ IIT Kharagpur,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 239--245
+ 
+ []
+
+
+Overfull \hbox (3.0pt too wide) in paragraph at lines 247--247
+ []  
+ []
+
+
+Overfull \hbox (3.0pt too wide) in paragraph at lines 247--247
+ [][]|  
+ []
+
+
+LaTeX Warning: Optional argument of \twocolumn too tall on page 197.
+
+
+Overfull \vbox (24.0pt too high) has occurred while \output is active []
+
+
+
+LaTeX Warning: Text page 197 contains only floats.
+
+
+Overfull \vbox (24.0pt too high) has occurred while \output is active []
+
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 247.
+
+
+(c:/yandy/tex/base/huber/fd/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 247.
+ [197
+
+
+]
+LaTeX Font Info:    Try loading font information for U+msa on input line 265.
+
+(c:/yandy/tex/latex2e/amsfonts/umsa.fd
+File: Umsa.fd 1995/01/05 v2.2e AMS font definitions
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 265.
+ (c:/yandy/tex/latex2e/amsfonts/umsb.fd
+File: Umsb.fd 1995/01/05 v2.2e AMS font definitions
+)
+LaTeX Font Info:    Try loading font information for U+lasy on input line 265.
+(c:/yandy/tex/latex2e/base/ulasy.fd
+File: ulasy.fd 1996/11/20 v2.2dLaTeX symbol font definitions
+)
+Overfull \hbox (264.79993pt too wide) in paragraph at lines 253--266
+$[]$ 
+ []
+
+
+Overfull \hbox (266.0pt too wide) in paragraph at lines 267--268
+[] 
+ []
+
+
+LaTeX Warning: Reference `fig1' on page 198 undefined on input line 279.
+
+
+Underfull \hbox (badness 2547) in paragraph at lines 274--280
+\OT1/cmr/m/n/10 algorithm used in such algorithms is the baseline
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 281--284
+\OT1/cmr/m/n/10 All of these approaches have the following
+ []
+
+
+Underfull \hbox (badness 3199) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 approaches are also increasingly being pursued in
+ []
+
+
+Underfull \hbox (badness 2443) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 recent years. Specially, wavelet based static image
+ []
+
+
+Underfull \hbox (badness 2057) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 1999; Skodras et al., 2000; Antonini et al., 1992)
+ []
+
+
+Underfull \hbox (badness 4872) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 compression scheme. In wavelet based approaches
+ []
+
+
+Underfull \hbox (badness 1997) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 compensation is used to improve the performance.
+ []
+
+
+Underfull \hbox (badness 1924) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 However the usage of 3D wavelets over the GOP
+ []
+
+
+Underfull \hbox (badness 1112) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 algorithm (Rath et al., 2006), we restrict ourselves
+ []
+
+
+Underfull \hbox (badness 1325) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 we have used JPEG2000 (instead of JPEG as the
+ []
+
+
+Underfull \hbox (badness 1221) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 motion compensation. In many cases, the proposed
+ []
+
+
+Underfull \hbox (badness 3312) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 approach (Tuithung et al., 2006) is found to be
+ []
+
+
+Underfull \hbox (badness 1448) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 having better rate distortion performance than the
+ []
+
+
+Underfull \hbox (badness 1072) in paragraph at lines 317--344
+\OT1/cmr/m/n/10 advantages on using JPEG2000 over the JPEG-like
+ []
+
+
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 198| \OT1/cmr/m/it/10 T. Tuithung et al.
+ []
+
+
+Overfull \hbox (3.3pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[198]
+Underfull \hbox (badness 2376) in paragraph at lines 375--378
+\OT1/cmr/m/n/10 The proposed algorithm has the following distinct
+ []
+
+
+Underfull \hbox (badness 3323) in paragraph at lines 393--402
+\OT1/cmr/m/n/10 The paper is organised in the following sections.
+ []
+
+
+Underfull \hbox (badness 2229) in paragraph at lines 393--402
+\OT1/cmr/m/n/10 In Section 2[] we provide the basic outline of the
+ []
+
+
+Underfull \hbox (badness 1701) in paragraph at lines 393--402
+\OT1/cmr/m/n/10 proposed scheme and its performance on fixed bit
+ []
+
+
+Underfull \hbox (badness 1043) in paragraph at lines 393--402
+\OT1/cmr/m/n/10 and graphs are provided in the respective sections.
+ []
+
+
+LaTeX Warning: Reference `fig2' on page 199 undefined on input line 416.
+
+
+Underfull \hbox (badness 1331) in paragraph at lines 406--417
+\OT1/cmr/m/n/10 the intra frames or $\OML/cmm/m/it/10 I$ \OT1/cmr/m/n/10 frames
+ as well as the error
+ []
+
+
+Underfull \hbox (badness 1067) in paragraph at lines 406--417
+\OT1/cmr/m/n/10 frames obtained through motion compensation. The
+ []
+
+
+Underfull \hbox (badness 1668) in paragraph at lines 406--417
+\OT1/cmr/m/n/10 next) frame(s). Motion compensation is made over
+ []
+
+
+Underfull \hbox (badness 1365) in paragraph at lines 406--417
+\OT1/cmr/m/n/10 the decompressed previous frames. Then the whole
+ []
+
+
+Underfull \hbox (badness 1400) in paragraph at lines 418--427
+\OT1/cmr/m/n/10 A parameter $\OML/cmm/m/it/10 ^^K$ \OT1/cmr/m/n/10 has been con
+sidered indicating the
+ []
+
+
+Underfull \hbox (badness 3668) in paragraph at lines 431--437
+\OT1/cmr/m/n/10 For studying the performance of the compression
+ []
+
+
+LaTeX Warning: Reference `fig3' on page 199 undefined on input line 453.
+
+
+LaTeX Warning: Reference `fig4' on page 199 undefined on input line 454.
+
+
+Underfull \hbox (badness 2521) in paragraph at lines 445--455
+\OT1/cmr/m/n/10 For the entire video, the \OT1/cmr/m/it/10 average \OT1/cmr/m/n
+/10 PSNR value of
+ []
+
+
+Underfull \hbox (badness 2189) in paragraph at lines 445--455
+\OT1/cmr/m/n/10 all the frames has been considered. The effect of
+ []
+
+
+Underfull \hbox (badness 3449) in paragraph at lines 445--455
+\OT1/cmr/m/n/10 using reversible and irreversible wavelets has also
+ []
+
+
+LaTeX Warning: Reference `fig3' on page 199 undefined on input line 456.
+
+
+LaTeX Warning: Reference `fig4' on page 199 undefined on input line 456.
+
+
+LaTeX Warning: Reference `brqcif' on page 199 undefined on input line 462.
+
+
+LaTeX Warning: Reference `brcif' on page 199 undefined on input line 463.
+
+
+LaTeX Warning: Reference `cmpbrqcif' on page 199 undefined on input line 464.
+
+
+LaTeX Warning: Reference `cmpbrcif' on page 199 undefined on input line 464.
+
+
+Underfull \hbox (badness 1789) in paragraph at lines 456--471
+[] \OT1/cmr/m/n/10 performances for the proposed schemes for
+ []
+
+
+Underfull \hbox (badness 6380) in paragraph at lines 456--471
+\OT1/cmr/m/n/10 provides higher PSNR values over MCJ2K with
+ []
+
+
+Underfull \hbox (badness 3312) in paragraph at lines 456--471
+\OT1/cmr/m/n/10 irreversible wavelets at high bit-rates. The PSNR
+ []
+
+
+Overfull \hbox (3.3pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[199]
+Underfull \hbox (badness 1072) in paragraph at lines 472--476
+\OT1/cmr/m/it/10 frame, when errors are computed from the previous
+ []
+
+
+Underfull \hbox (badness 1546) in paragraph at lines 540--547
+\OT1/cmr/m/n/10 We have observed that usage of reversible wavelet
+ []
+
+
+Underfull \hbox (badness 1014) in paragraph at lines 550--556
+\OT1/cmr/m/n/10 rate distortion relationship of encoding of Gaussian
+ []
+
+
+Underfull \hbox (badness 5681) in paragraph at lines 550--556
+\OT1/cmr/m/n/10 distributed values, as described by the following
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 557--565
+[] []\OT1/cmr/m/it/10 The values of a random variable
+ []
+
+
+Underfull \hbox (badness 6893) in paragraph at lines 557--565
+\OT1/cmr/m/it/10 following Gaussian distribution with the standard
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 576--590
+\OT1/cmr/m/n/10 et al., 2001) or the \OT1/cmr/m/it/10 Kolmogrov-Smirinov Test
+ []
+
+
+Underfull \hbox (badness 2418) in paragraph at lines 576--590
+\OT1/cmr/m/n/10 and sharpness of the height relative to a normal
+ []
+
+
+Underfull \hbox (badness 1205) in paragraph at lines 593--604
+\OT1/cmr/m/n/10 for each motion vector, in our case $\OML/cmm/m/it/10 mv[] \OT1
+/cmr/m/n/10 = 8$ bits),
+ []
+
+
+Underfull \hbox (badness 1014) in paragraph at lines 593--604
+\OT1/cmr/m/n/10 a macroblock of size $\OML/cmm/m/it/10 b[] \OMS/cmsy/m/n/10 ^^B
+ \OML/cmm/m/it/10 b[]$ \OT1/cmr/m/n/10 would require $[][][]$
+ []
+
+
+LaTeX Warning: Reference `fig5' on page 200 undefined on input line 609.
+
+
+LaTeX Warning: Reference `fig5' on page 200 undefined on input line 613.
+
+
+LaTeX Warning: Reference `fig5' on page 200 undefined on input line 615.
+
+
+Underfull \hbox (badness 5787) in paragraph at lines 608--620
+\OT1/cmr/m/n/10 size $16 \OMS/cmsy/m/n/10 ^^B \OT1/cmr/m/n/10 16$ yield better 
+performance empirically.
+ []
+
+
+Underfull \hbox (badness 1509) in paragraph at lines 608--620
+\OT1/cmr/m/n/10 Theoretical bounds on the average bit requirement
+ []
+
+
+Underfull \hbox (badness 4366) in paragraph at lines 608--620
+\OT1/cmr/m/n/10 are also lower for different videos in such case.
+ []
+
+
+Underfull \hbox (badness 1590) in paragraph at lines 608--620
+\OT1/cmr/m/n/10 better performance while in Figure [](b) and (c),
+ []
+
+
+Underfull \hbox (badness 3547) in paragraph at lines 608--620
+\OT1/cmr/m/n/10 macroblock size $16 \OMS/cmsy/m/n/10 ^^B \OT1/cmr/m/n/10 16$ sh
+ows better performance
+ []
+
+
+Underfull \hbox (badness 2591) in paragraph at lines 608--620
+\OT1/cmr/m/n/10 at lower bit-rates. Moreover [] also uses a
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 626--634
+
+ []
+
+
+LaTeX Warning: Reference `fig6' on page 200 undefined on input line 641.
+
+
+LaTeX Warning: Reference `fig7' on page 200 undefined on input line 648.
+
+
+Underfull \hbox (badness 1895) in paragraph at lines 638--651
+\OT1/cmr/m/n/10 length of GOP. In our scheme, as propagation of
+ []
+
+
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 200| \OT1/cmr/m/it/10 T. Tuithung et al.
+ []
+
+
+Overfull \hbox (3.3pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[200]
+Overfull \hbox (3.3pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[201]
+
+LaTeX Warning: Reference `fig7' on page 202 undefined on input line 715.
+
+
+LaTeX Warning: Reference `brcif' on page 202 undefined on input line 715.
+
+
+LaTeX Warning: Reference `fig8' on page 202 undefined on input line 721.
+
+
+LaTeX Warning: Reference `fig9' on page 202 undefined on input line 735.
+
+
+LaTeX Warning: Reference `fig10' on page 202 undefined on input line 737.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 739--745
+[]\OT1/cmr/m/n/10 However, one may observe that there is a
+ []
+
+
+LaTeX Warning: Reference `fig11' on page 202 undefined on input line 751.
+
+
+LaTeX Warning: Reference `fig12' on page 202 undefined on input line 751.
+
+
+LaTeX Warning: Reference `fig9' on page 202 undefined on input line 755.
+
+
+Underfull \hbox (badness 7064) in paragraph at lines 748--756
+\OT1/cmr/m/n/10 is initialised to $
+$. The PSNR vs. rate curves
+ []
+
+
+Underfull \hbox (badness 5756) in paragraph at lines 748--756
+\OT1/cmr/m/n/10 with this distortion control strategy (referred as
+ []
+
+
+Underfull \hbox (badness 2538) in paragraph at lines 759--766
+\OT1/cmr/m/n/10 In the \OT1/cmr/m/it/10 base compression \OT1/cmr/m/n/10 scheme
+ of MCJ2K (refer
+ []
+
+
+Underfull \hbox (badness 1484) in paragraph at lines 769--773
+[]\OT1/cmr/m/n/10 Using Gaussian modelling of error frames (refer
+ []
+
+
+LaTeX Warning: Reference `fig10' on page 202 undefined on input line 801.
+
+
+LaTeX Warning: Reference `fig12' on page 202 undefined on input line 801.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 794--802
+[]\OT1/cmr/m/n/10 In \OT1/cmr/m/it/10 distortion control \OT1/cmr/m/n/10 (quali
+ty control without
+ []
+
+
+Underfull \hbox (badness 1320) in paragraph at lines 794--802
+\OT1/cmr/m/n/10 a target PSNR $\OML/cmm/m/it/10 ^^M$\OT1/cmr/m/n/10 , the propo
+sed MCJ2K algorithm
+ []
+
+
+LaTeX Warning: Reference `res1' on page 202 undefined on input line 803.
+
+
+LaTeX Warning: Reference `res1' on page 202 undefined on input line 806.
+
+
+LaTeX Warning: Reference `res2' on page 202 undefined on input line 808.
+
+
+LaTeX Warning: Reference `fig7' on page 202 undefined on input line 812.
+
+
+LaTeX Warning: Reference `fig9' on page 202 undefined on input line 812.
+
+
+LaTeX Warning: Reference `fig11' on page 202 undefined on input line 812.
+
+
+Underfull \hbox (badness 2277) in paragraph at lines 803--813
+\OT1/cmr/m/n/10 control with feedback scheme of MCJ2K produces
+ []
+
+
+Underfull \hbox (badness 3547) in paragraph at lines 803--813
+\OT1/cmr/m/n/10 better PSNR values than that of quality control
+ []
+
+
+Underfull \hbox (badness 2495) in paragraph at lines 803--813
+\OT1/cmr/m/n/10 (refer Table []). However, it may be noted that
+ []
+
+
+Underfull \hbox (badness 1735) in paragraph at lines 803--813
+\OT1/cmr/m/n/10 quality control with feedback saturates faster than
+ []
+
+
+LaTeX Warning: Reference `fig13' on page 202 undefined on input line 819.
+
+
+Underfull \hbox (badness 3919) in paragraph at lines 814--820
+[]\OT1/cmr/m/n/10 Finally, in optimal bit allocation strategy, the
+ []
+
+
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 202| \OT1/cmr/m/it/10 T. Tuithung et al.
+ []
+
+
+Overfull \hbox (3.3pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[202]
+Underfull \hbox (badness 6204) in paragraph at lines 824--836
+\OT1/cmr/m/n/10 In this paper we have proposed a novel video
+ []
+
+
+Underfull \hbox (badness 2181) in paragraph at lines 824--836
+\OT1/cmr/m/n/10 the MCJ2K scheme have been developed and the
+ []
+
+
+Underfull \hbox (badness 1681) in paragraph at lines 824--836
+\OT1/cmr/m/n/10 MCJ2K is found to perform better than MPEG-2
+ []
+
+
+Underfull \hbox (badness 1490) in paragraph at lines 824--836
+\OT1/cmr/m/n/10 video conferencing, medical video transmission etc.,
+ []
+
+
+Underfull \hbox (badness 2057) in paragraph at lines 840--843
+\OT1/cmr/m/it/9 Transactions on Image Processing\OT1/cmr/m/n/9 , Vol. 1, No. 2,
+
+ []
+
+
+Underfull \hbox (badness 3690) in paragraph at lines 847--852
+\OT1/cmr/m/it/9 (EPLF)\OT1/cmr/m/n/9 , \OT1/cmr/m/it/9 Proceedings of First Int
+ernational JPEG
+ []
+
+
+Underfull \hbox (badness 1590) in paragraph at lines 854--856
+\OT1/cmr/m/n/9 paper', \OT1/cmr/m/it/9 IEEE Transactions on Information Theory\
+OT1/cmr/m/n/9 ,
+ []
+
+
+Underfull \hbox (badness 3557) in paragraph at lines 867--870
+[]\OT1/cmr/m/n/9 Leung, R. and Taubman, D. (2005) `Transform and
+ []
+
+
+Underfull \hbox (badness 2521) in paragraph at lines 867--870
+\OT1/cmr/m/it/9 IEEE Transactions on Image Processing\OT1/cmr/m/n/9 , Vol. 14,
+ []
+
+
+Underfull \hbox (badness 2781) in paragraph at lines 872--875
+\OT1/cmr/m/n/9 boundary pre/postfiltering for wavelet-based image
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 881--885
+\OT1/cmr/m/n/9 (2006) `Compressing videos using JPEG2000',
+ []
+
+
+Underfull \hbox (badness 3635) in paragraph at lines 881--885
+\OT1/cmr/m/it/9 Graphics and Image Processing\OT1/cmr/m/n/9 , 12--13th January,
+
+ []
+
+
+Underfull \hbox (badness 2418) in paragraph at lines 887--891
+\OT1/cmr/m/it/9 International Conference on Acoustics, Speech and
+ []
+
+
+Underfull \hbox (badness 2512) in paragraph at lines 897--901
+\OT1/cmr/m/n/9 `JPEG2000: the upcoming still image compression
+ []
+
+
+Underfull \hbox (badness 2653) in paragraph at lines 907--912
+\OT1/cmr/m/n/9 codec', \OT1/cmr/m/it/9 Proceedings of the 1st IEEE Internationa
+l
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 907--912
+\OT1/cmr/m/it/9 Conference on Signal and Image Processing\OT1/cmr/m/n/9 ,
+ []
+
+
+Underfull \hbox (badness 6775) in paragraph at lines 914--916
+\OT1/cmr/m/it/9 Image Compression Fundamentals, Standards and
+ []
+
+
+Underfull \hbox (badness 1394) in paragraph at lines 918--921
+[]\OT1/cmr/m/n/9 Taubman, D. (1999) `High performance scalable image
+ []
+
+
+Underfull \hbox (badness 8113) in paragraph at lines 918--921
+\OT1/cmr/m/n/9 compression with EBCOT', \OT1/cmr/m/it/9 Proceeding of IEEE
+ []
+
+
+Underfull \hbox (badness 1694) in paragraph at lines 918--921
+\OT1/cmr/m/it/9 International Conf. on Image Processing (ICIP99)\OT1/cmr/m/n/9 
+,
+ []
+
+
+Underfull \hbox (badness 3460) in paragraph at lines 923--925
+[]\OT1/cmr/m/n/9 Taubman, D. and Zakhor, A. (1994) `Multirate 3-D
+ []
+
+
+Underfull \hbox (badness 2213) in paragraph at lines 931--934
+\OT1/cmr/m/n/9 (2003) `Overview of the H.264/AVC video coding
+ []
+
+
+Underfull \hbox (badness 1389) in paragraph at lines 941--944
+[]\OT1/cmr/m/n/9 Xu, J., Xiong, Z., Li, S. and Zhang, Y. (1994) `3-D
+ []
+
+
+Underfull \hbox (badness 4266) in paragraph at lines 946--950
+[]\OT1/cmr/m/n/9 Xu, J., Xiong, Z., Li, S. and Zhang, Y.Q. (2002)
+ []
+
+(IJSISE-1(3-4)-04Tuithungetal.ent) AED: lastpage setting LastPage
+Overfull \hbox (3.3pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[203] (IJSISE-1(3-4)-04Tuithungetal.aux)
+
+LaTeX Warning: There were undefined references.
+
+ ) 
+
+Here is how much of TeX's memory you used:
+ 2457 strings out of 10000
+ 24830 string characters out of 80000
+ 86527 words of memory out of 131068
+ 5171 multiletter control sequences out of 32000
+ 19140 words of font info for 70 fonts, out of 43737 for 1023
+ 14 hyphenation exceptions out of 1009
+ 34i,14n,24p,350b,433s stack positions out of 100i,100n,100p,1000b,1000s
+ (i = instack, n = neststack, p = paramstack, b = bufstack, s = savestack)
+ 5 inputs open max out of 127
+
+Success at breaking 147 paragraphs:
+ 58 single line `paragraphs'
+ 26 first pass (\pretolerance = 100)
+ 50 second pass (\tolerance = 9999)
+ 13 third pass (\emergencystretch = 19.2001pt)
+
+ 10 overfull \hboxes
+ 91 underfull \hboxes
+ 2 overfull \vboxes
+
+Used 22 fonts:
+ cmbx10          at 10pt         encoding: eqx1w_..
+                 at 10.95pt 
+ cmbx12          at 14.4pt       encoding: 5-9psq..
+ cmbx9           at 9pt          encoding: tavvzs..
+ cmex10          at 10pt         encoding: fixed ..
+ cmmi10          at 10pt         encoding: b-h61g..
+ cmmi5           at 5pt          encoding: m_dwsm..
+ cmmi7           at 7pt          encoding: h&g&08..
+ cmmi9           at 9pt          encoding: i73jy8..
+ cmr10           at 10pt         encoding: mr1_57..
+ cmr5            at 5pt          encoding: v_k.xc..
+ cmr6            at 6pt          encoding: 4odxza..
+ cmr7            at 7pt          encoding: 9z-q10..
+ cmr9            at 9pt          encoding: smc8u...
+ cmsy10          at 10pt         encoding: frf38k..
+ cmsy5           at 5pt          encoding: 2.c62o..
+ cmsy7           at 7pt          encoding: m_yc_v..
+ cmsy9           at 9pt          encoding: 16egvc..
+ cmti10          at 10pt         encoding: bscxwk..
+                 at 10.95pt 
+ cmti9           at 9pt          encoding: 486h_j..
+ msam10          at 10pt         encoding: y8h.6n..
+
+Output written on IJSISE-1(3-4)-04Tuithungetal.dvi (7 pages, 54776 bytes).

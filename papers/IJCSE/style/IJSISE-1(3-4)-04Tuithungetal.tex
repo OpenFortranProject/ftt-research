@@ -1,0 +1,836 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{doublecol-new}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{natbib,stfloats}
+\def\newblock{\hskip .11em plus.33em minus.07em}
+
+\theoremstyle{TH}{
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{theorem}{Theorem}
+\newtheorem{corrolary}{Corrolary}
+\newtheorem{conjecture}[lemma]{Conjecture}
+\newtheorem{proposition}[lemma]{Proposition}
+\newtheorem{claim}[lemma]{Claim}
+\newtheorem{stheorem}[lemma]{Wrong Theorem}
+}
+
+\theoremstyle{THrm}{
+\newtheorem{definition}{Definition}[section]
+\newtheorem{question}{Question}[section]
+\newtheorem{remark}{Remark}[section]
+\newtheorem{scheme}{Scheme}
+}
+
+\theoremstyle{THhit}{
+\newtheorem{case}{Case}[section]
+}
+
+\makeatletter
+\def\theequation{\arabic{equation}}
+\makeatother
+
+%%%%%%%%%%%%%%%%%
+\begin{document}%
+%%%%%%%%%%%%%%%%%
+
+\thispagestyle{plain}
+
+\setcounter{page}{197}
+
+\LRH{T. Tuithung et~al.}
+
+\RRH{Motion Compensated JPEG2000 based video compression algorithms}
+
+\VOL{1}
+
+\ISSUE{3/4}
+
+\PUBYEAR{2008}
+
+%\BottomCatch
+
+\title{Motion Compensated JPEG2000 based video compression algorithms}
+
+\authorA{T. Tuithung}
+
+\affA{Department of Computer Science and Engineering,\\
+ Indian Institute of Technology Kharagpur,\\
+ Kharagpur 721302, India\\
+Fax: 91-3222-282206/282700\\ E-mail: themri@cse.iitkgp.ernet.in}
+
+\authorB{S.K. Ghosh*}
+\affB{School of Information Technology,\\
+ Indian Institute of Technology Kharagpur,\\
+ Kharagpur 721302, India\\
+Fax: 91-3222-282206/282700\\ E-mail: skg@iitkgp.ac.in\\ {*}Corresponding
+author}
+
+\authorC{Jayanta Mukherjee}
+
+\affC{Department of Computer Science and Engineering,\\
+ Indian Institute of Technology Kharagpur,\\
+ Kharagpur 721302, India\\
+Fax: 91-3222-282206/282700\\ E-mail: jay@cse.iitkgp.ernet.in}
+
+\begin{abstract}
+A new approach of Motion-Compensated JPEG2000 (MCJ2K) video compression is
+proposed in this paper. It uses simplified MPEG-2 fundamentals along with
+JPEG2000 encoding for compression of the image frames. MCJ2K generates
+differential images using motion compensation algorithms and store the motion
+vectors in a customised header. The~images are then compressed using JPEG2000
+based scheme. MCJ2K have been studied on QCIF and CIF formated videos for
+various rate control mechanism. The proposed scheme produced encouraging results
+compared to standard MPEG-2 and MJPEG2000 schemes, especially at higher bit
+rates.
+\end{abstract}
+
+\KEYWORD{video compression; JPEG2000; MJPEG2000; motion compensation; motion
+vectors; rate-control.}
+
+\REF{to this paper should be made as follows: Tuithung,~T.,
+Ghosh,~S.K. and Mukherjee,~J. (2008) `Motion Compensated JPEG2000
+based video compression algorithms', {\it Int. J. Signal and Imaging
+Systems Engineering}, Vol.~1, Nos.~3/4, pp.197--212.}
+
+\begin{bio}
+T. Tuithung did her BTech in Computer Science and Engineering and MTech in
+Information Technology from North Eastern Regional Institute of Science and and
+Technology (NERIST), Itanagar, India. Currently she is doing her PhD in Computer
+Science and Engineering at Indian Institute of Technology, Kharagpur, India. Her
+areas of interest are image processing, video compression, algorithms.\vs{8}
+
+\noindent S.K. Ghosh has done his PhD in the year 2002 from Indian
+Institute of Technology (IIT), Kharagpur, India from the Department
+of Computer Science and Engineering. He~is~presently working as an
+Associate Professor in the School of Information Technology, Indian
+Institute of Technology, Kharagpur. Prior to IIT Kharagpur, he~worked
+for Indian Space Research Organisation (ISRO), Department of Space,
+Government of India, for about eight years in the field of Satellite
+Remote Sensing and GIS. His research interest includes image
+processing, computer networking, education technology, remote sensing
+and~GIS.\vs{8}
+
+\noindent Jayanta Mukherjee received his BTech, MTech, and PhD
+Degrees in Electronics and Electrical Communication Engineering from
+the Indian Institute of Technology (IIT), Kharagpur in 1985, 1987,
+and 1990, respectively. He is presently a Professor in the Department
+of Computer Science and Engineering, IIT Kharagpur. He~was a
+Humboldt\break
+\end{bio}
+
+\maketitle\vfill\pagebreak
+
+\maketitle
+
+\thispagestyle{headings}
+
+\noindent\parbox{42.4pc}{\leftskip 12.75pc\NINE Research Fellow at
+the Technical University of Munich in Germany for one year in 2002.
+He also has held short term visiting positions at the University of
+California, Santa Barbara, University of Southern California, and the
+National University of Singapore. His research interests are in image
+processing, pattern recognition, computer graphics, multimedia
+systems and medical informatics. He~has published over 100~papers in
+international journals and conference proceedings in these areas.
+He~served in various technical program committees of international
+conferences in related areas. He~received the Young Scientist Award
+from the Indian National Science Academy in 1992. He~is~a~Senior
+Member of the IEEE. He is a fellow of the Indian National Academy of
+Engineering~(INAE).\vs{12}}
+
+\noindent\rule{42.5pc}{1.5pt}
+
+\maketitle
+
+%\vspace*{-9pt}
+\section{Introduction}
+
+Over the years Discrete Cosine Transform (DCT) based encoding algorithms such
+as, MPEG-2 \citep{1,2}, MPEG-4 \citep{3}, H.264 \citep{4,5} etc.
+ have been proposed for video compression.
+The core compression algorithm used in such algorithms  is the baseline JPEG
+\citep{6} encoding algorithm. A~typical block diagram outlining these approaches
+are shown in Figure~\ref{fig1}.
+
+\noindent
+ All of these approaches have the following
+commonalities:
+
+\begin{BL}
+\item Use of block DCT.
+
+\item The video stream is segmented into a Group Of Pictures
+(GOP), each
+       starting with an Intra (I) frame, which is encoded by the usual static
+       image compression algorithm such as block DCT based base-line JPEG
+       compression algorithm.
+
+\item Block-wise (or Macroblock-wise) motion compensated error
+prediction.
+       Prediction may be made from previous and future frames. However, in
+       our simplified framework we have considered only predictions from the
+       previous frame. This type of predicted error frame is termed as a `P' %(P frames)
+       frame. For each predictive frame, there is a set of motion vectors and
+       corresponding error blocks, which are also further compressed using
+  again the block-DCT based compression scheme, almost similar to baseline
+       JPEG compression algorithm.
+
+\item In the above schemes, typical size of a DCT block is $8
+\times 8$ and that  of a macro-block for motion compensation is $16 \times 16$.
+Colour images are represented in $Y-C_r-C_b$ colour space and usually $C_r$ and
+$C_b$ components are subsampled at a ratio of $4:1:1$ before the application of
+DCT.
+\end{BL}
+However one should note that there are  variations on the motion compensated
+prediction algorithms, block and macro block sizes, intra-block prediction,
+object based video streaming, rate control strategies etc. among these
+approaches.
+
+\enlargethispage{7pt}
+
+Other than DCT based approaches, wavelet based approaches are also
+increasingly being pursued in recent years. Specially, wavelet
+\vadjust{\vspace*{-9pt}\pagebreak\vspace*{11.9pc}}based static image
+compression schemes were found to be having better rate distortion
+performance over the DCT based JPEG \citep{6} compression scheme.
+Subsequently, the JPEG2000 \citep{7,8,9,10} standard has incorporated
+wavelet based static image compression scheme. In~wavelet based approaches
+usually 3-D wavelets \citep{11,12} are applied to~a~GOP. In~some work
+\citep{13,14}, motion compensation is used to improve the performance.
+However the usage of 3D wavelets over the GOP causes temporal artifacts
+(equivalent to jittering etc.) at its boundaries \citep{15}. In~our
+proposed algorithm \citep{16}, we~restrict ourselves to 2-D wavelets only.
+The scheme is similar to the DCT based schemes, where Intra frames
+($I$-frame) and motion compensated Predicted frames ($P$-frame) are
+encoded using similar 2-D transform domain techniques. Like MPEG
+\citep{17}, in our proposed algorithm we have used JPEG2000 (instead of
+JPEG as the core compression technique in MPEG) towards this. It~may be
+noted that JPEG2000 has already been used in the MJPEG2000 \citep{18}
+video compression standard, where all the frames are intra frames and no
+motion compensation is performed. The~MJPEG2000 usually provides superior
+performance over MPEG-2 at very high bit rates. Our proposed scheme is a
+generalisation over MJPEG2000, as~it allows motion compensation. In~many
+cases, the proposed approach \citep{19} is found to be having better rate
+distortion performance than the MJPEG2000 at very high bit rates. There
+are a few advantages on using JPEG2000 over the JPEG-like schemes for
+encoding prediction errors which have been adopted in the proposed
+algorithm:\vs{-4}
+
+\begin{NLh}{4}
+\item[1] Since the wavelet transform can be applied over the
+entire image, a JPEG2000
+       image does not exhibit the blocky artifacts common in highly compressed
+       traditional JPEG images.
+
+\item[2] Scalability and multi-resolution representation make
+JPEG2000 as ideal
+       choice for scalable video encoding scheme.
+
+\item[3] Precise frame wise rate control is possible while using
+JPEG2000. This is significant in the context of errors being modelled as
+{\it Gaussian distribution} \citep{21}. It~may be noted that MPEG-2 adopts
+macroblock wise rate control (for~$P$~frames),  which makes error encoding
+algorithm little different than the standard
+       baseline JPEG encoding scheme used for $I$~frames. In~our proposed
+       approach, rate control mechanisms
+       for both $I$ and $P$~frames remain same, which makes the
+encoder much simpler for
+       implementation.
+
+\item[4] The other advantage of JPEG2000 scheme is that the scope
+of making the        scheme lossless or semi-lossless by using reversible
+wavelets. This makes
+        the proposed approach very attractive for the higher
+bit rate video transmission,
+        specially the medical videos, where physicians demand very high quality
+        of the decompressed video.\vs{-2}
+\end{NLh}
+
+\noindent
+ The proposed algorithm has the following distinct
+features:\vs{-2}
+
+\begin{NLh}{3}
+\item[1] It uses similar motion compensation algorithm that is
+used in MPEG-2. However, in the present work, we have demonstrated results using
+only full pixel motion compensation and also using only predictive frames
+($P$~frames).
+
+\item[2] To make the scheme semi-lossless, we have used the
+feed-back from the  compressed video stream in the prediction of errors. We~have
+also used reversible wavelets for encoding error frames.
+
+\item[3] Precise rate control is possible by allocating fixed bits
+for $I$ and $P$~frames. For efficient rate distortion performance, we~have
+adopted  dynamic rate control and distortion adjustment strategies.\vs{-2}
+\end{NLh}
+The paper is organised in the following sections. In~Section~\ref{base_algo} we
+provide the basic outline of the proposed scheme and its performance on fixed
+bit allocation. We~discuss about the rate and distortion control strategies in
+Section~\ref{rate_control}, which make the proposed  scheme more efficient.
+Section~\ref{discussion} presents a brief overall discussion of the performance
+of the scheme. Finally, the conclusion is drawn in Section~\ref{conclusion}.
+Experimental results and graphs are provided in the respective sections.
+Further, we have considered the videos in YUV colour model for CIF and QCIF
+formats throughout this paper.
+
+\vspace*{-0.5pc}
+\section{Base compression scheme}\label{base_algo}
+
+In our scheme, we have used JPEG2000 for compressing the intra frames
+or $I$~frames as well as the error frames obtained through motion
+compensation. The $I$~frame compression is the usual JPEG2000 still
+image compression. However, while compressing error frames
+($P$~or~$B$), error values are computed for each macroblock of $Y$
+($16\times 16$ pixels for each block), $U$ and $V$ ($8\times
+ 8$ blocks for each of $U$ and~$V$) components by estimating motion
+vectors with respect to the previous (or/and next) frame(s). Motion compensation
+is made over the decompressed previous frames. Then the whole error frame is
+subjected to the JPEG2000 compression scheme. A~typical block diagram of the
+scheme is shown in Figure~\ref{fig2}.
+
+\noindent As JPEG2000 works with precise rate control (within a range of
+target bit rates), initially we have used fixed bit per pixel allocation
+for both $I$ and $P$~frames. A~parameter $\alpha$ has been considered
+indicating the relative proportions (fractions) of bit investment on $I$
+and $P$~frames. Let $R$ be the target rate in bits  per second (bps), $G$
+be the GOP (with single $I$~frame and $(G-1)$ $P$~frames) and $f$ be the
+frame per second. Let $h$ and $w$ be the height and width of a frame. The
+bit per pixels for $I$~frame ($\beta_I$) and for $P$ frames ($\beta_P$)
+are given~by:\vs{-2}
+\begin{eqnarray}
+\beta_I&=&\alpha\cdot \frac{R\cdot G}{f\cdot w\cdot h}\label{eqn_bpp_I}\\
+\beta_P&=&(1-\alpha)\cdot \frac{R\cdot G}{f\cdot w\cdot h\cdot
+(G-1)}.\label{eqn_bpp_P}
+\end{eqnarray}
+For studying the performance of the compression schemes, we have used the
+Peak Signal to Noise Ratio (PSNR) measure. Let $I_s(x,y)$ denote the pixel
+value at $(x,y)$ for the $s$th component ($s \in \{Y,U,V\}$) of the
+original frame and $I'_s(x,y)$ denote the corresponding recovered value
+after decompression. Then the PSNR is defined~as:\vs{4}
+\begin{eqnarray}
+\hspace*{-9pt}
+\h{PSNR}&=&20\log_{10}\kern-2pt\left(\kern-2pt\frac{255}{\sqrt{\frac{\Sigma_{\forall
+s \in \{Y,U,V\}}\Sigma_{\forall x}\Sigma_{\forall
+y}(I_s(x,y)-I^{'}_s(x,y))^2}{\frac{3}{2}\cdot h\cdot
+w}}}\kern-2pt\right)\kern-3pt.\nonumber\\[-2pt] \label{eqn_psnr}
+\end{eqnarray}
+
+\vspace*{-4pt} \noindent For the entire video, the {\it average} PSNR
+value of all the frames has been considered. The effect of using
+reversible and irreversible wavelets has also been studied. The JPEG2000
+compression has been implemented using the {\it
+Kakadu}\endnote{http://www.kakadusoftware.com} software. The number of
+levels of decomposition for $I$~frame is taken as 5 and for $P$~frame the
+value is~0. These values are chosen empirically. It~can~be observed that
+the use of reversible wavelets leads to higher PSNR values at higher bit
+rate. Experimental results have been shown in Figures~\ref{fig3}
+and~\ref{fig4}, with the proposed MCJ2K using reversible wavelets.\vs{-1}
+
+In Figures~\ref{fig3} and~\ref{fig4} we present the PSNR vs. \h{{\it bit-rate}}
+performances for the proposed schemes for different values of $\alpha$ using
+reversible and irreversible wavelets on QCIF and CIF videos respectively. The
+graph show that the MCJ2K using reversible wavelets provides higher PSNR values
+over MCJ2K with irreversible wavelets at high bit-rates. The PSNR values at
+typical \h{bit-rates} using reversible wavelets with different values
+of~$\alpha$ for QCIF and CIF videos, are shown in Tables~\ref{brqcif}
+and~\ref{brcif} respectively. It~is observed that lower values of $\alpha$
+performs better at high bit-rate. In Tables~\ref{cmpbrqcif} and~\ref{cmpbrcif}
+the PSNR values are compared with those obtained by MPEG-2 and MJPEG2000 for
+QCIF and CIF videos respectively. One may observe that the use of feedback from
+the compressed stream improves the performance remarkably. The use of feedback
+makes the lossless reconstruction of $P$ possible. In~fact, the PSNR values of
+recovery of error frames and recovery of $P$~frame become equivalent in such
+cases. This fact is stated in the Lemma~\ref{lemma_error_psnr}.\vs{2}
+
+\begin{lemma}\label{lemma_error_psnr}
+The PSNR value of the error recovery remains as same as the PSNR value of the
+decompressed frame, when errors are computed from the previous decompressed
+frame.\vs{2}
+\end{lemma}
+
+\proof{Proof} Let $\widehat{I}_{\rm prev}^{(d)}$ be the motion compensated
+values from the decompressed previous frame.  Let $I_{\rm curr}$ be the original
+current frame. Then the error values for the current frame are
+obtained~as:\vs{2}
+\begin{equation}
+ E=I_{\rm curr}-\widehat{I}_{\rm prev}^{(d)}.
+\end{equation}
+
+\begin{table*}[!t]%Tab5
+\caption{Results on measures of skewness and curtosis of error frames for {\it
+Container. cif} video at 2449~Kbps}\label{curtcontainer}
+{\NINE\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}} \toprule
+{\it Frame component} & {\it Avg\_Skewness} & {\it Avg\_Curtosis} & $\sigma$
+{\it Skewness} & $\sigma$ {\it Curtosis} & {\it Min\_Curtosis}\\ \midrule Y &
+\p{$-$}0.45 & 41.82 & 1.53  & 42.29 &9.53\\ U & $-$0.49 & \p{0}7.90  & 1.55 &
+47.17 & 3.05\\
+ V & $-$0.40 & \p{0}6.88  & 0.51  & 6.53 & 4.01\\
+\botrule
+\end{tabular*}}{}
+\vspace*{4pt}
+\end{table*}
+
+\begin{table*}[!t]%Tab6
+\caption{Results on measures of skewness and curtosis of error frames for {\it
+News.cif} video at 2640~Kbps}\label{curtnews}
+{\NINE\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}} \toprule
+{\it Frame component} & {\it Avg\_Skewness} & {\it Avg\_Curtosis} & $\sigma$
+{\it Skewness} & $\sigma$ {\it Curtosis} & {\it Min\_Curtosis}\\ \midrule Y &
+\p{$-$}0.39 & 96.08 & 1.98  & 46.56 & 5.90\\ U & $-$0.52 & 48.04  & 1.41 & 49.52
+& 4.38\\
+ V & $-$0.01 & 57.19  & 1.42 & 54.97 & 4.31\\
+\botrule
+\end{tabular*}}{}
+\end{table*}
+
+\begin{table*}[!t]%Tab7
+\caption{Results on measures of skewness and curtosis of error frames for {\it
+Foreman.cif} video at 3043~Kbps}\label{curtforeman}
+{\NINE\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccc@{}} \toprule
+{\it Frame component} & {\it Avg\_Skewness} & {\it Avg\_Curtosis} & $\sigma$
+{\it Skewness} & $\sigma$ {\it Curtosis} & {\it Min\_Curtosis}\\ \midrule Y &
+$-$0.03 & 17.20 & 0.70  & 10.42 & 4.75\\
+ U & $-$1.16 & 47.16  & 4.58  &165.36\p{0} & 2.79\\
+V & \p{$-$}0.11 & 22.83  & 1.34  & 28.01 & 2.91\\ \botrule
+\end{tabular*}}{}
+\end{table*}
+
+\noindent After decompression, let the error values be $E^{(d)}$. Hence,
+the $I_{\rm curr}^{(d)}$ after decompression could be expressed~as:
+\begin{equation}
+I_{\rm curr}^{(d)}=\widehat{I}_{\rm prev}^{(d)}+E^{(d)}.
+\end{equation}
+Hence,\vs{-3}
+\begin{eqnarray}
+|E-E^{(d)}| & = & |(I_{\rm curr}-\widehat{I}_{\rm
+prev}^{(d)})-E^{(d)}|\nonumber\\
+ &=& |(I_{\rm curr}-\widehat{I}_{\rm prev}^{(d)})-(I_{\rm curr}^{(d)}-\widehat{I}_{\rm prev}^{(d)})|\nonumber\\
+  &=&  |I_{\rm curr}-I_{\rm curr}^{(d)}|.
+\end{eqnarray}
+Hence the PSNR values for error recovery and frame recovery are same.\vs{-3}
+\endproof
+
+\noindent From the above lemma, we can observe that if the error recovery is
+{\it lossless}, the decompressed frame is also {\it lossless}. This motivates us
+to use the reversible wavelets. We~have observed that usage of reversible
+wavelet slightly improves the scheme at the higher \h{bit-rate}. However, as the
+dynamic ranges of errors increase by two folds, we have scaled the values by
+$\frac{1}{2}$ before compression. For this reason, our scheme behaves as a
+semi-lossless scheme at higher bit rates.
+
+\subsection{Gaussian modelling of error frames}
+
+Lemma~\ref{lemma_error_psnr} is also significant as it~converts the problem of
+compressing individual frames to the compression of error frames. It~would be
+interesting to study how best these errors are modelled by a Gaussian
+distribution. In~that case we would be able to use the well known rate
+distortion relationship of encoding of Gaussian distributed values, as described
+by the following\break lemma.
+
+\begin{lemma}\label{lemma_RD_gauss}
+ The values of a random variable following Gaussian
+distribution with the standard
+ deviation $\sigma$ would require   $R(D)$ bits per symbol at a distortion
+ {\rm (}the
+ Mean Square Error {\rm (}MSE{\rm ))} of $D$ where $R(D)$
+  holds the following relationship
+with~$D$
+\begin{equation}
+R(D) = \begin{cases}
+         \dfrac{1}{2} \log_2 \dfrac{\sigma^2}{D} &\quad 0 \le D \le
+                    \sigma^2\\[1pc]
+  0  &\quad D > \sigma^2\end{cases}.
+\end{equation}
+\end{lemma}
+
+\proof{Proof} Refer \cite{20}.
+\endproof
+
+\noindent
+ It was observed that in most cases the distributions
+of error values do not  pass the significance levels (of~1\%) of {\it
+Chi-Square} ($\chi^2$) {\it Goodness
+ of Fit test} \citep{21} or the {\it Kolmogrov-Smirinov Test} \citep{21}.
+ However, the distributions are
+ observed as symmetric and highly peaked around its mean.
+Skewness and curtosis are measures of asymmetry and sharpness of the height
+relative to a normal distribution respectively.
+In~Tables~\ref{curtcontainer}--\ref{curtforeman}, we~provide the average
+skewness and average curtosis measures (along with their standard deviations).
+They indicate that the Lemma~\ref{lemma_RD_gauss} would provide an upper bound
+on the rate for a given distortion. We~have made use of this fact in designing
+the rate control strategy.
+
+\subsection{Varying macroblock sizes}
+
+We have also studied the effect of different macroblock size on the performance
+of the proposed scheme. If~errors are generated by larger macroblocks, it~is
+expected the standard deviations of the error frames would be higher, on the
+other hand lower macroblocks should have smaller standard deviations. But there
+are increasing overheads on encoding the motion vectors for lower macroblock
+sizes. If~we~assume the bit assignment on encoding full pixel motion vectors is
+same (say $mv_b$ for each motion vector, in our case $mv_b = 8$~bits), a
+macroblock of size $b_w \times b_h$ would require $\big\lceil \frac{w\cdot
+h}{b_w\cdot b_h\vphantom{\sum_{1_1}}}\big\rceil$ number of motion vectors.
+If~$\sigma_i$, $i=1,2,\dots,N$ is the standard deviation for the $i$th error
+frames the average bit requirement $E_b$ for an error frame is given~by:\vs{-3}
+\begin{equation}
+E_b= \frac{1}{N}\sum_{i=1}^{N}\log_2(\sigma_i)+\frac{mv_b\cdot\big\lceil
+\frac{w\cdot h}{b_w\cdot b_h}\big\rceil}{w\cdot h}.
+\end{equation}
+In Table~\ref{Avgbit}, we have shown the theoretical average bit
+requirements for varying macroblock size. In~Figure~\ref{fig5}, PSNR vs.
+rate curves are drawn for varying macroblock sizes. It~is empirically
+observed that the macroblock size $16 \times 16$ yield better performance
+empirically. Theoretical bounds on the average bit requirement are also
+lower for different videos in such case. In~Figure~\ref{fig5}(a),
+macroblock size $32 \times 32$ is showing better performance while in
+Figure~\ref{fig5}(b) and (c), macroblock size $16 \times 16$ shows better
+performance at lower bit-rates. Moreover \h{MPEG-2} also uses a macroblock
+size of $16 \times 16$ and since our scheme uses the fundamentals of
+\h{MPEG-2}, thus the macroblock size $16 \times 16$ is chosen for
+implementing our scheme.
+
+\begin{table}%%Tab8
+\def\arraystretch{1.1}
+\caption{Average bit requirement for Y-component with different macroblock
+size ($8\times8$, $16\times16$ and $32\times32$) at higher bit-rate for
+CIF videos (Container, News, Foreman)}\label{Avgbit}
+{\NINE\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lccc@{}}
+\toprule {\it Video} & {\it Vb\_8} & {\it Vb\_16} & {\it Vb\_32}\\
+\midrule Container & 0.80 & 0.72 & {\bf 0.70}\\
+ News & {\bf 0.95} & 1.05 & 1.24\\
+ Foreman & {\bf 1.82} & 1.85 & 1.99\\
+\botrule
+\end{tabular*}}
+{}
+\end{table}
+
+\subsection{Varying length of GOP}
+
+We have also observed the effect of variation of the length of GOP. In our
+scheme, as propagation of errors is arrested by the feedback from the compressed
+stream, the effect on variation of the GOP length is less (refer
+Figure~\ref{fig6}). In~fact, the scheme works better for larger GOP length, as
+long as, there is a gain in rate for encoding a $P$ frame compared to that of an
+Intra encoding. However, larger GOP will also cause, increasing values of
+standard deviations for the error frames at its trailers. This puts a
+restriction on the length of the GOP. This leads us to design a compression
+scheme for adaptive GOP. If~the standard deviation of an error frame exceeds a
+threshold (called as $\sigma$th in our work) the GOP is initialised.
+In~Figure~\ref{fig7}, we~have demonstrated the performances for adaptive GOPs.
+In~Table~6, we~have also provided the average lengths of GOP at
+varying~$\sigma$th.\vs{-3}
+
+\section{Rate control} \label{rate_control}
+
+As discussed earlier, the use of JPEG2000 provides an opportunity for precise
+rate control. Moreover, the Gaussian nature of error frames motivates us to use
+the following lemma for the rate control of the MCJ2K scheme with fixed GOP.
+
+\begin{lemma}\label{lemma_rt_gauss}
+Let $\overline{\beta_P}$ be the average bit per pixel for encoding a $P$ frame.
+Let $\sigma_i$, $i=1,2,\dots,(G-1)$ be the standard deviation of the $i$th
+$P$~frame of a GOP of the length~$G$. Then, the optimal bit per pixel at which
+the $i$th $P$~frame would be encoded is given~by:
+\begin{equation}\label{eqn_bpp_optimal}
+\beta_{P_i}=\overline{\beta_P}+ \frac{1}{2} \log_2 \frac{\sigma^2}{\sigma^{*^2}}
+\end{equation}
+where
+\begin{equation}\label{eqn_sigma_gm}
+\sigma^*= \big(\Pi_{i=1}^{(G-1)} \sigma_i\big)^{\frac{1}{(G-1)}}
+\end{equation}
+with the optimum rate allocation the $i$th frame distortion $D_i$ becomes,
+\begin{equation}
+D_i=\sigma^{*^2} 2^{-2\overline{\beta_P}}.
+\end{equation}
+\end{lemma}
+
+\proof{Proof} Refer \cite{22}.\vs{-1}
+\endproof
+
+\subsection{Rate control of the MCJ2K}
+
+The above lemma motivates us to design the following rate control algorithm for
+the MCJ2K.\vs{-1}
+
+\vspace*{9pt} \noindent
+ Algorithm {\it Rate\_Control\_MCJ2K}
+
+\vspace*{8pt}
+ \noindent
+{\it Encoding Parameters}: Length of GOP ($G$), relative bit investment for
+$I$~frame ($\alpha$), rate~($R$).\vs{-1}
+
+\begin{NLh}{3}
+\item[1] Determine bit per pixel for encoding $I$ frame
+($\beta_I$) and average
+ bpp for encoding a $P$ frame ($\overline{\beta_P}$) using
+ equations~(\ref{eqn_bpp_I}) and~(\ref{eqn_bpp_P}).
+
+\item[2] Compute the geometric mean of the standard
+deviations (refer equation~(\ref{eqn_sigma_gm}))  for the next $GOP$ from the
+current one and use it for the purpose of~optimal bit assignment following the
+(refer equation~(\ref{eqn_bpp_optimal})).
+
+\item[3] Compute the bpp for $i$th $P$ frame ($\beta_{P_i}$)
+following~the Lemma~\ref{lemma_rt_gauss} and encode them\break accordingly.
+\end{NLh}
+\vspace*{0.3pc} \noindent End {\it Rate\_Control\_MCJ2K}
+
+\vspace*{8pt} \noindent
+ In this algorithm, $P$ frames for the first GOP are
+encoded using the average bpp as computed from (refer
+equation~(\ref{eqn_bpp_P})). The geometric mean of the standard deviations of
+all the $P$~frames is also computed and used for encoding $P$~frames of the next
+GOP using (refer equation~(\ref{eqn_bpp_optimal})). The process is repeated for
+all the subsequent GOPs in the same way. The performance is shown in the
+Figure~\ref{fig7}. From the Table~\ref{brcif}, it is observed that $\alpha=50\%$
+gives better PSNR value. As such $\sigma$ value at 5 and $\alpha$ at 50\% are
+typically chosen for studying the performance of {\it Rate\_Control\_MCJ2K}.
+
+At lower bit-rate, the achieved bit-rate is almost as same as the given target
+bit-rate but at higher bit-rate the achieved bit-rate gets saturated even if the
+target bit-rate is increased (refer Figure~\ref{fig8}).
+
+\subsection{Distortion control of the MCJ2K}\label{distortion_control}
+
+Interestingly, the MCJ2K scheme is more suitable for controlling distortion or
+quality of the decompressed video. In~this case, given a target PSNR~$\Omega$,
+the MCJ2K attempts to encode at the optimal rate for achieving the target rate.
+The
+ distortion $D$ is computed from $\Omega$ as follows:
+\begin{equation}\label{eqn_D_PSNR}
+ D=255^2\times 10^{-\frac{\Omega}{10}}.
+\end{equation}
+Then following the Lemma~\ref{lemma_RD_gauss}, $P$ frames are encoded. The
+performance  of this strategy with different bpp's used for encoding $I$~frames
+is shown  in Figure~\ref{fig9}. The achieved PSNR values given the target PSNR
+values are also
+ shown in the Figure~\ref{fig10}.
+
+However, one may observe that there is a considerable gap between the achieved
+PSNR values and the target PSNR values. To~reduce these gaps, we have adjusted
+the target PSNR values after encoding of each frame and measuring its PSNR with
+the original frame. Let the achieved PSNR value for the $i$th frame
+be~$\Omega^{(d)}$.
+ Then the target PSNR value for the $(i+1)$th frame is computed~as:\vs{-3}
+\begin{equation}
+    \Omega^{(i+1)}=2\Omega^{(i)}-\Omega^{(d)}.
+\end{equation}
+For the first $P$ frame of a GOP, the target PSNR is initialised to~$\Omega$.
+The PSNR vs. rate curves with this distortion control strategy (referred as {\it
+Quality\_Control\_MCJ2K})
+ are shown in the Figure~\ref{fig11}. In~Figure~\ref{fig12},
+ achieved PSNR values against the target
+ PSNR values are also shown. It~may be noted that due to the
+PSNR feedback, the achieved  bit-rate gets saturated faster as compared to the
+scheme without using this feedback (refer Figure~\ref{fig9}).\vs{-3}
+
+\section{Discussion}\label{discussion}
+
+In the {\it base compression} scheme of MCJ2K (refer Section~\ref{base_algo}),
+we~have experimented the bit-investment on $I$ and $P$~frames, using a
+parameter~$\alpha$. It~was found empirically that lower value of $\alpha$
+($\alpha = 0.5$), produces better PSNR value at the higher bit-rate. We~also
+experimented on using both reversible and irreversible wavelets and found that
+reversible wavelets outperforms irreversible wavelets (refer
+Lemma~\ref{lemma_error_psnr}).
+
+%\vfill\eject
+
+Using Gaussian modelling of error frames (refer Lemma~\ref{lemma_RD_gauss}),
+MCJ2K scheme is subjected to varying length of GOP base on a threshold
+value~$\sigma$. We~also found that GOP size increases with higher value of
+$\sigma$ (refer Table~\ref{Avggop}).
+
+\def\thetable{9}
+\begin{table}[h]%%Tab9
+\def\arraystretch{1.1}
+\caption{Average length of GOP for different $\sigma$th for CIF
+videos}\label{Avggop}
+{\NINE\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lcc@{}} \toprule {\it
+Video} & $\sigma={\it 4.0}$ & $\sigma={\it 5.0}$\\ \midrule Container & 150 &
+300\\
+ News & \p{0}30 & \p{0}75\\
+  Foreman & \p{00}5 & \p{0}10\\
+\botrule
+\end{tabular*}}{}
+\vspace*{5pt}
+\end{table}
+
+\noindent In {\it rate control} of MCJ2K (refer Section~\ref{rate_control}),
+Gaussian modelling of error frames along with $\alpha$ (the relative
+bit-investment for $I$~frame), has been implemented and found that it performs
+better than our base compression scheme at higher bit-rate.
+
+In {\it distortion control} (quality control without feedback) of MCJ2K
+scheme (refer Section~\ref{distortion_control}), given a target
+PSNR~$\gamma$, the proposed MCJ2K algorithm attempts to encode at the
+optimal rate for achieving the target rate using equation~(11) and
+Lemma~\ref{lemma_RD_gauss}. We~also~have quality control with feedback in
+which the target PSNR values are adjusted after encoding each frame (refer
+equation~(12)). The effect of having feedback can be observed from
+Figures~\ref{fig10} and~\ref{fig12}.
+
+From the Table~\ref{res1}, it can be observed that quality control with
+feedback scheme of MCJ2K produces better PSNR values than that of quality
+control without feedback and rate control schemes of MCJ2K
+(refer~Table~\ref{res1}). However, it~may be noted that quality control
+with feedback saturates faster than both \h{quality-control} without
+feedback and rate control schemes of MCJ2K (refer Table~\ref{res2}). It~is
+also worth mentioning that due to lower bound constraints, in both types
+of quality control schemes (with and without feedback), the scheme works
+from a certain high bit-rate only as compared to the rate control scheme
+of MCJ2K (refer Figures~\ref{fig7},~\ref{fig9} and~\ref{fig11}).
+
+Finally, in optimal bit allocation strategy, the MCJ2K scheme adjusts
+$\alpha$ for bit-investment for both the $I$ and $P$~frames.
+It~behaves like MCJ2K rate control scheme at lower bit-rate but at
+the higher bit-rate it tends to behave like MJPEG2000, where the GOP
+size tends to become one. Hence this scheme works better than MPEG-2
+at very high bit-rate (refer Figure~\ref{fig13}).
+
+\section{Conclusion}\label{conclusion}
+\vspace*{6pt}
+
+In this paper we have  proposed a novel video compression algorithms which
+use JPEG2000 as the core compression engine for compressing {\it intra}
+frames as well as the motion compensated {\it prediction} error frames.
+The rate and quality control algorithms for the MCJ2K scheme have been
+developed and the MCJ2K  is found to perform better than MPEG-2 and
+MJPEG2000 at higher bit-rates for many  cases. Extensive experimentations
+have been carried out and the results are compared with standard schemes.
+It~is also found that MCJ2K performs better for low motion videos as
+compared to high motion videos. The proposed MCJ2K scheme can find its
+applications like HDTV video conferencing, medical video transmission
+etc., where high quality video is required, even at the cost of high
+bit-rate.
+
+\begin{thebibliography}{10}
+
+\bibitem[\protect\citeauthoryear{Antonini et~al.}{1992}]{10}
+Antonini, M., Barlaud, M., Mathieu,~P. and Daubechies,~I. (1992) `Image coding
+using wavelet transform', {\it IEEE  Transactions on Image Processing}, Vol.~1,
+No.~2, \h{pp.205--222}.
+
+%\enlargethispage{-2pt}
+
+\bibitem[\protect\citeauthoryear{Dufaux and Ebrahimi}{2003}]{18}
+Dufaux, F. and Ebrahimi, T. (2003) `Motion JPEG2000 for wireless applications',
+{\it Signal Processing Laboratory (EPLF)}, {\it Proceedings of First
+International JPEG 2000 Workshop, Motion Analysis and Image Sequence
+Processing}, IEEE, Lugano, Switzerland, July, pp.1--5.% \tc{AUTHOR PLEASE SUPPLY
+%PAGE LOCATION AND PAGE RANGE.}
+
+\bibitem[\protect\citeauthoryear{Gray and Neuhoff}{1998}]{22}
+Gray, R.M. and Neuhoff, D.L. (1998) `Quantization: invited paper', {\it IEEE
+Transactions on Information Theory}, Vol.~44, No.~6, pp.2325--2383.
+
+\bibitem[\protect\citeauthoryear{He~and Mitra}{2005}]{20}
+He, Z. and Mitra, S.K. (2005) `From rate-distortion analysis to
+resource-distortion analysis', {\it IEEE Transaction on Circuit and
+System for Video Technology}, Vol.~5, No.~3, pp.6--18.
+
+\bibitem[\protect\citeauthoryear{LeGall}{1991}]{17}
+LeGall, D. (1991) `MPEG: a video compression standard for multimedia
+applications', {\it Communication of ACM}, Vol.~34, No.~4, pp.46--58.
+
+\bibitem[\protect\citeauthoryear{Leung and Taubman}{2005}]{13}
+Leung, R. and Taubman, D. (2005) `Transform and embedded coding techniques for
+maximum efficiency and random accessibility in 3-D scalable compression', {\it
+IEEE Transactions on Image Processing}, Vol.~14, No.~14, pp.1632--1646.
+
+\bibitem[\protect\citeauthoryear{Liang et~al.}{2005}]{15}
+Liang,~J., Tu,~C. and Tran,~T.D. (2005) `Optimal block boundary
+pre/postfiltering for wavelet-based image and video compression', {\it IEEE
+Transactions on Image Processing}, Vol.~14, No.~12, pp.2151--2158.
+
+\bibitem[\protect\citeauthoryear{Montgomery et~al.}{2001}]{21}
+Montgomery, D.C., Runger, G.C. and Hubele,~N.F. (2001) {\it Engineering
+Statistics}, 2nd~ed., John~Wiley, New~York.
+
+\bibitem[\protect\citeauthoryear{Rath et~al.}{2006}]{16}
+Rath,~A., Tuithung,~T., Ghosh, S.K. and Mukherjee,~J. (2006)
+`Compressing videos using JPEG2000', {\it Proceedings of the 3rd
+Workshop on Computer Vision, Graphics and Image Processing}, 12--13th
+January, Hyderabad, Andra~Pradesh, India, pp.93--97.
+
+\bibitem[\protect\citeauthoryear{Senda}{1995}]{1}
+Senda, Y. (1995) `A~simplified motion estimation using an approximation for the
+MPEG-2 real time encoder', {\it International Conference on Acoustics, Speech
+and Signal Processing}, Detroit, MI, USA, pp.3221--3224. %\tc{AUTHOR PLEASE
+%SUPPLY LOCATION.}
+
+\bibitem[\protect\citeauthoryear{Sikora}{1997}]{3}
+Sikora, T. (1997) `The MPEG-4 video standard verification model', {\it IEEE
+Transactions on Circuit and System for Video Technology}, Vol.~7, pp.19--31.
+
+\bibitem[\protect\citeauthoryear{Skodras et~al.}{2000}]{9}
+Skodras, A.N., Christopoulos, C.A. and Ebrahimi,~T. (2000) `JPEG2000:
+the upcoming still image compression standard', {\it Proceeding of
+the 11th Portuguese Conf. on Pattern Recognition (RECPA00D~20:
+Invited paper)}, \h{11--12th} May, Prto, Portugal,  pp.359--366.
+
+\bibitem[\protect\citeauthoryear{Tudor}{1995}]{2}
+Tudor, P.N. (1995) `MPEG-2 video compression', {\it Electronics and
+Communication Engineering Journal}, pp.257--264.
+
+\bibitem[\protect\citeauthoryear{Tuithung et~al.}{2006}]{19}
+Tuithung, T., Sinha, D., Ghosh,~S.K. and Mukherjee,~J. (2006)
+`Bit-investment policy of MCJ2K: a~new video codec', {\it Proceedings
+of the 1st IEEE International Conference on Signal and Image
+Processing}, \h{7--9th}~December, Hubli, Karnataka, India,
+pp.648--652.
+
+\bibitem[\protect\citeauthoryear{Taubman and Marcellin}{2002}]{7}
+Taubman, D. and Marcellin, M.W. (2002) {\it JPEG 2000: Image Compression
+Fundamentals, Standards and Practice}, Kluwer, MA, Norwell.
+
+\bibitem[\protect\citeauthoryear{Taubman}{1999}]{8}
+Taubman, D. (1999) `High performance scalable image compression with EBCOT',
+{\it Proceeding of IEEE International Conf. on Image Processing (ICIP99)},
+Tokyo, Japan, Vol.~3, pp.344--348.
+
+\bibitem[\protect\citeauthoryear{Taubman and Zakhor}{1994}]{12}
+Taubman, D. and Zakhor, A. (1994) `Multirate 3-D subband coding of video', {\it
+IEEE Transactions on Image Processing}, Vol.~3, No.~5, pp.572--589.
+
+\bibitem[\protect\citeauthoryear{Wallace}{1991}]{6}
+Wallace, G.K. (1991) `The JPEG still picture compression standard', {\it
+Communication of ACM}, Vol.~34, No.~4, pp.30--44.
+
+\bibitem[\protect\citeauthoryear{Wiegand et~al.}{2003}]{4}
+Wiegand, T., Sullivan, G.J., Bjontegaard,~G. and Luthra,~A. (2003) `Overview of
+the H.264/AVC video coding standard', {\it IEEE Transaction on Circuit and
+System for Video Technology}, Vol.~13, pp.560--576.
+
+\bibitem[\protect\citeauthoryear{Wiegand and Sullivan}{2005}]{5}
+Wiegand, T. and Sullivan, G.J. (2005) `Video compression-from concepts to the
+H.264/AVC standard', {\it Proceeding of the IEEE}, Vol.~93, No.~1, pp.18--31.
+%\tc{AUTHOR PLEASE SUPPLY PAGE RANGE.}
+
+\bibitem[\protect\citeauthoryear{Xu~et~al.}{1994}]{11}
+Xu, J., Xiong, Z., Li, S. and Zhang,~Y. (1994) `3-D embedded subband coding with
+optimal truncation (3-D~Escot)', {\it J.~Appl. Comput. Harmon. Anal.}, Vol.~10,
+pp.290--315.
+
+\bibitem[\protect\citeauthoryear{Xu et~al.}{2002}]{14}
+Xu, J., Xiong, Z., Li, S. and Zhang,~Y.Q. (2002) \h{`Memory-constrained} 3-D
+wavelet transform for video coding without boundary effects', {\it IEEE
+Transaction on Circuit and System for Video Technology}, Vol.~12, No.~9,
+\h{pp.812--818}.
+
+\end{thebibliography}
+
+\def\notesname{Note}
+
+\theendnotes
+
+%\section*{Query}
+%
+%\tc{AQ1: AUTHOR PLEASE CITE FIGURE 8 IN TEXT.}
+
+\end{document}
