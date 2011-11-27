@@ -17,12 +17,6 @@ R.~G. Brickner, K.~Holian, B.~Thiagarajan, and S.~L. Johnsson.
 \newblock Designing a stencil compiler for the connection machine model {CM}-5.
 \newblock Technical Report LA-UR-94-3152, LANL, 1994.
 
-\bibitem{chamberlain_chapel}
-B.~L. Chamberlain, D.~Callahan, and H.~P. Zima.
-\newblock {Parallel Programmability and the Chapel Language}.
-\newblock {\em {International Journal of High Performance Computing
-  Applications}}, 21(3):291--312, 2007.
-
 \bibitem{chamberlain04zpl}
 B.~L. Chamberlain, S.-E. Choi, S.~J. Deitz, and L.~Snyder.
 \newblock {The High-Level Parallel Language ZPL Improves Productivity and

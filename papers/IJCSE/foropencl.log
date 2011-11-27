@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  27 NOV 2011 02:03
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  27 NOV 2011 02:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -16,17 +16,42 @@ iya, panjabi, tamil, telugu, indonesian, interlingua, irish, italian, kurmanji,
 ish, portuguese, romanian, russian, sanskrit, serbian, serbianc, slovak, sloven
 ian, spanish, swedish, turkish, turkmen, ukrainian, uppersorbian, welsh, loaded
 .
-(./acm_proc_article-sp.cls
-(/usr/local/texlive/2011/texmf-dist/tex/latex/graphics/epsfig.sty
-Package: epsfig 1999/02/16 v1.7a (e)psfig emulation (SPQR)
+(./doublecol-new.cls
 
-(/usr/local/texlive/2011/texmf-dist/tex/latex/graphics/graphicx.sty
-Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+LaTeX Warning: You have requested document class `doublecol-new',
+               but the document class provides `singlecol'.
 
-(/usr/local/texlive/2011/texmf-dist/tex/latex/graphics/keyval.sty
-Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
-\KV@toks@=\toks14
+Document Class: singlecol 1998/05/05 v1.3y Standard LaTeX document class
+(/usr/local/texlive/2011/texmf-dist/tex/generic/epsf/epsf.sty
+This is `epsf.tex' v2.7.4 <14 February 2011>
+\epsffilein=\read1
+\epsfframemargin=\dimen102
+\epsfframethickness=\dimen103
+\epsfrsize=\dimen104
+\epsftmp=\dimen105
+\epsftsize=\dimen106
+\epsfxsize=\dimen107
+\epsfysize=\dimen108
+\pspoints=\dimen109
+) (/usr/local/texlive/2011/texmf-dist/tex/latex/endnotes/endnotes.sty
+\c@endnote=\count79
+\endnotesep=\dimen110
+\@enotes=\write3
 )
+(/usr/local/texlive/2011/texmf-dist/tex/latex/base/ifthen.sty
+Package: ifthen 2001/05/26 v1.1c Standard LaTeX ifthen package (DPC)
+)
+(/usr/local/texlive/2011/texmf-dist/tex/latex/tools/dcolumn.sty
+Package: dcolumn 2001/05/28 v1.06 decimal alignment package (DPC)
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/tools/array.sty
+Package: array 2008/09/09 v2.4c Tabular extension package (FMi)
+\col@sep=\dimen111
+\extrarowheight=\dimen112
+\NC@list=\toks14
+\extratabsurround=\skip41
+\backup@length=\skip42
+))
 (/usr/local/texlive/2011/texmf-dist/tex/latex/graphics/graphics.sty
 Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
 
@@ -47,28 +72,42 @@ Package: infwarerr 2010/04/08 v1.3 Providing info/warning/message (HO)
 (/usr/local/texlive/2011/texmf-dist/tex/generic/oberdiek/ltxcmds.sty
 Package: ltxcmds 2011/04/18 v1.20 LaTeX kernel commands for general use (HO)
 )
-\Gread@gobject=\count79
+\Gread@gobject=\count80
 ))
-\Gin@req@height=\dimen102
-\Gin@req@width=\dimen103
-)
-\epsfxsize=\dimen104
-\epsfysize=\dimen105
-)
-(/usr/local/texlive/2011/texmf-dist/tex/latex/amsfonts/amssymb.sty
-Package: amssymb 2009/06/22 v3.00
+(/usr/local/texlive/2011/texmf-dist/tex/latex/base/leqno.sty
 
-(/usr/local/texlive/2011/texmf-dist/tex/latex/amsfonts/amsfonts.sty
-Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
-\@emptytoks=\toks15
-\symAMSa=\mathgroup4
-\symAMSb=\mathgroup5
-LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
-(Font)                  U/euf/m/n --> U/euf/b/n on input line 96.
+LaTeX Warning: inputting `leqno.clo' instead of obsolete `leqno.sty'.
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/base/leqno.clo
+File: leqno.clo 1998/08/17 v1.1c Standard LaTeX option (left equation numbers)
 ))
+(/usr/local/texlive/2011/texmf-dist/tex/latex/tools/calc.sty
+Package: calc 2007/08/22 v4.3 Infix arithmetic (KKT,FJ)
+\calc@Acount=\count81
+\calc@Bcount=\count82
+\calc@Adimen=\dimen113
+\calc@Bdimen=\dimen114
+\calc@Askip=\skip43
+\calc@Bskip=\skip44
+LaTeX Info: Redefining \setlength on input line 76.
+LaTeX Info: Redefining \addtolength on input line 77.
+\calc@Ccount=\count83
+\calc@Cskip=\skip45
+) (./lastpage.sty
+Package: lastpage 1994/06/25 v0.1b LaTeX2e package for refs to last page number
+ (JPG)
+)
+(/usr/local/texlive/2011/texmf-dist/tex/latex/graphics/color.sty
+Package: color 2005/11/14 v1.0j Standard LaTeX Color (DPC)
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/latexconfig/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package color Info: Driver file: pdftex.def on input line 130.
+)
 (/usr/local/texlive/2011/texmf-dist/tex/latex/amsmath/amsmath.sty
 Package: amsmath 2000/07/18 v2.13 AMS math features
-\@mathmargin=\skip41
+\@mathmargin=\skip46
 
 For additional information on amsmath, use the `?' option.
 (/usr/local/texlive/2011/texmf-dist/tex/latex/amsmath/amstext.sty
@@ -76,155 +115,165 @@ Package: amstext 2000/06/29 v2.01
 
 (/usr/local/texlive/2011/texmf-dist/tex/latex/amsmath/amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0
-\@emptytoks=\toks16
-\ex@=\dimen106
+\@emptytoks=\toks15
+\ex@=\dimen115
 ))
 (/usr/local/texlive/2011/texmf-dist/tex/latex/amsmath/amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d
-\pmbraise@=\dimen107
+\pmbraise@=\dimen116
 )
 (/usr/local/texlive/2011/texmf-dist/tex/latex/amsmath/amsopn.sty
 Package: amsopn 1999/12/14 v2.01 operator names
 )
-\inf@bad=\count80
+\inf@bad=\count84
 LaTeX Info: Redefining \frac on input line 211.
-\uproot@=\count81
-\leftroot@=\count82
+\uproot@=\count85
+\leftroot@=\count86
 LaTeX Info: Redefining \overline on input line 307.
-\classnum@=\count83
-\DOTSCASE@=\count84
+\classnum@=\count87
+\DOTSCASE@=\count88
 LaTeX Info: Redefining \ldots on input line 379.
 LaTeX Info: Redefining \dots on input line 382.
 LaTeX Info: Redefining \cdots on input line 467.
 \Mathstrutbox@=\box26
 \strutbox@=\box27
-\big@size=\dimen108
+\big@size=\dimen117
 LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
 LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
-\macc@depth=\count85
-\c@MaxMatrixCols=\count86
+\macc@depth=\count89
+\c@MaxMatrixCols=\count90
 \dotsspace@=\muskip10
-\c@parentequation=\count87
-\dspbrk@lvl=\count88
-\tag@help=\toks17
-\row@=\count89
-\column@=\count90
-\maxfields@=\count91
-\andhelp@=\toks18
-\eqnshift@=\dimen109
-\alignsep@=\dimen110
-\tagshift@=\dimen111
-\tagwidth@=\dimen112
-\totwidth@=\dimen113
-\lineht@=\dimen114
-\@envbody=\toks19
-\multlinegap=\skip42
-\multlinetaggap=\skip43
-\mathdisplay@stack=\toks20
+\c@parentequation=\count91
+\dspbrk@lvl=\count92
+\tag@help=\toks16
+\row@=\count93
+\column@=\count94
+\maxfields@=\count95
+\andhelp@=\toks17
+\eqnshift@=\dimen118
+\alignsep@=\dimen119
+\tagshift@=\dimen120
+\tagwidth@=\dimen121
+\totwidth@=\dimen122
+\lineht@=\dimen123
+\@envbody=\toks18
+\multlinegap=\skip47
+\multlinetaggap=\skip48
+\mathdisplay@stack=\toks19
 LaTeX Info: Redefining \[ on input line 2666.
 LaTeX Info: Redefining \] on input line 2667.
 )
-Document Class 'acm_proc_article-sp' <22nd. April '09>. Modified by G.K.M. Tobi
-n
-Based in part upon document Style `acmconf' <22 May 89>. Hacked 4/91 by
-shivers@cs.cmu.edu, 4/93 by theobald@cs.mcgill.ca
-Excerpts were taken from (Journal Style) 'esub2acm.cls'.
-****** Bugs/comments/suggestions to Gerry Murray -- murray@hq.acm.org ******
-\footheight=\dimen115
-\@maxsep=\dimen116
-\@dblmaxsep=\dimen117
-\aucount=\count92
-\originalaucount=\count93
-\auwidth=\dimen118
-\auskip=\dimen119
-\auskipcount=\count94
-\auskip=\dimen120
-\allauboxes=\dimen121
-\addauthors=\toks21
-\addauflag=\count95
-\subtitletext=\toks22
-\savesection=\count96
-\sectioncntr=\count97
-\c@figure=\count98
-\c@table=\count99
-\titleboxnotes=\toks23
-\titleboxnoteflag=\count100
-Document Class: acm_proc_article-sp 2009/04/22 - V3.2SP - based on esub2acm.sty
- <23 April 96>
+(/usr/local/texlive/2011/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 96.
+)
+(/usr/local/texlive/2011/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2009/06/22 v3.00
+)
+(/usr/local/texlive/2011/texmf-dist/tex/latex/tools/bm.sty
+Package: bm 2004/02/26 v1.1c Bold Symbol Support (DPC/FMi)
+\symboldoperators=\mathgroup6
+\symboldletters=\mathgroup7
+\symboldsymbols=\mathgroup8
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 138.
+LaTeX Info: Redefining \bm on input line 204.
+)
 (/usr/local/texlive/2011/texmf-dist/tex/latex/base/latexsym.sty
 Package: latexsym 1998/08/17 v2.2e Standard LaTeX package (lasy symbols)
-\symlasy=\mathgroup6
+\symlasy=\mathgroup9
 LaTeX Font Info:    Overwriting symbol font `lasy' in version `bold'
 (Font)                  U/lasy/m/n --> U/lasy/b/n on input line 47.
 )
-\@acmtitlebox=\box28
-\titlenotecount=\count101
-\tntoks=\toks24
-\tntokstwo=\toks25
-\tntoksthree=\toks26
-\tntoksfour=\toks27
-\tntoksfive=\toks28
-\catcount=\count102
-\copyrightnotice=\toks29
-\conf=\toks30
-\confinfo=\toks31
-\c@part=\count103
-\c@section=\count104
-\c@subsection=\count105
-\c@subsubsection=\count106
-\c@paragraph=\count107
-
-Using 'Abbrev' bibliography style
-LaTeX Info: Redefining \cite on input line 1236.
-\bibindent=\dimen122
-\colcntr=\count108
-\saveb@x=\box29
-\copyrtyr=\toks32
-\acmcopyr=\toks33
-\boilerplate=\toks34
-\copyrightetc=\toks35
-(/usr/local/texlive/2011/texmf-dist/tex/latex/base/fontenc.sty
-Package: fontenc 2005/09/27 v1.99g Standard LaTeX package
-
-(/usr/local/texlive/2011/texmf-dist/tex/latex/base/t1enc.def
-File: t1enc.def 2005/09/27 v1.99g Standard LaTeX file
-LaTeX Font Info:    Redeclaring font encoding T1 on input line 43.
+(/usr/local/texlive/2011/texmf-dist/tex/latex/base/size10.clo
+File: size10.clo 2007/10/19 v1.4h Standard LaTeX file (size option)
 )
-LaTeX Font Info:    Try loading font information for T1+aer on input line 100.
+\markwidth=\dimen124
+\blth=\dimen125
+\marklength=\dimen126
+\markdistance=\dimen127
+\trimwidth=\dimen128
+\trimheight=\dimen129
+\auxaaa=\dimen130
+\auxbbb=\dimen131
+\auxccc=\dimen132
+\auxddd=\dimen133
+\t@abstract=\box28
+\t@receivedname=\box29
+\temptbox=\box30
+\tempdime=\dimen134
+\t@bio=\box31
 
-(/usr/local/texlive/2011/texmf-dist/tex/latex/ae/t1aer.fd
-File: t1aer.fd 1997/11/16 Font definitions for T1/aer.
-)))
+(/usr/local/texlive/2011/texmf-dist/tex/latex/tools/theorem.sty
+Package: theorem 1995/11/23 v2.2c Theorem extension package (FMi)
+\theorem@style=\toks20
+\theorem@bodyfont=\toks21
+\theorempreskipamount=\skip49
+\theorempostskipamount=\skip50
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/tools/thp.sty
+File: thp.sty 1995/11/23 v2.2c Theorem extension package (FMi)
+))
+\c@part=\count96
+\c@section=\count97
+\c@subsection=\count98
+\c@subsubsection=\count99
+\c@paragraph=\count100
+\c@subparagraph=\count101
+\mathindent=\dimen135
+\mathindent=\dimen136
+\c@figure=\count102
+\c@table=\count103
+\abovecaptionskip=\skip51
+\belowcaptionskip=\skip52
+\@tempboxb=\box32
+\boxH=\box33
+\boxHrunin=\box34
+\temptbox=\box35
+\temptboxA=\box36
+\tempdime=\dimen137
+\tempdimeA=\dimen138
+\rboxh=\dimen139
+\rboxw=\dimen140
+)
 (/usr/local/texlive/2011/texmf-dist/tex/latex/cite/cite.sty
 LaTeX Info: Redefining \cite on input line 302.
 LaTeX Info: Redefining \nocite on input line 373.
 Package: cite 2010/09/10  v 5.3
 )
-(/usr/local/texlive/2011/texmf-dist/tex/latex/url/url.sty
-\Urlmuskip=\muskip11
-Package: url 2006/04/12  ver 3.3  Verb mode for urls, etc.
+(/usr/local/texlive/2011/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/local/texlive/2011/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks22
 )
-(/usr/local/texlive/2011/texmf-dist/tex/latex/listings/listings.sty
-\lst@mode=\count109
-\lst@gtempboxa=\box30
-\lst@token=\toks36
-\lst@length=\count110
-\lst@currlwidth=\dimen123
-\lst@column=\count111
-\lst@pos=\count112
-\lst@lostspace=\dimen124
-\lst@width=\dimen125
-\lst@newlines=\count113
-\lst@lineno=\count114
-\abovecaptionskip=\skip44
-\belowcaptionskip=\skip45
-\lst@maxwidth=\dimen126
+\Gin@req@height=\dimen141
+\Gin@req@width=\dimen142
+) (./url.sty
+\Urlmuskip=\muskip11
+Package: url 1999/03/28  ver 1.5x  Verb mode for urls, etc.
+) (/usr/local/texlive/2011/texmf-dist/tex/latex/listings/listings.sty
+\lst@mode=\count104
+\lst@gtempboxa=\box37
+\lst@token=\toks23
+\lst@length=\count105
+\lst@currlwidth=\dimen143
+\lst@column=\count106
+\lst@pos=\count107
+\lst@lostspace=\dimen144
+\lst@width=\dimen145
+\lst@newlines=\count108
+\lst@lineno=\count109
+\lst@maxwidth=\dimen146
 
 (/usr/local/texlive/2011/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2007/02/22 1.4 (Carsten Heinz)
-\c@lstnumber=\count115
-\lst@skipnumbers=\count116
-\lst@framebox=\box31
+\c@lstnumber=\count110
+\lst@skipnumbers=\count111
+\lst@framebox=\box38
 )
 (/usr/local/texlive/2011/texmf-dist/tex/latex/listings/listings.cfg
 File: listings.cfg 2007/02/22 1.4 listings configuration
@@ -249,17 +298,17 @@ LaTeX Font Info:    ... okay on input line 72.
 
 (/usr/local/texlive/2011/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count117
-\scratchdimen=\dimen127
-\scratchbox=\box32
-\nofMPsegments=\count118
-\nofMParguments=\count119
-\everyMPshowfont=\toks37
-\MPscratchCnt=\count120
-\MPscratchDim=\dimen128
-\MPnumerator=\count121
-\makeMPintoPDFobject=\count122
-\everyMPtoPDFconversion=\toks38
+\scratchcounter=\count112
+\scratchdimen=\dimen147
+\scratchbox=\box39
+\nofMPsegments=\count113
+\nofMParguments=\count114
+\everyMPshowfont=\toks24
+\MPscratchCnt=\count115
+\MPscratchDim=\dimen148
+\MPnumerator=\count116
+\makeMPintoPDFobject=\count117
+\everyMPtoPDFconversion=\toks25
 ) (/usr/local/texlive/2011/texmf-dist/tex/generic/oberdiek/pdftexcmds.sty
 Package: pdftexcmds 2011/04/22 v0.16 Utilities of pdfTeX for LuaTeX (HO)
 
@@ -307,126 +356,715 @@ G,.JBIG2,.JB2,.eps]
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-\c@lstlisting=\count123
-LaTeX Font Info:    Try loading font information for U+msa on input line 120.
+\c@lstlisting=\count118
 
+Overfull \hbox (3.0pt too wide) in paragraph at lines 117--117
+ []  
+ []
+
+
+Overfull \hbox (3.0pt too wide) in paragraph at lines 117--117
+ [][]|  
+ []
+
+
+Underfull \hbox (badness 3168) in paragraph at lines 120--130
+ \OT1/cmr/bx/n/9 Abstract: \OT1/cmr/m/n/9 Emerging
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 GPU architectures
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 computing are well
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 suited to a data-
+ []
+
+
+Underfull \hbox (badness 1859) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 parallel programming
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 model. This paper
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 presents preliminary
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 work examining
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 a programming
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 methodology that
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 provides Fortran
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 programmers with
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 access to these
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 emerging systems.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 We use array
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 to show how this
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 feature is easily
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 The transformations
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 in ForOpenCL are
+ []
+
+
+Underfull \hbox (badness 6859) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 based on a simple
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 to OpenCL. We
+ []
+
+
+Underfull \hbox (badness 7116) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 stencil code solving
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 the shallow-water
+ []
+
+
+Underfull \hbox (badness 2460) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 fluid equations, that
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 the performance
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 of the ForOpenCL
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 compiler-generated
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 transformations is
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 120--130
+ \OT1/cmr/m/n/9 of hand-optimized
+ []
+
+(./intro.tex
+Underfull \hbox (badness 2096) in paragraph at lines 4--15
+\OT1/cmr/m/n/10 This paper presents a compiler-level approach for
+ []
+
+
+Underfull \hbox (badness 1990) in paragraph at lines 4--15
+\OT1/cmr/m/n/10 for different hardware architectures using low-level
+ []
+
+
+Underfull \hbox (badness 3128) in paragraph at lines 4--15
+\OT1/cmr/m/n/10 that can be easily expressed in terms of whole
+ []
+
+
+LaTeX Warning: Citation `hpcwire11manycore' on page 1 undefined on input line 1
+9.
+
+
+Underfull \hbox (badness 2418) in paragraph at lines 16--24
+\OT1/cmr/m/n/10 Tesla processor is in the same neighborhood [\OT1/cmr/bx/n/10 ?
+\OT1/cmr/m/n/10 ].
+ []
+
+
+Underfull \hbox (badness 2856) in paragraph at lines 16--24
+\OT1/cmr/m/n/10 Unfortunately the performance that many of the
+ []
+
+
+Underfull \hbox (badness 1360) in paragraph at lines 16--24
+\OT1/cmr/m/n/10 Architectural changes are trending toward multiple
+ []
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+Underfull \hbox (badness 2027) in paragraph at lines 25--32
+\OT1/cmr/m/n/10 systems. An especially challenging problem is not
+ []
+
+
+LaTeX Warning: Citation `pgi10accelerator' on page 1 undefined on input line 34
+.
+
+
+Underfull \hbox (badness 2913) in paragraph at lines 33--41
+\OT1/cmr/m/n/10 is well-suited to architectures that are based on
+ []
+
+
+Underfull \hbox (badness 2426) in paragraph at lines 33--41
+\OT1/cmr/m/n/10 of simple cores. The recent CUDA and OpenCL
+ []
+
+
+LaTeX Warning: Citation `wolfe08gpgpu' on page 1 undefined on input line 43.
+
+
+Underfull \hbox (badness 1178) in paragraph at lines 42--51
+[]\OT1/cmr/m/n/10 The problem with OpenCL and CUDA is that
+ []
+
+
+Underfull \hbox (badness 2837) in paragraph at lines 42--51
+\OT1/cmr/m/n/10 they expose too much detail about the machine
+ []
+
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 51.
+(/usr/local/texlive/2011/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 51.
+ [1{/usr/local/texlive/2011/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+
+
+]
+Underfull \hbox (badness 4726) in paragraph at lines 55--65
+\OT1/cmr/m/n/10 We demonstrate that a subset of Fortran map
+ []
+
+
+Underfull \hbox (badness 1859) in paragraph at lines 55--65
+\OT1/cmr/m/n/10 surprisingly well onto GPUs when transformed to
+ []
+
+
+Underfull \hbox (badness 1755) in paragraph at lines 55--65
+\OT1/cmr/m/n/10 Note that this subset of the Fortran language is
+ []
+
+
+Underfull \hbox (badness 1082) in paragraph at lines 55--65
+\OT1/cmr/m/it/10 require explicit declaration of parallelism within the
+ []
+
+LaTeX Font Info:    Try loading font information for U+msa on input line 69.
 (/usr/local/texlive/2011/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2009/06/22 v3.00 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 120.
+LaTeX Font Info:    Try loading font information for U+msb on input line 69.
 
 (/usr/local/texlive/2011/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2009/06/22 v3.00 AMS symbols B
 )
-LaTeX Font Info:    Try loading font information for U+lasy on input line 120.
+LaTeX Font Info:    Try loading font information for U+lasy on input line 69.
 
 (/usr/local/texlive/2011/texmf-dist/tex/latex/base/ulasy.fd
 File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
-) (./intro.tex
-Overfull \hbox (2.89558pt too wide) in paragraph at lines 16--24
-\T1/aer/m/n/9 SGEMM bench-mark with their Knights Ferry pro-ces-sor while
+)
+\openout3 = `foropencl.ent'.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 66--77
+[]\OT1/cmr/m/n/10 Transformations are supplied that provide a
  []
 
-[1{/usr/local/texlive/2011/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+
+Underfull \hbox (badness 5274) in paragraph at lines 66--77
+\OT1/cmr/m/n/10 representation (IR) was constructed to represent
+ []
 
 
-]
-LaTeX Font Info:    Try loading font information for T1+aett on input line 58.
+Underfull \hbox (badness 1184) in paragraph at lines 86--97
+[]\OT1/cmr/m/n/10 We study the automatic transformations for an
+ []
 
-(/usr/local/texlive/2011/texmf-dist/tex/latex/ae/t1aett.fd
-File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
-)
-Overfull \hbox (5.88425pt too wide) in paragraph at lines 99--103
-\T1/aer/m/n/9 trans-formed code is com-pared with a hand-optimized OpenCL
+
+Underfull \hbox (badness 2753) in paragraph at lines 86--97
+\OT1/cmr/m/n/10 that update array elements according to a fixed
+ []
+
+
+Underfull \hbox (badness 1226) in paragraph at lines 86--97
+\OT1/cmr/m/n/10 computational fluid dynamics (CFD). The example
+ []
+
+
+Underfull \hbox (badness 1412) in paragraph at lines 86--97
+\OT1/cmr/m/n/10 described later in this paper is a simple shallow-
+ []
+
+
+Underfull \hbox (badness 1112) in paragraph at lines 98--102
+\OT1/cmr/m/n/10 to run on GPU architectures. The performance of
  []
 
 ) (./programming-model.tex
-Underfull \vbox (badness 1496) has occurred while \output is active []
+Underfull \hbox (badness 1881) in paragraph at lines 103--1
+\OT1/cmr/m/n/10 the data parallel operations that we focus on in
+ []
 
- [2]
-Overfull \hbox (3.2468pt too wide) in paragraph at lines 145--151
-\T1/aer/m/n/9 The static anal-y-sis and source-to-source trans-for-ma-tions use
-d
+
+Underfull \hbox (badness 2521) in paragraph at lines 17--22
+[]\OT1/cmr/m/n/10 In this section we present the Fortran subset
+ []
+
+
+LaTeX Warning: Citation `iverson79apl' on page 2 undefined on input line 31.
+
+
+LaTeX Warning: Citation `koelbel94hpf' on page 2 undefined on input line 40.
+
+
+Underfull \hbox (badness 1178) in paragraph at lines 37--49
+\OT1/cmtt/m/n/10 INDEPENDENT\OT1/cmr/m/n/10 , was added to allow the programmer
+
+ []
+
+
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 2| \OT1/cmr/m/it/10 M. Sottile et al.
+ []
+
+
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[2]
+
+LaTeX Warning: Citation `benkner99hpf' on page 3 undefined on input line 55.
+
+
+Underfull \hbox (badness 1194) in paragraph at lines 50--58
+\OT1/cmr/m/n/10 in 1990 in any significant way, relying instead on
+ []
+
+
+Underfull \hbox (badness 1028) in paragraph at lines 59--74
+\OT1/cmr/m/n/10 model is appropriate for part or all of the major
+ []
+
+
+Underfull \hbox (badness 2443) in paragraph at lines 59--74
+\OT1/cmr/m/n/10 where programmers relied heavily on higher level
+ []
+
+
+LaTeX Warning: Citation `stencil-compiler' on page 3 undefined on input line 10
+1.
+
+
+Underfull \hbox (badness 4954) in paragraph at lines 108--122
+[]\OT1/cmr/m/n/10 Unfortunately, this had two side effects that
+ []
+
+
+Underfull \hbox (badness 2277) in paragraph at lines 108--122
+\OT1/cmr/m/n/10 have limited broad acceptance of the whole-array
+ []
+
+
+Underfull \hbox (badness 6995) in paragraph at lines 108--122
+\OT1/cmr/m/n/10 operations. Finite difference stencils and similar
+ []
+
+
+Underfull \hbox (badness 1902) in paragraph at lines 108--122
+\OT1/cmr/m/n/10 to maintain these semantics. Limited attention to
+ []
+
+
+Underfull \hbox (badness 1259) in paragraph at lines 108--122
+\OT1/cmr/m/n/10 optimizing memory usage due to this intermediate
+ []
+
+
+LaTeX Warning: Citation `chamberlain04zpl' on page 3 undefined on input line 13
+4.
+
+
+LaTeX Warning: Citation `chamberlainchapel' on page 3 undefined on input line 1
+35.
+
+
+LaTeX Warning: Citation `keller10repa' on page 3 undefined on input line 141.
+
+
+Underfull \hbox (badness 1342) in paragraph at lines 145--151
+\OT1/cmr/m/n/10 used in this work require the programmer to use
+ []
+
+
+Underfull \hbox (badness 6348) in paragraph at lines 145--151
+\OT1/cmr/m/n/10 a language subset that employs a data-parallel
+ []
+
+
+Underfull \hbox (badness 2221) in paragraph at lines 154--159
+\OT1/cmr/m/n/10 to write statements in terms of whole arrays or
+ []
+
+
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
  []
 
 [3]
-Overfull \hbox (1.79797pt too wide) in paragraph at lines 313--320
-[]\T1/aer/m/n/9 Data par-al-lelism has been called collection-oriented pro-gram
--
+Underfull \hbox (badness 1325) in paragraph at lines 207--214
+\OT1/cmr/m/n/10 While this may seem like a trivial example, such
  []
 
 
-Overfull \hbox (4.71431pt too wide) in paragraph at lines 313--320
-\T1/aer/m/n/9 par-al-lelism by the use of pure (other than calls to \T1/aett/m/
-n/9 re-gion_ptr\T1/aer/m/n/9 )
+Underfull \hbox (badness 1735) in paragraph at lines 215--219
+\OT1/cmr/m/n/10 requires that elemental functions now need to be
+ []
+
+
+Underfull \hbox (badness 1237) in paragraph at lines 232--236
+\OT1/cmr/m/n/10 Currently our prototype tool only transforms pure
+ []
+
+
+Underfull \hbox (badness 2961) in paragraph at lines 263--268
+\OT1/cmr/m/n/10 defined in Fortran and are used in array-syntax
+ []
+
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 271.
+
+Underfull \hbox (badness 1253) in paragraph at lines 279--295
+\OT1/cmr/m/n/10 that a pure subroutine can be transformed to an
+ []
+
+
+Underfull \hbox (badness 2142) in paragraph at lines 279--295
+\OT1/cmr/m/n/10 for calls to \OT1/cmtt/m/n/10 region[]ptr\OT1/cmr/m/n/10 . Thes
+e directives are not
+ []
+
+
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 4| \OT1/cmr/m/it/10 M. Sottile et al.
+ []
+
+
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
  []
 
 [4]
-Overfull \hbox (2.55405pt too wide) in paragraph at lines 347--354
-\T1/aett/m/n/9 gion_ptr \T1/aer/m/n/9 func-tions. Fu-ture work will ad-dress no
-n-contiguous
+Underfull \hbox (badness 10000) in paragraph at lines 298--300
+\OT1/cmr/m/n/10 There are several advantages to this style of
  []
 
-) (./shallow-water.tex [5]) (./source-to-source.tex [6]
+
+LaTeX Warning: Citation `blelloch90' on page 5 undefined on input line 314.
+
+
+Underfull \hbox (badness 4569) in paragraph at lines 313--320
+\OT1/cmr/m/n/10 and the array-valued expressions all semantically
+ []
+
+
+Underfull \hbox (badness 1603) in paragraph at lines 313--320
+\OT1/cmr/m/n/10 return a value, this style of programming is also
+ []
+
+
+LaTeX Warning: Citation `Levesque:SC08' on page 5 undefined on input line 325.
+
+
+Underfull \hbox (badness 2443) in paragraph at lines 333--342
+\OT1/cmr/m/n/10 OpenCL kernels. This restriction is lifted slightly
+ []
+
+
+Underfull \hbox (badness 1215) in paragraph at lines 333--342
+\OT1/cmr/m/n/10 kernels using Fortran interfaces in the ForOpenCL
+ []
+
+
+Underfull \hbox (badness 3428) in paragraph at lines 347--354
+\OT1/cmr/m/n/10 as contiguous. A kernel procedure may not call
+ []
+
+) (./shallow-water.tex
+
+LaTeX Warning: Citation `Robey07' on page 5 undefined on input line 5.
+
+
+LaTeX Warning: Citation `Leveque02' on page 5 undefined on input line 10.
+
+
+Underfull \hbox (badness 1132) in paragraph at lines 4--13
+\OT1/cmr/m/n/10 The numerical code used for this work is from a
+ []
+
+
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 35--46
+[]\OT1/cmr/m/n/10 The numerical method is a two-step Lax-
+ []
+
+
+Overfull \hbox (27.44684pt too wide) detected at line 53
+$ []$ 
+ []
+
+
+Underfull \hbox (badness 1960) in paragraph at lines 121--123
+\OT1/cmr/m/n/10 on the cell faces. Assignment statements like the
+ []
+
+
+Overfull \hbox (11.14703pt too wide) in paragraph at lines 130--130
+[]     \OT1/cmtt/m/n/9 * (region_cpy(U,face_lt) - region_cpy(U,face_rt))[] 
+ []
+
+
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 6| \OT1/cmr/m/it/10 M. Sottile et al.
+ []
+
+
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[6]) (./source-to-source.tex
+Underfull \hbox (badness 5681) in paragraph at lines 3--9
+\OT1/cmr/m/n/10 This section provides an brief overview of the
+ []
+
+
+LaTeX Warning: Citation `opencl08' on page 7 undefined on input line 12.
+
+
+Underfull \hbox (badness 1082) in paragraph at lines 19--27
+[]\OT1/cmr/m/n/10 An important concept in OpenCL is that of a
+ []
+
+
+Underfull \hbox (badness 1436) in paragraph at lines 19--27
+\OT1/cmr/m/n/10 to run an OpenCL kernel concurrently on several
+ []
+
 <cl-memory.pdf, id=37, 216.81pt x 144.54pt>
 File: cl-memory.pdf Graphic file (type pdf)
  <use cl-memory.pdf>
 Package pdftex.def Info: cl-memory.pdf used on input line 47.
 (pdftex.def)             Requested size: 126.47249pt x 84.31624pt.
 
-Underfull \vbox (badness 2608) has occurred while \output is active []
-
-
-Overfull \hbox (10.85912pt too wide) in paragraph at lines 146--150
-\T1/aer/m/n/9 For ex-am-ple, in-te-rior pointer vari-ables are par-tic-u-larly 
-straight-
+Underfull \hbox (badness 10000) in paragraph at lines 62--78
+[]\OT1/cmr/m/n/10 Halo regions obtained via the \OT1/cmtt/m/n/10 region[]cpy
  []
 
-[7 <./cl-memory.pdf>]) (./performance.tex
-Overfull \hbox (3.54767pt too wide) in paragraph at lines 165--1
-\T1/aer/m/n/9 of the thread group in the $\OML/cmm/m/it/9 x$ \T1/aer/m/n/9 di-m
-en-sion, and the \T1/aett/m/n/9 get_local_id
+
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[7 <./cl-memory.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 120--123
+\OT1/cmr/m/n/10 with OpenCL equivalents. For example, the
+ []
+
+
+Overfull \hbox (6.42209pt too wide) in paragraph at lines 126--126
+[]\OT1/cmtt/m/n/9 wave_advance(float dx, ..., __global float * H, ...);[] 
+ []
+
+
+Underfull \hbox (badness 3780) in paragraph at lines 146--150
+\OT1/cmr/m/n/10 code. For example, interior pointer variables are
+ []
+
+) (./performance.tex
+Underfull \hbox (badness 4805) in paragraph at lines 165--1
+\OT1/cmr/m/n/10 where \OT1/cmtt/m/n/10 i = LX + LY*(NLX+halo(0)+halo(1))) \OT1/
+cmr/m/n/10 is a
+ []
+
+
+Underfull \hbox (badness 1371) in paragraph at lines 165--1
+\OT1/cmr/m/n/10 is the local thread id in the $\OML/cmm/m/it/10 y$ \OT1/cmr/m/n
+/10 dimension, \OT1/cmtt/m/n/10 NLX =
+ []
+
+
+Underfull \hbox (badness 5802) in paragraph at lines 3--13
+\OT1/cmr/m/n/10 Performance measurements were made comparing
+ []
+
+
+Underfull \hbox (badness 6173) in paragraph at lines 3--13
+\OT1/cmr/m/n/10 the transformed code with different versions of
+ []
+
+
+Underfull \hbox (badness 2837) in paragraph at lines 3--13
+\OT1/cmr/m/n/10 the serial shallow-water code. The serial versions
+ []
+
+
+Underfull \hbox (badness 1152) in paragraph at lines 3--13
+\OT1/cmr/m/n/10 constructs. We also compared with a hand-written
  []
 
 )
-Overfull \hbox (5.08365pt too wide) in paragraph at lines 155--162
-\T1/aer/m/n/9 trans-for-ma-tions that al-low pro-gram-mers to de-velop and main
--
+Underfull \hbox (badness 10000) has occurred while \output is active
+\OT1/cmr/m/n/10 8| \OT1/cmr/m/it/10 M. Sottile et al.
  []
 
-(./foropencl.bbl [8]) [9
 
-] (./foropencl.aux) ) 
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[8]
+Underfull \hbox (badness 1515) in paragraph at lines 152--159
+\OT1/cmr/m/n/10 develop and maintain programs at a high-level of
+ []
+
+
+Underfull \hbox (badness 1394) in paragraph at lines 152--159
+\OT1/cmr/m/n/10 abstraction, without coding to a specific hardware
+ []
+
+
+Underfull \hbox (badness 1776) in paragraph at lines 152--159
+\OT1/cmr/m/n/10 details of the accelerator architecture or to know
+ []
+
+(./foropencl.bbl
+Underfull \hbox (badness 1552) in paragraph at lines 9--14
+\OT1/cmr/m/n/9 oriented languages onto massively parallel processors.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 37--42
+[]\OT1/cmr/m/n/9 keller10repa G. Keller, M. M. T. Chakravarty,
+ []
+
+
+Underfull \hbox (badness 4454) in paragraph at lines 37--42
+\OT1/cmr/m/n/9 shape-polymorphic, parallel arrays in Haskell.  In
+ []
+
+
+Underfull \hbox (badness 2990) in paragraph at lines 52--56
+\OT1/cmr/m/it/9 Hyperbolic Problems\OT1/cmr/m/n/9 .  Cambridge Texts in Applied
+
+ []
+
+) AED: lastpage setting LastPage
+Overfull \hbox (3.33333pt too wide) has occurred while \output is active
+|[][]
+ []
+
+[9] (./foropencl.aux)
+
+LaTeX Warning: There were undefined references.
+
+ ) 
 Here is how much of TeX's memory you used:
- 4167 strings out of 493633
- 55454 string characters out of 3143378
- 121834 words of memory out of 3000000
- 7354 multiletter control sequences out of 15000+200000
- 53438 words of font info for 74 fonts, out of 3000000 for 9000
+ 4431 strings out of 493633
+ 59584 string characters out of 3143378
+ 135358 words of memory out of 3000000
+ 7608 multiletter control sequences out of 15000+200000
+ 11861 words of font info for 46 fonts, out of 3000000 for 9000
  831 hyphenation exceptions out of 8191
- 41i,10n,32p,461b,299s stack positions out of 5000i,500n,10000p,200000b,50000s
-{/usr/local/texlive/2011/texmf-dist/fonts/enc/dvips/base/8
-r.enc}</usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.
-pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cmextra/cme
-x9.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6
-.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.p
-fb></usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb>
-</usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></u
-sr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/
-local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/lo
-cal/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/loca
-l/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb></usr/local/
-texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt8.pfb></usr/local/te
-xlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb></usr/local/texl
-ive/2011/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/
-texlive/2011/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/local/texlive
-/2011/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/local/texlive/2011/t
-exmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2011/texmf-dist/
-fonts/type1/urw/times/utmri8a.pfb>
-Output written on foropencl.pdf (9 pages, 410056 bytes).
+ 38i,14n,32p,461b,408s stack positions out of 5000i,500n,10000p,200000b,50000s
+</usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
+></usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
+</usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></
+usr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></u
+sr/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></us
+r/local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/
+local/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/lo
+cal/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local
+/texlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/te
+xlive/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texli
+ve/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texliv
+e/2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/
+2011/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/20
+11/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/201
+1/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb></usr/local/texlive/2011/
+texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2011/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb></usr/local/texlive/2011/tex
+mf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+Output written on foropencl.pdf (9 pages, 444600 bytes).
 PDF statistics:
- 126 PDF objects out of 1000 (max. 8388607)
- 83 compressed objects within 1 object stream
+ 129 PDF objects out of 1000 (max. 8388607)
+ 85 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  6 words of extra memory for PDF output out of 10000 (max. 10000000)
 

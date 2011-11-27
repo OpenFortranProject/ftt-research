@@ -55,7 +55,7 @@
 %
 
 
-\documentclass{acm_proc_article-sp}
+\documentclass{doublecol-new}
 
 \usepackage{cite}
 \usepackage{graphicx}
@@ -71,51 +71,48 @@
 
 \begin{document}
 
+\LRH{M. Sottile et~al.}
+
+\RRH{ForOpenCL: Transformations Exploiting Array Syntax in Fortran for Accelerator Programming}
+
 \title{ForOpenCL: Transformations Exploiting Array Syntax in Fortran for Accelerator Programming}
 
-\numberofauthors{6}
-
-\author{
 % 1st. author
-\alignauthor
-Matthew J. Sottile\\
-       \affaddr{Galois, Inc.}\\
-%       \affaddr{421 SW 6th Ave. Suite 300}\\
-       \affaddr{Portland, OR 97204}\\
-       \email{mjsottile@computer.org}
+\authorA{Matthew J. Sottile}
+\affA{Galois, Inc.\\
+ Portland, OR 97204\\
+ E-mail: mjsottile@computer.org}
+
 % 2nd. author
-\alignauthor
-Craig E Rasmussen\\
-       \affaddr{Los Alamos National Laboratory}\\
-%       \affaddr{CCS-7, MS B287}\\
-       \affaddr{Los Alamos, NM 87545}\\
-       \email{crasmussen@lanl.gov}
+\authorB{Craig E Rasmussen}
+\affB{Los Alamos National Laboratory\\
+ Los Alamos, NM 87545\\
+ E-mail: crasmussen@lanl.gov}
+
 % 3rd. author
-\alignauthor
-Wayne N. Weseloh\\
-       \affaddr{Los Alamos National Laboratory}\\
-       %\affaddr{XTD-1, MS T082}\\
-       %\affaddr{Los Alamos, NM 87545}\\
-       \email{weseloh@lanl.gov}
-\and  % use '\and' if you need 'another row' of author names
+\authorC{Wayne N. Weseloh}
+\affC{Los Alamos National Laboratory\\
+ Los Alamos, NM 87545\\
+ E-mail: weseloh@lanl.gov}
+
 % 4th. author
-\alignauthor
-Robert W. Robey\\
-       \affaddr{Los Alamos National Laboratory}\\
-       %\affaddr{XCP-2, MS T086}\\
-       %\affaddr{Los Alamos, NM 87545}\\
-       \email{brobey@lanl.gov}
+\authorD{Robert W. Robey}
+\affD{Los Alamos National Laboratory\\
+ Los Alamos, NM 87545\\
+ E-mail: brobey@lanl.gov}
+
 % 5th. author
-\alignauthor
-Daniel Quinlan\\
-       \affaddr{Lawrence Livermore National Laboratory}\\
-       \email{dquinlan@llnl.gov}
+\authorE{Daniel Quinlan}
+\affE{Lawrence Livermore National Laboratory\\
+ Livermore, CA 94550\\
+ E-Mail: dquinlan@llnl.gov}
+
 % 6th. author
-\alignauthor
-Jeffrey Overbey\\
-       \affaddr{University of Illinois at Urbanna-Champaign}\\
-       \email{overbey2@illinois.edu}
-}
+\authorF{Jeffrey Overbey}
+\affF{University of Illinois at Urbanna-Champaign\\
+ Champaign, IL 61820\\
+ E-mail: overbey2@illinois.edu}
+
 
 \maketitle
 
@@ -170,5 +167,4 @@ Advanced Scientific Computing Research.
 \bibliographystyle{abbrv}
 \bibliography{foropencl}
 
-\balancecolumns
 \end{document}

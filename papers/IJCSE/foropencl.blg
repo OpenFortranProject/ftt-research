@@ -5,50 +5,49 @@ The style file: abbrv.bst
 Database file #1: foropencl.bib
 Warning--string name "november" is undefined
 --line 20 of file foropencl.bib
-Warning--string name "august" is undefined
---line 27 of file foropencl.bib
 Warning--string name "june" is undefined
 --line 38 of file foropencl.bib
+Warning--I didn't find a database entry for "chamberlainchapel"
 Warning--empty institution in pgi10accelerator
-You've used 15 entries,
+You've used 14 entries,
             2118 wiz_defined-function locations,
-            576 strings with 5923 characters,
-and the built_in function-call counts, 4021 in all, are:
-= -- 363
-> -- 224
+            571 strings with 5737 characters,
+and the built_in function-call counts, 3657 in all, are:
+= -- 326
+> -- 206
 < -- 2
-+ -- 91
-- -- 74
-* -- 248
-:= -- 729
-add.period$ -- 44
-call.type$ -- 15
-change.case$ -- 80
++ -- 84
+- -- 68
+* -- 217
+:= -- 668
+add.period$ -- 41
+call.type$ -- 14
+change.case$ -- 74
 chr.to.int$ -- 0
-cite$ -- 16
-duplicate$ -- 159
-empty$ -- 311
-format.name$ -- 74
-if$ -- 807
+cite$ -- 15
+duplicate$ -- 148
+empty$ -- 284
+format.name$ -- 68
+if$ -- 734
 int.to.chr$ -- 0
-int.to.str$ -- 15
-missing$ -- 12
-newline$ -- 77
-num.names$ -- 30
-pop$ -- 99
+int.to.str$ -- 14
+missing$ -- 11
+newline$ -- 72
+num.names$ -- 28
+pop$ -- 95
 preamble$ -- 1
-purify$ -- 67
+purify$ -- 62
 quote$ -- 0
-skip$ -- 101
+skip$ -- 94
 stack$ -- 0
-substring$ -- 102
-swap$ -- 18
+substring$ -- 72
+swap$ -- 17
 text.length$ -- 2
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 56
+type$ -- 52
 warning$ -- 1
-while$ -- 32
-width$ -- 17
-write$ -- 154
+while$ -- 28
+width$ -- 16
+write$ -- 143
 (There were 4 warnings)
