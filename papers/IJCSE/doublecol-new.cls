@@ -571,6 +571,34 @@ Copyright \copyright\ 2008 Inderscience Enterprises Ltd. & &%
     \end{Flushleft}%%
     \fi%
 %%%
+    \ifx\@authorE\undefined%
+    \else%
+      \begin{Flushleft}%
+    \leftskip 12.75pc plus 20pc  %\rightskip 3pc plus 20pc
+    \HD{10}{0}\FOURTEEN\@authorE\HD{0}{0}
+    \end{Flushleft}
+    \fi%
+    \ifx\@affE\undefined%
+    \else \begin{Flushleft}\HD{15}{0}%
+    \leftskip 12.75pc plus 0pc  %\rightskip 3pc plus 20pc
+    \@affE\HD{0}{12}%
+    \end{Flushleft}%%
+    \fi%
+%%%
+    \ifx\@authorF\undefined%
+    \else%
+      \begin{Flushleft}%
+    \leftskip 12.75pc plus 20pc  %\rightskip 3pc plus 20pc
+    \HD{10}{0}\FOURTEEN\@authorF\HD{0}{0}
+    \end{Flushleft}
+    \fi%
+    \ifx\@affF\undefined%
+    \else \begin{Flushleft}\HD{15}{0}%
+    \leftskip 12.75pc plus 0pc  %\rightskip 3pc plus 20pc
+    \@affF\HD{0}{12}%
+    \end{Flushleft}%%
+    \fi%
+%%%
     \ifx\@Date\undefined\else{\footnotesize%
     \@Date%
     \par}\vskip24pt\fi%
