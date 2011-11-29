@@ -1,7 +1,7 @@
 \begin{thebibliography}{10}
 
 \bibitem{benkner99hpf}
-S.~Benkner, G.~Lonsdale, and H.~Zima.
+Siegfried Benkner, Guy Lonsdale, and Hans Zima.
 \newblock {The HPF+ Project: Supporting HPF for Advanced Industrial
   Applications}.
 \newblock In {\em Proceedings of Euro-Par'99}, 1999.
@@ -13,12 +13,12 @@ G.~Blelloch and G.~W. Sabot.
 \newblock {\em Journal of Parallel and Distributed Computing}, 8(2), Feb 1990.
 
 \bibitem{stencil-compiler}
-R.~G. Brickner, K.~Holian, B.~Thiagarajan, and S.~L. Johnsson.
+Ralph~G. Brickner, Kathy Holian, Balaji Thiagarajan, and S.~Lennart Johnsson.
 \newblock Designing a stencil compiler for the connection machine model {CM}-5.
 \newblock Technical Report LA-UR-94-3152, LANL, 1994.
 
 \bibitem{chamberlain04zpl}
-B.~L. Chamberlain, S.-E. Choi, S.~J. Deitz, and L.~Snyder.
+Bradford~L. Chamberlain, Sung-Eun Choi, Steven~J. Deitz, and Lawrence Snyder.
 \newblock {The High-Level Parallel Language ZPL Improves Productivity and
   Performance}.
 \newblock In {\em {Proceedings of the IEEE International Workshop on
@@ -30,13 +30,13 @@ A.~D. Falkoff and K.~E. Iverson.
 \newblock {\em {SIGPLAN Notices}}, 14(4), 1979.
 
 \bibitem{hpcwire11manycore}
-M.~Feldman.
+Michael Feldman.
 \newblock Intel touts manycore coprocessor at supercomputing conference.
 \newblock {\em HPC-Wire}, 2011.
 
 \bibitem{keller10repa}
-G.~Keller, M.~M.~T. Chakravarty, R.~Leshchinskiy, S.~P. Jones, and
-  B.~Lippmeier.
+Gabriele Keller, Manuel M.~T. Chakravarty, Roman Leshchinskiy, Simon~Peyton
+  Jones, and Ben Lippmeier.
 \newblock {Regular, shape-polymorphic, parallel arrays in Haskell}.
 \newblock In {\em Proceedings of ICFP 2010}, 2010.
 
@@ -45,12 +45,13 @@ G.~Keller, M.~M.~T. Chakravarty, R.~Leshchinskiy, S.~P. Jones, and
 \newblock {\em The OpenCL Specification, version 1.0.29}, 8 December 2008.
 
 \bibitem{koelbel94hpf}
-C.~H. Koelbel, D.~B. Loveman, R.~S. Schreiber, G.~L. Steele, and M.~E. Zosel.
+Charles~H. Koelbel, David~B. Loveman, Robert~S. Schreiber, Guy~L. Steele, and
+  Mary~E. Zosel.
 \newblock {\em The High Performance Fortran Handbook}.
 \newblock {The MIT Press}, 1994.
 
 \bibitem{Leveque02}
-R.~J. Le{V}eque.
+Randall~J. Le{V}eque.
 \newblock {\em Finite Volume Methods for Hyperbolic Problems}.
 \newblock {Cambridge Texts in Applied Mathematics}, 2002.
 
@@ -71,7 +72,7 @@ R.~W. Robey, R.~Roberts, and C.~Moler.
 \newblock Technical report, March 2010.
 
 \bibitem{wolfe08gpgpu}
-M.~Wolfe.
+Michael Wolfe.
 \newblock {How We Should Program GPGPUs}.
 \newblock {\em Linux Journal}, 2008.
 

@@ -1,0 +1,13 @@
+\begin{abstract}
+  Emerging GPU architectures for high performance computing are well
+  suited to a data-parallel programming model.  This paper presents
+  preliminary work examining a programming methodology that provides
+  Fortran programmers with access to these emerging systems.  We use
+  array constructs in Fortran to show how this infrequently exploited,
+  standardized language feature is easily transformed to lower-level
+  accelerator code.  The transformations in ForOpenCL are based on a
+  simple mapping from Fortran to OpenCL.  We demonstrate, using a
+  stencil code solving the shallow-water fluid equations, that the
+  performance of the ForOpenCL compiler-generated transformations is
+  comparable with that of hand-optimized OpenCL code.
+\end{abstract}

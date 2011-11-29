@@ -1,62 +1,8 @@
-%
-% I'm adding an outline here so I can see how everything fits together
-
-%
-% \title{Exploiting First-Class Arrays in Fortran for Accelerator Programming}
-%
-
-%
-% \abstract
-%
-
-%
-% \section{Introduction}
-%    \subsection{Approach}
-%    \subsection{Why Fortran?}
-%    \subsection{Comparison to Other Languages}
-%
-
-%
-% \section{Programming model}
-%    \subsection{Fortran Syntax}   
-%       \subsubsection*{Array notation}
-%       \subsubsection*{Elemental functions}
-%       \subsubsection*{Pure procedures}
-%       \subsubsection*{Shift functions}
-%       \subsubsection*{Regions}
-%    \subsection{New Functions}
-%    \subsection{Parallelism}
-%    \subsection{Limitations}
-%
-
-%
-% \section{Shallow Water Model}
-%    \subsection{Equations}
-%
-
-%
-% \section{Source-To-Source Transformations}
-%    \subsection{ForOpenCL}
-%       \subsubsection{array syntax}
-%       \subsubsection{where construct}
-%    \subsection{New functions}
-%       \subsubsection{region}
-%    \subsection{Static Analysis}
-%       \subsubsection{Analysis not required}
-%    \subsection{Simplifying Assumptions}
-%
-
-%
-% \section{Performance}
-%
-
-%
-% \section{Conclusions}
-%
-
-
+%%
 \documentclass{doublecol-new}
+%%
 
+%\usepackage{natbib, stfloats}
 \usepackage{cite}
 \usepackage{graphicx}
 %\usepackage[cmex10]{amsmath}
@@ -70,6 +16,8 @@
 \lstdefinestyle{NoFloatCLike}{frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
 
 \begin{document}
+
+\thispagestyle{plain}
 
 \LRH{M. Sottile et~al.}
 
@@ -135,18 +83,7 @@ computational physics and applied mathematics.
 
 \maketitle
 
-\begin{abstract}
-  Emerging GPU architectures for high performance computing are well suited to a
-  data-parallel programming model.  This paper presents preliminary work
-  examining a programming methodology that provides Fortran programmers with access
-  to these emerging systems.  We use array constructs in Fortran to
-  show how this infrequently exploited, standardized language feature is easily
-  transformed to lower-level accelerator code.  The transformations in ForOpenCL are based
-  on a simple mapping from Fortran to OpenCL.  We demonstrate, using a
-  stencil code solving the shallow-water fluid equations, that the performance
-  of the ForOpenCL compiler-generated transformations is comparable with that of
-  hand-optimized OpenCL code.
-\end{abstract}
+\input{abstract}
 
 % A category with the (minimum) three required fields
 %\category{D.3.3}{Language Constructs and Features}{Concurrent programming structures}
@@ -183,7 +120,8 @@ Advanced Scientific Computing Research.
 
 %%TODO \cite{chamberlain04zpl, roth97stencils}
 
-\bibliographystyle{abbrv}
+%\bibliographystyle{abbrv}
+\bibliographystyle{plain}
 \bibliography{foropencl}
 
 \end{document}
