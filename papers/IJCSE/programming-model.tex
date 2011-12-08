@@ -92,18 +92,20 @@ prior execution of the loop. When shifts are employed, this can be expressed as:
 }
 
 \noindent
-The semantics of the shift intrinsic and operators like {\tt +} applied to the whole array make it
-unnecessary to manually implement the double buffering scheme found in the loop above.
-Similar whole array shifting was used in higher dimensions for finite difference
-codes within the computational physics community for codes targeting the CM-5
-system.  Research in compilation of stencil-based codes that use shift operators
-targeting these systems is related to the work presented
-here~\cite{stencil-compiler}.
+The semantics of the shift intrinsic and operators like {\tt +}
+applied to the whole array make it unnecessary to manually implement
+the double buffering scheme found in the loop above.  Similar whole
+array shifting was used in higher dimensions for finite difference
+codes within the computational physics community for codes targeting
+the CM-5 system.  Research in compilation of stencil-based codes that
+use shift operators targeting these systems is related to the work
+presented here~\cite{stencil-compiler}.
 
-The whole-array model was attractive because it deferred responsibility for
-optimally implementing the computations to the compiler.  Instead of relying on
-a compiler to infer parallelism from a set of explicit loops, the choice for how
-to implement loops was left entirely up to the tool.
+The whole-array model was attractive because it deferred
+responsibility for optimally implementing the computations to the
+compiler.  Instead of relying on a compiler to infer parallelism from
+a set of explicit loops, the choice for how to implement loops was
+left entirely up to the tool.
 
 Unfortunately, this had two side effects that have limited broad
 acceptance of the whole-array programming model in Fortran.  First,
@@ -117,8 +119,8 @@ are updated as if they were updated simultaneously.  In a program
 where the programmer explicitly manages arrays and loops, double
 buffering techniques and user managed temporaries are used to maintain
 these semantics.  Limited attention to optimizing memory usage due to
-this intermediate storage by compilers has led to these constructs seeing
-little adoption by programmers.
+this intermediate storage by compilers has led to these constructs
+seeing little adoption by programmers.
 
 %When the compiler is responsible for managing this
 %intermediate storage, it has historically proven that they are
@@ -250,21 +252,31 @@ portion of the array.  It is important to note, however, that all memory allocat
 by the programmer must explicitly contain the extra array elements in the halo.
 %%%This is critical to reducing the amount of code that the programmer is forced to write, as the halo cells are often where boundary errors and off-by-one errors may occur in code that is manually generated.
 
-Region functions are similar to the shift operator as they can be used to
-reference portions of the array that are shifted with respect to the interior
-portion.  However, unlike the shift operator, regions are not expressed in terms
-of boundary conditions and thus don't explicitly \emph{require} a knowledge of,
-nor the application of, boundary conditions locally (global boundary conditions must
-be explicitly provided by the programmer outside of calls to kernel procedures).
-Thus, as will be shown
-below, regions are more suitable for usage by OpenCL thread groups which access
-only local subsections of an array stored in global memory.
+Region functions are similar to the shift operator as they can be used
+to reference portions of the array that are shifted with respect to
+the interior portion.  However, unlike the shift operator, regions are
+not expressed in terms of boundary conditions and thus don't
+explicitly \emph{require} a knowledge of, nor the application of,
+boundary conditions locally (global boundary conditions must be
+explicitly provided by the programmer outside of calls to kernel
+procedures).  Thus, as will be shown below, regions are more suitable
+for usage by OpenCL thread groups which access only local subsections
+of an array stored in global memory.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=2.5in]{halo.pdf}
+\caption{An illustration of three simple halo regions around a single central
+index.}
+\label{fig:halos}
+\end{figure}
 
 ForOpenCL provides two new functions that are defined in Fortran and are used
 in array-syntax operations.  Each function takes an integer array halo argument
 that specifies the number of ghost cells on either side of a region, for each
 dimension.  For example {\tt halo = [left, right, down, up]} specifies a halo
-for a two-dimensional region.  These functions are:
+for a two-dimensional region.  Example halo regions are illustrated in
+Figure~\ref{fig:halos}.  These functions are:
 
 \begin{itemize}
 

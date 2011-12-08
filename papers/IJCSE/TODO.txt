@@ -4,13 +4,15 @@ Notes from SC'11 meeting
 - Better definition of halo concept.
 - update paper to match current real API that drifted since the GPUScA paper
   was written
-- figure to illustrate halo and index computation.  this is currently too
-  vague and hard for readers to infer from text.
-- describe details about the code that implements the fortran->C translator
-  for kernels.  this is contained in the transformation directory of the
-  opencl section of the research repo.
 - replace figure 1 with something more descriptive.
 - more performance experiments/numbers
 - discuss where this work addresses performance-relevant things like
   ensuring that memory accesses are coalesced
 
+DONE:
+
+- figure to illustrate halo and index computation.  this is currently too
+  vague and hard for readers to infer from text.
+- describe details about the code that implements the fortran->C translator
+  for kernels.  this is contained in the transformation directory of the
+  opencl section of the research repo.
