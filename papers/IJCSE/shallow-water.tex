@@ -1,15 +1,14 @@
 \section{Shallow Water Model}
 \label{sec:shallow-water}
 
-The numerical code used for this work is from a presentation at the
-NM Supercomputing Challenge~\cite{Robey07}.
-The algorithm solves the standard 2D shallow water equations. This
-algorithm is typical of a wide range of modeling equations based on
-conservation laws such as compressible fluid dynamics (CFD), elastic
-material waves, acoustics, electromagnetic waves and even traffic
-flow~\cite{Leveque02}. For the shallow water problem there are
-three equations with one based on conservation of mass and the other
-two on conservation of momentum.
+The numerical code used for this work is from a presentation at the NM
+Supercomputing Challenge~\citep{Robey07}.  The algorithm solves the
+standard 2D shallow water equations. This algorithm is typical of a
+wide range of modeling equations based on conservation laws such as
+compressible fluid dynamics (CFD), elastic material waves, acoustics,
+electromagnetic waves and even traffic flow~\citep{Leveque02}. For the
+shallow water problem there are three equations with one based on
+conservation of mass and the other two on conservation of momentum.
 
 \begin{eqnarray*}
 h_{t}+(hu)_{x}+(hv)_{y} & = & 0\quad\mbox{(mass)}\\

@@ -16,7 +16,7 @@ of architecture specific code.
 The peak performance of these newer accelerator architectures can be substantial.
 Intel expects a teraflop for the SGEMM benchmark with their Knights Ferry
 processor while the performance of the M2090 NVIDIA Tesla processor is in the
-same neighborhood~\cite{hpcwire11manycore}.  Unfortunately the performance that
+same neighborhood~\citep{hpcwire11manycore}.  Unfortunately the performance that
 many of the new accelerator architectures offer comes at a cost.  Architectural
 changes are trending toward multiple heterogeneous cores and less of a reliance
 on superscalar instruction level parallelism and hardware managed memory
@@ -31,7 +31,7 @@ computer architectures.  How does a programmer write one program that can
 perform well on both a conventional multicore CPU \emph{and} a GPU (or any other emerging many-core architectures)?
 
 A directive-based approach, such as OpenMP or the Accelerator programming model
-from the Portland Group~\cite{pgi10accelerator}, is one solution to this
+from the Portland Group~\citep{pgi10accelerator}, is one solution to this
 problem.  However, in this paper we take a somewhat different approach.  A
 common theme amongst the new processors is the emphasis on data-parallel
 programming.  This model is well-suited to architectures that are
@@ -40,7 +40,7 @@ cores.  The recent CUDA and OpenCL programming languages are intended to
 support this programming model.
 
 The problem with OpenCL and CUDA is that they expose too much detail about the
-machine architecture to the programmer~\cite{wolfe08gpgpu}.  The programmer is
+machine architecture to the programmer~\citep{wolfe08gpgpu}.  The programmer is
 responsible for explicitly managing memory (including the staging of data back
 and forth between the host CPU and the accelerator device) and specifically
 taking into account architectural differences (such as whether the architecture

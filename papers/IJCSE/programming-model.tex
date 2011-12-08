@@ -28,7 +28,7 @@ developments in other languages.
 A number of previous efforts have exploited data-parallel programming
 at the language level to utilize novel architectures.  The origin of
 the array syntax adopted by Fortran in the 1990 standard can be found
-in the APL language~\cite{iverson79apl}.  These additions to Fortran
+in the APL language~\citep{iverson79apl}.  These additions to Fortran
 allowed parallelism to be expressed with whole-array operations at the
 expression level, instead of via parallelism within explicit DO-loops,
 as implemented in earlier variants of the language (e.g., IVTRAN for the
@@ -37,7 +37,7 @@ Illiac IV).
 The High Performance Fortran (HPF) extension of Fortran was proposed
 to add features to the language that would enhance the ability of
 compilers to emit fast parallel code for distributed and shared memory
-parallel computers\cite{koelbel94hpf}.  One of the notable additions
+parallel computers\citep{koelbel94hpf}.  One of the notable additions
 to the language in HPF was syntax to specify the distribution of data
 structures amongst a set of parallel processors.  HPF also introduced
 an alternative looping construct to the traditional DO-loop called
@@ -52,7 +52,7 @@ exploit the new array features introduced in 1990 in any significant
 way, relying instead on explicit loop-based parallelism.  This
 restriction allowed the language to support parallel programming that
 wasn't easily mapped onto a pure data-parallel model.  The {\tt SHADOW}
-directive introduced in HPF-2, and the {\tt HALO} in HPF+~\cite{benkner99hpf}
+directive introduced in HPF-2, and the {\tt HALO} in HPF+~\citep{benkner99hpf}
 bear some similarity to the halo region concept that we discuss in this 
 paper.
 
@@ -99,7 +99,7 @@ array shifting was used in higher dimensions for finite difference
 codes within the computational physics community for codes targeting
 the CM-5 system.  Research in compilation of stencil-based codes that
 use shift operators targeting these systems is related to the work
-presented here~\cite{stencil-compiler}.
+presented here~\citep{stencil-compiler}.
 
 The whole-array model was attractive because it deferred
 responsibility for optimally implementing the computations to the
@@ -133,14 +133,14 @@ seeing little adoption by programmers.
 
 An interesting line of language research that grew out of HPF was that
 associated with the ZPL language at the University of
-Washington~\cite{chamberlain04zpl} and Chapel, an HPCS language developed by
-Cray~\cite{chamberlainchapel}.  In ZPL, programmers adopt a similar global view
+Washington~\citep{chamberlain04zpl} and Chapel, an HPCS language developed by
+Cray~\citep{chamberlainchapel}.  In ZPL, programmers adopt a similar global view
 of computation over arrays, but define their computations based on regions,
 which provide a local view of the set of indices that participate in the update
 of each element of an array.  A similar line of research in the functional
 language community has investigated array abstractions for expressing
 whole-array operations in the Haskell language in the REPA (regular, shape-polymorphic,
-parallel array) library~\cite{keller10repa}.
+parallel array) library~\citep{keller10repa}.
 
 \subsection{Fortran Language Subset}
 
@@ -323,7 +323,7 @@ syntax, regions, and pure and elemental functions:
 \end{itemize}
 
 Data parallelism has been called collection-oriented programming by
-Blelloch~\cite{blelloch90}.  As the {\tt cshift} function and the array-valued
+Blelloch~\citep{blelloch90}.  As the {\tt cshift} function and the array-valued
 expressions all semantically return a value, this style of programming is also
 similar to functional programming (or value-oriented programming).  It should be
 noted that the sub-setting language we employ goes beyond pure data parallelism
@@ -334,7 +334,7 @@ Unfortunately, this style of programming has never really caught on because when
 array syntax was first introduced in Fortran, performance of codes using these features was
 relatively poor and thus programmers shied away from using array syntax (even
 recently, some are actively counseling against its usage because of performance
-issues~\cite{Levesque:SC08}).  Thus the Fortran community was caught in a
+issues~\citep{Levesque:SC08}).  Thus the Fortran community was caught in a
 classic ``chicken-and-egg'' conundrum: (1) programmers didn't use it because it
 was slow; and (2) compilers vendors didn't improve it because programmers didn't
 use it.  A goal of this paper is to demonstrate that parallel programs written

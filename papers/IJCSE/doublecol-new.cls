@@ -333,7 +333,7 @@
 \def\ISSUE#1{\gdef\theISSUE{#1}}%
 \ISSUE{00}%
 
-\JOURNALNAME{\TEN{\it Int. J. Signal and Imaging Systems Engineering}}%
+\JOURNALNAME{\TEN{\it Int. J. of Computational Science and Engineering}}%
 \def\jtitlefont{\fontsize{16}{22}\selectfont\rm}
 
 \def\Dnum#1{\gdef\theDnum{#1}}%
@@ -739,7 +739,7 @@ Copyright \copyright\ 2008 Inderscience Enterprises Ltd. & &%
 %%% BIBLIOGRAPHY
 
 \def\@biblabel#1{[#1]}
- \def\@cite#1{[#1]}
+\def\@cite#1{[#1]}
 
 %%%%%%%%%%%%%%%%%BIBLIOGRAPHY %%%%%%%%%%%%BBBBBB
 

@@ -2,8 +2,8 @@
 \documentclass{doublecol-new}
 %%
 
-%\usepackage{natbib, stfloats}
-%\usepackage{cite}
+\usepackage{natbib, stfloats}
+\usepackage{cite}
 \usepackage{graphicx}
 %\usepackage[cmex10]{amsmath}
 %\usepackage{amssymb}
@@ -121,7 +121,8 @@ Advanced Scientific Computing Research.
 %%TODO \cite{chamberlain04zpl, roth97stencils}
 
 %\bibliographystyle{abbrv}
-\bibliographystyle{plain}
+\newcommand{\newblock}{}
+\bibliographystyle{plainnat}
 \bibliography{foropencl}
 
 \end{document}
