@@ -66,9 +66,9 @@ on a single core without concurrency.
 Transformations are supplied that provide a mechanism for converting Fortran
 procedures written in the Fortran subset described in this paper to OpenCL
 kernels.  We use the ROSE compiler
-infrastructure\footnote{\url{http://www.rosecompiler.org/}} to develop these
+infrastructure~\citep{rose-web} to develop these
 transformations.  ROSE uses the Open Fortran
-Parser\footnote{\url{http://fortran-parser.sf.net/}} to parse Fortran 2008
+Parser~\citep{ofp:sf} to parse Fortran 2008
 syntax and can generate C-based OpenCL.  Since ROSE's intermediate
 representation (IR) was constructed to represent multiple languages, it is
 relatively straightforward to transform high-level Fortran IR nodes to C OpenCL
