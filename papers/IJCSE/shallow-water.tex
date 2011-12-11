@@ -28,14 +28,19 @@ because of the simplification of a unit cell size and a uniform water
 density. Another simplifying assumption is that the water depth is
 small in comparison to length and width and so velocities in the z-direction
 can be ignored. A fixed time step is used for simplicity though it
-must be less than $dt \leqq dx / (\sqrt{gh}+|u|)$ to fulfill the CFL
-condition.
+must be less than
+
+\begin{eqnarray*}
+dt \leqq \frac{dx}{\left(\left(\sqrt{gh}+|u|\right) + \left(\sqrt{gh}+|v|\right)\right)}
+\end{eqnarray*}
+
+\noindent to fulfill the CFL condition.
 
 The numerical method is a two-step Lax-Wendroff scheme. The method
 has some numerical oscillations with sharp gradients but is adequate
 for simulating smooth shallow-water flows. In the following explanation,
 $U$ is the conserved state variable at the center of the cell. This
-state variable, $U$ $=(h,hu,hv)$ in the first term in the equations
+state variable, $U$ $=\{h,hu,hv\}$ in the first term in the equations
 below. $F$ is the flux quantity that crosses the boundary of the cell
 and is subtracted from one cell and added to the other. The remaining
 terms after the first term are the flux terms in the equations above

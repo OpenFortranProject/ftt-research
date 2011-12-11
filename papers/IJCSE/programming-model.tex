@@ -293,22 +293,25 @@ Figure~\ref{fig:halos}.  These functions are:
 
 \end{itemize}
 
-It should be noted that the function {\tt region\_cpy} is pure and thus can be
-called from within a pure kernel procedure, and {\tt
-region\_ptr} is impure because it aliases the array parameter.  However as will
-be shown below, the usage of {\tt region\_ptr} is constrained so that it does not
-introduce side effects in the functions that call it.  These two functions are
-part of the language recognized by the compiler and though {\tt region\_cpy}
-returns a copy of a portion of an array \emph{semantically}, the compiler is not
-forced to actually make a copy and is free to enforce copy semantics through
-other means.  In addition to these two new functions, ForOpenCL provides the
-compiler directive, {\tt \!\$OFP PURE, KERNEL}, which specifies that a pure subroutine
-can be transformed to an OpenCL kernel and that the subroutine is pure
-except for calls to {\tt region\_ptr}.  These directives are not strictly
-necessary for the technique described in this paper, but aid in automated
-identification of specific kernels to be transformed to OpenCL.  A directive-free
-implementation would require the transformation tool be provided the set of 
-kernels to work via a user defined list.
+It should be noted that the function {\tt region\_cpy} is pure and
+thus can be called from within a pure kernel procedure, and {\tt
+  region\_ptr} is impure because it aliases the array parameter.
+However as will be shown below, the usage of {\tt region\_ptr} is
+constrained so that it does not introduce side effects in the
+functions that call it.  These two functions are part of the language
+recognized by the compiler and though {\tt region\_cpy} returns a copy
+of a portion of an array \emph{semantically}, the compiler is not
+forced to actually make a copy and is free to enforce copy semantics
+through other means within the pure constraint.  In addition to these
+two new functions, ForOpenCL provides the compiler directive, {\tt
+  \!\$OFP PURE, KERNEL}, which specifies that a pure subroutine can be
+transformed to an OpenCL kernel and that the subroutine is pure except
+for calls to {\tt region\_ptr}.  These directives are not strictly
+necessary for the technique described in this paper, but aid in
+automated identification of specific kernels to be transformed to
+OpenCL.  A directive-free implementation would require the
+transformation tool be provided the set of kernels to work via a user
+defined list.
 
 \subsection{Advantages}
 
