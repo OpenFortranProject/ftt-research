@@ -47,14 +47,24 @@ terms after the first term are the flux terms in the equations above
 with one term for the flux in the x-direction and the next term for
 the flux in the y-direction. The first step estimates the values a
 half-step advanced in time and space on each face, using loops on
-the faces.\begin{eqnarray*}
+the faces.
+
+\begin{eqnarray*}
 U_{i+\frac{1}{2},j}^{n+\frac{1}{2}} & = & (U_{i+1,j}^{n}+U_{i,j}^{n})/2+\frac{\triangle t}{2\triangle x}\left(F_{i+1,j}^{n}-F_{i,j}^{n}\right)\\
-U_{i,j+\frac{1}{2}}^{n+\frac{1}{2}} & = & (U_{i,j+1}^{n}+U_{i,j}^{n})/2+\frac{\triangle t}{2\triangle y}\left(F_{i,j+1}^{n}-F_{i,j}^{n}\right)\end{eqnarray*}
+U_{i,j+\frac{1}{2}}^{n+\frac{1}{2}} & = & (U_{i,j+1}^{n}+U_{i,j}^{n})/2+\frac{\triangle t}{2\triangle y}\left(F_{i,j+1}^{n}-F_{i,j}^{n}\right)
+\end{eqnarray*}
 
 
 The second step uses the estimated values from step 1 to compute the
-values at the next time step in a dimensionally unsplit loop.\[
-U_{i,j}^{n+1}=U_{i,j}^{n}-\frac{\triangle t}{\triangle x}(F_{i+\frac{1}{2},j}^{n+\frac{1}{2}}-F_{i-\frac{1}{2},j}^{n+\frac{1}{2}})-\frac{\triangle t}{\triangle y}(F_{i,j+\frac{1}{2}}^{n+\frac{1}{2}}-F_{i,j-\frac{1}{2}}^{n+\frac{1}{2}})\]
+values at the next time step in a dimensionally unsplit loop.
+
+\begin{eqnarray*}
+U_{i,j}^{n+1} = U_{i,j}^{n} &-&\frac{\triangle t}{\triangle
+  x}(F_{i+\frac{1}{2},j}^{n+\frac{1}{2}}-F_{i-\frac{1}{2},j}^{n+\frac{1}{2}})\\
+&-& \frac{\triangle
+  t}{\triangle
+  y}(F_{i,j+\frac{1}{2}}^{n+\frac{1}{2}}-F_{i,j-\frac{1}{2}}^{n+\frac{1}{2}})
+\end{eqnarray*}
 
 
 \subsection{Fortran implementation}
