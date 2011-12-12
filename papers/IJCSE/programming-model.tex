@@ -37,7 +37,7 @@ Illiac IV).
 The High Performance Fortran (HPF) extension of Fortran was proposed
 to add features to the language that would enhance the ability of
 compilers to emit fast parallel code for distributed and shared memory
-parallel computers\citep{koelbel94hpf}.  One of the notable additions
+parallel computers~\citep{koelbel94hpf}.  One of the notable additions
 to the language in HPF was syntax to specify the distribution of data
 structures amongst a set of parallel processors.  HPF also introduced
 an alternative looping construct to the traditional DO-loop called
@@ -116,11 +116,12 @@ Shifting, while conceptually analogous, can be awkward to think about
 for high dimensional stencils with many points.  Second, the semantics
 of these operations are such that all elements of an array operation
 are updated as if they were updated simultaneously.  In a program
-where the programmer explicitly manages arrays and loops, double
-buffering techniques and user managed temporaries are used to maintain
-these semantics.  Limited attention to optimizing memory usage due to
-this intermediate storage by compilers has led to these constructs
-seeing little adoption by programmers.
+where the programmer explicitly manages arrays and loops (rather than
+the compiler), double buffering techniques and user managed
+temporaries are used to maintain these semantics.  Limited attention
+to optimizing memory usage due to this intermediate storage by
+compilers has led to these constructs seeing little adoption by
+programmers.
 
 %When the compiler is responsible for managing this
 %intermediate storage, it has historically proven that they are
@@ -304,7 +305,7 @@ of a portion of an array \emph{semantically}, the compiler is not
 forced to actually make a copy and is free to enforce copy semantics
 through other means within the pure constraint.  In addition to these
 two new functions, ForOpenCL provides the compiler directive, {\tt
-  \!\$OFP PURE, KERNEL}, which specifies that a pure subroutine can be
+  \!\$OFP PURE, CONCURRENT}, which specifies that a pure subroutine can be
 transformed to an OpenCL kernel and that the subroutine is pure except
 for calls to {\tt region\_ptr}.  These directives are not strictly
 necessary for the technique described in this paper, but aid in
@@ -373,7 +374,7 @@ are constraints of this current work and not of the possible future
 enhancements.
 
 Array variables within a kernel procedure (specified by the {\tt
-  \!\$OFP PURE, KERNEL} directive) must be declared as contiguous.  A
+  \!\$OFP PURE, CONCURRENT} directive) must be declared as contiguous.  A
 kernel procedure may not call other procedures except for limited
 intrinsic functions (primarily math), user-defined elemental
 functions, and the {\tt region\_cpy} and {\tt region\_ptr} functions.
