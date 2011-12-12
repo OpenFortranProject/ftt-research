@@ -368,7 +368,9 @@ some generated code must be modified.  For example, the {\tt
 It is assumed that memory for all arrays reside on the device.  The
 programmer must copy memory to and from the device.  In addition,
 array size (neglecting ghost cell regions) must be multiples of the
-global OpenCL kernel size.
+global OpenCL kernel size.  The explicit memory copy and array sizes
+are constraints of this current work and not of the possible future
+enhancements.
 
 Array variables within a kernel procedure (specified by the {\tt
   \!\$OFP PURE, KERNEL} directive) must be declared as contiguous.  A
