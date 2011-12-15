@@ -1,11 +1,8 @@
 # Example Makefile
 
 # Location of ROSE directory
-#ROSE_DIR = /Users/rasmussn/ROSE/install-tree-11570
-#ROSE_BUILD_DIR = /Users/rasmussn/ROSE/build-tree-11570
-
-ROSE_DIR = /Users/rasmussn/ROSE/install-tree-12749
-ROSE_BUILD_DIR = /Users/rasmussn/ROSE/build-tree-12749
+ROSE_DIR ?= $(HOME)/ROSE/install-tree-12749
+ROSE_BUILD_DIR ?= $(HOME)/ROSE/build-tree-12749
 
 # Location of ROSE include directory 
 ROSE_INCLUDE_DIR = $(ROSE_DIR)/include 
