@@ -1,8 +1,8 @@
 # Example Makefile
 
 # Location of ROSE directory
-ROSE_DIR ?= $(HOME)/ROSE/install-tree-12749
-ROSE_BUILD_DIR ?= $(HOME)/ROSE/build-tree-12749
+ROSE_DIR ?= $(HOME)/ftt/rose-trunk/compileTree
+ROSE_BUILD_DIR ?= $(HOME)/ftt/rose-trunk/compileTree
 
 # Location of ROSE include directory 
 ROSE_INCLUDE_DIR = $(ROSE_DIR)/include 
