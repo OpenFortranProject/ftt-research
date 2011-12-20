@@ -47,6 +47,8 @@ void HaloRefSearch::visit(SgNode * node)
 
 
 FortranAnalysis::FortranAnalysis(SgGlobal * scope)
+: src_global_scope(NULL), src_block(NULL), src_func_decl(NULL),
+  last_halo_symbol(NULL), first_array_dummy_ref(NULL)
 {
    this->src_global_scope = scope;
    this->last_halo_symbol = NULL;

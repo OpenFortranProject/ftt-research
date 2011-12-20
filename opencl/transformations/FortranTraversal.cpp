@@ -3,6 +3,7 @@
 #include "FortranTraversal.hpp"
 
 FortranTraversal::FortranTraversal(SgGlobal * scope)
+: cl_global_scope(NULL), cl_block(NULL), src_func_decl(NULL), tile_idx(0)
 {
    this->cl_global_scope = scope;
    this->tile_idx = 0;
@@ -16,11 +17,11 @@ void FortranTraversal::visit(SgNode * node)
 
    switch (node->variantT())
    {
-     case V_SgAllocateStatement   :  visit( (SgAllocateStatement   *) node);  break;
-     case V_SgFunctionDeclaration :  visit( (SgFunctionDeclaration *) node);  break;
-     case V_SgVariableDeclaration :  visit( (SgVariableDeclaration *) node);  break;
-     case V_SgFunctionCallExp     :  visit( (SgFunctionCallExp     *) node);  break;
-     case V_SgExprStatement       :  visit( (SgExprStatement       *) node);  break;
+     case V_SgAllocateStatement        :  visit( (SgAllocateStatement        *) node);  break;
+     case V_SgVariableDeclaration      :  visit( (SgVariableDeclaration      *) node);  break;
+     case V_SgFunctionCallExp          :  visit( (SgFunctionCallExp          *) node);  break;
+     case V_SgExprStatement            :  visit( (SgExprStatement            *) node);  break;
+     case V_SgProcedureHeaderStatement :  visit( (SgProcedureHeaderStatement *) node);  break;
    }
 
 
@@ -60,7 +61,7 @@ void FortranTraversal::visit(SgAllocateStatement * alloc_stmt)
    insertTileOffsetFor(lhs->get_symbol()->get_name().getString());
 }
 
-void FortranTraversal::visit(SgFunctionDeclaration * func_decl)
+void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
 {
    int numArrayParams = 0;
    SgType * array_type = NULL;

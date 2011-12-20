@@ -24,8 +24,9 @@ int main(int argc, char ** argv)
       if (isSgFunctionDeclaration(*it_decls) != NULL) {
          printf("build_opencl: found function decl\n");
          analysis.visit((SgFunctionDeclaration*) *it_decls);
+         // TODO: Do we need to do an analysis traversal?
          analysis.traverse((SgFunctionDeclaration*) *it_decls, preorder);
-         //traversal.traverse((SgFunctionDeclaration*) *it_decls, preorder);
+         traversal.traverse((SgFunctionDeclaration*) *it_decls, preorder);
       }
    }
 
