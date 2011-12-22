@@ -11,6 +11,8 @@ function run_cases {
   local flags=${3:--Wall -pedantic -Werror}
   local num_passed=0
   local num_failed=0
+  local template=${HERE}/cl_template.c
+  local template_out=${HERE}/rose_cl_template.c
 
   # make sure the directory for test results exists
   mkdir -p ${where}/tests/actual
@@ -25,11 +27,9 @@ function run_cases {
     local actual=${where}/tests/actual/${test_name}.out
 
     echo -n "Running ${test_name} ... "
-    gfortran ${flags} ${test_file}
-    # this pushd is here to prevent segfaults in ${tool} due
-    # to not finding compass_parameters in pwd
     pushd ${where} > /dev/null
-    ./${tool} ${test_file} &>${actual}
+    ${tool} ${test_file} ${template} &>/dev/null
+    mv ${template_out} ${actual}
     popd > /dev/null
 
     # check the output
