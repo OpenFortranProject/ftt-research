@@ -11,10 +11,6 @@ FortranTraversal::FortranTraversal(SgGlobal * scope)
 
 void FortranTraversal::visit(SgNode * node)
 {
-   // handle array assignment
-   //SgPntrArrRefExp* arrayReference = isSgPntrArrRefExp(*i);
-   //FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, SgUnparse_Info& info)
-
    switch (node->variantT())
    {
      case V_SgAllocateStatement        :  visit( (SgAllocateStatement        *) node);  break;
@@ -22,25 +18,8 @@ void FortranTraversal::visit(SgNode * node)
      case V_SgFunctionCallExp          :  visit( (SgFunctionCallExp          *) node);  break;
      case V_SgExprStatement            :  visit( (SgExprStatement            *) node);  break;
      case V_SgProcedureHeaderStatement :  visit( (SgProcedureHeaderStatement *) node);  break;
+     default: break;
    }
-
-
-   // TODO - replace with switch
-   //   if (isSgAllocateStatement(node) != NULL) {
-   //      visit( (SgAllocateStatement *) node);
-   //   }
-   //   if (isSgFunctionDeclaration(node) != NULL) {
-   //      visit( (SgFunctionDeclaration *) node);
-   //   }
-   //   if (isSgVariableDeclaration(node) != NULL) {
-   //      visit( (SgVariableDeclaration *) node);
-   //   }
-   //   if (isSgFunctionCallExp(node) != NULL) {
-   //      visit( (SgFunctionCallExp *) node);
-   //   }
-   //   if (isSgExprStatement(node) != NULL) {
-   //      visit( (SgExprStatement *) node);
-   //   }
 }
 
 void FortranTraversal::visit(SgAllocateStatement * alloc_stmt)
@@ -134,7 +113,13 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
 
    // add variables definitinions for indexing
    //
-   SgVariableDeclaration * cl_var_decl = buildVariableDeclaration("k", buildIntType());
+   SgExpression          * const zero                    = buildIntVal(0);
+   SgExprListExp         * const cl_get_global_id_params = buildExprListExp(zero);
+   SgFunctionSymbol      * const cl_get_global_id_sym    = lookupFunctionSymbolInParentScopes(SgName("get_global_id"), cl_block);
+   SgExpression          * const cl_get_global_id_call   = buildFunctionCallExp(cl_get_global_id_sym, cl_get_global_id_params);
+   SgAssignInitializer   * const cl_var_assign           = buildAssignInitializer(cl_get_global_id_call, NULL);
+   SgVariableDeclaration * const cl_var_decl             = buildVariableDeclaration("k", buildIntType(), cl_var_assign);
+
    appendStatement(cl_var_decl, cl_block);
 }
 
