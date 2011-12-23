@@ -80,29 +80,42 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
    for (it_vars = vars.begin(); it_vars != vars.end(); it_vars++) {
       SgInitializedName * param = isSgInitializedName(*it_vars);
       SgType * param_type = param->get_type();
+      SgPointerType * param_pointer_type(new SgPointerType());
+      param_pointer_type->set_base_type(param_type);
 
       // create new parameter
       //
-      if (isSgArrayType(param_type) != NULL) {
-         array_type = param_type;
-         numArrayParams += 1;
+      array_type = param_pointer_type;
+      numArrayParams += 1;
 
-         // TODO - add __global
-         // I think this should work but may not be unparsed
-         param->get_storageModifier().setOpenclGlobal();
-      }
+      // TODO - add __global
+      // I think this should work but may not be unparsed
+      param->get_storageModifier().setOpenclGlobal();
 
-      SgInitializedName * param_name = buildInitializedName(param->get_name(), param_type);
+      SgInitializedName * param_name = buildInitializedName(param->get_name(),
+                                                            param_pointer_type);
       appendArg(params, param_name);
    }
 
    // add tile for local storage
    //
    if (numArrayParams > 0) {
+      // Add an input array length parameter
+      SgInitializedName * inputSize_param_name =
+                         buildInitializedName("inputSize", new SgTypeUnsignedInt());
+      inputSize_param_name->get_storageModifier().setOpenclLocal();
+      appendArg(params, inputSize_param_name);
+
       //SgType * param_type = buildPointerType(array_type->findBaseType());
       SgInitializedName * param_name = buildInitializedName("tiles", array_type);
       param_name->get_storageModifier().setOpenclLocal();
       appendArg(params, param_name);
+
+      // Add tile size parameter
+      SgInitializedName * tileSize_param_name =
+                         buildInitializedName("tileSize", new SgTypeUnsignedInt());
+      tileSize_param_name->get_storageModifier().setOpenclLocal();
+      appendArg(params, tileSize_param_name);
    }
 
    // create function declaration
