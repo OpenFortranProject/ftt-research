@@ -63,6 +63,7 @@ void FortranTraversal::visit(SgAllocateStatement * alloc_stmt)
 
 void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
 {
+   ROSE_ASSERT( cl_global_scope != NULL );
    int numArrayParams = 0;
    SgType * array_type = NULL;
 
@@ -89,7 +90,7 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
       numArrayParams += 1;
 
       // TODO - add __global
-      // I think this should work but may not be unparsed
+      // BUG: This does not unparse correctly.  Probably a ROSE bug
       param->get_storageModifier().setOpenclGlobal();
 
       SgInitializedName * param_name = buildInitializedName(param->get_name(),
@@ -106,7 +107,6 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
       inputSize_param_name->get_storageModifier().setOpenclLocal();
       appendArg(params, inputSize_param_name);
 
-      //SgType * param_type = buildPointerType(array_type->findBaseType());
       SgInitializedName * param_name = buildInitializedName("tiles", array_type);
       param_name->get_storageModifier().setOpenclLocal();
       appendArg(params, param_name);
@@ -140,6 +140,7 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
 
 void FortranTraversal::visit(SgVariableDeclaration * var_decl)
 {
+   ROSE_ASSERT( cl_block != NULL );
    SgVariableDeclaration * cl_var_decl;
    SgInitializedNamePtrList vars = var_decl->get_variables();
    SgInitializedNamePtrList::iterator it_vars;
@@ -200,6 +201,7 @@ void FortranTraversal::visit(SgFunctionCallExp * func_call_expr) {
  */
 void FortranTraversal::visit(SgExprStatement * expr_stmt)
 {
+   ROSE_ASSERT( cl_block != NULL );
    SgExprStatement * c_expr_stmt = buildCExprStatement(expr_stmt);
    if (c_expr_stmt != NULL) {
       appendStatement(c_expr_stmt, cl_block);
@@ -233,6 +235,7 @@ SgExprStatement * FortranTraversal::buildCExprStatement(SgExprStatement * expr_s
 #ifdef CL_SPECIALIZE
    // insert cast if required by lhs and rhs is SgAggregateInitializer
    // TODO - check that lhs is int4 variable
+   ROSE_ASSERT( cl_block != NULL );
    if (isSgAggregateInitializer(c_rhs) != NULL) {
       c_rhs = buildCastExp(c_rhs, buildOpaqueType("int4", cl_block));
    }
@@ -330,6 +333,7 @@ SgFunctionCallExp * FortranTraversal::buildCFunctionCallExp(SgFunctionCallExp * 
 
 #ifdef CL_SPECIALIZE
    // define pointer to tile variable for interior() and add variable to call
+   ROSE_ASSERT( cl_block != NULL );
    if (name == "interior") {
       const char * tile = insertTransferHaloVarDecl(fcall);
       exprs->append_expression(buildVarRefExp(tile, cl_block));
@@ -386,6 +390,7 @@ SgValueExp * FortranTraversal::buildCValueExp(SgValueExp * expr)
 
 SgExpression * FortranTraversal::buildForVarRefExp(SgVarRefExp * expr)
 {
+   ROSE_ASSERT( cl_block != NULL );
    SgExpression * c_expr = NULL;
    SgSymbol * sym = expr->get_symbol();
    SgType * type = sym->get_type();
@@ -412,6 +417,7 @@ SgAggregateInitializer * FortranTraversal::buildCAggregateInitializer(SgAggregat
 
 bool FortranTraversal::isFunctionArg(SgInitializedName * arg)
 {
+   ROSE_ASSERT( src_func_decl != NULL );
    SgInitializedNamePtrList func_args = src_func_decl->get_parameterList()->get_args();
    SgInitializedNamePtrList::iterator it_args;
 
@@ -426,6 +432,7 @@ bool FortranTraversal::isFunctionArg(SgInitializedName * arg)
 
 bool FortranTraversal::isRegionSelector(SgInitializedName * var)
 {
+   ROSE_ASSERT( src_func_decl != NULL );
    bool isSelector = false;
    SgType * var_type = var->get_type();
 
@@ -477,6 +484,7 @@ const char * FortranTraversal::isFunctionCall(const char * name, SgExprStatement
 
 const char * FortranTraversal::insertTransferHaloVarDecl(SgFunctionCallExp * fcall)
 {
+   ROSE_ASSERT( cl_block != NULL );
    SgExpressionPtrList::iterator it = fcall->get_args()->get_expressions().begin();
    SgVarRefExp * arg = isSgVarRefExp(*it);
    SgInitializedName * argName = arg->get_symbol()->get_declaration();
@@ -496,6 +504,8 @@ const char * FortranTraversal::insertTransferHaloVarDecl(SgFunctionCallExp * fca
 
 void FortranTraversal::insertTileOffsetFor(std::string name)
 {
+   ROSE_ASSERT( cl_global_scope != NULL );
+   ROSE_ASSERT( cl_block != NULL );
    SgExpression * expr;
 
    SgFunctionSymbol * tile_offset = isSgFunctionSymbol(cl_global_scope->lookup_symbol("TILE_OFFSET"));
