@@ -19,6 +19,7 @@ public:
    void visit(SgVariableDeclaration      * var_decl);
    void visit(SgFunctionCallExp          * func_call_exp);
    void visit(SgExprStatement            * expr_stmt);
+   void visit(SgVarRefExp                * var_ref);
 
    // build statements
    //
@@ -35,6 +36,7 @@ public:
    SgValueExp        * buildCValueExp(SgValueExp * expr);
    SgExpression      * buildForVarRefExp(SgVarRefExp * expr);
    SgExprListExp     * buildCExprListExp(SgExprListExp * expr);
+   SgExpression      * buildForPntrArrRefExp(SgVarRefExp * expr);
 
    SgAggregateInitializer * buildCAggregateInitializer(SgAggregateInitializer * expr);
 

@@ -59,11 +59,13 @@ void FortranAnalysis::visit(SgNode * node)
 {
    switch (node->variantT())
    {
-     case V_SgAllocateStatement   :  visit( (SgAllocateStatement   *) node);  break;
-     case V_SgFunctionDeclaration :  visit( (SgFunctionDeclaration *) node);  break;
-     case V_SgVariableDeclaration :  visit( (SgVariableDeclaration *) node);  break;
-     case V_SgFunctionCallExp     :  visit( (SgFunctionCallExp     *) node);  break;
-     case V_SgExprStatement       :  visit( (SgExprStatement       *) node);  break;
+     case V_SgAllocateStatement        :  visit( (SgAllocateStatement        *) node);  break;
+     case V_SgProcedureHeaderStatement :  visit( (SgProcedureHeaderStatement *) node);  break;
+     case V_SgVariableDeclaration      :  visit( (SgVariableDeclaration      *) node);  break;
+     case V_SgFunctionCallExp          :  visit( (SgFunctionCallExp          *) node);  break;
+     case V_SgExprStatement            :  visit( (SgExprStatement            *) node);  break;
+     case V_SgVarRefExp                :  visit( (SgVarRefExp                *) node);  break;
+     default: break;
    }
 }
 
@@ -74,17 +76,17 @@ void FortranAnalysis::visit(SgAllocateStatement * alloc_stmt)
 #endif
 }
 
-void FortranAnalysis::visit(SgFunctionDeclaration * func_decl)
+void FortranAnalysis::visit(SgProcedureHeaderStatement * func_decl)
 {
    SgFunctionDefinition * func_def = isSgFunctionDefinition(func_decl->get_definition());
    if (func_def == NULL) return;
 
    SgInitializedNamePtrList func_args = func_decl->get_parameterList()->get_args();
-   SgInitializedNamePtrList::iterator it_args;
+   SgInitializedNamePtrList::const_iterator it_args;
 
    for (it_args = func_args.begin(); it_args != func_args.end(); it_args++) {
-      SgInitializedName * func_arg = isSgInitializedName(*it_args);
-      SgSymbol * sym = func_def->lookup_symbol(func_arg->get_name());
+      SgInitializedName * const func_arg = isSgInitializedName(*it_args);
+      SgSymbol * const sym = func_def->lookup_symbol(func_arg->get_name());
       if (sym == NULL) {
          printf("FortranAnalysis::visit: no symbol for name %s\n",
                 func_arg->get_name().getString().c_str());
@@ -132,6 +134,13 @@ void FortranAnalysis::visit(SgFunctionCallExp * fcall)
  */
 void FortranAnalysis::visit(SgExprStatement * expr_stmt)
 {
+   /*
+   std::cout << "FortranAnalysis::" << __func__
+             << "(SgExprStatement * '" << expr_stmt->unparseToString()
+             << "')" << std::endl;
+   */
+   /* Do we care about matching region assignment? */
+   /*
    if (matchRegionAssignment(expr_stmt)) {
       SgBinaryOp * bin_op = isSgBinaryOp(expr_stmt->get_expression());
       SgVarRefExp * var = isSgVarRefExp(bin_op->get_lhs_operand());
@@ -144,6 +153,16 @@ void FortranAnalysis::visit(SgExprStatement * expr_stmt)
       expr_stmt->setAttribute("halo_ref", new AstTextAttribute("HAS_HALO_REF"));
       printf("FortranAnalysis:: adding halo attr to statement\n");
    }
+   */
+}
+
+void FortranAnalysis::visit(SgVarRefExp * const var_ref)
+{
+   std::cout << "FortranAnalysis::" << __func__
+             << "(SgVarRefExp * '" << var_ref->unparseToString()
+             << "')" << std::endl;
+   // TODO: For now we assume all VarRefExp are references to input arrays
+   var_ref->setAttribute("arrayRef", new AstTextAttribute("arrayRef"));
 }
 
 void FortranAnalysis::atTraversalEnd()
