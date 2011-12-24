@@ -18,6 +18,7 @@ void FortranTraversal::visit(SgNode * node)
      case V_SgFunctionCallExp          :  visit( (SgFunctionCallExp          *) node);  break;
      case V_SgExprStatement            :  visit( (SgExprStatement            *) node);  break;
      case V_SgProcedureHeaderStatement :  visit( (SgProcedureHeaderStatement *) node);  break;
+     case V_SgVarRefExp                :  visit( (SgVarRefExp                *) node);  break;
      default: break;
    }
 }
@@ -197,6 +198,17 @@ void FortranTraversal::visit(SgExprStatement * expr_stmt)
 #endif
 }
 
+void FortranTraversal::visit(SgVarRefExp * const var_ref)
+{
+   ROSE_ASSERT( var_ref != NULL );
+   std::cout << "FortranTraversal::" << __func__
+             << "(SgVarRefExp * '" << var_ref->unparseToString()
+             << "')" << std::endl;
+   if( var_ref->getAttribute("arrayRef")->toString() == "arrayRef" ){
+     std::cout << __func__ << ": " << buildForPntrArrRefExp(var_ref)->unparseToString() << std::endl;
+   }
+}
+
 void FortranTraversal::atTraversalEnd()
 {
    printf("FortranTraversal::atTraversalEnd\n");
@@ -371,6 +383,23 @@ SgValueExp * FortranTraversal::buildCValueExp(SgValueExp * expr)
    }
 
    return val;
+}
+
+SgExpression * FortranTraversal::buildForPntrArrRefExp(SgVarRefExp * expr)
+{
+   ROSE_ASSERT( cl_block != NULL );
+   SgExpression * c_expr = NULL;
+   SgSymbol * sym = expr->get_symbol();
+   SgType * type = sym->get_type();
+
+   c_expr = buildVarRefExp(sym->get_name(), cl_block);
+
+   //if (isSgArrayType(type) || isSgPointerType(type)) {
+   printf("[%s] made it!\n", __func__);
+   SgName name = cl_block->lookup_variable_symbol("k")->get_name();
+   c_expr = buildBinaryExpression<SgPntrArrRefExp>(c_expr, buildVarRefExp(name, cl_block));
+   //}
+   return c_expr;
 }
 
 SgExpression * FortranTraversal::buildForVarRefExp(SgVarRefExp * expr)
