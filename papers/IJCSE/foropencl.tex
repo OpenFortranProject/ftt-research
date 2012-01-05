@@ -1,0 +1,139 @@
+%%
+\documentclass{doublecol-new}
+%%
+
+\usepackage{natbib, stfloats}
+\usepackage{cite}
+\usepackage{graphicx}
+%\usepackage[cmex10]{amsmath}
+%\usepackage{amssymb}
+%\usepackage{array}
+\usepackage{url}
+\usepackage{listings}
+
+\lstdefinestyle{FortranLike}{float,frame=lines,language=Fortran,commentstyle=\ttfamily,basicstyle=\ttfamily}
+\lstdefinestyle{CLike}{float,frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
+\lstdefinestyle{NoFloatCLike}{frame=lines,language=C,commentstyle=\ttfamily,basicstyle=\ttfamily}
+
+\begin{document}
+
+\thispagestyle{plain}
+
+%% ANONYMIZED
+%\LRH{M. Sottile et~al.}
+\LRH{ }
+
+\RRH{ForOpenCL: Transformations Exploiting Array Syntax in Fortran for Accelerator Programming}
+
+\title{ForOpenCL: Transformations Exploiting Array Syntax in Fortran for Accelerator Programming}
+
+%% ANONYMIZED
+\authorA{Author names removed for review}
+% 1st. author
+%\authorA{Matthew J. Sottile}
+%\affA{Galois, Inc.\\
+% Portland, OR 97204\\
+% E-mail: mjsottile@computer.org}
+
+% 2nd. author
+%\authorB{Craig E Rasmussen}
+%\affB{Los Alamos National Laboratory\\
+% Los Alamos, NM 87545\\
+% E-mail: crasmussen@lanl.gov}
+
+% 3rd. author
+%\authorC{Wayne N. Weseloh}
+%\affC{Los Alamos National Laboratory\\
+% Los Alamos, NM 87545\\
+% E-mail: weseloh@lanl.gov}
+
+% 4th. author
+%\authorD{Robert W. Robey}
+%\affD{Los Alamos National Laboratory\\
+% Los Alamos, NM 87545\\
+% E-mail: brobey@lanl.gov}
+
+% 5th. author
+%\authorE{Daniel Quinlan}
+%\affE{Lawrence Livermore National Laboratory\\
+% Livermore, CA 94550\\
+% E-Mail: dquinlan@llnl.gov}
+
+% 6th. author
+%\authorF{Jeffrey Overbey}
+%\affF{National Center for Supercomputing Applications\\
+% Urbana, IL 61801\\
+% E-mail: overbey2@illinois.edu}
+
+\input{abstract}
+
+\KEYWORD{Fortran; OpenCL; Accelerator programming; GPU programming; code generation.}
+
+%% bio
+%\begin{bio}
+%M. Sottile completed his PhD in 2006 from the University of New Mexico
+%from the Department of Electrical and Computer Engineering.  He is
+%presently working as a researcher at Galois, Inc. in Portland, Oregon
+%leading research work efforts in scientific and high performance computing.
+%His research interests include programming languages, compilation techniques,
+%computational physics and applied mathematics.
+
+%\noindent Craig has a bio.
+
+%\noindent Wayne has a bio.
+
+%\noindent Bob has a bio.
+
+%\noindent Dan has a bio.
+
+%\noindent Jeff has a bio.
+%\end{bio}
+
+\maketitle
+
+% A category with the (minimum) three required fields
+%\category{D.3.3}{Language Constructs and Features}{Concurrent programming structures}
+
+\input{intro}
+\input{programming-model}
+\input{shallow-water}
+\input{source-to-source}
+%\input{static-analysis}
+\input{performance}
+
+\section{Conclusions}
+
+The sheer complexity of programming for clusters of many or multi-core
+processors with tens of millions threads of execution makes the simplicity of
+the data-parallel model attractive.  The increasing complexity of
+today's applications (especially in light of the increasing complexity
+of the hardware) and the need for portability across architectures
+make a higher-level and simpler programming model like the data-parallel
+model attractive.
+
+The goal of this work has been to exploit source-to-source transformations that
+allow programmers to develop and maintain programs at a high-level of
+abstraction, without coding to a specific hardware architecture.
+Furthermore these transformations allow multiple hardware architectures
+to be targeted without changing the high-level source.  It also removes the
+necessity for application programmers to understand details of the accelerator
+architecture or to know OpenCL.
+
+%ACKNOWLEDGMENTS are optional
+
+%\section{Acknowledgments}
+%This work was supported in part by the Department of Energy Office of Science,
+%Advanced Scientific Computing Research.
+
+%%TODO \cite{chamberlain04zpl, roth97stencils}
+
+%\bibliographystyle{abbrv}
+\newcommand{\newblock}{}
+\bibliographystyle{plainnat}
+\bibliography{foropencl}
+
+\newpage
+
+\input{note-to-reviewers}
+
+\end{document}

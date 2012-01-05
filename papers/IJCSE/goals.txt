@@ -1,0 +1,20 @@
+Goals
+
+1. Program accelerators
+2. within bounds of existing language
+3. goal is to be competitive with hand generated code
+
+Approach
+- OpenCL
+-- runtime
+-- kernels
+- ForOpenCL
+
+Language Features
+- array syntax
+- pure and elemental functions
+- all part of the language, propose syntax for choosing functions to transform
+
+Source-To-Source Transformations
+- figure on host and device code
+- ForOpenCL

@@ -12,12 +12,12 @@ public:
    virtual void visit(SgNode * node);
    virtual void atTraversalEnd();
 
-   void visit(SgAllocateStatement   * alloc_stmt);
-   void visit(SgFunctionDeclaration * func_decl);
-   void visit(SgVariableDeclaration * var_decl);
-   void visit(SgFunctionCallExp     * func_call_exp);
-   void visit(SgExprStatement       * expr_stmt);
-
+   void visit(SgAllocateStatement        * alloc_stmt);
+   void visit(SgProcedureHeaderStatement * func_decl);
+   void visit(SgVariableDeclaration      * var_decl);
+   void visit(SgFunctionCallExp          * func_call_exp);
+   void visit(SgExprStatement            * expr_stmt);
+   void visit(SgVarRefExp                * const var_ref);
    // helper functions
    //
 

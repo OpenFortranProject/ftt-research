@@ -1,0 +1,44 @@
+\subsection{Fortran to OpenCL code conversion}
+
+Programmers using ForOpenCL write kernel code in standard Fortran, and
+a sequence of code transformations are applied to generate equivalent
+code in C-based OpenCL.  These transformations are fairly
+straightforward, and map a restricted subset of Fortran directly to
+the C equivalent.  The transformation is based on a regular traversal
+of the ROSE Sage AST that represents the Fortran code.  The visitor
+used in the traversal handles four types of Sage AST Nodes: {\tt
+  SgAllocateStatement}, {\tt SgFunctionDeclaration}, {\tt
+  SgVariableDeclaration}, and {\tt SgExprStatement}.  These encompass
+the primary activities that are commonly encountered in computational
+kernels: allocation, variable and function declaration, and
+expressions that correspond to arithmetic operations.  Allocate
+statements are mapped to local tile variables in the kernel.  The
+function declarations for the pure elemental Fortran functions are
+mapped to OpenCL kernel function declarations.  Variable declarations and
+expressions based on primitive (non-record) numerical types are mapped
+to their direct equivalent on the C side.  
+
+Our current prototype contains a visitor for {\tt SgFunctionCallExp}
+nodes, but no conversion is performed.  We plan to provide support to
+map numerical intrinsic functions to the equivalent math primitives
+provided by OpenCL.  In many cases, this is a simple one to one
+mapping from Fortran intrinsic to OpenCL primitive.  The more complex
+case is invocation of user-defined functions from within kernel, which
+will require additional analysis by the ForOpenCL conversion tool to
+perform inlining of the called code into the kernel when appropriate.
+
+In order to perform the language conversion, two ROSE {\tt SgSourceFile}
+objects are created -- one corresponding to the input Fortran code, and
+one corresponding to the output OpenCL code.  The transformation performs
+a traversal of the input Fortran code during which AST nodes are inserted
+into the OpenCL code to represent the equivalent code in the output language.
+The input Fortran code is the unmodified code that defines the pure
+elemental functions and related code that represent the computations to be
+performed on the accelerator.  The output is seeded with a template C
+source file ({\tt cl\_template.c}) that comes pre-defined with a set of
+helper functions that are used by the generated OpenCL code.  These
+generic pre-defined functions are primarily related to memory indexing (such
+as mapping 2D logical array indices to physical 1D addresses).  Our current
+prototype includes a limited set of helper functions sufficient to demonstrate
+the 2D shallow water model code, but could conceivably be expanded to include
+higher dimensional arrays with little effort.
