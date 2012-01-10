@@ -18,7 +18,7 @@ BOOST_INCLUDE_PATH ?= /usr
 
 OBJS := FortranAnalysis.lo FortranTraversal.lo
 
-CXXFLAGS := -Wall -Wextra -Werror -pedantic -pedantic-errors -isystem $(ROSE_INCLUDE_DIR) -isystem $(BOOST_INCLUDE_PATH)
+CXXFLAGS := -g -Wall -Wextra -Werror -pedantic -pedantic-errors -isystem $(ROSE_INCLUDE_DIR) -isystem $(BOOST_INCLUDE_PATH)
 
 # Default make rule to use
 all: build_opencl

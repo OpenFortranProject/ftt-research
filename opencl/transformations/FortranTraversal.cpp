@@ -1,4 +1,5 @@
 #include <rose.h>
+#include <sageInterface.h>
 #include <iostream>
 #include "FortranTraversal.hpp"
 
@@ -78,6 +79,7 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
    //
    if (numArrayParams > 0) {
       // Add an input array length parameter
+      printf("adding inputSize parameter\n");
       SgInitializedName * const inputSize_param_name =
                          buildInitializedName("inputSize", buildUnsignedIntType());
       inputSize_param_name->get_storageModifier().setOpenclLocal();
@@ -185,17 +187,28 @@ void FortranTraversal::visit(const SgFunctionCallExp * const func_call_expr) con
 void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
 {
    ROSE_ASSERT( cl_block != NULL );
-   SgStatement * const c_stmt = buildCExprStatement(expr_stmt);
+   SgStatement * c_stmt = buildCExprStatement(expr_stmt);
    if (c_stmt != NULL) {
-      appendStatement(c_stmt, cl_block);
-   }
-   // TODO: finish me
-   // Add a bounds check around the index expression
-   // First build the conditional expression
-   // const SgName boundsName = cl_block->lookup_variable_symbol("inputSize")->get_name();
-   // SgExpression * const c_cond = buildLessThanOp(buildVarRefExp(indexName, cl_block), buildVarRefExp(boundsName, cl_block));
+      // 1. check if a the sub expression touches the kernel's array parameter
+      // TODO: this check is wrong for non-trivial programs because it doesn't 
+      // check that the array reference is one we care about
+      std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
+      const bool usesArray = refs.size() > 0;
+      if (usesArray) {
+         // 2. wrap the access in a bounds check
+         // Add a bounds check around the index expression
+         // First build the conditional expression
+         // TODO: reference the dope vector instead of hardcoded "inputSize"
+         const SgName boundsName = lookupVariableSymbolInParentScopes("inputSize", cl_block)->get_name();
+         const SgName indexName = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
+         SgExpression * const c_cond = buildLessThanOp(buildVarRefExp(indexName, cl_block), buildVarRefExp(boundsName, cl_block));
 
-   // return buildIfStmt(c_cond, c_indexStmt, NULL);
+         // insert the if statement
+         appendStatement(buildIfStmt(c_cond, c_stmt, NULL), cl_block);
+      } else {
+        appendStatement(c_stmt, cl_block);
+      }
+   }
 
 #ifdef CL_SPECIALIZE
    // if lhs is a region selector, define index variable for associated local tile
