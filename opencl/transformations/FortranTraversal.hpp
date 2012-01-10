@@ -59,4 +59,6 @@ protected:
 
    // list of variables that are used as region selectors
    std::vector<SgInitializedName *> selectors;
+
+   const std::string arrayIndexVar;
 };
