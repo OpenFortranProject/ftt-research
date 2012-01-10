@@ -57,8 +57,7 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
    for (it_vars = vars.begin(); it_vars != vars.end(); it_vars++) {
       SgInitializedName * const param = isSgInitializedName(*it_vars);
       SgType * const param_type = param->get_type();
-      SgPointerType * const param_pointer_type(new SgPointerType());
-      param_pointer_type->set_base_type(param_type);
+      SgPointerType * const param_pointer_type(buildPointerType(param_type));
 
       // create new parameter
       //
@@ -79,7 +78,7 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
    if (numArrayParams > 0) {
       // Add an input array length parameter
       SgInitializedName * const inputSize_param_name =
-                         buildInitializedName("inputSize", new SgTypeUnsignedInt());
+                         buildInitializedName("inputSize", buildUnsignedIntType());
       inputSize_param_name->get_storageModifier().setOpenclLocal();
       appendArg(params, inputSize_param_name);
 
@@ -89,7 +88,7 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
 
       // Add tile size parameter
       SgInitializedName * const tileSize_param_name =
-                         buildInitializedName("tileSize", new SgTypeUnsignedInt());
+                         buildInitializedName("tileSize", buildUnsignedIntType());
       tileSize_param_name->get_storageModifier().setOpenclLocal();
       appendArg(params, tileSize_param_name);
    }
