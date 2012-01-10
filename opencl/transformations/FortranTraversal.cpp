@@ -8,6 +8,7 @@ FortranTraversal::FortranTraversal(SgGlobal * const scope)
 
 void FortranTraversal::visit(SgNode * node)
 {
+   ROSE_ASSERT( node != NULL );
    switch (node->variantT())
    {
      case V_SgAllocateStatement        :  visit( (const SgAllocateStatement        * const) node);  break;
