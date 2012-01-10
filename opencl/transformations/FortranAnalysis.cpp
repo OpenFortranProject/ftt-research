@@ -36,12 +36,14 @@ HaloRefSearch::HaloRefSearch()
 void HaloRefSearch::visit(SgNode * node)
 {
    switch (node->variantT()) {
-   case V_SgVarRefExp:
+   case V_SgVarRefExp: {
       SgVarRefExp * var = isSgVarRefExp(node);
       if (var->get_symbol()->getAttribute("halo_attr") != NULL) {
          found = true;
       }
       break;
+   }
+   default: break;
    }
 }
 
@@ -69,7 +71,7 @@ void FortranAnalysis::visit(SgNode * node)
    }
 }
 
-void FortranAnalysis::visit(SgAllocateStatement * alloc_stmt)
+void FortranAnalysis::visit(SgAllocateStatement *)
 {
 #ifdef DEBUG_PRINT
    printf("FortranAnalysis::visit(SgAllocateStatement *)\n");
@@ -104,7 +106,7 @@ void FortranAnalysis::visit(SgProcedureHeaderStatement * func_decl)
    }
 }
 
-void FortranAnalysis::visit(SgVariableDeclaration * var_decl)
+void FortranAnalysis::visit(SgVariableDeclaration *)
 {
 #ifdef DEBUG_PRINT
    printf("FortranAnalysis::visit(SgVariableDeclaration *)\n");
@@ -132,7 +134,7 @@ void FortranAnalysis::visit(SgFunctionCallExp * fcall)
 /**
  * Matches assignment statements (including pointer association)
  */
-void FortranAnalysis::visit(SgExprStatement * expr_stmt)
+void FortranAnalysis::visit(SgExprStatement *)
 {
    /*
    std::cout << "FortranAnalysis::" << __func__
@@ -241,7 +243,7 @@ bool FortranAnalysis::isRegionSelector(SgInitializedName * var)
    // look for var in region and transfer_halo calls
    //
    if (isSelector == true) {
-      SgStatementPtrList & stmts = src_func_decl->get_definition()->get_body()->getStatementList();
+      /* SgStatementPtrList & stmts = */ src_func_decl->get_definition()->get_body()->getStatementList();
    }
 
    return isSelector;
