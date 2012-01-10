@@ -5,6 +5,14 @@ int get_local_id(unsigned int dim);
 int get_local_size(unsigned int dim);
 int get_global_id(unsigned int dim);
 int get_global_size(unsigned int dim);
+typedef struct _int4 {
+int s0;
+int s1;
+int s2;
+int s3;}int4;
+typedef struct _int2 {
+int s0;
+int s1;}int2;
 
 float *TILE_OFFSET(float *base,int idx,int2 size)
 {
@@ -32,10 +40,9 @@ inline static float sq(float x)
 }
 inline static float transfer_halo(float *A,int4 halo,float *tile);
 
-__kernel void identity(__global float * A,
-                       __global float * B, const unsigned int count)
+__kernel void identity(float *A,float *B,unsigned int inputSize,float *tiles,unsigned int tileSize)
 {
   int k = get_global_id(0);
-  if( k < count )
+  if (k < inputSize) 
     B[k] = A[k];
 }

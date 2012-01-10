@@ -1,47 +1,46 @@
 #include <rose.h>
+#include <sageInterface.h>
 #include <iostream>
 #include "FortranTraversal.hpp"
 
-FortranTraversal::FortranTraversal(SgGlobal * scope)
-: cl_global_scope(NULL), cl_block(NULL), src_func_decl(NULL), tile_idx(0)
-{
-   this->cl_global_scope = scope;
-   this->tile_idx = 0;
-}
+FortranTraversal::FortranTraversal(SgGlobal * const scope)
+: cl_global_scope(scope), cl_block(NULL), src_func_decl(NULL), tile_idx(0), arrayIndexVar("k")
+{}
 
 void FortranTraversal::visit(SgNode * node)
 {
+   ROSE_ASSERT( node != NULL );
    switch (node->variantT())
    {
-     case V_SgAllocateStatement        :  visit( (SgAllocateStatement        *) node);  break;
-     case V_SgVariableDeclaration      :  visit( (SgVariableDeclaration      *) node);  break;
-     case V_SgFunctionCallExp          :  visit( (SgFunctionCallExp          *) node);  break;
-     case V_SgExprStatement            :  visit( (SgExprStatement            *) node);  break;
-     case V_SgProcedureHeaderStatement :  visit( (SgProcedureHeaderStatement *) node);  break;
-     case V_SgVarRefExp                :  visit( (SgVarRefExp                *) node);  break;
+     case V_SgAllocateStatement        :  visit( (const SgAllocateStatement        * const) node);  break;
+     case V_SgVariableDeclaration      :  visit( (const SgVariableDeclaration      * const) node);  break;
+     case V_SgFunctionCallExp          :  visit( (const SgFunctionCallExp          * const) node);  break;
+     case V_SgExprStatement            :  visit( (const SgExprStatement            * const) node);  break;
+     case V_SgProcedureHeaderStatement :  visit( (const SgProcedureHeaderStatement * const) node);  break;
+     case V_SgVarRefExp                :  visit( (const SgVarRefExp                * const) node);  break;
      default: break;
    }
 }
 
-void FortranTraversal::visit(SgAllocateStatement * alloc_stmt)
+void FortranTraversal::visit(const SgAllocateStatement * const alloc_stmt)
 {
-   SgExprListExp* exprs = alloc_stmt->get_expr_list();
+   const SgExprListExp* const exprs = alloc_stmt->get_expr_list();
    ROSE_ASSERT(exprs != NULL);
 
-   std::string exprs_str = exprs->unparseToString();
+   const std::string exprs_str = exprs->unparseToString();
    printf("SgAllocateStatement: allocate exprs are %s\n", exprs_str.c_str());
 
-   SgExpressionPtrList::iterator i = exprs->get_expressions().begin();
-   SgPntrArrRefExp * arrayRef = isSgPntrArrRefExp(*i);
+   SgExpressionPtrList::const_iterator i = exprs->get_expressions().begin();
+   const SgPntrArrRefExp * const arrayRef = isSgPntrArrRefExp(*i);
    ROSE_ASSERT(arrayRef != NULL);
-   SgVarRefExp * lhs = isSgVarRefExp(arrayRef->get_lhs_operand());
+   const SgVarRefExp * const lhs = isSgVarRefExp(arrayRef->get_lhs_operand());
    ROSE_ASSERT(lhs != NULL);
 
    // define local tile, e.g., hx = TILE_OFFSET(tiles,3,get_tile_size())
    insertTileOffsetFor(lhs->get_symbol()->get_name().getString());
 }
 
-void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
+void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
 {
    ROSE_ASSERT( cl_global_scope != NULL );
    int numArrayParams = 0;
@@ -49,20 +48,18 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
 
    this->src_func_decl = func_decl;
 
-   // get parameters from source function
-   //
-   SgInitializedNamePtrList vars = func_decl->get_parameterList()->get_args();
-   SgInitializedNamePtrList::iterator it_vars;
-
    // create new parameter list and add parameters
    //
-   SgFunctionParameterList * params = buildFunctionParameterList();
+   SgFunctionParameterList * const params = buildFunctionParameterList();
 
+   // get parameters from source function
+   //
+   const SgInitializedNamePtrList vars = func_decl->get_parameterList()->get_args();
+   SgInitializedNamePtrList::const_iterator it_vars;
    for (it_vars = vars.begin(); it_vars != vars.end(); it_vars++) {
-      SgInitializedName * param = isSgInitializedName(*it_vars);
-      SgType * param_type = param->get_type();
-      SgPointerType * param_pointer_type(new SgPointerType());
-      param_pointer_type->set_base_type(param_type);
+      SgInitializedName * const param = isSgInitializedName(*it_vars);
+      SgType * const param_type = param->get_type();
+      SgPointerType * const param_pointer_type(buildPointerType(param_type));
 
       // create new parameter
       //
@@ -73,8 +70,8 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
       // BUG: This does not unparse correctly.  Probably a ROSE bug
       param->get_storageModifier().setOpenclGlobal();
 
-      SgInitializedName * param_name = buildInitializedName(param->get_name(),
-                                                            param_pointer_type);
+      SgInitializedName * const param_name = buildInitializedName(param->get_name(),
+                                                                  param_pointer_type);
       appendArg(params, param_name);
    }
 
@@ -82,25 +79,26 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
    //
    if (numArrayParams > 0) {
       // Add an input array length parameter
-      SgInitializedName * inputSize_param_name =
-                         buildInitializedName("inputSize", new SgTypeUnsignedInt());
+      printf("adding inputSize parameter\n");
+      SgInitializedName * const inputSize_param_name =
+                         buildInitializedName("inputSize", buildUnsignedIntType());
       inputSize_param_name->get_storageModifier().setOpenclLocal();
       appendArg(params, inputSize_param_name);
 
-      SgInitializedName * param_name = buildInitializedName("tiles", array_type);
+      SgInitializedName * const param_name = buildInitializedName("tiles", array_type);
       param_name->get_storageModifier().setOpenclLocal();
       appendArg(params, param_name);
 
       // Add tile size parameter
-      SgInitializedName * tileSize_param_name =
-                         buildInitializedName("tileSize", new SgTypeUnsignedInt());
+      SgInitializedName * const tileSize_param_name =
+                         buildInitializedName("tileSize", buildUnsignedIntType());
       tileSize_param_name->get_storageModifier().setOpenclLocal();
       appendArg(params, tileSize_param_name);
    }
 
    // create function declaration
    //
-   SgFunctionDeclaration *
+   SgFunctionDeclaration * const
    cl_func = buildDefiningFunctionDeclaration(func_decl->get_name(),
                                               buildVoidType(),
                                               params,
@@ -119,21 +117,21 @@ void FortranTraversal::visit(SgProcedureHeaderStatement * func_decl)
    SgFunctionSymbol      * const cl_get_global_id_sym    = lookupFunctionSymbolInParentScopes(SgName("get_global_id"), cl_block);
    SgExpression          * const cl_get_global_id_call   = buildFunctionCallExp(cl_get_global_id_sym, cl_get_global_id_params);
    SgAssignInitializer   * const cl_var_assign           = buildAssignInitializer(cl_get_global_id_call, NULL);
-   SgVariableDeclaration * const cl_var_decl             = buildVariableDeclaration("k", buildIntType(), cl_var_assign);
+   // TODO: Use a free variable name instead of hardcoding arrayIndexVar
+   SgVariableDeclaration * const cl_var_decl             = buildVariableDeclaration(arrayIndexVar, buildIntType(), cl_var_assign);
 
    appendStatement(cl_var_decl, cl_block);
 }
 
-void FortranTraversal::visit(SgVariableDeclaration * var_decl)
+void FortranTraversal::visit(const SgVariableDeclaration * const var_decl) const
 {
    ROSE_ASSERT( cl_block != NULL );
-   SgVariableDeclaration * cl_var_decl;
-   SgInitializedNamePtrList vars = var_decl->get_variables();
-   SgInitializedNamePtrList::iterator it_vars;
+   const SgInitializedNamePtrList vars = var_decl->get_variables();
+   SgInitializedNamePtrList::const_iterator it_vars;
 
    printf("SgVariableDeclaration:\n");
    for (it_vars = vars.begin(); it_vars != vars.end(); it_vars++) {
-      SgInitializedName * var = isSgInitializedName(*it_vars);
+      const SgInitializedName * const var = isSgInitializedName(*it_vars);
       SgType * var_type = var->get_type();
 
       // ignore function arguments contained in params list
@@ -161,7 +159,7 @@ void FortranTraversal::visit(SgVariableDeclaration * var_decl)
          var_type = buildPointerType(isSgArrayType(var_type)->findBaseType());
       }
 
-      cl_var_decl = buildVariableDeclaration(var->get_name(), var_type);
+      SgVariableDeclaration * const cl_var_decl = buildVariableDeclaration(var->get_name(), var_type);
       appendStatement(cl_var_decl, cl_block);
 
       // allocatable variables need to be local on device
@@ -172,12 +170,13 @@ void FortranTraversal::visit(SgVariableDeclaration * var_decl)
    }
 }
 
-void FortranTraversal::visit(SgFunctionCallExp * func_call_expr) {
-   SgExpression * func = func_call_expr->get_function();
-   SgFunctionRefExp * fref = isSgFunctionRefExp(func);
+void FortranTraversal::visit(const SgFunctionCallExp * const func_call_expr) const
+{
+   const SgExpression     * const func = func_call_expr->get_function();
+   const SgFunctionRefExp * const fref = isSgFunctionRefExp(func);
 
    if (fref != NULL) {
-      std::string name = fref->get_symbol()->get_name().str();
+      const std::string name(fref->get_symbol()->get_name().str());
       //      printf("SgFunctionCallExp: symbol name is %s\n", name.c_str());
    }
 }
@@ -185,12 +184,30 @@ void FortranTraversal::visit(SgFunctionCallExp * func_call_expr) {
 /**
  * Matches assignment statements (including pointer association)
  */
-void FortranTraversal::visit(SgExprStatement * expr_stmt)
+void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
 {
    ROSE_ASSERT( cl_block != NULL );
-   SgExprStatement * c_expr_stmt = buildCExprStatement(expr_stmt);
-   if (c_expr_stmt != NULL) {
-      appendStatement(c_expr_stmt, cl_block);
+   SgStatement * c_stmt = buildCExprStatement(expr_stmt);
+   if (c_stmt != NULL) {
+      // 1. check if a the sub expression touches the kernel's array parameter
+      // TODO: this check is wrong for non-trivial programs because it doesn't 
+      // check that the array reference is one we care about
+      std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
+      const bool usesArray = refs.size() > 0;
+      if (usesArray) {
+         // 2. wrap the access in a bounds check
+         // Add a bounds check around the index expression
+         // First build the conditional expression
+         // TODO: reference the dope vector instead of hardcoded "inputSize"
+         const SgName boundsName = lookupVariableSymbolInParentScopes("inputSize", cl_block)->get_name();
+         const SgName indexName = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
+         SgExpression * const c_cond = buildLessThanOp(buildVarRefExp(indexName, cl_block), buildVarRefExp(boundsName, cl_block));
+
+         // insert the if statement
+         appendStatement(buildIfStmt(c_cond, c_stmt, NULL), cl_block);
+      } else {
+        appendStatement(c_stmt, cl_block);
+      }
    }
 
 #ifdef CL_SPECIALIZE
@@ -198,7 +215,7 @@ void FortranTraversal::visit(SgExprStatement * expr_stmt)
 #endif
 }
 
-void FortranTraversal::visit(SgVarRefExp * const var_ref)
+void FortranTraversal::visit(const SgVarRefExp * const var_ref) const
 {
    ROSE_ASSERT( var_ref != NULL );
    std::cout << "FortranTraversal::" << __func__
@@ -209,7 +226,7 @@ void FortranTraversal::visit(SgVarRefExp * const var_ref)
    }
 }
 
-void FortranTraversal::atTraversalEnd()
+void FortranTraversal::atTraversalEnd() const
 {
    printf("FortranTraversal::atTraversalEnd\n");
 }
@@ -218,14 +235,15 @@ void FortranTraversal::atTraversalEnd()
 // build statements
 //
 
-SgExprStatement * FortranTraversal::buildCExprStatement(SgExprStatement * expr_stmt)
+SgExprStatement * FortranTraversal::buildCExprStatement(const SgExprStatement * const expr_stmt) const
 {
+   std::cout << "expr_stmnt = '" << expr_stmt->unparseToString() << "'" << std::endl;
    // TODO - other cases, likely subroutine call is a function call expr
-   SgBinaryOp * bin_op = isSgBinaryOp(expr_stmt->get_expression());
+   const SgBinaryOp * const bin_op = isSgBinaryOp(expr_stmt->get_expression());
    ROSE_ASSERT(bin_op != NULL);
 
-   SgExpression * c_lhs = buildCExpr(bin_op->get_lhs_operand());
-   SgExpression * c_rhs = buildCExpr(bin_op->get_rhs_operand());
+   SgExpression * const c_lhs = buildCExpr(bin_op->get_lhs_operand());
+   SgExpression * const c_rhs = buildCExpr(bin_op->get_rhs_operand());
    ROSE_ASSERT(c_lhs != NULL);
    ROSE_ASSERT(c_rhs != NULL);
 
@@ -238,12 +256,12 @@ SgExprStatement * FortranTraversal::buildCExprStatement(SgExprStatement * expr_s
    }
 #endif
 
-   SgBinaryOp   * c_bin_op = buildBinaryExpression<SgAssignOp>(c_lhs, c_rhs);
+   SgBinaryOp * const c_bin_op = buildBinaryExpression<SgAssignOp>(c_lhs, c_rhs);
 
    return buildExprStatement(c_bin_op);
 }
 
-SgExpression * FortranTraversal::buildCExpr(SgExpression * expr)
+SgExpression * FortranTraversal::buildCExpr(SgExpression * const expr) const
 {
    if (expr == NULL) {
       printf("buildCExpr: NULL expression\n");
@@ -255,6 +273,7 @@ SgExpression * FortranTraversal::buildCExpr(SgExpression * expr)
       case V_SgFunctionCallExp:      return buildCFunctionCallExp(isSgFunctionCallExp(expr));
       case V_SgVarRefExp:            return buildForVarRefExp(isSgVarRefExp(expr));
       case V_SgAggregateInitializer: return buildCAggregateInitializer(isSgAggregateInitializer(expr));
+      default: break;
    }
 
    // lots of unary, binary and value exprs so general catch all here
@@ -273,24 +292,25 @@ SgExpression * FortranTraversal::buildCExpr(SgExpression * expr)
    return NULL;
 }
 
-SgUnaryOp * FortranTraversal::buildCUnaryOp(SgUnaryOp * expr)
+SgUnaryOp * FortranTraversal::buildCUnaryOp(const SgUnaryOp * const expr) const
 {
-   SgExpression * op = buildCExpr(expr->get_operand());
+   SgExpression * const op = buildCExpr(expr->get_operand());
    ROSE_ASSERT(op != NULL);
 
    switch (expr->variantT())
    {
       case V_SgMinusOp:    return buildUnaryExpression<SgMinusOp>(op);
+      default: break;
    }
       
    printf("buildCUnaryOp: Unimplemented variantT==%d\n", expr->variantT());
    return NULL;
 }
 
-SgBinaryOp * FortranTraversal::buildCBinaryOp(SgBinaryOp * expr)
+SgBinaryOp * FortranTraversal::buildCBinaryOp(const SgBinaryOp * const expr) const
 {
-   SgExpression * c_lhs = buildCExpr(expr->get_lhs_operand());
-   SgExpression * c_rhs = buildCExpr(expr->get_rhs_operand());
+   SgExpression * const c_lhs = buildCExpr(expr->get_lhs_operand());
+   SgExpression * const c_rhs = buildCExpr(expr->get_rhs_operand());
    ROSE_ASSERT(c_lhs != NULL);
    ROSE_ASSERT(c_rhs != NULL);
 
@@ -300,11 +320,12 @@ SgBinaryOp * FortranTraversal::buildCBinaryOp(SgBinaryOp * expr)
       case V_SgDivideOp:   return buildBinaryExpression<SgDivideOp>(c_lhs, c_rhs);
       case V_SgMultiplyOp: return buildBinaryExpression<SgMultiplyOp>(c_lhs, c_rhs);
       case V_SgSubtractOp: return buildBinaryExpression<SgSubtractOp>(c_lhs, c_rhs);
+      default: break;
    }
 
    if (isSgExponentiationOp(expr) != NULL) {
       if (isSgIntVal(c_rhs) != NULL) {
-         SgIntVal * val = isSgIntVal(c_rhs);
+         const SgIntVal * const val = isSgIntVal(c_rhs);
          if (val->get_value() == 2) {
             return buildBinaryExpression<SgMultiplyOp>(c_lhs, c_lhs);
 
@@ -318,13 +339,13 @@ SgBinaryOp * FortranTraversal::buildCBinaryOp(SgBinaryOp * expr)
    return NULL;
 }
 
-SgFunctionCallExp * FortranTraversal::buildCFunctionCallExp(SgFunctionCallExp * expr)
+SgFunctionCallExp * FortranTraversal::buildCFunctionCallExp(const SgFunctionCallExp * const expr) const
 {
-   SgFunctionCallExp * fcall = isSgFunctionCallExp(expr);
-   SgFunctionRefExp  * fref  = isSgFunctionRefExp(fcall->get_function());
-   SgExprListExp     * exprs = buildCExprListExp(fcall->get_args());
+   const SgFunctionCallExp * const fcall = isSgFunctionCallExp(expr);
+   SgFunctionRefExp  * const fref  = isSgFunctionRefExp(fcall->get_function());
+   SgExprListExp     * const exprs = buildCExprListExp(fcall->get_args());
 
-   std::string name = fref->get_symbol()->get_name().getString();
+   const std::string name(fref->get_symbol()->get_name().getString());
 
    printf("buildCFunctionCallExp: for function %s\n", name.c_str());
 
@@ -332,7 +353,7 @@ SgFunctionCallExp * FortranTraversal::buildCFunctionCallExp(SgFunctionCallExp * 
    // define pointer to tile variable for interior() and add variable to call
    ROSE_ASSERT( cl_block != NULL );
    if (name == "interior") {
-      const char * tile = insertTransferHaloVarDecl(fcall);
+      const char * const tile = insertTransferHaloVarDecl(fcall);
       exprs->append_expression(buildVarRefExp(tile, cl_block));
    }
    // region call to an array dereference
@@ -346,13 +367,13 @@ SgFunctionCallExp * FortranTraversal::buildCFunctionCallExp(SgFunctionCallExp * 
    return buildFunctionCallExp(fref->get_symbol(), exprs);
 }
 
-SgExprListExp * FortranTraversal::buildCExprListExp(SgExprListExp * expr_list)
+SgExprListExp * FortranTraversal::buildCExprListExp(const SgExprListExp * const expr_list) const
 {
-   SgExprListExp * c_expr_list = buildExprListExp();
-   SgExpressionPtrList::iterator it = expr_list->get_expressions().begin();
+   SgExprListExp * const c_expr_list = buildExprListExp();
+   SgExpressionPtrList::const_iterator it = expr_list->get_expressions().begin();
 
    while (it != expr_list->get_expressions().end()) {
-      SgExpression * c_expr = buildCExpr(*it);
+      SgExpression * const c_expr = buildCExpr(*it);
       if (c_expr != NULL) {
          c_expr_list->append_expression(c_expr);
       }
@@ -361,21 +382,22 @@ SgExprListExp * FortranTraversal::buildCExprListExp(SgExprListExp * expr_list)
    return c_expr_list;
 }
 
-SgValueExp * FortranTraversal::buildCValueExp(SgValueExp * expr)
+SgValueExp * FortranTraversal::buildCValueExp(SgValueExp * const expr) const
 {
    SgValueExp * val = NULL;
    switch (expr->variantT())
    {
       case V_SgFloatVal: {
-         SgFloatVal * f_val = isSgFloatVal(expr);
-         SgFloatVal * c_val = buildFloatVal(f_val->get_value());  val = c_val;
+         SgFloatVal * const f_val = isSgFloatVal(expr);
+         SgFloatVal * const c_val = buildFloatVal(f_val->get_value());  val = c_val;
          c_val->set_valueString(f_val->get_valueString());        break;
       }
       case V_SgIntVal: {
-         SgIntVal * f_val = isSgIntVal(expr);
-         SgIntVal * c_val = buildIntVal(f_val->get_value());  val = c_val;
+         SgIntVal * const f_val = isSgIntVal(expr);
+         SgIntVal * const c_val = buildIntVal(f_val->get_value());  val = c_val;
          c_val->set_valueString(f_val->get_valueString());    break;
       }
+      default: break;
    }
 
    if (val == NULL) {
@@ -385,42 +407,35 @@ SgValueExp * FortranTraversal::buildCValueExp(SgValueExp * expr)
    return val;
 }
 
-SgExpression * FortranTraversal::buildForPntrArrRefExp(SgVarRefExp * expr)
+SgExpression * FortranTraversal::buildForPntrArrRefExp(const SgVarRefExp * const expr) const
 {
    ROSE_ASSERT( cl_block != NULL );
-   SgExpression * c_expr = NULL;
-   SgSymbol * sym = expr->get_symbol();
-   SgType * type = sym->get_type();
+   const SgSymbol * const sym = expr->get_symbol();
 
-   c_expr = buildVarRefExp(sym->get_name(), cl_block);
+   std::cout << "[" << __func__ << "]" << std::endl;
+   SgExpression * const c_refExpr = buildVarRefExp(sym->get_name(), cl_block);
 
-   //if (isSgArrayType(type) || isSgPointerType(type)) {
-   printf("[%s] made it!\n", __func__);
-   SgName name = cl_block->lookup_variable_symbol("k")->get_name();
-   c_expr = buildBinaryExpression<SgPntrArrRefExp>(c_expr, buildVarRefExp(name, cl_block));
-   //}
-   return c_expr;
+   const SgName name = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
+   SgExpression * const c_indexExpr = buildBinaryExpression<SgPntrArrRefExp>(c_refExpr, buildVarRefExp(name, cl_block));
+
+   return c_indexExpr;
 }
 
-SgExpression * FortranTraversal::buildForVarRefExp(SgVarRefExp * expr)
+SgExpression * FortranTraversal::buildForVarRefExp(const SgVarRefExp * const expr) const
 {
+   std::cout << "[" << __func__ << "]" << std::endl;
    ROSE_ASSERT( cl_block != NULL );
-   SgExpression * c_expr = NULL;
-   SgSymbol * sym = expr->get_symbol();
-   SgType * type = sym->get_type();
-   printf("buildForVarRefExp: for %s\n", sym->get_name().str());
+   const SgSymbol * const sym = expr->get_symbol();
+   SgExpression * const c_refExpr = buildVarRefExp(sym->get_name(), cl_block);
+   const SgName indexName = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
 
-   c_expr = buildVarRefExp(sym->get_name(), cl_block);
+   // create the array index expr
+   SgExpression * const c_indexExpr = buildBinaryExpression<SgPntrArrRefExp>(c_refExpr, buildVarRefExp(indexName, cl_block));
 
-   if (isSgArrayType(type) || isSgPointerType(type)) {
-      printf("    is array or pointer\n");
-      SgName name = cl_block->lookup_variable_symbol("k")->get_name();
-      c_expr = buildBinaryExpression<SgPntrArrRefExp>(c_expr, buildVarRefExp(name, cl_block));
-   }
-   return c_expr;
+   return c_indexExpr;
 }
 
-SgAggregateInitializer * FortranTraversal::buildCAggregateInitializer(SgAggregateInitializer * expr)
+SgAggregateInitializer * FortranTraversal::buildCAggregateInitializer(const SgAggregateInitializer * const expr) const
 {
    return buildAggregateInitializer(expr->get_initializers(), expr->get_type());
 }
@@ -429,14 +444,14 @@ SgAggregateInitializer * FortranTraversal::buildCAggregateInitializer(SgAggregat
 // helper functions
 //
 
-bool FortranTraversal::isFunctionArg(SgInitializedName * arg)
+bool FortranTraversal::isFunctionArg(const SgInitializedName * const arg) const
 {
    ROSE_ASSERT( src_func_decl != NULL );
-   SgInitializedNamePtrList func_args = src_func_decl->get_parameterList()->get_args();
-   SgInitializedNamePtrList::iterator it_args;
+   const SgInitializedNamePtrList func_args = src_func_decl->get_parameterList()->get_args();
+   SgInitializedNamePtrList::const_iterator it_args;
 
    for (it_args = func_args.begin(); it_args != func_args.end(); it_args++) {
-      SgInitializedName * func_arg = isSgInitializedName(*it_args);
+      const SgInitializedName * const func_arg = isSgInitializedName(*it_args);
       if (arg->get_name() == func_arg->get_name()) {
          return true;
       }
@@ -444,15 +459,15 @@ bool FortranTraversal::isFunctionArg(SgInitializedName * arg)
    return false;
 }
 
-bool FortranTraversal::isRegionSelector(SgInitializedName * var)
+bool FortranTraversal::isRegionSelector(const SgInitializedName * const var) const
 {
    ROSE_ASSERT( src_func_decl != NULL );
    bool isSelector = false;
-   SgType * var_type = var->get_type();
+   const SgType * const var_type = var->get_type();
 
    // see if var is already in selector list
    //
-   for (int i = 0; i < selectors.size(); i++) {
+   for (size_t i = 0; i < selectors.size(); i++) {
       if (var->get_name().getString() == selectors[i]->get_name().getString()) {
          return true;
       }
@@ -461,8 +476,8 @@ bool FortranTraversal::isRegionSelector(SgInitializedName * var)
    // first do the easy stuff
    //
    if (isSgArrayType(var_type) != NULL) {
-      SgArrayType * array_type = isSgArrayType(var_type);
-      SgExpressionPtrList & dim_ptrs = array_type->get_dim_info()->get_expressions();
+      const SgArrayType * const array_type = isSgArrayType(var_type);
+      const SgExpressionPtrList & dim_ptrs = array_type->get_dim_info()->get_expressions();
 
       if (array_type->get_rank() == 1 && isSgTypeInt(array_type->findBaseType()) != NULL) {
          // TODO - could be a variable reference rather than a value expression
@@ -475,7 +490,7 @@ bool FortranTraversal::isRegionSelector(SgInitializedName * var)
    // look for var in region and interior calls
    //
    if (isSelector == true) {
-      SgStatementPtrList & stmts = src_func_decl->get_definition()->get_body()->getStatementList();
+      /* SgStatementPtrList & stmts = */ src_func_decl->get_definition()->get_body()->getStatementList();
    }
 
    return isSelector;
@@ -484,6 +499,7 @@ bool FortranTraversal::isRegionSelector(SgInitializedName * var)
 /**
  * This function is not used and doesn't work as named
  */
+/*
 const char * FortranTraversal::isFunctionCall(const char * name, SgExprStatement * expr_stmt)
 {
    SgBinaryOp * bin_op = isSgBinaryOp(expr_stmt->get_expression());
@@ -495,17 +511,17 @@ const char * FortranTraversal::isFunctionCall(const char * name, SgExprStatement
    }
    return NULL;
 }
+*/
 
-const char * FortranTraversal::insertTransferHaloVarDecl(SgFunctionCallExp * fcall)
+const char * FortranTraversal::insertTransferHaloVarDecl(const SgFunctionCallExp * const fcall)
 {
    ROSE_ASSERT( cl_block != NULL );
-   SgExpressionPtrList::iterator it = fcall->get_args()->get_expressions().begin();
-   SgVarRefExp * arg = isSgVarRefExp(*it);
-   SgInitializedName * argName = arg->get_symbol()->get_declaration();
-   std::string str = arg->get_symbol()->get_name().getString() + "_tile";
+   SgExpressionPtrList::const_iterator it = fcall->get_args()->get_expressions().begin();
+   const SgVarRefExp * const arg = isSgVarRefExp(*it);
+   const std::string str = arg->get_symbol()->get_name().getString() + "_tile";
 
    // declare local tile, e.g., __local float *h_tile
-   SgVariableDeclaration *
+   SgVariableDeclaration * const
       cl_var_decl = buildVariableDeclaration(SgName(str), buildPointerType(arg->get_type()->findBaseType()));
    cl_var_decl->get_declarationModifier().get_storageModifier().setOpenclLocal();
    appendStatement(cl_var_decl, cl_block);
@@ -516,26 +532,25 @@ const char * FortranTraversal::insertTransferHaloVarDecl(SgFunctionCallExp * fca
    return str.c_str();
 }
 
-void FortranTraversal::insertTileOffsetFor(std::string name)
+void FortranTraversal::insertTileOffsetFor(const std::string name)
 {
    ROSE_ASSERT( cl_global_scope != NULL );
    ROSE_ASSERT( cl_block != NULL );
-   SgExpression * expr;
 
-   SgFunctionSymbol * tile_offset = isSgFunctionSymbol(cl_global_scope->lookup_symbol("TILE_OFFSET"));
-   SgFunctionSymbol * get_tile_size = isSgFunctionSymbol(cl_global_scope->lookup_symbol("get_tile_size"));
+   SgFunctionSymbol * const tile_offset = isSgFunctionSymbol(cl_global_scope->lookup_symbol("TILE_OFFSET"));
+   SgFunctionSymbol * const get_tile_size = isSgFunctionSymbol(cl_global_scope->lookup_symbol("get_tile_size"));
    ROSE_ASSERT(tile_offset != NULL && get_tile_size != NULL);
 
-   SgExprListExp * exprs = buildExprListExp();
+   SgExprListExp * const exprs = buildExprListExp();
    exprs->append_expression(buildVarRefExp("tiles", cl_block));
    exprs->append_expression(buildIntVal(tile_idx++));
    exprs->append_expression(buildFunctionCallExp(get_tile_size, buildExprListExp()));
 
-   SgExpression * lhs = buildVarRefExp(SgName(name), cl_block);
-   SgExpression * rhs = buildFunctionCallExp(tile_offset, exprs);
+   SgExpression * const lhs = buildVarRefExp(SgName(name), cl_block);
+   SgExpression * const rhs = buildFunctionCallExp(tile_offset, exprs);
 
-   SgBinaryOp * bin_expr = buildBinaryExpression<SgAssignOp>(lhs, rhs);
+   SgBinaryOp * const bin_expr = buildBinaryExpression<SgAssignOp>(lhs, rhs);
 
-   SgExprStatement * assign_stmt = buildExprStatement(bin_expr);
+   SgExprStatement * const assign_stmt = buildExprStatement(bin_expr);
    appendStatement(assign_stmt, cl_block);
 }
