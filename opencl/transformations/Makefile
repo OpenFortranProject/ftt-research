@@ -23,7 +23,7 @@ CXXFLAGS := -Wall -Wextra -Werror -pedantic -pedantic-errors -isystem $(ROSE_INC
 # Default make rule to use
 all: build_opencl
 
-build_opencl: build_opencl.lo $(OBJS)
+build_opencl: build_opencl.lo FortranAnalysis.hpp FortranTraversal.hpp $(OBJS)
 	$(ROSE_LIBTOOL) --mode=link g++ $(CXXFLAGS) -o $@ $< $(OBJS) $(ROSE_LIBS)
 
 build_opencl.lo: build_opencl.cpp

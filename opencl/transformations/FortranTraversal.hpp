@@ -10,55 +10,55 @@ class FortranTraversal : public AstSimpleProcessing
 
 public:
    
-   FortranTraversal(SgGlobal * scope);
+   FortranTraversal(SgGlobal * const scope);
    virtual void visit(SgNode * node);
-   virtual void atTraversalEnd();
+   virtual void atTraversalEnd() const;
 
-   void visit(SgAllocateStatement        * alloc_stmt);
-   void visit(SgProcedureHeaderStatement * func_decl);
-   void visit(SgVariableDeclaration      * var_decl);
-   void visit(SgFunctionCallExp          * func_call_exp);
-   void visit(SgExprStatement            * expr_stmt);
-   void visit(SgVarRefExp                * var_ref);
+   void visit(const SgAllocateStatement        * const alloc_stmt)         ;
+   void visit(const SgProcedureHeaderStatement * const func_decl)          ;
+   void visit(const SgVariableDeclaration      * const var_decl)      const;
+   void visit(const SgFunctionCallExp          * const func_call_exp) const;
+   void visit(const SgExprStatement            * const expr_stmt)     const;
+   void visit(const SgVarRefExp                * const var_ref)       const;
 
    // build statements
    //
 
-   SgExprStatement   * buildCExprStatement(SgExprStatement * expr);
+   SgExprStatement   * buildCExprStatement(const SgExprStatement * const expr) const;
 
    // build expressions
    //
 
-   SgExpression      * buildCExpr(SgExpression * expr);
-   SgBinaryOp        * buildCBinaryOp(SgBinaryOp * expr);
-   SgUnaryOp         * buildCUnaryOp(SgUnaryOp * expr);
-   SgFunctionCallExp * buildCFunctionCallExp(SgFunctionCallExp * expr);
-   SgValueExp        * buildCValueExp(SgValueExp * expr);
-   SgExpression      * buildForVarRefExp(SgVarRefExp * expr);
-   SgExprListExp     * buildCExprListExp(SgExprListExp * expr);
-   SgExpression      * buildForPntrArrRefExp(SgVarRefExp * expr);
+   SgExpression      * buildCExpr(SgExpression * const expr) const;
+   SgBinaryOp        * buildCBinaryOp(const SgBinaryOp * const expr) const;
+   SgUnaryOp         * buildCUnaryOp(const SgUnaryOp * const expr) const;
+   SgFunctionCallExp * buildCFunctionCallExp(const SgFunctionCallExp * const expr) const;
+   SgValueExp        * buildCValueExp(SgValueExp * const expr) const;
+   SgExpression      * buildForVarRefExp(const SgVarRefExp * const expr) const;
+   SgExprListExp     * buildCExprListExp(const SgExprListExp * const expr) const;
+   SgExpression      * buildForPntrArrRefExp(const SgVarRefExp * const expr) const;
 
-   SgAggregateInitializer * buildCAggregateInitializer(SgAggregateInitializer * expr);
+   SgAggregateInitializer * buildCAggregateInitializer(const SgAggregateInitializer * const expr) const;
 
    // helper functions
    //
 
-   bool isFunctionArg(SgInitializedName * name);
-   bool isRegionSelector(SgInitializedName * var);
-   const char * isFunctionCall(const char * name, SgExprStatement * expr_stmt);
-   const char * insertTransferHaloVarDecl(SgFunctionCallExp * fcall);
-   void insertTileOffsetFor(std::string name);
+   bool isFunctionArg(const SgInitializedName * const name) const;
+   bool isRegionSelector(const SgInitializedName * const var) const;
+   const char * isFunctionCall(const char * const name, const SgExprStatement * const expr_stmt) const;
+   const char * insertTransferHaloVarDecl(const SgFunctionCallExp * const fcall);
+   void insertTileOffsetFor(const std::string name);
 
 protected:
 
-   SgGlobal * cl_global_scope;   
+   SgGlobal * const cl_global_scope;
    SgBasicBlock * cl_block;
-   SgFunctionDeclaration * src_func_decl;
+   const SgFunctionDeclaration * src_func_decl;
 
    int tile_idx;
 
    // list of variables that are used as region selectors
-   std::vector<SgInitializedName *> selectors;
+   const std::vector<SgInitializedName *> selectors;
 
    const std::string arrayIndexVar;
 };
