@@ -61,4 +61,9 @@ protected:
    const std::vector<SgInitializedName *> selectors;
 
    const std::string arrayIndexVar;
+   // arrays stores the names of the arrays input to the opencl kernel
+   std::vector<const SgInitializedName *> arrays;
+   // for each array we will also pass a dope vector
+   std::map<const SgInitializedName *, const SgInitializedName *> dopeVectors;
+
 };

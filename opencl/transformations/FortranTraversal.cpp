@@ -64,7 +64,9 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
       // create new parameter
       //
       array_type = param_pointer_type;
+      printf("[%s]: param_type = '%s'\n", __func__, param_type->sage_class_name());
       numArrayParams += 1;
+      arrays.push_back(param);
 
       // TODO - add __global
       // BUG: This does not unparse correctly.  Probably a ROSE bug
@@ -77,23 +79,32 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
 
    // add tile for local storage
    //
-   if (numArrayParams > 0) {
+   for(std::vector<const SgInitializedName *>::const_iterator i = arrays.begin(); i != arrays.end(); i++){
+   //if( numArrayParams > 0 ) {
+      // Add dope vector parameter
+      SgType * const dopeVecType = buildOpaqueType("CFI_cdesc_t", cl_global_scope);
+      const std::string dopeVecName(std::string((*i)->get_name().str()) + std::string("_dopeV"));
+      SgInitializedName * const paramDopeVecName =
+                         buildInitializedName(dopeVecName, dopeVecType);
+      paramDopeVecName->get_storageModifier().setOpenclLocal();
+      printf("adding parameter %s\n", dopeVecName.c_str());
+      appendArg(params, paramDopeVecName);
+      dopeVectors[*i] = paramDopeVecName; 
       // Add an input array length parameter
-      printf("adding inputSize parameter\n");
-      SgInitializedName * const inputSize_param_name =
-                         buildInitializedName("inputSize", buildUnsignedIntType());
-      inputSize_param_name->get_storageModifier().setOpenclLocal();
-      appendArg(params, inputSize_param_name);
+      //SgInitializedName * const inputSize_param_name =
+      //                   buildInitializedName(dopeVecName, /* buildUnsignedIntType() */ dopeVecType);
+      //inputSize_param_name->get_storageModifier().setOpenclLocal();
+      //appendArg(params, inputSize_param_name);
 
-      SgInitializedName * const param_name = buildInitializedName("tiles", array_type);
-      param_name->get_storageModifier().setOpenclLocal();
-      appendArg(params, param_name);
+      //SgInitializedName * const param_name = buildInitializedName("tiles", array_type);
+      //param_name->get_storageModifier().setOpenclLocal();
+      //appendArg(params, param_name);
 
-      // Add tile size parameter
-      SgInitializedName * const tileSize_param_name =
-                         buildInitializedName("tileSize", buildUnsignedIntType());
-      tileSize_param_name->get_storageModifier().setOpenclLocal();
-      appendArg(params, tileSize_param_name);
+      //// Add tile size parameter
+      //SgInitializedName * const tileSize_param_name =
+      //                   buildInitializedName("tileSize", buildUnsignedIntType());
+      //tileSize_param_name->get_storageModifier().setOpenclLocal();
+      //appendArg(params, tileSize_param_name);
    }
 
    // create function declaration
@@ -193,20 +204,62 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
       // TODO: this check is wrong for non-trivial programs because it doesn't 
       // check that the array reference is one we care about
       std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
-      const bool usesArray = refs.size() > 0;
-      if (usesArray) {
+      //const bool usesArray = refs.size() > 0;
+      SgExpression * c_cond = NULL;
+      for(std::vector<SgNode*>::const_iterator i = refs.begin(); i != refs.end(); i++){
+      //if (usesArray) {
          // 2. wrap the access in a bounds check
          // Add a bounds check around the index expression
          // First build the conditional expression
-         // TODO: reference the dope vector instead of hardcoded "inputSize"
-         const SgName boundsName = lookupVariableSymbolInParentScopes("inputSize", cl_block)->get_name();
-         const SgName indexName = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
-         SgExpression * const c_cond = buildLessThanOp(buildVarRefExp(indexName, cl_block), buildVarRefExp(boundsName, cl_block));
+         SgExpression * ref_lhs = isSgPntrArrRefExp(*i)->get_lhs_operand();
+         SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
+         // TODO: refactor this "if(...) { .. } else { printf(...); ROSE_ASSERT(...) }" structure
+         if(varRef != NULL ){
+            // TODO: reference the dope vector instead of hardcoded "A_dopeV"
+            //const SgInitializedName * const declName = varRef->get_symbol()->get_declaration();
+            //const SgInitializedName * const dopeVecInitName = dopeVectors.find(declName)->second;
+            //ROSE_ASSERT( dopeVectors.find(declName) != dopeVectors.end() );
+            //const std::string boundsVarName(dopeVecInitName->get_name().str());
+            // TODO: this should go via the dopeVectors map
+            const std::string boundsVarName(std::string(varRef->get_symbol()->get_name().str()) + std::string("_dopeV"));
+            const SgVariableSymbol * const boundsVarSym = lookupVariableSymbolInParentScopes(boundsVarName, cl_block);
+            if( boundsVarSym != NULL ){
+               const SgName boundsName = boundsVarSym->get_name();
+               const SgVariableSymbol * const indexVarSym = cl_block->lookup_variable_symbol(arrayIndexVar);
+               if( indexVarSym != NULL ){
+                  const SgName indexName = indexVarSym->get_name();
+                  SgExpression * const sizeAccessExpr = buildDotExp(buildVarRefExp(boundsName, cl_block), buildVarRefExp("upper_bound", cl_block));
+                  SgExpression * const c_comparison = buildLessThanOp(buildVarRefExp(indexName, cl_block), sizeAccessExpr);
+                  if( c_cond == NULL ){
+                     // This must be the first time in the loop, just use the comparison
+                     c_cond = c_comparison;
+                  } else {
+                     // build a logical and (&&) with existing c_cond expression
+                     c_cond = buildAndOp(c_cond, c_comparison);
+                  }
 
+               } else {
+                  // TODO: handle the error more gracefully
+                  printf("[%s] unable to lookup index variable '%s' in cl_block scope\n", __func__, arrayIndexVar.c_str());
+                  ROSE_ASSERT(indexVarSym != NULL);
+               }
+            } else {
+              // TODO: handle the error more gracefully
+              printf("[%s] unable to lookup bounds variable '%s' in cl_block scope (or parent scope)\n", __func__, boundsVarName.c_str());
+              ROSE_ASSERT(boundsVarSym != NULL);
+            }
+         } else {
+            // TODO: handle the error more gracefully
+            printf("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
+            ROSE_ASSERT(varRef != NULL);
+         }
+      }
+      if( c_cond != NULL ){
          // insert the if statement
          appendStatement(buildIfStmt(c_cond, c_stmt, NULL), cl_block);
       } else {
-        appendStatement(c_stmt, cl_block);
+         // if there are no array refs, just add the stmt to the block
+         appendStatement(c_stmt, cl_block);
       }
    }
 
