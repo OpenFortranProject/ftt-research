@@ -90,21 +90,18 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
       printf("adding parameter %s\n", dopeVecName.c_str());
       appendArg(params, paramDopeVecName);
       dopeVectors[*i] = paramDopeVecName; 
-      // Add an input array length parameter
-      //SgInitializedName * const inputSize_param_name =
-      //                   buildInitializedName(dopeVecName, /* buildUnsignedIntType() */ dopeVecType);
-      //inputSize_param_name->get_storageModifier().setOpenclLocal();
-      //appendArg(params, inputSize_param_name);
+   }
+   // If using arrays, add parameters for the tiles and the number of tiles
+   if( arrays.size() > 0 ) {
+      SgInitializedName * const param_name = buildInitializedName("tiles", array_type);
+      param_name->get_storageModifier().setOpenclLocal();
+      appendArg(params, param_name);
 
-      //SgInitializedName * const param_name = buildInitializedName("tiles", array_type);
-      //param_name->get_storageModifier().setOpenclLocal();
-      //appendArg(params, param_name);
-
-      //// Add tile size parameter
-      //SgInitializedName * const tileSize_param_name =
-      //                   buildInitializedName("tileSize", buildUnsignedIntType());
-      //tileSize_param_name->get_storageModifier().setOpenclLocal();
-      //appendArg(params, tileSize_param_name);
+      // Add tile size parameter
+      SgInitializedName * const tileSize_param_name =
+                         buildInitializedName("tileSize", buildUnsignedIntType());
+      tileSize_param_name->get_storageModifier().setOpenclLocal();
+      appendArg(params, tileSize_param_name);
    }
 
    // create function declaration
