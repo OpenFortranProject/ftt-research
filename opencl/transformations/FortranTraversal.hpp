@@ -11,9 +11,11 @@ class FortranTraversal : public AstSimpleProcessing
 public:
    
    FortranTraversal(SgGlobal * const scope);
+
    virtual void visit(SgNode * node);
    virtual void atTraversalEnd() const;
 
+private:
    void visit(const SgAllocateStatement        * const alloc_stmt)         ;
    void visit(const SgProcedureHeaderStatement * const func_decl)          ;
    void visit(const SgVariableDeclaration      * const var_decl)      const;
@@ -37,6 +39,7 @@ public:
    SgExpression      * buildForVarRefExp(const SgVarRefExp * const expr) const;
    SgExprListExp     * buildCExprListExp(const SgExprListExp * const expr) const;
    SgExpression      * buildForPntrArrRefExp(const SgVarRefExp * const expr) const;
+   SgInitializedName * buildDopeVecInitializedName(const std::string dopeVecName) const;
 
    SgAggregateInitializer * buildCAggregateInitializer(const SgAggregateInitializer * const expr) const;
 
@@ -49,8 +52,6 @@ public:
    const char * insertTransferHaloVarDecl(const SgFunctionCallExp * const fcall);
    void insertTileOffsetFor(const std::string name);
 
-protected:
-
    SgGlobal * const cl_global_scope;
    SgBasicBlock * cl_block;
    const SgFunctionDeclaration * src_func_decl;
@@ -61,6 +62,7 @@ protected:
    const std::vector<SgInitializedName *> selectors;
 
    const std::string arrayIndexVar;
+   const std::string dopeVecStructName;
    // arrays stores the names of the arrays input to the opencl kernel
    std::vector<const SgInitializedName *> arrays;
    // for each array we will also pass a dope vector

@@ -4,7 +4,8 @@
 #include "FortranTraversal.hpp"
 
 FortranTraversal::FortranTraversal(SgGlobal * const scope)
-: cl_global_scope(scope), cl_block(NULL), src_func_decl(NULL), tile_idx(0), arrayIndexVar("k")
+: cl_global_scope(scope), cl_block(NULL), src_func_decl(NULL),
+  tile_idx(0), arrayIndexVar("k"), dopeVecStructName("CFI_cdesc_t")
 {}
 
 void FortranTraversal::visit(SgNode * node)
@@ -80,13 +81,9 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
    // add tile for local storage
    //
    for(std::vector<const SgInitializedName *>::const_iterator i = arrays.begin(); i != arrays.end(); i++){
-   //if( numArrayParams > 0 ) {
       // Add dope vector parameter
-      SgType * const dopeVecType = buildOpaqueType("CFI_cdesc_t", cl_global_scope);
       const std::string dopeVecName(std::string((*i)->get_name().str()) + std::string("_dopeV"));
-      SgInitializedName * const paramDopeVecName =
-                         buildInitializedName(dopeVecName, dopeVecType);
-      paramDopeVecName->get_storageModifier().setOpenclLocal();
+      SgInitializedName * const paramDopeVecName = buildDopeVecInitializedName(dopeVecName);
       printf("adding parameter %s\n", dopeVecName.c_str());
       appendArg(params, paramDopeVecName);
       dopeVectors[*i] = paramDopeVecName; 
@@ -201,10 +198,8 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
       // TODO: this check is wrong for non-trivial programs because it doesn't 
       // check that the array reference is one we care about
       std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
-      //const bool usesArray = refs.size() > 0;
       SgExpression * c_cond = NULL;
       for(std::vector<SgNode*>::const_iterator i = refs.begin(); i != refs.end(); i++){
-      //if (usesArray) {
          // 2. wrap the access in a bounds check
          // Add a bounds check around the index expression
          // First build the conditional expression
@@ -488,6 +483,15 @@ SgExpression * FortranTraversal::buildForVarRefExp(const SgVarRefExp * const exp
 SgAggregateInitializer * FortranTraversal::buildCAggregateInitializer(const SgAggregateInitializer * const expr) const
 {
    return buildAggregateInitializer(expr->get_initializers(), expr->get_type());
+}
+
+SgInitializedName * FortranTraversal::buildDopeVecInitializedName(const std::string dopeVecName) const
+{
+   SgType * const dopeVecType = buildOpaqueType(dopeVecStructName, cl_global_scope);
+   SgInitializedName * const paramDopeVecName =
+                      buildInitializedName(dopeVecName, dopeVecType);
+   paramDopeVecName->get_storageModifier().setOpenclLocal();
+   return paramDopeVecName;
 }
 
 
