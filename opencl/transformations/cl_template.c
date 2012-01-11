@@ -1,3 +1,4 @@
+#include "ISO_Fortran_binding.h"
 const int NPAD = 1;
 
 #define CL_LOCAL
