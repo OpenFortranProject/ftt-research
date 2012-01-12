@@ -225,35 +225,7 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
       // 2. wrap the access in a bounds check
       // Add a bounds check around the index expression
       // First build the conditional expression
-      SgExpression * ref_lhs = isSgPntrArrRefExp(*i)->get_lhs_operand();
-      SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
-      // TODO: refactor this "if(...) { .. } else { printf(...); ROSE_ASSERT(...) }" structure
-      if(varRef != NULL ){
-         // TODO: handle the error more gracefully
-         printf("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
-         ROSE_ASSERT(varRef != NULL);
-      }
-      const SgVariableSymbol * const declVarSym = varRef->get_symbol();
-      debug("%p ", (void*)declVarSym);
-      ROSE_ASSERT( dopeVectors.find(declVarSym) != dopeVectors.end() );
-      const SgName dopeVecInitName = dopeVectors.find(declVarSym)->second->get_name();
-      const std::string boundsVarName(dopeVecInitName.str());
-      const SgVariableSymbol * const boundsVarSym = lookupVariableSymbolInParentScopes(boundsVarName, cl_block);
-      if( boundsVarSym == NULL ){
-        // TODO: handle the error more gracefully
-        printf("[%s] unable to lookup bounds variable '%s' in cl_block scope (or parent scope)\n", __func__, boundsVarName.c_str());
-        ROSE_ASSERT(boundsVarSym != NULL);
-      }
-      const SgName boundsName = boundsVarSym->get_name();
-      const SgVariableSymbol * const indexVarSym = cl_block->lookup_variable_symbol(arrayIndexVar);
-      if( indexVarSym == NULL ){
-         // TODO: handle the error more gracefully
-         printf("[%s] unable to lookup index variable '%s' in cl_block scope\n", __func__, arrayIndexVar.c_str());
-         ROSE_ASSERT(indexVarSym != NULL);
-      }
-      const SgName indexName = indexVarSym->get_name();
-      SgExpression * const sizeAccessExpr = buildDotExp(buildVarRefExp(boundsName, cl_block), buildVarRefExp("upper_bound", cl_block));
-      SgExpression * const c_comparison = buildLessThanOp(buildVarRefExp(indexName, cl_block), sizeAccessExpr);
+      SgExpression * const c_comparison = buildCBoundsCheck(isSgPntrArrRefExp(*i));
       // If c_cond is null then this is the first time in the loop, just use the comparison because it's the only conditional
       // otherwise, build a logical and (&&) with existing c_cond expression
       c_cond = c_cond == NULL ? c_comparison : buildAndOp(c_cond, c_comparison);
@@ -505,6 +477,40 @@ SgInitializedName * FortranTraversal::buildDopeVecInitializedName(const std::str
    return paramDopeVecName;
 }
 
+// Take an array ref "a[i]" and turn it into something like:
+// if( k < a_dopeV.upper_bound ) a[k]
+SgExpression * FortranTraversal::buildCBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const
+{
+   ROSE_ASSERT( arrRefExp != NULL ); 
+   SgExpression * ref_lhs = arrRefExp->get_lhs_operand();
+   SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
+   if(varRef != NULL ){
+      // TODO: handle the error more gracefully
+      printf("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
+      ROSE_ASSERT(varRef != NULL);
+   }
+   const SgVariableSymbol * const declVarSym = varRef->get_symbol();
+   debug("%p ", (void*)declVarSym);
+   ROSE_ASSERT( dopeVectors.find(declVarSym) != dopeVectors.end() );
+   const SgName dopeVecInitName = dopeVectors.find(declVarSym)->second->get_name();
+   const std::string boundsVarName(dopeVecInitName.str());
+   const SgVariableSymbol * const boundsVarSym = lookupVariableSymbolInParentScopes(boundsVarName, cl_block);
+   if( boundsVarSym == NULL ){
+     // TODO: handle the error more gracefully
+     printf("[%s] unable to lookup bounds variable '%s' in cl_block scope (or parent scope)\n", __func__, boundsVarName.c_str());
+     ROSE_ASSERT(boundsVarSym != NULL);
+   }
+   const SgName boundsName = boundsVarSym->get_name();
+   const SgVariableSymbol * const indexVarSym = cl_block->lookup_variable_symbol(arrayIndexVar);
+   if( indexVarSym == NULL ){
+      // TODO: handle the error more gracefully
+      printf("[%s] unable to lookup index variable '%s' in cl_block scope\n", __func__, arrayIndexVar.c_str());
+      ROSE_ASSERT(indexVarSym != NULL);
+   }
+   const SgName indexName = indexVarSym->get_name();
+   SgExpression * const sizeAccessExpr = buildDotExp(buildVarRefExp(boundsName, cl_block), buildVarRefExp("upper_bound", cl_block));
+   return buildLessThanOp(buildVarRefExp(indexName, cl_block), sizeAccessExpr);
+}
 
 // helper functions
 //
