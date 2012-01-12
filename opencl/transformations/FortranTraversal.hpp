@@ -4,7 +4,6 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-
 class FortranTraversal : public AstSimpleProcessing
 {
 
@@ -51,6 +50,9 @@ private:
    const char * isFunctionCall(const char * const name, const SgExprStatement * const expr_stmt) const;
    const char * insertTransferHaloVarDecl(const SgFunctionCallExp * const fcall);
    void insertTileOffsetFor(const std::string name);
+   std::string buildDopeVecName(const std::string baseName) const;
+   std::string buildDopeVecName(const char * const baseName) const;
+   std::string getDopeVectorName(const SgVarRefExp * const varRef) const;
 
    SgGlobal * const cl_global_scope;
    SgBasicBlock * cl_block;
@@ -63,9 +65,14 @@ private:
 
    const std::string arrayIndexVar;
    const std::string dopeVecStructName;
+   const std::string dopeVecNameSuffix;
+   const std::string tilesName;
+   const std::string tileSizeName;
+   typedef const SgVariableSymbol * varref_t;
+   typedef std::map<varref_t, varref_t> dopeVectorMap_t;
    // arrays stores the names of the arrays input to the opencl kernel
-   std::vector<const SgInitializedName *> arrays;
+   std::vector<varref_t> arrays;
    // for each array we will also pass a dope vector
-   std::map<const SgInitializedName *, const SgInitializedName *> dopeVectors;
+   dopeVectorMap_t dopeVectors;
 
 };
