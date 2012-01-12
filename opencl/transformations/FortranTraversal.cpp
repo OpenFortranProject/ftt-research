@@ -216,8 +216,6 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
    debug("dopeVectors = ");
    printPointers(dopeVectors);
    // 1. check if a the sub expression touches the kernel's array parameter
-   // TODO: this check is wrong for non-trivial programs because it doesn't 
-   // check that the array reference is one we care about
    std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
    SgExpression * c_cond = NULL;
    debug("varRefs = ");
@@ -226,7 +224,8 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
       // Add a bounds check around the index expression
       // First build the conditional expression
       SgExpression * const c_comparison = buildCBoundsCheck(isSgPntrArrRefExp(*i));
-      // If c_cond is null then this is the first time in the loop, just use the comparison because it's the only conditional
+      // If c_cond is null then this is the first time in the loop,
+      // just use the comparison because it's the only conditional
       // otherwise, build a logical and (&&) with existing c_cond expression
       c_cond = c_cond == NULL ? c_comparison : buildAndOp(c_cond, c_comparison);
    }
@@ -477,8 +476,8 @@ SgInitializedName * FortranTraversal::buildDopeVecInitializedName(const std::str
    return paramDopeVecName;
 }
 
-// Take an array ref "a[i]" and turn it into something like:
-// if( k < a_dopeV.upper_bound ) a[k]
+// Take an array ref "a[i]" and create a comparison, something like:
+// ( k < a_dopeV.upper_bound )
 SgExpression * FortranTraversal::buildCBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const
 {
    ROSE_ASSERT( arrRefExp != NULL ); 
