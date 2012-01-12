@@ -210,72 +210,62 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
 {
    ROSE_ASSERT( cl_block != NULL );
    SgStatement * c_stmt = buildCExprStatement(expr_stmt);
+   if (c_stmt == NULL) return;
    debug("arrays = ");
    printPointers(arrays);
    debug("dopeVectors = ");
    printPointers(dopeVectors);
-   if (c_stmt != NULL) {
-      // 1. check if a the sub expression touches the kernel's array parameter
-      // TODO: this check is wrong for non-trivial programs because it doesn't 
-      // check that the array reference is one we care about
-      std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
-      SgExpression * c_cond = NULL;
-      debug("varRefs = ");
-      for(std::vector<SgNode*>::const_iterator i = refs.begin(); i != refs.end(); i++){
-         // 2. wrap the access in a bounds check
-         // Add a bounds check around the index expression
-         // First build the conditional expression
-         SgExpression * ref_lhs = isSgPntrArrRefExp(*i)->get_lhs_operand();
-         SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
-         // TODO: refactor this "if(...) { .. } else { printf(...); ROSE_ASSERT(...) }" structure
-         if(varRef != NULL ){
-            const SgVariableSymbol * const declVarSym = varRef->get_symbol();
-            debug("%p ", (void*)declVarSym);
-            ROSE_ASSERT( dopeVectors.find(declVarSym) != dopeVectors.end() );
-            const SgName dopeVecInitName = dopeVectors.find(declVarSym)->second->get_name();
-            const std::string boundsVarName(dopeVecInitName.str());
-            const SgVariableSymbol * const boundsVarSym = lookupVariableSymbolInParentScopes(boundsVarName, cl_block);
-            if( boundsVarSym != NULL ){
-               const SgName boundsName = boundsVarSym->get_name();
-               const SgVariableSymbol * const indexVarSym = cl_block->lookup_variable_symbol(arrayIndexVar);
-               if( indexVarSym != NULL ){
-                  const SgName indexName = indexVarSym->get_name();
-                  SgExpression * const sizeAccessExpr = buildDotExp(buildVarRefExp(boundsName, cl_block), buildVarRefExp("upper_bound", cl_block));
-                  SgExpression * const c_comparison = buildLessThanOp(buildVarRefExp(indexName, cl_block), sizeAccessExpr);
-                  if( c_cond == NULL ){
-                     // This must be the first time in the loop, just use the comparison
-                     c_cond = c_comparison;
-                  } else {
-                     // build a logical and (&&) with existing c_cond expression
-                     c_cond = buildAndOp(c_cond, c_comparison);
-                  }
-
-               } else {
-                  // TODO: handle the error more gracefully
-                  printf("[%s] unable to lookup index variable '%s' in cl_block scope\n", __func__, arrayIndexVar.c_str());
-                  ROSE_ASSERT(indexVarSym != NULL);
-               }
-            } else {
-              // TODO: handle the error more gracefully
-              printf("[%s] unable to lookup bounds variable '%s' in cl_block scope (or parent scope)\n", __func__, boundsVarName.c_str());
-              ROSE_ASSERT(boundsVarSym != NULL);
-            }
-         } else {
-            // TODO: handle the error more gracefully
-            printf("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
-            ROSE_ASSERT(varRef != NULL);
-         }
+   // 1. check if a the sub expression touches the kernel's array parameter
+   // TODO: this check is wrong for non-trivial programs because it doesn't 
+   // check that the array reference is one we care about
+   std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
+   SgExpression * c_cond = NULL;
+   debug("varRefs = ");
+   for(std::vector<SgNode*>::const_iterator i = refs.begin(); i != refs.end(); i++){
+      // 2. wrap the access in a bounds check
+      // Add a bounds check around the index expression
+      // First build the conditional expression
+      SgExpression * ref_lhs = isSgPntrArrRefExp(*i)->get_lhs_operand();
+      SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
+      // TODO: refactor this "if(...) { .. } else { printf(...); ROSE_ASSERT(...) }" structure
+      if(varRef != NULL ){
+         // TODO: handle the error more gracefully
+         printf("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
+         ROSE_ASSERT(varRef != NULL);
       }
-      debug("\n");
-      if( c_cond != NULL ){
-         // insert the if statement
-         appendStatement(buildIfStmt(c_cond, c_stmt, NULL), cl_block);
-      } else {
-         // if there are no array refs, just add the stmt to the block
-         appendStatement(c_stmt, cl_block);
+      const SgVariableSymbol * const declVarSym = varRef->get_symbol();
+      debug("%p ", (void*)declVarSym);
+      ROSE_ASSERT( dopeVectors.find(declVarSym) != dopeVectors.end() );
+      const SgName dopeVecInitName = dopeVectors.find(declVarSym)->second->get_name();
+      const std::string boundsVarName(dopeVecInitName.str());
+      const SgVariableSymbol * const boundsVarSym = lookupVariableSymbolInParentScopes(boundsVarName, cl_block);
+      if( boundsVarSym == NULL ){
+        // TODO: handle the error more gracefully
+        printf("[%s] unable to lookup bounds variable '%s' in cl_block scope (or parent scope)\n", __func__, boundsVarName.c_str());
+        ROSE_ASSERT(boundsVarSym != NULL);
       }
+      const SgName boundsName = boundsVarSym->get_name();
+      const SgVariableSymbol * const indexVarSym = cl_block->lookup_variable_symbol(arrayIndexVar);
+      if( indexVarSym == NULL ){
+         // TODO: handle the error more gracefully
+         printf("[%s] unable to lookup index variable '%s' in cl_block scope\n", __func__, arrayIndexVar.c_str());
+         ROSE_ASSERT(indexVarSym != NULL);
+      }
+      const SgName indexName = indexVarSym->get_name();
+      SgExpression * const sizeAccessExpr = buildDotExp(buildVarRefExp(boundsName, cl_block), buildVarRefExp("upper_bound", cl_block));
+      SgExpression * const c_comparison = buildLessThanOp(buildVarRefExp(indexName, cl_block), sizeAccessExpr);
+      // If c_cond is null then this is the first time in the loop, just use the comparison because it's the only conditional
+      // otherwise, build a logical and (&&) with existing c_cond expression
+      c_cond = c_cond == NULL ? c_comparison : buildAndOp(c_cond, c_comparison);
    }
-
+   debug("\n");
+   if( c_cond != NULL ){
+      // insert the if statement
+      appendStatement(buildIfStmt(c_cond, c_stmt, NULL), cl_block);
+   } else {
+      // if there are no array refs, just add the stmt to the block
+      appendStatement(c_stmt, cl_block);
+   }
 #ifdef CL_SPECIALIZE
    // if lhs is a region selector, define index variable for associated local tile
 #endif
