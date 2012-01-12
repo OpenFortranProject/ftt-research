@@ -63,10 +63,15 @@ private:
    // list of variables that are used as region selectors
    const std::vector<SgInitializedName *> selectors;
 
+   // The arrayIndexVar is what we use to look at our working set (the result of get_global_id())
    const std::string arrayIndexVar;
+   // This is the name of the type of our dope vector struct
    const std::string dopeVecStructName;
+   // Suffix for naming dope vectors based on array name
    const std::string dopeVecNameSuffix;
+   // name of tiles array in C
    const std::string tilesName;
+   // name of tile's size parameter in C
    const std::string tileSizeName;
    typedef const SgVariableSymbol * varref_t;
    typedef std::map<varref_t, varref_t> dopeVectorMap_t;
