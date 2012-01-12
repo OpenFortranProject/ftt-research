@@ -1,5 +1,6 @@
 #include "FortranAnalysis.hpp"
 #include "FortranTraversal.hpp"
+#include "Util.hpp"
 
 int main(int argc, char ** argv)
 {
@@ -22,7 +23,7 @@ int main(int argc, char ** argv)
    SgDeclarationStatementPtrList::iterator it_decls;
    for (it_decls = decls.begin(); it_decls != decls.end(); it_decls++) {
       if (isSgFunctionDeclaration(*it_decls) != NULL) {
-         printf("build_opencl: found function decl\n");
+         debug("build_opencl: found function decl\n");
          analysis.visit((SgFunctionDeclaration*) *it_decls);
          // TODO: Do we need to do an analysis traversal?
          analysis.traverse((SgFunctionDeclaration*) *it_decls, preorder);
