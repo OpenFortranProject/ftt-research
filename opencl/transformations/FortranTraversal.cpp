@@ -7,7 +7,7 @@
 
 FortranTraversal::FortranTraversal(SgGlobal * const scope)
 : cl_global_scope(scope), cl_block(NULL), src_func_decl(NULL),
-  tile_idx(0), arrayIndexVar("k"), dopeVecStructName("CFI_cdesc_t"),
+  tile_idx(0), arrayIndexVar("global_id_0"), dopeVecStructName("CFI_cdesc_t"),
   dopeVecNameSuffix("_dopeV"), tilesName("tiles"), tileSizeName("tileSize")
 {}
 
