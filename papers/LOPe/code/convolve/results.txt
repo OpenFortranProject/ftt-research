@@ -1,3 +1,16 @@
+OpenCL Device # 0 == Quadro FX 4800  status==0
+	device[0x1022600]: Type: GPU with 24 units/cores at 1204 MHz
+	float vector width == 1
+	Maximum work group size == 512
+	Maximum work item dimensions == 3
+	Maximum work item sizes == ( 512 512 64 )
+	Local mem size == 16384
+	Global mem size == 1610612736
+	Global mem cache size == 0
+	Global mem cache line size == 0
+	Extensions == cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_APPLE_gl_sharing cl_APPLE_SetMemObjectDestructor cl_APPLE_ContextLoggingFunctions cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics  size==254 status=0
+
+
    integer, parameter :: G_WIDTH = 512
    integer(c_int), parameter :: NXP = 1 + 2*NPAD
    integer(c_int), parameter :: NYP = NXP
