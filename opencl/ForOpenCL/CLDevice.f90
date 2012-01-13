@@ -72,6 +72,12 @@ contains
 
    end function init_device
 
+   function query(this)
+      type(CLDevice) :: this
+      integer(c_int) :: query
+      query = query_device_info(this%device_id, this%device_ids(1+this%device_id))
+   end function query
+
    function createKernel(this, filename, name) result(kernel)
       use CLKernel_mod
       implicit none
