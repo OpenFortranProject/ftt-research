@@ -1,4 +1,5 @@
 #include "FortranAnalysis.hpp"
+#include "Util.hpp"
 
 #undef DEBUG_PRINT
 
@@ -36,12 +37,14 @@ HaloRefSearch::HaloRefSearch()
 void HaloRefSearch::visit(SgNode * node)
 {
    switch (node->variantT()) {
-   case V_SgVarRefExp:
+   case V_SgVarRefExp: {
       SgVarRefExp * var = isSgVarRefExp(node);
       if (var->get_symbol()->getAttribute("halo_attr") != NULL) {
          found = true;
       }
       break;
+   }
+   default: break;
    }
 }
 
@@ -69,11 +72,9 @@ void FortranAnalysis::visit(SgNode * node)
    }
 }
 
-void FortranAnalysis::visit(SgAllocateStatement * alloc_stmt)
+void FortranAnalysis::visit(SgAllocateStatement *)
 {
-#ifdef DEBUG_PRINT
-   printf("FortranAnalysis::visit(SgAllocateStatement *)\n");
-#endif
+   debug("FortranAnalysis::visit(SgAllocateStatement *)\n");
 }
 
 void FortranAnalysis::visit(SgProcedureHeaderStatement * func_decl)
@@ -88,27 +89,25 @@ void FortranAnalysis::visit(SgProcedureHeaderStatement * func_decl)
       SgInitializedName * const func_arg = isSgInitializedName(*it_args);
       SgSymbol * const sym = func_def->lookup_symbol(func_arg->get_name());
       if (sym == NULL) {
-         printf("FortranAnalysis::visit: no symbol for name %s\n",
+         debug("FortranAnalysis::visit: no symbol for name %s\n",
                 func_arg->get_name().getString().c_str());
       }
       else if (isSgArrayType(sym->get_type()) != NULL) {
          sym->setAttribute("dummy_attr", new AstTextAttribute("DUMMY_ARRAY_ARG"));
-         printf("SgFunctionDeclaration: adding dummy array attribute to %s\n",
+         debug("SgFunctionDeclaration: adding dummy array attribute to %s\n",
                 sym->get_name().getString().c_str());
       }
       else {
          sym->setAttribute("dummy_attr", new AstTextAttribute("DUMMY_ARG"));
-         printf("SgFunctionDeclaration: adding dummy attribute to %s\n",
+         debug("SgFunctionDeclaration: adding dummy attribute to %s\n",
                 sym->get_name().getString().c_str());
       }
    }
 }
 
-void FortranAnalysis::visit(SgVariableDeclaration * var_decl)
+void FortranAnalysis::visit(SgVariableDeclaration *)
 {
-#ifdef DEBUG_PRINT
-   printf("FortranAnalysis::visit(SgVariableDeclaration *)\n");
-#endif
+   debug("FortranAnalysis::visit(SgVariableDeclaration *)\n");
 }
 
 void FortranAnalysis::visit(SgFunctionCallExp * fcall)
@@ -123,7 +122,7 @@ void FortranAnalysis::visit(SgFunctionCallExp * fcall)
          SgVarRefExp * var = isSgVarRefExp(*it);
          SgSymbol * sym = var->get_symbol();
          sym->setAttribute("halo_attr", new AstTextAttribute("HALO_VAR"));
-         printf("SgFunctionCallExp: adding halo attribute to %s\n",
+         debug("SgFunctionCallExp: adding halo attribute to %s\n",
                 sym->get_name().getString().c_str());
       }
    }
@@ -132,12 +131,12 @@ void FortranAnalysis::visit(SgFunctionCallExp * fcall)
 /**
  * Matches assignment statements (including pointer association)
  */
-void FortranAnalysis::visit(SgExprStatement * expr_stmt)
+void FortranAnalysis::visit(SgExprStatement *)
 {
    /*
-   std::cout << "FortranAnalysis::" << __func__
-             << "(SgExprStatement * '" << expr_stmt->unparseToString()
-             << "')" << std::endl;
+   dout << "FortranAnalysis::" << __func__
+        << "(SgExprStatement * '" << expr_stmt->unparseToString()
+        << "')" << std::endl;
    */
    /* Do we care about matching region assignment? */
    /*
@@ -146,28 +145,28 @@ void FortranAnalysis::visit(SgExprStatement * expr_stmt)
       SgVarRefExp * var = isSgVarRefExp(bin_op->get_lhs_operand());
       if (var == NULL) return;
       var->get_symbol()->setAttribute("halo_attr", new AstTextAttribute("HALO_VAR"));
-      printf("FortranAnalysis:: adding halo attr to %s\n",
+      debug("FortranAnalysis:: adding halo attr to %s\n",
              var->get_symbol()->get_name().getString().c_str());
    }
    else if (HaloRefSearch::findHaloRef(expr_stmt)) {
       expr_stmt->setAttribute("halo_ref", new AstTextAttribute("HAS_HALO_REF"));
-      printf("FortranAnalysis:: adding halo attr to statement\n");
+      debug("FortranAnalysis:: adding halo attr to statement\n");
    }
    */
 }
 
 void FortranAnalysis::visit(SgVarRefExp * const var_ref)
 {
-   std::cout << "FortranAnalysis::" << __func__
-             << "(SgVarRefExp * '" << var_ref->unparseToString()
-             << "')" << std::endl;
+   dout << "FortranAnalysis::" << __func__
+        << "(SgVarRefExp * '" << var_ref->unparseToString()
+        << "')" << std::endl;
    // TODO: For now we assume all VarRefExp are references to input arrays
    var_ref->setAttribute("arrayRef", new AstTextAttribute("arrayRef"));
 }
 
 void FortranAnalysis::atTraversalEnd()
 {
-   printf("FortranAnalysis::atTraversalEnd\n");
+   debug("FortranAnalysis::atTraversalEnd\n");
 }
 
 
@@ -241,7 +240,7 @@ bool FortranAnalysis::isRegionSelector(SgInitializedName * var)
    // look for var in region and transfer_halo calls
    //
    if (isSelector == true) {
-      SgStatementPtrList & stmts = src_func_decl->get_definition()->get_body()->getStatementList();
+      /* SgStatementPtrList & stmts = */ src_func_decl->get_definition()->get_body()->getStatementList();
    }
 
    return isSelector;
