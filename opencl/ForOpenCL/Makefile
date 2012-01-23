@@ -11,7 +11,7 @@ SDKROOTDIR   := /usr/local/NVIDIA_GPU_Computing_SDK
 dbg := 0
 
 # fortran compiler flag
-intel_fortran := 0
+intel_fortran := 1
 
 # detect OS                                                                               
 OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
@@ -99,8 +99,10 @@ endif
 CFLAGS   += $(INCLUDES) $(COMMONFLAGS)
 FCFLAGS  += $(COMMONFLAGS)
 
-OBJS = Timer.o OpenCLTypes.o OpenCLInterfaces.o CLBuffer.o CLKernel.o CLDevice.o \
-       OpenCL.o opencl_utils.o opencl_test.o
+LIB_OBJS = Timer.o OpenCLTypes.o CLBuffer.o CLKernel.o CLDevice.o \
+           opencl_utils.o opencl_test.o
+
+OBJS += OpenCLInterfaces.o $(LIB_OBJS) OpenCL.o
 
 LIBS += $(OBJS)
 
@@ -110,7 +112,11 @@ APPS = elemental_add
 	@echo 'Building for OS $(OSUPPER) file: $<'
 	$(FC) -c $(FCFLAGS) -o $@ $<
 
-all: $(OBJS) $(APPS)
+all: $(OBJS) libforopencl.a $(APPS)
+
+libforopencl.a: $(OBJS)
+	ar -r libforopencl.a $(LIB_OBJS)
+	ranlib libforopencl.a
 
 elemental_add: elemental_add.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)

@@ -1,8 +1,8 @@
 # Example Makefile
 
 # Location of ROSE directory
-ROSE_DIR = /Users/rasmussn/ROSE/install-tree
-ROSE_BUILD_DIR = /Users/rasmussn/ROSE/build-tree
+ROSE_DIR = /Users/rasmussn/ROSE/install-master
+ROSE_BUILD_DIR = /Users/rasmussn/ROSE/build-master
 
 # Location of ROSE include directory 
 ROSE_INCLUDE_DIR = $(ROSE_DIR)/include 
@@ -14,36 +14,29 @@ ROSE_LIBS = $(ROSE_LIB_DIR)/librose.la
 # Location of ROSE libtool
 ROSE_LIBTOOL = $(ROSE_BUILD_DIR)/libtool
 
-# Location of fortran-parser/transformations source directory
-SPU_SOURCE_DIR = .
-
-# Location of SPU include files
-SPU_INCLUDES = -I$(SPU_SOURCE_DIR) -I$(SPU_SOURCE_DIR)/cell
+OBJS = FortranUnparser.lo #FortranAnalysis.lo FortranTraversal.lo
 
 # Default make rule to use
-all: SPU_app_gen
+all: FortranUnparser.lo gen-pdb.lo
 
-SPUProgramAnalyzer.lo:
-	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPUProgramAnalyzer.lo $(SPU_SOURCE_DIR)/cell/SPUProgramAnalyzer.cpp
+gen-pdb: gen-pdb.lo $(OBJS)
+	$(ROSE_LIBTOOL) --mode=link g++ -o $@ $< $(OBJS) $(ROSE_LIBS)
 
-SPUProgramTranslator.lo:
-	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPUProgramTranslator.lo $(SPU_SOURCE_DIR)/cell/SPUProgramTranslator.cpp
+build_opencl.lo: build_opencl.cpp
+	$(ROSE_LIBTOOL) --mode=compile g++ -I$(ROSE_INCLUDE_DIR) -c -o $@ $<
 
-SPUAnalyzer.lo:
-	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPUAnalyzer.lo $(SPU_SOURCE_DIR)/cell/SPUAnalyzer.cpp
+FortranAnalysis.lo: FortranAnalysis.cpp FortranAnalysis.hpp
+	$(ROSE_LIBTOOL) --mode=compile g++ -I$(ROSE_INCLUDE_DIR) -c -o $@ $<
 
-SPUBuilder.lo:
-	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPUBuilder.lo $(SPU_SOURCE_DIR)/cell/SPUBuilder.cpp
+FortranTraversal.lo: FortranTraversal.cpp FortranTraversal.hpp
+	$(ROSE_LIBTOOL) --mode=compile g++ -I$(ROSE_INCLUDE_DIR) -c -o $@ $<
 
-FTTBuilder.lo:
-	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o FTTBuilder.lo $(SPU_SOURCE_DIR)/FTTBuilder.cpp 
+FortranUnparser.lo: FortranUnparser.cpp FortranUnparser.hpp
+	$(ROSE_LIBTOOL) --mode=compile g++ -I$(ROSE_INCLUDE_DIR) -c -o $@ $<
 
-SPU_app_gen.lo: SPU_app_gen.cpp
-	$(ROSE_LIBTOOL) --mode=compile g++ $(SPU_INCLUDES) -I$(ROSE_INCLUDE_DIR) -c -o SPU_app_gen.lo  $(SPU_SOURCE_DIR)/SPU_app_gen.cpp
-
-SPU_app_gen: SPU_app_gen.lo SPUProgramTranslator.lo SPUProgramAnalyzer.lo SPUAnalyzer.lo SPUBuilder.lo FTTBuilder.lo
-	$(ROSE_LIBTOOL) --mode=link g++ -o SPU_app_gen SPU_app_gen.lo SPUProgramTranslator.lo SPUProgramAnalyzer.lo SPUAnalyzer.lo SPUBuilder.lo FTTBuilder.lo $(ROSE_LIBS)
+gen-pdb.lo: gen-pdb.cpp
+	$(ROSE_LIBTOOL) --mode=compile g++ -I$(ROSE_INCLUDE_DIR) -c -o $@ $<
 
 clean:
-	rm -f SPU_app_gen SPU_app_gen.lo SPUProgramTranslator.lo SPUProgramAnalyzer.lo SPUAnalyzer.lo SPUBuilder.lo FTTBuilder.lo
+	rm -f build_opencl build_opencl.lo $(OBJS)
 
