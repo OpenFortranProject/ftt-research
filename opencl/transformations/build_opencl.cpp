@@ -1,3 +1,4 @@
+#include <PaulDecorate.h>
 #include "FortranAnalysis.hpp"
 #include "FortranTraversal.hpp"
 #include "Util.hpp"
@@ -8,6 +9,9 @@ int main(int argc, char ** argv)
 
    SgProject* project = frontend(argc, argv);
    ROSE_ASSERT(project != NULL);
+
+   // Decorate the AST, with HALO annotations from comments
+   paulDecorate(project, "lope.pconf");
 
    SgSourceFile * src_file = isSgSourceFile((*project)[0]);
    ROSE_ASSERT(src_file);

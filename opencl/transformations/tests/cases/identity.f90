@@ -1,12 +1,6 @@
-pure elemental subroutine identity(A, B)
-!   !
-!   ! compiler directives that will eventually be turned into syntax
-!   ! 
-!   !$OFP CONCURRENT :: identity
-!   !$OFP intent(COPYIN)   :: A
-!   !$OFP intent(COPYOUT)  :: B
-!   !
-!
+pure elemental subroutine identity(A,B)
+!%LOPE key1=good
+!%LOPE key2=better
    real, intent(in), value :: A
    real, intent(out)       :: B
 
