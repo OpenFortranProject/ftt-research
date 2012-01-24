@@ -22,8 +22,19 @@ void FortranTraversal::visit(SgNode * node)
      case V_SgExprStatement            :  visit( (const SgExprStatement            * const) node);  break;
      case V_SgProcedureHeaderStatement :  visit( (const SgProcedureHeaderStatement * const) node);  break;
      case V_SgVarRefExp                :  visit( (const SgVarRefExp                * const) node);  break;
+     case V_SgInitializedName          :  visit( (const SgInitializedName          * const) node);  break;
      default: break;
    }
+}
+
+void FortranTraversal::visit(const SgInitializedName * const name) const
+{
+   // Check that libpaul added an annotation
+   AstAttribute * attr = name->getAttribute("LOPE");
+   if(attr != NULL){
+     printf("attr is non-NULL: %s\n", attr->toString().c_str());
+   }
+
 }
 
 void FortranTraversal::visit(const SgAllocateStatement * const alloc_stmt)
@@ -148,6 +159,7 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
 void FortranTraversal::visit(const SgVariableDeclaration * const var_decl) const
 {
    ROSE_ASSERT( cl_block != NULL );
+
    const SgInitializedNamePtrList vars = var_decl->get_variables();
    SgInitializedNamePtrList::const_iterator it_vars;
 
@@ -485,7 +497,7 @@ SgExpression * FortranTraversal::buildCBoundsCheck(const SgPntrArrRefExp * const
    SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
    if(varRef != NULL ){
       // TODO: handle the error more gracefully
-      printf("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
+      debug("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
       ROSE_ASSERT(varRef != NULL);
    }
    const SgVariableSymbol * const declVarSym = varRef->get_symbol();
@@ -496,14 +508,14 @@ SgExpression * FortranTraversal::buildCBoundsCheck(const SgPntrArrRefExp * const
    const SgVariableSymbol * const boundsVarSym = lookupVariableSymbolInParentScopes(boundsVarName, cl_block);
    if( boundsVarSym == NULL ){
      // TODO: handle the error more gracefully
-     printf("[%s] unable to lookup bounds variable '%s' in cl_block scope (or parent scope)\n", __func__, boundsVarName.c_str());
+     debug("[%s] unable to lookup bounds variable '%s' in cl_block scope (or parent scope)\n", __func__, boundsVarName.c_str());
      ROSE_ASSERT(boundsVarSym != NULL);
    }
    const SgName boundsName = boundsVarSym->get_name();
    const SgVariableSymbol * const indexVarSym = cl_block->lookup_variable_symbol(arrayIndexVar);
    if( indexVarSym == NULL ){
       // TODO: handle the error more gracefully
-      printf("[%s] unable to lookup index variable '%s' in cl_block scope\n", __func__, arrayIndexVar.c_str());
+      debug("[%s] unable to lookup index variable '%s' in cl_block scope\n", __func__, arrayIndexVar.c_str());
       ROSE_ASSERT(indexVarSym != NULL);
    }
    const SgName indexName = indexVarSym->get_name();

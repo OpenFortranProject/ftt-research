@@ -21,6 +21,7 @@ private:
    void visit(const SgFunctionCallExp          * const func_call_exp) const;
    void visit(const SgExprStatement            * const expr_stmt)     const;
    void visit(const SgVarRefExp                * const var_ref)       const;
+   void visit(const SgInitializedName          * const name)          const;
 
    // build statements
    //
