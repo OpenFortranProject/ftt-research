@@ -8,8 +8,8 @@ contains
 !
 !   CONCURRENT subroutine convolve_lope(S, Image, F)
 !      implicit none
-!      real, intent(out) :: S(:,:)
-!      real, intent(in ) :: Image(:,:)
+!      real, intent(out) :: S(0:,0:)
+!      real, intent(in ) :: Image(0:,0:)
 !      HALO(NPAD:*:NPAD,NPAD:*:NPAD) :: Image
 !      real, intent(in ) :: F(-NPAD:NPAD,-NPAD:NPAD)
 !
