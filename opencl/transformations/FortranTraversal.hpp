@@ -41,6 +41,7 @@ private:
    SgExpression      * buildForPntrArrRefExp(const SgVarRefExp * const expr) const;
    SgInitializedName * buildDopeVecInitializedName(const std::string dopeVecName) const;
    SgExpression      * buildCBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const;
+   SgExpression      * buildCPntrArrRefExp(const SgPntrArrRefExp * const expr) const;
 
    SgAggregateInitializer * buildCAggregateInitializer(const SgAggregateInitializer * const expr) const;
 
