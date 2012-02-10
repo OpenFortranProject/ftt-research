@@ -2,3 +2,4 @@
 build_opencl
 *.dot
 *.out
+rose_*
