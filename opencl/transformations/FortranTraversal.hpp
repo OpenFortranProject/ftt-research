@@ -48,6 +48,7 @@ private:
    // helper functions
    //
 
+   bool needBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const;
    bool isFunctionArg(const SgInitializedName * const name) const;
    bool isRegionSelector(const SgInitializedName * const var) const;
    const char * isFunctionCall(const char * const name, const SgExprStatement * const expr_stmt) const;
@@ -68,6 +69,8 @@ private:
 
    // The arrayIndexVar is what we use to look at our working set (the result of get_global_id())
    const std::string arrayIndexVar;
+   // name of the array reference attribute
+   const std::string arrayRefAttr;
    // This is the name of the type of our dope vector struct
    const std::string dopeVecStructName;
    // Suffix for naming dope vectors based on array name

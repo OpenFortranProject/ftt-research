@@ -7,8 +7,9 @@
 
 FortranTraversal::FortranTraversal(SgGlobal * const scope)
 : cl_global_scope(scope), cl_block(NULL), src_func_decl(NULL),
-  tile_idx(0), arrayIndexVar("global_id_0"), dopeVecStructName("CFI_cdesc_t"),
-  dopeVecNameSuffix("_dopeV"), tilesName("tiles"), tileSizeName("tileSize")
+  tile_idx(0), arrayIndexVar("global_id_0"), arrayRefAttr("arrayRef"),
+  dopeVecStructName("CFI_cdesc_t"), dopeVecNameSuffix("_dopeV"),
+  tilesName("tiles"), tileSizeName("tileSize")
 {}
 
 void FortranTraversal::visit(SgNode * node)
@@ -235,6 +236,7 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
       // 2. wrap the access in a bounds check
       // Add a bounds check around the index expression
       // First build the conditional expression
+      if( !needBoundsCheck(isSgPntrArrRefExp(*i)) ) continue;
       SgExpression * const c_comparison = buildCBoundsCheck(isSgPntrArrRefExp(*i));
       // If c_cond is null then this is the first time in the loop,
       // just use the comparison because it's the only conditional
@@ -260,7 +262,8 @@ void FortranTraversal::visit(const SgVarRefExp * const var_ref) const
    dout << "FortranTraversal::" << __func__
         << "(SgVarRefExp * '" << var_ref->unparseToString()
         << "')" << std::endl;
-   if( var_ref->getAttribute("arrayRef")->toString() == "arrayRef" ){
+   if( var_ref->getAttribute(arrayRefAttr) != NULL ){
+      dout << __func__ << ": " << "taking arrayRef branch" << std::endl;
       dout << __func__ << ": " << buildForPntrArrRefExp(var_ref)->unparseToString() << std::endl;
    }
 }
@@ -523,6 +526,8 @@ SgExpression * FortranTraversal::buildForVarRefExp(const SgVarRefExp * const exp
    ROSE_ASSERT( cl_block != NULL );
    const SgSymbol * const sym = expr->get_symbol();
    SgExpression * const c_refExpr = buildVarRefExp(sym->get_name(), cl_block);
+   // TODO: is this right?
+   if( expr->getAttribute("arrayRef") == NULL ) return c_refExpr;
    const SgName indexName = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
 
    // create the array index expr
@@ -545,6 +550,24 @@ SgInitializedName * FortranTraversal::buildDopeVecInitializedName(const std::str
    return paramDopeVecName;
 }
 
+bool FortranTraversal::needBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const
+{
+   ROSE_ASSERT( arrRefExp != NULL ); 
+   SgExpression * ref_lhs = arrRefExp->get_lhs_operand();
+   SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
+   if(varRef != NULL ){
+      // TODO: handle the error more gracefully
+      debug("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
+      ROSE_ASSERT(varRef != NULL);
+   }
+   const SgVariableSymbol * const declVarSym = varRef->get_symbol();
+   debug("%p ", (void*)declVarSym);
+   if( dopeVectors.find(declVarSym) != dopeVectors.end() ){
+      dout << "need bounds check for: '" << declVarSym->get_name().str() << "'" << std::endl;
+   }
+   return dopeVectors.find(declVarSym) != dopeVectors.end();
+}
+
 // Take an array ref "a[i]" and create a comparison, something like:
 // ( k < a_dopeV.upper_bound )
 SgExpression * FortranTraversal::buildCBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const
@@ -552,7 +575,7 @@ SgExpression * FortranTraversal::buildCBoundsCheck(const SgPntrArrRefExp * const
    ROSE_ASSERT( arrRefExp != NULL ); 
    SgExpression * ref_lhs = arrRefExp->get_lhs_operand();
    SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
-   if(varRef != NULL ){
+   if(varRef == NULL ){
       // TODO: handle the error more gracefully
       debug("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
       ROSE_ASSERT(varRef != NULL);

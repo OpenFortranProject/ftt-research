@@ -160,8 +160,13 @@ void FortranAnalysis::visit(SgVarRefExp * const var_ref)
    dout << "FortranAnalysis::" << __func__
         << "(SgVarRefExp * '" << var_ref->unparseToString()
         << "')" << std::endl;
-   // TODO: For now we assume all VarRefExp are references to input arrays
-   var_ref->setAttribute("arrayRef", new AstTextAttribute("arrayRef"));
+   // TODO: We really need some form of external knowledge to determine
+   // what is an array and what is not an array on the OpenCL side.
+   // To get that information we need the call site?
+   //if( isSgPntrArrRefExp(var_ref) != NULL ) {
+      dout << __func__ << ": " << "marking as arrayRef" << std::endl;
+      var_ref->setAttribute("arrayRef", new AstTextAttribute("arrayRef"));
+   //}
 }
 
 void FortranAnalysis::atTraversalEnd()
