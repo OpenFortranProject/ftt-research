@@ -8,27 +8,35 @@
 FortranTraversal::FortranTraversal(SgGlobal * const scope)
 : cl_global_scope(scope), cl_block(NULL), src_func_decl(NULL),
   tile_idx(0), arrayIndexVar("global_id_0"), arrayRefAttr("arrayRef"),
-  dopeVecStructName("CFI_cdesc_t"), dopeVecNameSuffix("_dopeV"),
-  tilesName("tiles"), tileSizeName("tileSize")
+  alreadyVisitedAttr("visited"), dopeVecStructName("CFI_cdesc_t"),
+  dopeVecNameSuffix("_dopeV"), tilesName("tiles"), tileSizeName("tileSize")
 {}
 
 void FortranTraversal::visit(SgNode * node)
 {
    ROSE_ASSERT( node != NULL );
+   
+   // exit early when we find a node that we've already visited
+   if( isParentVisited(node) ) return;
+
    switch (node->variantT())
    {
-     case V_SgAllocateStatement        :  visit( (const SgAllocateStatement        * const) node);  break;
-     case V_SgVariableDeclaration      :  visit( (const SgVariableDeclaration      * const) node);  break;
-     case V_SgFunctionCallExp          :  visit( (const SgFunctionCallExp          * const) node);  break;
-     case V_SgExprStatement            :  visit( (const SgExprStatement            * const) node);  break;
-     case V_SgProcedureHeaderStatement :  visit( (const SgProcedureHeaderStatement * const) node);  break;
-     case V_SgVarRefExp                :  visit( (const SgVarRefExp                * const) node);  break;
-     case V_SgInitializedName          :  visit( (const SgInitializedName          * const) node);  break;
-     default: break;
+     case V_SgAllocateStatement        :  visitNode( (const SgAllocateStatement        * const) node);  break;
+     case V_SgVariableDeclaration      :  visitNode( (const SgVariableDeclaration      * const) node);  break;
+     case V_SgFunctionCallExp          :  visitNode( (const SgFunctionCallExp          * const) node);  break;
+     case V_SgExprStatement            :  visitNode( (const SgExprStatement            * const) node);  break;
+     case V_SgProcedureHeaderStatement :  visitNode( (const SgProcedureHeaderStatement * const) node);  break;
+     case V_SgVarRefExp                :  visitNode( (const SgVarRefExp                * const) node);  break;
+     case V_SgInitializedName          :  visitNode( (const SgInitializedName          * const) node);  break;
+     case V_SgIfStmt                   :  visitNode( (      SgIfStmt                   * const) node);  break;
+     default: {
+        dout << "Unhandled visit to '" << node->class_name() << "'" << std::endl;
+        break;
+     }
    }
 }
 
-void FortranTraversal::visit(const SgInitializedName * const name) const
+void FortranTraversal::visitNode(const SgInitializedName * const name) const
 {
    // Check that libpaul added an annotation
    AstAttribute * attr = name->getAttribute("LOPE");
@@ -38,7 +46,7 @@ void FortranTraversal::visit(const SgInitializedName * const name) const
 
 }
 
-void FortranTraversal::visit(const SgAllocateStatement * const alloc_stmt)
+void FortranTraversal::visitNode(const SgAllocateStatement * const alloc_stmt)
 {
    const SgExprListExp* const exprs = alloc_stmt->get_expr_list();
    ROSE_ASSERT(exprs != NULL);
@@ -56,7 +64,7 @@ void FortranTraversal::visit(const SgAllocateStatement * const alloc_stmt)
    insertTileOffsetFor(lhs->get_symbol()->get_name().getString());
 }
 
-void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
+void FortranTraversal::visitNode(const SgProcedureHeaderStatement * const func_decl)
 {
    ROSE_ASSERT( cl_global_scope != NULL );
    int numArrayParams = 0;
@@ -157,7 +165,7 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
    appendStatement(cl_var_decl, cl_block);
 }
 
-void FortranTraversal::visit(const SgVariableDeclaration * const var_decl) const
+void FortranTraversal::visitNode(const SgVariableDeclaration * const var_decl) const
 {
    ROSE_ASSERT( cl_block != NULL );
 
@@ -205,7 +213,7 @@ void FortranTraversal::visit(const SgVariableDeclaration * const var_decl) const
    }
 }
 
-void FortranTraversal::visit(const SgFunctionCallExp * const func_call_expr) const
+void FortranTraversal::visitNode(const SgFunctionCallExp * const func_call_expr) const
 {
    const SgExpression     * const func = func_call_expr->get_function();
    const SgFunctionRefExp * const fref = isSgFunctionRefExp(func);
@@ -219,7 +227,7 @@ void FortranTraversal::visit(const SgFunctionCallExp * const func_call_expr) con
 /**
  * Matches assignment statements (including pointer association)
  */
-void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
+void FortranTraversal::visitNode(const SgExprStatement * const expr_stmt) const
 {
    ROSE_ASSERT( cl_block != NULL );
    SgStatement * c_stmt = buildCExprStatement(expr_stmt);
@@ -256,7 +264,7 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
 #endif
 }
 
-void FortranTraversal::visit(const SgVarRefExp * const var_ref) const
+void FortranTraversal::visitNode(const SgVarRefExp * const var_ref) const
 {
    ROSE_ASSERT( var_ref != NULL );
    dout << "FortranTraversal::" << __func__
@@ -268,6 +276,27 @@ void FortranTraversal::visit(const SgVarRefExp * const var_ref) const
    }
 }
 
+void FortranTraversal::visitNode(SgIfStmt * const ifstmt) const
+{
+   ROSE_ASSERT( ifstmt != NULL );
+
+   ROSE_ASSERT( isSgExprStatement(ifstmt->get_conditional()) != NULL );
+   SgStatement * const c_cond = buildCExprStatement(isSgExprStatement(ifstmt->get_conditional()));
+   dout << "true_body is type: " << ifstmt->get_true_body()->class_name() << std::endl;
+
+   ROSE_ASSERT( isSgBasicBlock(ifstmt->get_true_body()) != NULL );
+   // TODO: this currently handles only some expression types
+   SgStatement * const c_true_body = buildCBasicBlock(isSgBasicBlock(ifstmt->get_true_body()));
+
+   ROSE_ASSERT( ifstmt->get_false_body() == NULL || isSgBasicBlock(ifstmt->get_false_body()) != NULL );
+   SgStatement * const c_false_body = ifstmt->get_false_body() == NULL ? NULL : buildCBasicBlock(isSgBasicBlock(ifstmt->get_false_body()));
+
+   appendStatement(buildIfStmt(c_cond, c_true_body, c_false_body), cl_block);
+
+   // One last thing, we do is set this if-statement as visited
+   ifstmt->setAttribute(alreadyVisitedAttr, new AstAttribute());
+}
+
 void FortranTraversal::atTraversalEnd() const
 {
    debug("FortranTraversal::atTraversalEnd\n");
@@ -276,6 +305,28 @@ void FortranTraversal::atTraversalEnd() const
 
 // build statements
 //
+SgStatement * FortranTraversal::buildCBasicBlock(const SgBasicBlock * const stmt) const
+{
+   ROSE_ASSERT( stmt != NULL );
+   const SgStatementPtrList & stmtList = stmt->get_statements();
+   
+   if ( stmtList.size() < 1 ) return NULL;
+
+   SgBasicBlock * const c_block = buildBasicBlock();
+   for(std::vector<SgStatement*>::const_iterator i = stmtList.begin(); i != stmtList.end(); i++)
+   {
+      // TODO: we need to do something about the other cases
+      if( isSgExprStatement((*i)) ) {
+        SgExprStatement * const c_expr = buildCExprStatement(isSgExprStatement((*i)));
+        c_block->append_statement(c_expr);
+      } else {
+        ROSE_ASSERT( false );
+      }
+   }
+
+   return c_block;
+}
+
 
 SgExprStatement * FortranTraversal::buildCExprStatement(const SgExprStatement * const expr_stmt) const
 {
@@ -550,12 +601,36 @@ SgInitializedName * FortranTraversal::buildDopeVecInitializedName(const std::str
    return paramDopeVecName;
 }
 
+/// Traverses up the tree from node until either a) it get to the top and returns false
+//  or b) hits a node that is visited and returns true.
+bool FortranTraversal::isParentVisited(const SgNode * const node) const
+{
+   ROSE_ASSERT( node != NULL );
+   const SgNode * const parent = node->get_parent();
+
+   // I hope this means we're at the top of the tree
+   if( parent == NULL ) return false;
+
+   const AstAttribute * const attr = parent->getAttribute(alreadyVisitedAttr);
+   // Just the presence of attr is enough to signal it has been visited
+   if( attr != NULL ) return true;
+
+   // We have more work to do...
+   return isParentVisited(parent);
+}
+
+/// Same as above but with different overloading of const
+bool FortranTraversal::isParentVisited(SgNode * const node)
+{
+   return (static_cast<const FortranTraversal&>(*this).isParentVisited(static_cast<const SgNode * const>(node)));
+}
+
 bool FortranTraversal::needBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const
 {
    ROSE_ASSERT( arrRefExp != NULL ); 
    SgExpression * ref_lhs = arrRefExp->get_lhs_operand();
    SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
-   if(varRef != NULL ){
+   if(varRef == NULL ){
       // TODO: handle the error more gracefully
       debug("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
       ROSE_ASSERT(varRef != NULL);

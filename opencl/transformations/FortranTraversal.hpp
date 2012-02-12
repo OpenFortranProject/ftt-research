@@ -15,13 +15,14 @@ public:
    virtual void atTraversalEnd() const;
 
 private:
-   void visit(const SgAllocateStatement        * const alloc_stmt)         ;
-   void visit(const SgProcedureHeaderStatement * const func_decl)          ;
-   void visit(const SgVariableDeclaration      * const var_decl)      const;
-   void visit(const SgFunctionCallExp          * const func_call_exp) const;
-   void visit(const SgExprStatement            * const expr_stmt)     const;
-   void visit(const SgVarRefExp                * const var_ref)       const;
-   void visit(const SgInitializedName          * const name)          const;
+   void visitNode(const SgAllocateStatement        * const alloc_stmt)         ;
+   void visitNode(const SgProcedureHeaderStatement * const func_decl)          ;
+   void visitNode(const SgVariableDeclaration      * const var_decl)      const;
+   void visitNode(const SgFunctionCallExp          * const func_call_exp) const;
+   void visitNode(const SgExprStatement            * const expr_stmt)     const;
+   void visitNode(const SgVarRefExp                * const var_ref)       const;
+   void visitNode(const SgInitializedName          * const name)          const;
+   void visitNode(      SgIfStmt                   * const ifstmt)        const;
 
    // build statements
    //
@@ -42,12 +43,15 @@ private:
    SgInitializedName * buildDopeVecInitializedName(const std::string dopeVecName) const;
    SgExpression      * buildCBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const;
    SgExpression      * buildCPntrArrRefExp(const SgPntrArrRefExp * const expr) const;
+   SgStatement       * buildCBasicBlock(const SgBasicBlock * const stmt) const;
 
    SgAggregateInitializer * buildCAggregateInitializer(const SgAggregateInitializer * const expr) const;
 
    // helper functions
    //
 
+   bool isParentVisited(SgNode * const node);
+   bool isParentVisited(const SgNode * const) const;
    bool needBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const;
    bool isFunctionArg(const SgInitializedName * const name) const;
    bool isRegionSelector(const SgInitializedName * const var) const;
@@ -71,6 +75,8 @@ private:
    const std::string arrayIndexVar;
    // name of the array reference attribute
    const std::string arrayRefAttr;
+   // name of 'already visited' attribute
+   const std::string alreadyVisitedAttr;
    // This is the name of the type of our dope vector struct
    const std::string dopeVecStructName;
    // Suffix for naming dope vectors based on array name
