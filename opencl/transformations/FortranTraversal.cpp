@@ -267,6 +267,8 @@ void FortranTraversal::visitNode(const SgExprStatement * const expr_stmt) const
       // 2. wrap the access in a bounds check
       // Add a bounds check around the index expression
       // First build the conditional expression
+      // TODO: what is the official story with the bounds check?
+      continue;
       if( !needBoundsCheck(isSgPntrArrRefExp(*i)) ) continue;
       SgExpression * const c_comparison = buildCBoundsCheck(isSgPntrArrRefExp(*i));
       // If c_cond is null then this is the first time in the loop,
@@ -470,9 +472,23 @@ SgBinaryOp * FortranTraversal::buildCBinaryOp(const SgBinaryOp * const expr) con
    return NULL;
 }
 
-SgFunctionCallExp * FortranTraversal::buildCFunctionCallExp(const SgFunctionCallExp * const expr) const
+SgExpression * FortranTraversal::buildCFunctionCallExp(const SgFunctionCallExp * const expr) const
 {
-   const SgFunctionCallExp * const fcall = isSgFunctionCallExp(expr);
+   // The logic here is slighty hard to follow because it's been inverted to keep the function
+   // body from being huge. #3 is actually the common case, and intrinsic == NULL causes
+   // intrinsic_fcall == NULL.
+   // 
+   // 1. attempt the intrinsics mapping
+   SgExpression * const intrinsic = intrinsicsMap.map(expr, cl_block);
+   SgFunctionCallExp * const intrinsic_fcall = isSgFunctionCallExp(intrinsic);
+   if( intrinsic_fcall == NULL && intrinsic != NULL ) {
+      // 2. when the mapping succeeds but we get an SgExpression
+      // instead of an SgFunctionCallExp (see MERGE intrinsic), just return the expression
+      // TODO: if this expression contains intrinsics inside it, will they get mapped?
+      return intrinsic;
+   }
+   // 3. when intrinsic mapping fails we revert back to the original fun call expression
+   const SgFunctionCallExp * const fcall = intrinsic_fcall == NULL ? expr : intrinsic_fcall;
    SgFunctionRefExp  * const fref  = isSgFunctionRefExp(fcall->get_function());
    SgExprListExp     * const exprs = buildCExprListExp(fcall->get_args());
 

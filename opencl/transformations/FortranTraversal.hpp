@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <iostream>
+#include "IntrinsicsMapper.hpp"
 
 using namespace SageBuilder;
 using namespace SageInterface;
@@ -35,7 +36,7 @@ private:
    SgExpression          * buildCExpr(SgExpression * const expr) const;
    SgBinaryOp            * buildCBinaryOp(const SgBinaryOp * const expr) const;
    SgUnaryOp             * buildCUnaryOp(const SgUnaryOp * const expr) const;
-   SgFunctionCallExp     * buildCFunctionCallExp(const SgFunctionCallExp * const expr) const;
+   SgExpression          * buildCFunctionCallExp(const SgFunctionCallExp * const expr) const;
    SgValueExp            * buildCValueExp(SgValueExp * const expr) const;
    SgExpression          * buildForVarRefExp(const SgVarRefExp * const expr) const;
    SgExprListExp         * buildCExprListExp(const SgExprListExp * const expr) const;
@@ -100,5 +101,7 @@ private:
    VarRefMap_t dopeVectors;
    // for each array we will also have an index value
    VarRefMap_t indexes;
+
+   const IntrinsicsMapper intrinsicsMap;
 
 };
