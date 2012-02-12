@@ -32,18 +32,19 @@ private:
    // build expressions
    //
 
-   SgExpression      * buildCExpr(SgExpression * const expr) const;
-   SgBinaryOp        * buildCBinaryOp(const SgBinaryOp * const expr) const;
-   SgUnaryOp         * buildCUnaryOp(const SgUnaryOp * const expr) const;
-   SgFunctionCallExp * buildCFunctionCallExp(const SgFunctionCallExp * const expr) const;
-   SgValueExp        * buildCValueExp(SgValueExp * const expr) const;
-   SgExpression      * buildForVarRefExp(const SgVarRefExp * const expr) const;
-   SgExprListExp     * buildCExprListExp(const SgExprListExp * const expr) const;
-   SgExpression      * buildForPntrArrRefExp(const SgVarRefExp * const expr) const;
-   SgInitializedName * buildDopeVecInitializedName(const std::string dopeVecName) const;
-   SgExpression      * buildCBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const;
-   SgExpression      * buildCPntrArrRefExp(const SgPntrArrRefExp * const expr) const;
-   SgStatement       * buildCBasicBlock(const SgBasicBlock * const stmt) const;
+   SgExpression          * buildCExpr(SgExpression * const expr) const;
+   SgBinaryOp            * buildCBinaryOp(const SgBinaryOp * const expr) const;
+   SgUnaryOp             * buildCUnaryOp(const SgUnaryOp * const expr) const;
+   SgFunctionCallExp     * buildCFunctionCallExp(const SgFunctionCallExp * const expr) const;
+   SgValueExp            * buildCValueExp(SgValueExp * const expr) const;
+   SgExpression          * buildForVarRefExp(const SgVarRefExp * const expr) const;
+   SgExprListExp         * buildCExprListExp(const SgExprListExp * const expr) const;
+   SgExpression          * buildForPntrArrRefExp(const SgVarRefExp * const expr) const;
+   SgInitializedName     * buildDopeVecInitializedName(const std::string dopeVecName) const;
+   SgVariableDeclaration * buildIndexVariableDeclaration(const std::string indexName, const std::string dopeVecName) const;
+   SgExpression          * buildCBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const;
+   SgExpression          * buildCPntrArrRefExp(const SgPntrArrRefExp * const expr) const;
+   SgStatement           * buildCBasicBlock(const SgBasicBlock * const stmt) const;
 
    SgAggregateInitializer * buildCAggregateInitializer(const SgAggregateInitializer * const expr) const;
 
@@ -60,6 +61,8 @@ private:
    void insertTileOffsetFor(const std::string name);
    std::string buildDopeVecName(const std::string baseName) const;
    std::string buildDopeVecName(const char * const baseName) const;
+   std::string buildIndexName(const std::string baseName) const;
+   std::string buildIndexName(const char * const baseName) const;
    std::string getDopeVectorName(const SgVarRefExp * const varRef) const;
 
    SgGlobal * const cl_global_scope;
@@ -81,15 +84,21 @@ private:
    const std::string dopeVecStructName;
    // Suffix for naming dope vectors based on array name
    const std::string dopeVecNameSuffix;
+   // Name of the type of index variables
+   const std::string indexTypeName;
+   // Suffix fr naming index variables based on array name
+   const std::string indexNameSuffix;
    // name of tiles array in C
    const std::string tilesName;
    // name of tile's size parameter in C
    const std::string tileSizeName;
    typedef const SgVariableSymbol * varref_t;
-   typedef std::map<varref_t, varref_t> dopeVectorMap_t;
+   typedef std::map<varref_t, varref_t> VarRefMap_t;
    // arrays stores the names of the arrays input to the opencl kernel
    std::vector<varref_t> arrays;
    // for each array we will also pass a dope vector
-   dopeVectorMap_t dopeVectors;
+   VarRefMap_t dopeVectors;
+   // for each array we will also have an index value
+   VarRefMap_t indexes;
 
 };

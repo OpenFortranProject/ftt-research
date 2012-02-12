@@ -9,7 +9,8 @@ FortranTraversal::FortranTraversal(SgGlobal * const scope)
 : cl_global_scope(scope), cl_block(NULL), src_func_decl(NULL),
   tile_idx(0), arrayIndexVar("global_id_0"), arrayRefAttr("arrayRef"),
   alreadyVisitedAttr("visited"), dopeVecStructName("CFI_cdesc_t"),
-  dopeVecNameSuffix("_dopeV"), tilesName("tiles"), tileSizeName("tileSize")
+  dopeVecNameSuffix("_dopeV"), indexTypeName("size_t"),
+  indexNameSuffix("_idx"), tilesName("tiles"), tileSizeName("tileSize")
 {}
 
 void FortranTraversal::visit(SgNode * node)
@@ -141,17 +142,6 @@ void FortranTraversal::visitNode(const SgProcedureHeaderStatement * const func_d
    //
    cl_block = cl_func->get_definition()->get_body();
 
-   // Now build the list of input arrays
-   ROSE_ASSERT( dopeVectorNames.size() == inputArrays.size() );
-   std::vector<const SgInitializedName *>::const_iterator i = inputArrays.begin();
-   std::vector<const SgInitializedName *>::const_iterator j = dopeVectorNames.begin();
-   for(; i != inputArrays.end() && j != dopeVectorNames.end(); i++, j++) {
-      const SgVariableSymbol * const arrayvarsym = lookupVariableSymbolInParentScopes((*i)->get_name(), cl_block);
-      const SgVariableSymbol * const dopevarsym  = lookupVariableSymbolInParentScopes((*j)->get_name(), cl_block);
-      arrays.push_back(arrayvarsym);
-      dopeVectors[arrayvarsym] = dopevarsym;
-   }
-
    // add variables definitinions for indexing
    //
    SgExpression          * const zero                    = buildIntVal(0);
@@ -163,6 +153,37 @@ void FortranTraversal::visitNode(const SgProcedureHeaderStatement * const func_d
    SgVariableDeclaration * const cl_var_decl             = buildVariableDeclaration(arrayIndexVar, buildIntType(), cl_var_assign);
 
    appendStatement(cl_var_decl, cl_block);
+
+   // Now build the list of input arrays
+   {
+      ROSE_ASSERT( dopeVectorNames.size() == inputArrays.size() );
+      std::vector<const SgInitializedName *>::const_iterator i = inputArrays.begin();
+      std::vector<const SgInitializedName *>::const_iterator j = dopeVectorNames.begin();
+      for(; i != inputArrays.end() && j != dopeVectorNames.end(); i++, j++) {
+         const SgVariableSymbol * const arrayvarsym = lookupVariableSymbolInParentScopes((*i)->get_name(), cl_block);
+         const SgVariableSymbol * const dopevarsym  = lookupVariableSymbolInParentScopes((*j)->get_name(), cl_block);
+         arrays.push_back(arrayvarsym);
+         dopeVectors[arrayvarsym] = dopevarsym;
+      }
+   }
+   // We are finally ready to build the names of the index variables for the arrays
+   {
+      std::vector<const SgInitializedName *>::const_iterator i = inputArrays.begin();
+      std::vector<const SgInitializedName *>::const_iterator j = dopeVectorNames.begin();
+      for(; i != inputArrays.end() && j != dopeVectorNames.end(); i++, j++){
+         const std::string indexName(buildIndexName((*i)->get_name().str()));
+         const SgName indexVarName(indexName);
+         SgVariableDeclaration * varDecl = buildIndexVariableDeclaration(indexName, (*j)->get_name().str());
+         debug("adding variable %s\n", indexName.c_str());
+         appendStatement(varDecl, cl_block);
+         const SgVariableSymbol * const arrayvarsym = lookupVariableSymbolInParentScopes((*i)->get_name(), cl_block);
+         ROSE_ASSERT( arrayvarsym != NULL );
+         const SgVariableSymbol * const indexvarsym = lookupVariableSymbolInParentScopes(indexName, cl_block);
+         ROSE_ASSERT( indexvarsym != NULL );
+         indexes[arrayvarsym] = indexvarsym;
+      }
+   }
+
 }
 
 void FortranTraversal::visitNode(const SgVariableDeclaration * const var_decl) const
@@ -236,6 +257,8 @@ void FortranTraversal::visitNode(const SgExprStatement * const expr_stmt) const
    printPointers(arrays);
    debug("dopeVectors = ");
    printPointers(dopeVectors);
+   debug("indexes = ");
+   printPointers(indexes);
    // 1. check if a the sub expression touches the kernel's array parameter
    std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
    SgExpression * c_cond = NULL;
@@ -563,8 +586,14 @@ SgExpression * FortranTraversal::buildForPntrArrRefExp(const SgVarRefExp * const
 
    dout << "[" << __func__ << "]" << std::endl;
    SgExpression * const c_refExpr = buildVarRefExp(sym->get_name(), cl_block);
-
-   const SgName name = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
+   const SgVariableSymbol * const declVarSym = lookupVariableSymbolInParentScopes(sym->get_name(), cl_block);
+   if( indexes.find(declVarSym) == indexes.end() ){
+      dout << __func__ << ": Cannot find index for variable" << std::endl;
+      printf("%s: pointer for %s is %p\n", __func__, sym->get_name().str(), (void*)declVarSym);
+      return c_refExpr;
+   }
+   ROSE_ASSERT( indexes.find(declVarSym)->second != NULL );
+   const SgName name = indexes.find(declVarSym)->second->get_name();
    SgExpression * const c_indexExpr = buildBinaryExpression<SgPntrArrRefExp>(c_refExpr, buildVarRefExp(name, cl_block));
 
    return c_indexExpr;
@@ -579,7 +608,13 @@ SgExpression * FortranTraversal::buildForVarRefExp(const SgVarRefExp * const exp
    SgExpression * const c_refExpr = buildVarRefExp(sym->get_name(), cl_block);
    // TODO: is this right?
    if( expr->getAttribute("arrayRef") == NULL ) return c_refExpr;
-   const SgName indexName = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
+   const SgVariableSymbol * const declVarSym = lookupVariableSymbolInParentScopes(sym->get_name(), cl_block);
+   if( indexes.find(declVarSym) == indexes.end() ){
+      dout << __func__ << "Cannot find index for variable" << std::endl;
+      return c_refExpr;
+   }
+   ROSE_ASSERT( indexes.find(declVarSym)->second != NULL );
+   const SgName indexName = indexes.find(declVarSym)->second->get_name();
 
    // create the array index expr
    SgExpression * const c_indexExpr = buildBinaryExpression<SgPntrArrRefExp>(c_refExpr, buildVarRefExp(indexName, cl_block));
@@ -594,11 +629,47 @@ SgAggregateInitializer * FortranTraversal::buildCAggregateInitializer(const SgAg
 
 SgInitializedName * FortranTraversal::buildDopeVecInitializedName(const std::string dopeVecName) const
 {
-   SgType * const dopeVecType = buildOpaqueType(dopeVecStructName, cl_global_scope);
+   ROSE_ASSERT( cl_global_scope != NULL );
+   SgType * const dopeVecType = lookupNamedTypeInParentScopes(dopeVecStructName, cl_global_scope);
+   ROSE_ASSERT( dopeVecType != NULL );
    SgInitializedName * const paramDopeVecName =
                       buildInitializedName(dopeVecName, dopeVecType);
    paramDopeVecName->get_storageModifier().setOpenclLocal();
    return paramDopeVecName;
+}
+
+SgVariableDeclaration * FortranTraversal::buildIndexVariableDeclaration(const std::string indexName, const std::string dopeVecName) const
+{
+   // You could consider this function to be NULL-paranoid.
+   ROSE_ASSERT( cl_block != NULL );
+   SgType * const indexType = buildIntType();
+   ROSE_ASSERT( indexType != NULL );
+   /* we need to construct the following test: foo.rank == 0 ? 0 : global_id_0 */
+   // TODO: refactor "rank" to a variable
+   SgVariableSymbol * const dopeVecVarSym = lookupVariableSymbolInParentScopes(SgName(dopeVecName), cl_block);
+   ROSE_ASSERT( dopeVecVarSym != NULL );
+   SgVarRefExp * const dopeVecVarRef = buildVarRefExp(dopeVecVarSym);
+   ROSE_ASSERT( dopeVecVarRef != NULL );
+   SgVarRefExp * const rankVarRef = buildVarRefExp("rank", cl_block);
+   ROSE_ASSERT( rankVarRef != NULL );
+   SgBinaryOp * const rankAccessExpr = buildDotExp(dopeVecVarRef, rankVarRef);
+   ROSE_ASSERT( rankAccessExpr != NULL );
+   SgType* const dopeVecType = rankAccessExpr->get_lhs_operand_i()->get_type();
+   dout << "class_name is = '" << dopeVecType->class_name() << "'" << std::endl;
+   dout << "type is = '" << dopeVecType->get_mangled().str() << "'" << std::endl;
+   dout << "type points to '" << isSgTypedefType(dopeVecType)->get_base_type()->class_name() << "'" << std::endl;
+   dout << "type points to '" << isSgTypedefType(dopeVecType)->get_base_type()->get_mangled().str() << "'" << std::endl;
+   SgExpression * const cond = buildEqualityOp(rankAccessExpr, buildIntVal(0));
+   ROSE_ASSERT( cond != NULL );
+   SgVarRefExp * const global_id_0 = buildVarRefExp(SgName(arrayIndexVar), cl_block);
+   ROSE_ASSERT( global_id_0 != NULL );
+   SgExpression * const expr = buildConditionalExp(cond, buildIntVal(0), global_id_0);
+   ROSE_ASSERT( expr != NULL );
+   SgAssignInitializer * const init = buildAssignInitializer(expr, NULL);
+   ROSE_ASSERT( init != NULL );
+   SgVariableDeclaration * const varDecl = buildVariableDeclaration(SgName(indexName), indexType, init);
+   ROSE_ASSERT( varDecl != NULL );
+   return varDecl;
 }
 
 /// Traverses up the tree from node until either a) it get to the top and returns false
@@ -804,4 +875,14 @@ std::string FortranTraversal::buildDopeVecName(const std::string baseName) const
 std::string FortranTraversal::buildDopeVecName(const char * const baseName) const
 {
   return buildDopeVecName(std::string(baseName));
+}
+
+std::string FortranTraversal::buildIndexName(const std::string baseName) const
+{
+  return std::string(baseName + indexNameSuffix);
+}
+
+std::string FortranTraversal::buildIndexName(const char * const baseName) const
+{
+  return buildIndexName(std::string(baseName));
 }

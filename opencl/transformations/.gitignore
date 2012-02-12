@@ -3,3 +3,4 @@ build_opencl
 *.dot
 *.out
 rose_*
+*.log
