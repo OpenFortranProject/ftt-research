@@ -1,0 +1,49 @@
+#include "ISO_Fortran_binding.h"
+const int NPAD = 1;
+#define CL_LOCAL
+#define CL_GLOBAL
+int get_local_id(unsigned int dim);
+int get_local_size(unsigned int dim);
+int get_global_id(unsigned int dim);
+int get_global_size(unsigned int dim);
+typedef struct _int4 {
+int s0;
+int s1;
+int s2;
+int s3;}int4;
+typedef struct _int2 {
+int s0;
+int s1;}int2;
+
+float *TILE_OFFSET(float *base,int idx,int2 size)
+{
+  return base + ((idx * size.s0) * size.s1);
+}
+
+int2 get_tile_size()
+{
+  return {((get_local_size(0) + (2 * NPAD))), ((get_local_size(1) + (2 * NPAD)))};
+}
+
+int get_k_index()
+{
+  return (get_global_id(0) + NPAD) + ((get_global_id(1) + NPAD) * (get_global_size(0) + (2 * NPAD)));
+}
+
+inline static int region_idx(int4 halo,int2 size)
+{
+  return (get_local_id(0) + halo.s0) + ((get_local_id(1) + halo.s2) * size.s0);
+}
+
+inline static float sq(float x)
+{
+  return x * x;
+}
+inline static float transfer_halo(float *A,int4 halo,float *tile);
+
+__kernel void elemental_add(float *A,float *B,float *C,float *s,CFI_cdesc_t A_dopeV,CFI_cdesc_t B_dopeV,CFI_cdesc_t C_dopeV,CFI_cdesc_t s_dopeV,float *tiles,unsigned int tileSize)
+{
+  int global_id_0 = get_global_id(0);
+  if (global_id_0 < C_dopeV.upper_bound && global_id_0 < A_dopeV.upper_bound && global_id_0 < s_dopeV.upper_bound && global_id_0 < B_dopeV.upper_bound) 
+    C[global_id_0] = A[global_id_0] + s[global_id_0] * B[global_id_0];
+}

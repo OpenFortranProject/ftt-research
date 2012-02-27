@@ -35,6 +35,7 @@ int main(int argc, char ** argv)
       }
    }
 
+   //(*project)[0]->set_outputLanguage(SgFile::e_C_output_language);
    project->unparse();
 
    return 0;

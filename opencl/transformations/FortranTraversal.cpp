@@ -7,27 +7,37 @@
 
 FortranTraversal::FortranTraversal(SgGlobal * const scope)
 : cl_global_scope(scope), cl_block(NULL), src_func_decl(NULL),
-  tile_idx(0), arrayIndexVar("global_id_0"), dopeVecStructName("CFI_cdesc_t"),
-  dopeVecNameSuffix("_dopeV"), tilesName("tiles"), tileSizeName("tileSize")
+  tile_idx(0), arrayIndexVar("global_id_0"), arrayRefAttr("arrayRef"),
+  alreadyVisitedAttr("visited"), dopeVecStructName("CFI_cdesc_t"),
+  dopeVecNameSuffix("_dopeV"), indexTypeName("size_t"),
+  indexNameSuffix("_idx"), tilesName("tiles"), tileSizeName("tileSize")
 {}
 
 void FortranTraversal::visit(SgNode * node)
 {
    ROSE_ASSERT( node != NULL );
+   
+   // exit early when we find a node that we've already visited
+   if( isParentVisited(node) ) return;
+
    switch (node->variantT())
    {
-     case V_SgAllocateStatement        :  visit( (const SgAllocateStatement        * const) node);  break;
-     case V_SgVariableDeclaration      :  visit( (const SgVariableDeclaration      * const) node);  break;
-     case V_SgFunctionCallExp          :  visit( (const SgFunctionCallExp          * const) node);  break;
-     case V_SgExprStatement            :  visit( (const SgExprStatement            * const) node);  break;
-     case V_SgProcedureHeaderStatement :  visit( (const SgProcedureHeaderStatement * const) node);  break;
-     case V_SgVarRefExp                :  visit( (const SgVarRefExp                * const) node);  break;
-     case V_SgInitializedName          :  visit( (const SgInitializedName          * const) node);  break;
-     default: break;
+     case V_SgAllocateStatement        :  visitNode( (const SgAllocateStatement        * const) node);  break;
+     case V_SgVariableDeclaration      :  visitNode( (const SgVariableDeclaration      * const) node);  break;
+     case V_SgFunctionCallExp          :  visitNode( (const SgFunctionCallExp          * const) node);  break;
+     case V_SgExprStatement            :  visitNode( (const SgExprStatement            * const) node);  break;
+     case V_SgProcedureHeaderStatement :  visitNode( (const SgProcedureHeaderStatement * const) node);  break;
+     case V_SgVarRefExp                :  visitNode( (const SgVarRefExp                * const) node);  break;
+     case V_SgInitializedName          :  visitNode( (const SgInitializedName          * const) node);  break;
+     case V_SgIfStmt                   :  visitNode( (      SgIfStmt                   * const) node);  break;
+     default: {
+        dout << "Unhandled visit to '" << node->class_name() << "'" << std::endl;
+        break;
+     }
    }
 }
 
-void FortranTraversal::visit(const SgInitializedName * const name) const
+void FortranTraversal::visitNode(const SgInitializedName * const name) const
 {
    // Check that libpaul added an annotation
    AstAttribute * attr = name->getAttribute("LOPE");
@@ -37,7 +47,7 @@ void FortranTraversal::visit(const SgInitializedName * const name) const
 
 }
 
-void FortranTraversal::visit(const SgAllocateStatement * const alloc_stmt)
+void FortranTraversal::visitNode(const SgAllocateStatement * const alloc_stmt)
 {
    const SgExprListExp* const exprs = alloc_stmt->get_expr_list();
    ROSE_ASSERT(exprs != NULL);
@@ -55,7 +65,7 @@ void FortranTraversal::visit(const SgAllocateStatement * const alloc_stmt)
    insertTileOffsetFor(lhs->get_symbol()->get_name().getString());
 }
 
-void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
+void FortranTraversal::visitNode(const SgProcedureHeaderStatement * const func_decl)
 {
    ROSE_ASSERT( cl_global_scope != NULL );
    int numArrayParams = 0;
@@ -132,17 +142,6 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
    //
    cl_block = cl_func->get_definition()->get_body();
 
-   // Now build the list of input arrays
-   ROSE_ASSERT( dopeVectorNames.size() == inputArrays.size() );
-   std::vector<const SgInitializedName *>::const_iterator i = inputArrays.begin();
-   std::vector<const SgInitializedName *>::const_iterator j = dopeVectorNames.begin();
-   for(; i != inputArrays.end() && j != dopeVectorNames.end(); i++, j++) {
-      const SgVariableSymbol * const arrayvarsym = lookupVariableSymbolInParentScopes((*i)->get_name(), cl_block);
-      const SgVariableSymbol * const dopevarsym  = lookupVariableSymbolInParentScopes((*j)->get_name(), cl_block);
-      arrays.push_back(arrayvarsym);
-      dopeVectors[arrayvarsym] = dopevarsym;
-   }
-
    // add variables definitinions for indexing
    //
    SgExpression          * const zero                    = buildIntVal(0);
@@ -154,9 +153,40 @@ void FortranTraversal::visit(const SgProcedureHeaderStatement * const func_decl)
    SgVariableDeclaration * const cl_var_decl             = buildVariableDeclaration(arrayIndexVar, buildIntType(), cl_var_assign);
 
    appendStatement(cl_var_decl, cl_block);
+
+   // Now build the list of input arrays
+   {
+      ROSE_ASSERT( dopeVectorNames.size() == inputArrays.size() );
+      std::vector<const SgInitializedName *>::const_iterator i = inputArrays.begin();
+      std::vector<const SgInitializedName *>::const_iterator j = dopeVectorNames.begin();
+      for(; i != inputArrays.end() && j != dopeVectorNames.end(); i++, j++) {
+         const SgVariableSymbol * const arrayvarsym = lookupVariableSymbolInParentScopes((*i)->get_name(), cl_block);
+         const SgVariableSymbol * const dopevarsym  = lookupVariableSymbolInParentScopes((*j)->get_name(), cl_block);
+         arrays.push_back(arrayvarsym);
+         dopeVectors[arrayvarsym] = dopevarsym;
+      }
+   }
+   // We are finally ready to build the names of the index variables for the arrays
+   {
+      std::vector<const SgInitializedName *>::const_iterator i = inputArrays.begin();
+      std::vector<const SgInitializedName *>::const_iterator j = dopeVectorNames.begin();
+      for(; i != inputArrays.end() && j != dopeVectorNames.end(); i++, j++){
+         const std::string indexName(buildIndexName((*i)->get_name().str()));
+         const SgName indexVarName(indexName);
+         SgVariableDeclaration * varDecl = buildIndexVariableDeclaration(indexName, (*j)->get_name().str());
+         debug("adding variable %s\n", indexName.c_str());
+         appendStatement(varDecl, cl_block);
+         const SgVariableSymbol * const arrayvarsym = lookupVariableSymbolInParentScopes((*i)->get_name(), cl_block);
+         ROSE_ASSERT( arrayvarsym != NULL );
+         const SgVariableSymbol * const indexvarsym = lookupVariableSymbolInParentScopes(indexName, cl_block);
+         ROSE_ASSERT( indexvarsym != NULL );
+         indexes[arrayvarsym] = indexvarsym;
+      }
+   }
+
 }
 
-void FortranTraversal::visit(const SgVariableDeclaration * const var_decl) const
+void FortranTraversal::visitNode(const SgVariableDeclaration * const var_decl) const
 {
    ROSE_ASSERT( cl_block != NULL );
 
@@ -204,7 +234,7 @@ void FortranTraversal::visit(const SgVariableDeclaration * const var_decl) const
    }
 }
 
-void FortranTraversal::visit(const SgFunctionCallExp * const func_call_expr) const
+void FortranTraversal::visitNode(const SgFunctionCallExp * const func_call_expr) const
 {
    const SgExpression     * const func = func_call_expr->get_function();
    const SgFunctionRefExp * const fref = isSgFunctionRefExp(func);
@@ -218,7 +248,7 @@ void FortranTraversal::visit(const SgFunctionCallExp * const func_call_expr) con
 /**
  * Matches assignment statements (including pointer association)
  */
-void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
+void FortranTraversal::visitNode(const SgExprStatement * const expr_stmt) const
 {
    ROSE_ASSERT( cl_block != NULL );
    SgStatement * c_stmt = buildCExprStatement(expr_stmt);
@@ -227,6 +257,8 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
    printPointers(arrays);
    debug("dopeVectors = ");
    printPointers(dopeVectors);
+   debug("indexes = ");
+   printPointers(indexes);
    // 1. check if a the sub expression touches the kernel's array parameter
    std::vector<SgNode*> refs = NodeQuery::querySubTree(c_stmt, V_SgPntrArrRefExp);
    SgExpression * c_cond = NULL;
@@ -235,6 +267,9 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
       // 2. wrap the access in a bounds check
       // Add a bounds check around the index expression
       // First build the conditional expression
+      // TODO: what is the official story with the bounds check?
+      continue;
+      if( !needBoundsCheck(isSgPntrArrRefExp(*i)) ) continue;
       SgExpression * const c_comparison = buildCBoundsCheck(isSgPntrArrRefExp(*i));
       // If c_cond is null then this is the first time in the loop,
       // just use the comparison because it's the only conditional
@@ -254,15 +289,37 @@ void FortranTraversal::visit(const SgExprStatement * const expr_stmt) const
 #endif
 }
 
-void FortranTraversal::visit(const SgVarRefExp * const var_ref) const
+void FortranTraversal::visitNode(const SgVarRefExp * const var_ref) const
 {
    ROSE_ASSERT( var_ref != NULL );
    dout << "FortranTraversal::" << __func__
         << "(SgVarRefExp * '" << var_ref->unparseToString()
         << "')" << std::endl;
-   if( var_ref->getAttribute("arrayRef")->toString() == "arrayRef" ){
+   if( var_ref->getAttribute(arrayRefAttr) != NULL ){
+      dout << __func__ << ": " << "taking arrayRef branch" << std::endl;
       dout << __func__ << ": " << buildForPntrArrRefExp(var_ref)->unparseToString() << std::endl;
    }
+}
+
+void FortranTraversal::visitNode(SgIfStmt * const ifstmt) const
+{
+   ROSE_ASSERT( ifstmt != NULL );
+
+   ROSE_ASSERT( isSgExprStatement(ifstmt->get_conditional()) != NULL );
+   SgStatement * const c_cond = buildCExprStatement(isSgExprStatement(ifstmt->get_conditional()));
+   dout << "true_body is type: " << ifstmt->get_true_body()->class_name() << std::endl;
+
+   ROSE_ASSERT( isSgBasicBlock(ifstmt->get_true_body()) != NULL );
+   // TODO: this currently handles only some expression types
+   SgStatement * const c_true_body = buildCBasicBlock(isSgBasicBlock(ifstmt->get_true_body()));
+
+   ROSE_ASSERT( ifstmt->get_false_body() == NULL || isSgBasicBlock(ifstmt->get_false_body()) != NULL );
+   SgStatement * const c_false_body = ifstmt->get_false_body() == NULL ? NULL : buildCBasicBlock(isSgBasicBlock(ifstmt->get_false_body()));
+
+   appendStatement(buildIfStmt(c_cond, c_true_body, c_false_body), cl_block);
+
+   // One last thing, we do is set this if-statement as visited
+   ifstmt->setAttribute(alreadyVisitedAttr, new AstAttribute());
 }
 
 void FortranTraversal::atTraversalEnd() const
@@ -273,31 +330,63 @@ void FortranTraversal::atTraversalEnd() const
 
 // build statements
 //
+SgStatement * FortranTraversal::buildCBasicBlock(const SgBasicBlock * const stmt) const
+{
+   ROSE_ASSERT( stmt != NULL );
+   const SgStatementPtrList & stmtList = stmt->get_statements();
+   
+   if ( stmtList.size() < 1 ) return NULL;
+
+   SgBasicBlock * const c_block = buildBasicBlock();
+   for(std::vector<SgStatement*>::const_iterator i = stmtList.begin(); i != stmtList.end(); i++)
+   {
+      // TODO: we need to do something about the other cases
+      if( isSgExprStatement((*i)) ) {
+        SgExprStatement * const c_expr = buildCExprStatement(isSgExprStatement((*i)));
+        c_block->append_statement(c_expr);
+      } else {
+        ROSE_ASSERT( false );
+      }
+   }
+
+   return c_block;
+}
+
 
 SgExprStatement * FortranTraversal::buildCExprStatement(const SgExprStatement * const expr_stmt) const
 {
-   dout << "expr_stmnt = '" << expr_stmt->unparseToString() << "'" << std::endl;
+   dout << "expr_stmt = '" << expr_stmt->unparseToString() << "'" << std::endl;
+   dout << "expr_stmt->get_expression->class_name = '" << expr_stmt->get_expression()->class_name() << "'" << std::endl;
    // TODO - other cases, likely subroutine call is a function call expr
-   const SgBinaryOp * const bin_op = isSgBinaryOp(expr_stmt->get_expression());
-   ROSE_ASSERT(bin_op != NULL);
-
-   SgExpression * const c_lhs = buildCExpr(bin_op->get_lhs_operand());
-   SgExpression * const c_rhs = buildCExpr(bin_op->get_rhs_operand());
-   ROSE_ASSERT(c_lhs != NULL);
-   ROSE_ASSERT(c_rhs != NULL);
-
-#ifdef CL_SPECIALIZE
-   // insert cast if required by lhs and rhs is SgAggregateInitializer
-   // TODO - check that lhs is int4 variable
-   ROSE_ASSERT( cl_block != NULL );
-   if (isSgAggregateInitializer(c_rhs) != NULL) {
-      c_rhs = buildCastExp(c_rhs, buildOpaqueType("int4", cl_block));
+   if( isSgVarRefExp(expr_stmt->get_expression()) != NULL ) {
+      SgExpression * const c_expr = buildCExpr(expr_stmt->get_expression());
+      return buildExprStatement(c_expr);
    }
+   if( isSgBinaryOp(expr_stmt->get_expression()) != NULL ) {
+      const SgBinaryOp * const bin_op = isSgBinaryOp(expr_stmt->get_expression());
+      ROSE_ASSERT(bin_op != NULL);
+   
+      dout << "bin_op->get_lhs_operand = '" << bin_op->get_lhs_operand()->unparseToString() << "'" << std::endl;
+      dout << "bin_op->get_rhs_operand = '" << bin_op->get_rhs_operand()->unparseToString() << "'" << std::endl;
+      SgExpression * const c_lhs = buildCExpr(bin_op->get_lhs_operand());
+      SgExpression * const c_rhs = buildCExpr(bin_op->get_rhs_operand());
+      ROSE_ASSERT(c_lhs != NULL);
+      ROSE_ASSERT(c_rhs != NULL);
+   
+#ifdef CL_SPECIALIZE
+      // insert cast if required by lhs and rhs is SgAggregateInitializer
+      // TODO - check that lhs is int4 variable
+      ROSE_ASSERT( cl_block != NULL );
+      if (isSgAggregateInitializer(c_rhs) != NULL) {
+         c_rhs = buildCastExp(c_rhs, buildOpaqueType("int4", cl_block));
+      }
 #endif
-
-   SgBinaryOp * const c_bin_op = buildBinaryExpression<SgAssignOp>(c_lhs, c_rhs);
-
-   return buildExprStatement(c_bin_op);
+   
+      SgBinaryOp * const c_bin_op = buildBinaryExpression<SgAssignOp>(c_lhs, c_rhs);
+   
+      return buildExprStatement(c_bin_op);
+   }
+   ROSE_ASSERT( false );
 }
 
 SgExpression * FortranTraversal::buildCExpr(SgExpression * const expr) const
@@ -312,11 +401,14 @@ SgExpression * FortranTraversal::buildCExpr(SgExpression * const expr) const
       case V_SgFunctionCallExp:      return buildCFunctionCallExp(isSgFunctionCallExp(expr));
       case V_SgVarRefExp:            return buildForVarRefExp(isSgVarRefExp(expr));
       case V_SgAggregateInitializer: return buildCAggregateInitializer(isSgAggregateInitializer(expr));
+      //case V_SgExprListExp:          return buildCExprListExp(isSgExprListExp(expr));
+      case V_SgPntrArrRefExp:        return buildCPntrArrRefExp(isSgPntrArrRefExp(expr));
       default: break;
    }
 
    // lots of unary, binary and value exprs so general catch all here
    //
+   // TODO: SgPntrArrRefExp should be hitting here, but seems to be failing
    if (isSgBinaryOp(expr) != NULL) {
       return buildCBinaryOp(isSgBinaryOp(expr));
    }
@@ -327,7 +419,8 @@ SgExpression * FortranTraversal::buildCExpr(SgExpression * const expr) const
       return buildCValueExp(isSgValueExp(expr));
    }
 
-   printf("buildCExpr: Unimplemented variantT==%d\n", expr->variantT());
+   printf("buildCExpr: Unimplemented class_name=%s, expr='%s'\n", expr->class_name().c_str(), expr->unparseToString().c_str());
+   ROSE_ASSERT( false );
    return NULL;
 }
 
@@ -339,10 +432,11 @@ SgUnaryOp * FortranTraversal::buildCUnaryOp(const SgUnaryOp * const expr) const
    switch (expr->variantT())
    {
       case V_SgMinusOp:    return buildUnaryExpression<SgMinusOp>(op);
+      case V_SgUnaryAddOp:      return buildUnaryExpression<SgUnaryAddOp>(op);
       default: break;
    }
       
-   printf("buildCUnaryOp: Unimplemented variantT==%d\n", expr->variantT());
+   printf("%s: Unimplemented class_name=%s, expr='%s'\n", __func__,expr->class_name().c_str(), expr->unparseToString().c_str());
    return NULL;
 }
 
@@ -374,13 +468,27 @@ SgBinaryOp * FortranTraversal::buildCBinaryOp(const SgBinaryOp * const expr) con
              expr->get_lhs_operand()->variantT(), expr->get_rhs_operand()->variantT());
    }
       
-   printf("buildCBinaryOp: Unimplemented variantT==%d\n", expr->variantT());
+   printf("buildCBinaryOp: Unimplemented variantT==%d, class_name=%s\n", expr->variantT(), expr->class_name().c_str());
    return NULL;
 }
 
-SgFunctionCallExp * FortranTraversal::buildCFunctionCallExp(const SgFunctionCallExp * const expr) const
+SgExpression * FortranTraversal::buildCFunctionCallExp(const SgFunctionCallExp * const expr) const
 {
-   const SgFunctionCallExp * const fcall = isSgFunctionCallExp(expr);
+   // The logic here is slighty hard to follow because it's been inverted to keep the function
+   // body from being huge. #3 is actually the common case, and intrinsic == NULL causes
+   // intrinsic_fcall == NULL.
+   // 
+   // 1. attempt the intrinsics mapping
+   SgExpression * const intrinsic = intrinsicsMap.map(expr, cl_block);
+   SgFunctionCallExp * const intrinsic_fcall = isSgFunctionCallExp(intrinsic);
+   if( intrinsic_fcall == NULL && intrinsic != NULL ) {
+      // 2. when the mapping succeeds but we get an SgExpression
+      // instead of an SgFunctionCallExp (see MERGE intrinsic), just return the expression
+      // TODO: if this expression contains intrinsics inside it, will they get mapped?
+      return intrinsic;
+   }
+   // 3. when intrinsic mapping fails we revert back to the original fun call expression
+   const SgFunctionCallExp * const fcall = intrinsic_fcall == NULL ? expr : intrinsic_fcall;
    SgFunctionRefExp  * const fref  = isSgFunctionRefExp(fcall->get_function());
    SgExprListExp     * const exprs = buildCExprListExp(fcall->get_args());
 
@@ -440,21 +548,68 @@ SgValueExp * FortranTraversal::buildCValueExp(SgValueExp * const expr) const
    }
 
    if (val == NULL) {
-      debug("buildCValueExp: val is NULL, variantT==%d\n", expr->variantT());
+      debug("buildCValueExp: val is NULL, variantT==%d, class_name=%s\n", expr->variantT(), expr->class_name().c_str());
    }
 
    return val;
 }
 
+/** Translate A Fortran style array indexing expression 'arr(x,y,z)'
+ * into a C style array indexing expression 'arr[x][y][z]'.
+ * The hardest part here is that the AST structure is different.
+ * In C, we have nested PntrArrRefExp but in Fortran we have one list.
+ */
+SgExpression * FortranTraversal::buildCPntrArrRefExp(const SgPntrArrRefExp * const expr) const
+{
+   ROSE_ASSERT( cl_block != NULL );
+   ROSE_ASSERT( expr != NULL );
+   SgExpression * const lhs = expr->get_lhs_operand();
+   ROSE_ASSERT(lhs != NULL);
+   SgExpression * const rhs = expr->get_rhs_operand();
+   ROSE_ASSERT(rhs != NULL);
+   
+   /* The LHS expression should contain the variable reference */
+   ROSE_ASSERT( isSgVarRefExp(lhs) != NULL);
+   SgSymbol * const sym = isSgVarRefExp(lhs)->get_symbol();
+   ROSE_ASSERT( sym != NULL );
+   SgExpression * const varRef = buildVarRefExp(sym->get_name(), cl_block);
+   ROSE_ASSERT( varRef != NULL );
+   dout << "varRef = '" << varRef->unparseToString() << "'" << std::endl;
+
+   /* The RHS expression should contain an expression list */
+   SgExpression * c_lhs = varRef;
+   ROSE_ASSERT(isSgExprListExp(rhs) != NULL);
+   const SgExprListExp * const exprListExp = isSgExprListExp(rhs);
+   const SgExpressionPtrList& expList = exprListExp->get_expressions();
+   for(std::vector<SgExpression*>::const_iterator i = expList.begin(); i != expList.end(); i++)
+   {
+      ROSE_ASSERT(*i != NULL);
+      SgExpression * const c_exp = buildCExpr(*i);
+      ROSE_ASSERT(c_exp != NULL);
+      c_lhs = buildBinaryExpression<SgPntrArrRefExp>(c_lhs, c_exp);
+      ROSE_ASSERT(c_lhs != NULL);
+      //dout << "c_lhs = '" << c_lhs->unparseToString() << "'" << std::endl; 
+   }
+
+   return c_lhs;
+}
+
 SgExpression * FortranTraversal::buildForPntrArrRefExp(const SgVarRefExp * const expr) const
 {
+   ROSE_ASSERT( expr != NULL );
    ROSE_ASSERT( cl_block != NULL );
    const SgSymbol * const sym = expr->get_symbol();
 
    dout << "[" << __func__ << "]" << std::endl;
    SgExpression * const c_refExpr = buildVarRefExp(sym->get_name(), cl_block);
-
-   const SgName name = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
+   const SgVariableSymbol * const declVarSym = lookupVariableSymbolInParentScopes(sym->get_name(), cl_block);
+   if( indexes.find(declVarSym) == indexes.end() ){
+      dout << __func__ << ": Cannot find index for variable" << std::endl;
+      printf("%s: pointer for %s is %p\n", __func__, sym->get_name().str(), (void*)declVarSym);
+      return c_refExpr;
+   }
+   ROSE_ASSERT( indexes.find(declVarSym)->second != NULL );
+   const SgName name = indexes.find(declVarSym)->second->get_name();
    SgExpression * const c_indexExpr = buildBinaryExpression<SgPntrArrRefExp>(c_refExpr, buildVarRefExp(name, cl_block));
 
    return c_indexExpr;
@@ -463,10 +618,19 @@ SgExpression * FortranTraversal::buildForPntrArrRefExp(const SgVarRefExp * const
 SgExpression * FortranTraversal::buildForVarRefExp(const SgVarRefExp * const expr) const
 {
    dout << "[" << __func__ << "]" << std::endl;
+   ROSE_ASSERT( expr != NULL );
    ROSE_ASSERT( cl_block != NULL );
    const SgSymbol * const sym = expr->get_symbol();
    SgExpression * const c_refExpr = buildVarRefExp(sym->get_name(), cl_block);
-   const SgName indexName = cl_block->lookup_variable_symbol(arrayIndexVar)->get_name();
+   // TODO: is this right?
+   if( expr->getAttribute("arrayRef") == NULL ) return c_refExpr;
+   const SgVariableSymbol * const declVarSym = lookupVariableSymbolInParentScopes(sym->get_name(), cl_block);
+   if( indexes.find(declVarSym) == indexes.end() ){
+      dout << __func__ << "Cannot find index for variable" << std::endl;
+      return c_refExpr;
+   }
+   ROSE_ASSERT( indexes.find(declVarSym)->second != NULL );
+   const SgName indexName = indexes.find(declVarSym)->second->get_name();
 
    // create the array index expr
    SgExpression * const c_indexExpr = buildBinaryExpression<SgPntrArrRefExp>(c_refExpr, buildVarRefExp(indexName, cl_block));
@@ -481,11 +645,89 @@ SgAggregateInitializer * FortranTraversal::buildCAggregateInitializer(const SgAg
 
 SgInitializedName * FortranTraversal::buildDopeVecInitializedName(const std::string dopeVecName) const
 {
-   SgType * const dopeVecType = buildOpaqueType(dopeVecStructName, cl_global_scope);
+   ROSE_ASSERT( cl_global_scope != NULL );
+   SgType * const dopeVecType = lookupNamedTypeInParentScopes(dopeVecStructName, cl_global_scope);
+   ROSE_ASSERT( dopeVecType != NULL );
    SgInitializedName * const paramDopeVecName =
                       buildInitializedName(dopeVecName, dopeVecType);
    paramDopeVecName->get_storageModifier().setOpenclLocal();
    return paramDopeVecName;
+}
+
+SgVariableDeclaration * FortranTraversal::buildIndexVariableDeclaration(const std::string indexName, const std::string dopeVecName) const
+{
+   // You could consider this function to be NULL-paranoid.
+   ROSE_ASSERT( cl_block != NULL );
+   SgType * const indexType = buildIntType();
+   ROSE_ASSERT( indexType != NULL );
+   /* we need to construct the following test: foo.rank == 0 ? 0 : global_id_0 */
+   // TODO: refactor "rank" to a variable
+   SgVariableSymbol * const dopeVecVarSym = lookupVariableSymbolInParentScopes(SgName(dopeVecName), cl_block);
+   ROSE_ASSERT( dopeVecVarSym != NULL );
+   SgVarRefExp * const dopeVecVarRef = buildVarRefExp(dopeVecVarSym);
+   ROSE_ASSERT( dopeVecVarRef != NULL );
+   SgVarRefExp * const rankVarRef = buildVarRefExp("rank", cl_block);
+   ROSE_ASSERT( rankVarRef != NULL );
+   SgBinaryOp * const rankAccessExpr = buildDotExp(dopeVecVarRef, rankVarRef);
+   ROSE_ASSERT( rankAccessExpr != NULL );
+   SgType* const dopeVecType = rankAccessExpr->get_lhs_operand_i()->get_type();
+   dout << "class_name is = '" << dopeVecType->class_name() << "'" << std::endl;
+   dout << "type is = '" << dopeVecType->get_mangled().str() << "'" << std::endl;
+   dout << "type points to '" << isSgTypedefType(dopeVecType)->get_base_type()->class_name() << "'" << std::endl;
+   dout << "type points to '" << isSgTypedefType(dopeVecType)->get_base_type()->get_mangled().str() << "'" << std::endl;
+   SgExpression * const cond = buildEqualityOp(rankAccessExpr, buildIntVal(0));
+   ROSE_ASSERT( cond != NULL );
+   SgVarRefExp * const global_id_0 = buildVarRefExp(SgName(arrayIndexVar), cl_block);
+   ROSE_ASSERT( global_id_0 != NULL );
+   SgExpression * const expr = buildConditionalExp(cond, buildIntVal(0), global_id_0);
+   ROSE_ASSERT( expr != NULL );
+   SgAssignInitializer * const init = buildAssignInitializer(expr, NULL);
+   ROSE_ASSERT( init != NULL );
+   SgVariableDeclaration * const varDecl = buildVariableDeclaration(SgName(indexName), indexType, init);
+   ROSE_ASSERT( varDecl != NULL );
+   return varDecl;
+}
+
+/// Traverses up the tree from node until either a) it get to the top and returns false
+//  or b) hits a node that is visited and returns true.
+bool FortranTraversal::isParentVisited(const SgNode * const node) const
+{
+   ROSE_ASSERT( node != NULL );
+   const SgNode * const parent = node->get_parent();
+
+   // I hope this means we're at the top of the tree
+   if( parent == NULL ) return false;
+
+   const AstAttribute * const attr = parent->getAttribute(alreadyVisitedAttr);
+   // Just the presence of attr is enough to signal it has been visited
+   if( attr != NULL ) return true;
+
+   // We have more work to do...
+   return isParentVisited(parent);
+}
+
+/// Same as above but with different overloading of const
+bool FortranTraversal::isParentVisited(SgNode * const node)
+{
+   return (static_cast<const FortranTraversal&>(*this).isParentVisited(static_cast<const SgNode * const>(node)));
+}
+
+bool FortranTraversal::needBoundsCheck(const SgPntrArrRefExp * const arrRefExp) const
+{
+   ROSE_ASSERT( arrRefExp != NULL ); 
+   SgExpression * ref_lhs = arrRefExp->get_lhs_operand();
+   SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
+   if(varRef == NULL ){
+      // TODO: handle the error more gracefully
+      debug("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
+      ROSE_ASSERT(varRef != NULL);
+   }
+   const SgVariableSymbol * const declVarSym = varRef->get_symbol();
+   debug("%p ", (void*)declVarSym);
+   if( dopeVectors.find(declVarSym) != dopeVectors.end() ){
+      dout << "need bounds check for: '" << declVarSym->get_name().str() << "'" << std::endl;
+   }
+   return dopeVectors.find(declVarSym) != dopeVectors.end();
 }
 
 // Take an array ref "a[i]" and create a comparison, something like:
@@ -495,14 +737,18 @@ SgExpression * FortranTraversal::buildCBoundsCheck(const SgPntrArrRefExp * const
    ROSE_ASSERT( arrRefExp != NULL ); 
    SgExpression * ref_lhs = arrRefExp->get_lhs_operand();
    SgVarRefExp * varRef = isSgVarRefExp(ref_lhs);
-   if(varRef != NULL ){
+   if(varRef == NULL ){
       // TODO: handle the error more gracefully
       debug("[%s] unable to get var ref from lhs of SgPntrArrRefExp\n", __func__);
       ROSE_ASSERT(varRef != NULL);
    }
    const SgVariableSymbol * const declVarSym = varRef->get_symbol();
    debug("%p ", (void*)declVarSym);
-   ROSE_ASSERT( dopeVectors.find(declVarSym) != dopeVectors.end() );
+   // If there isn't a dope vector, just return a "true" conditional
+   if ( dopeVectors.find(declVarSym) == dopeVectors.end() )
+   {
+     return buildBoolValExp(1);
+   }
    const SgName dopeVecInitName = dopeVectors.find(declVarSym)->second->get_name();
    const std::string boundsVarName(dopeVecInitName.str());
    const SgVariableSymbol * const boundsVarSym = lookupVariableSymbolInParentScopes(boundsVarName, cl_block);
@@ -645,4 +891,14 @@ std::string FortranTraversal::buildDopeVecName(const std::string baseName) const
 std::string FortranTraversal::buildDopeVecName(const char * const baseName) const
 {
   return buildDopeVecName(std::string(baseName));
+}
+
+std::string FortranTraversal::buildIndexName(const std::string baseName) const
+{
+  return std::string(baseName + indexNameSuffix);
+}
+
+std::string FortranTraversal::buildIndexName(const char * const baseName) const
+{
+  return buildIndexName(std::string(baseName));
 }
