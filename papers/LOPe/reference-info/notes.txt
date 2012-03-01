@@ -1,3 +1,5 @@
+http://www.hpcwire.com/hpcwire/2012-02-23/retrofitting_programming_languages_for_a_parallel_world.html
+
 http://en.wikipedia.org/wiki/Stencil_codes
 
 Stencil codes are a class of iterative kernels[1] which update array elements according to some fixed pattern, called stencil[2]. They are most commonly found in the codes of computer simulations, e.g. for computational fluid dynamics in the context of scientific and engineering applications. Other notable examples include solving partial differential equations[1], the Jacobi kernel, the Gauss–Seidel method[2], image processing[1] and cellular automata.[3] The regular structure of the arrays sets stencil codes apart from other modeling methods such as the Finite element method. Most finite difference codes which operate on regular grids can be formulated as stencil codes.
