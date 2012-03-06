@@ -1,0 +1,3 @@
+Warning: environment variable COMPASS_PARAMETERS is not set, trying to use compass_parameters of the current path
+ Running Prerequisite SgProject
+ImplicitCast: /home/dagit/research/checkers/implicitCast/tests/cases/real2integer.f90:7.7: Implicit cast in Fortran code found:  expr 'from' from float to int
