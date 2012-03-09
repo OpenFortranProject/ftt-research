@@ -6,7 +6,10 @@
 // Date: 18-September-2009
 
 #include "rose.h"
+#include "sageInterface.h"
 #include "compass.h"
+#include "ConfigParser.hpp"
+#include "TypeDescription.hpp"
 
 extern const Compass::Checker* const implicitCastChecker;
 
@@ -24,6 +27,8 @@ namespace CompassAnalyses {
     extern const std::string shortDescription= "Implicit cast in Fortran code found: ";
     extern const std::string longDescription= "Finding statement with implicit cast in a Fortran code :";
 
+    const char confFile[] = "implicitCast.conf";
+
 
 // Specification of Checker Output Implementation
     class CheckerOutput: public Compass::OutputViolationBase {
@@ -39,7 +44,10 @@ namespace CompassAnalyses {
         // Checker specific parameters should be allocated here.
 
       public:
-        Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+        typedef std::map<std::pair<TypeDescription, TypeDescription>, ConfigParser::warn_e> rules_t;
+
+        Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output,
+                  const ConfigParser::rules_t &rules);
 
         // Change the implementation of this function if you are using inherited attributes.
         void *initialInheritedAttribute() const {
@@ -57,6 +65,43 @@ namespace CompassAnalyses {
         // void *evaluateInheritedAttribute(SgNode *, void *);
         // for AstTopDownProcessing.
         void visit(SgNode* n);
+      private:
+        rules_t rules;
+
+        SgType * buildType(const std::string &type) const {
+          // TODO: there is some risk that these types do not match
+          // the default kinds of the underlying fortran compiler
+          if( type == "complex" ){
+            return SageBuilder::buildComplexType(SageBuilder::buildFloatType());
+          } else if( type == "real" ){
+            return SageBuilder::buildFloatType();
+          } else if( type == "integer" ){
+            return SageBuilder::buildIntType();
+          } else if( type == "logical" ){
+            return SageBuilder::buildBoolType();
+          } else if( type == "character" ){
+            return SageBuilder::buildCharType();
+          }
+          return NULL;
+        }
+
+        rules_t buildRules(const ConfigParser::rules_t& inputRules) const
+        {
+          rules_t ret;
+          for(ConfigParser::rules_t::const_iterator i = inputRules.begin(); i != inputRules.end(); i++)
+          {
+             SgType * const fromType = buildType(i->first.first);
+             SgType * const toType   = buildType(i->first.second);
+             
+             const TypeDescription fromTD = buildTypeDescription(fromType);
+             const TypeDescription toTD   = buildTypeDescription(toType);
+
+             const std::pair<TypeDescription, TypeDescription> cast(std::make_pair(fromTD,toTD));
+
+             ret.insert(std::make_pair(cast, i->second));
+          }
+          return ret;
+        }
     };
   }
 }
@@ -67,11 +112,10 @@ CheckerOutput::CheckerOutput ( SgNode * const node, const std::string & reason )
 {}
 
 CompassAnalyses::ImplicitCast::Traversal::
-Traversal(Compass::Parameters, Compass::OutputObject* output)
-  : output(output) {
+Traversal(Compass::Parameters, Compass::OutputObject* output, const ConfigParser::rules_t &rules)
+  : output(output), rules(buildRules(rules)) {
   // Initalize checker specific parameters here, for example:
   // YourParameter = Compass::parseInteger(inputParameters["ImplicitCast.YourParameter"]);
-
 
 }
 
@@ -88,45 +132,109 @@ visit(SgNode* node) {
   // check operand in a binary operator
   if ( isSgAssignOp(b_node) || isSgAddOp(b_node) || isSgSubtractOp(b_node)
        || isSgDivideOp(b_node) || isSgMultiplyOp(b_node) ) {
-    SgType const * const type = b_node->get_type();
+    SgType * const type = b_node->get_type();
     const std::string type_operator_string = type->unparseToString();
 
     SgExpression * const l_operand = b_node->get_lhs_operand();
     SgExpression * const r_operand = b_node->get_rhs_operand();
 
-    SgType const * const type_l_operand = l_operand->get_type();
-    SgType const * const type_r_operand = r_operand->get_type();
+    SgType * const type_l_operand = l_operand->get_type();
+    SgType * const type_r_operand = r_operand->get_type();
 
-    if (type_r_operand != type_l_operand) {
-      SgFunctionType const * const ftype_l = isSgFunctionType(type_l_operand);
-      SgFunctionType const * const ftype_r = isSgFunctionType(type_r_operand);
-      // if the child node is SgFunctionType
-      if (ftype_l != NULL ) {
-        if (ftype_l->get_return_type() == type_r_operand) {
-          return;
+    std::string type_l_name = type_l_operand->get_mangled();
+    std::string type_r_name = type_r_operand->get_mangled();
+    std::transform(type_l_name.begin(), type_l_name.end(), type_l_name.begin(), lower);
+    std::transform(type_r_name.begin(), type_r_name.end(), type_r_name.begin(), lower);
+
+    TypeDescription td_l(buildTypeDescription(type_l_operand));
+    TypeDescription td_r(buildTypeDescription(type_r_operand));
+    std::pair<TypeDescription, TypeDescription> cast(std::make_pair(td_r, td_l));
+
+    rules_t::const_iterator i = rules.find(cast);
+
+    if( i != rules.end() ) {
+      std::cout << "Found cast in rule set" << std::endl;
+      ConfigParser::warn_e action = i->second;
+      std::cout << td_r << " -> " << td_l << " : " << warn_e_ToString(action) << std::endl;
+      switch(action) {
+        case ConfigParser::eOK: /* Do nothing */ break;
+        case ConfigParser::eWARN:
+        case ConfigParser::eERROR: {
+          std::stringstream reason;
+          reason << " expr '" << r_operand->unparseToString() << "' from "
+                 << td_r << " to " << td_l;
+          output->addOutput(new CheckerOutput(l_operand,reason.str()));
+/*
+          SgFunctionType const * const ftype_l = isSgFunctionType(type_l_operand);
+          SgFunctionType const * const ftype_r = isSgFunctionType(type_r_operand);
+          // if the child node is SgFunctionType
+          if (ftype_l != NULL ) {
+            if (ftype_l->get_return_type() == type_r_operand) {
+              return;
+            }
+          }
+    
+          if (ftype_r != NULL ) {
+            if (ftype_r->get_return_type() == type_l_operand) {
+              return;
+            }
+          }
+    
+          // the child node is SgFunctionType and its type different from operator type
+          if (type_r_operand != type) {
+            const std::string reason = " expr '" + r_operand->unparseToString()+"' from "
+                   + type_r_operand->unparseToString() + " to " + type_operator_string ;
+            output->addOutput(new CheckerOutput(r_operand,reason));
+    
+          }
+          if (type_l_operand != type) {
+            const std::string reason = " expr '" + l_operand->unparseToString()+"' from "
+                   + type_l_operand->unparseToString() + " to " + type_operator_string ;
+            output->addOutput(new CheckerOutput(l_operand,reason));
+          }
+*/               
         }
+        default: break;
       }
-
-      if (ftype_r != NULL ) {
-        if (ftype_r->get_return_type() == type_l_operand) {
-          return;
-        }
-      }
-
-      // the child node is SgFunctionType and its type different from operator type
-      if (type_r_operand != type) {
-        const std::string reason = " expr '" + r_operand->unparseToString()+"' from "
-               + type_r_operand->unparseToString() + " to " + type_operator_string ;
-        output->addOutput(new CheckerOutput(r_operand,reason));
-
-      }
-      if (type_l_operand != type) {
-        const std::string reason = " expr '" + l_operand->unparseToString()+"' from "
-               + type_l_operand->unparseToString() + " to " + type_operator_string ;
-        output->addOutput(new CheckerOutput(l_operand,reason));
-      }
-
+    } else {
+      std::cout << "Unable to find cast in rule set" << std::endl;
+      std::cout << td_r << " -> " << td_l << std::endl;
     }
+//    std::pair<std::string,std::string> cast = std::make_pair(type_l_operand->get_name(),
+//                                                             type_r_operand->get_name());
+//    if (rules.find(cast) != rules.end() )
+//      warn_e_ToString(rules.find(cast)->second);
+
+//    if (type_r_operand != type_l_operand) {
+//      SgFunctionType const * const ftype_l = isSgFunctionType(type_l_operand);
+//      SgFunctionType const * const ftype_r = isSgFunctionType(type_r_operand);
+//      // if the child node is SgFunctionType
+//      if (ftype_l != NULL ) {
+//        if (ftype_l->get_return_type() == type_r_operand) {
+//          return;
+//        }
+//      }
+//
+//      if (ftype_r != NULL ) {
+//        if (ftype_r->get_return_type() == type_l_operand) {
+//          return;
+//        }
+//      }
+//
+//      // the child node is SgFunctionType and its type different from operator type
+//      if (type_r_operand != type) {
+//        const std::string reason = " expr '" + r_operand->unparseToString()+"' from "
+//               + type_r_operand->unparseToString() + " to " + type_operator_string ;
+//        output->addOutput(new CheckerOutput(r_operand,reason));
+//
+//      }
+//      if (type_l_operand != type) {
+//        const std::string reason = " expr '" + l_operand->unparseToString()+"' from "
+//               + type_l_operand->unparseToString() + " to " + type_operator_string ;
+//        output->addOutput(new CheckerOutput(l_operand,reason));
+//      }
+//
+//    }
 
   }
 
@@ -138,12 +246,20 @@ visit(SgNode* node) {
 // Checker main run function and metadata
 
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
-  CompassAnalyses::ImplicitCast::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+  std::ifstream configFile(CompassAnalyses::ImplicitCast::confFile);
+  ConfigParser cp;
+  ConfigParser::rules_t rules(cp.parseFile(configFile));
+  std::cout << "rules.size() = " << rules.size() << std::endl;
+  CompassAnalyses::ImplicitCast::Traversal(params, output, rules).run(Compass::projectPrerequisite.getProject());
 }
 
 // Remove this function if your checker is not an AST traversal
 static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
-  return new CompassAnalyses::ImplicitCast::Traversal(params, output);
+  std::ifstream configFile(CompassAnalyses::ImplicitCast::confFile);
+  ConfigParser cp;
+  ConfigParser::rules_t rules(cp.parseFile(configFile));
+  std::cout << "rules.size() = " << rules.size() << std::endl;
+  return new CompassAnalyses::ImplicitCast::Traversal(params, output, rules);
 }
 
 extern const Compass::Checker* const implicitCastChecker =

@@ -39,12 +39,18 @@ all: implicitCast
 libcompass.so: compass.h compass.C
 	g++ -shared -o libcompass.so compass.C $(CXX_FLAGS)
 
-implicitCast: implicitCast.C implicitCastMain.C libcompass.so
-	g++ -o implicitCast implicitCastMain.C implicitCast.C $(CXX_FLAGS) $(LINKER_FLAGS)
+TypeDescription.o: TypeDescription.cpp TypeDescription.hpp
+	g++ $(CXX_FLAGS) -c $< -o $@
+
+ConfigParser.o: ConfigParser.cpp ConfigParser.hpp
+	g++ $(CXX_FLAGS) -c $< -o $@
+
+implicitCast: implicitCast.C implicitCastMain.C libcompass.so ConfigParser.o TypeDescription.o
+	g++ -o implicitCast implicitCastMain.C implicitCast.C $(CXX_FLAGS) $(LINKER_FLAGS) ConfigParser.o TypeDescription.o
 
 test: implicitCast implicitCastTest1.f90
 	./implicitCast implicitCastTest1.f90
 
 clean:
-	-rm -f libcompass.so "implicitCast"
+	-rm -f libcompass.so "implicitCast" ConfigParser.o
 
