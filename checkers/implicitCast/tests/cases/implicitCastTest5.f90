@@ -1,3 +1,7 @@
+! Test that we catch the implicit cast of
+! a function's returned value in the presence
+! of explicit interfaces
+
 function f()
   real :: f
   real :: x = 42.4

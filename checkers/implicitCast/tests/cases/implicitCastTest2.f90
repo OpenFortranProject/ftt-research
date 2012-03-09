@@ -1,3 +1,5 @@
+! Test that we detect (and warn) about the
+! conversion of real to integer.
 program test
 
   INTEGER :: x

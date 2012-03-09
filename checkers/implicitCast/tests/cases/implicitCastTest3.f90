@@ -1,3 +1,5 @@
+! Test for implicit promotion of x to real
+! No warning is expected by default
 program test
 
   INTEGER :: x
