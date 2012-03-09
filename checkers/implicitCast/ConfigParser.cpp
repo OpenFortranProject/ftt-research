@@ -28,7 +28,7 @@ ConfigParser::rules_t ConfigParser::parseFile(std::istream &configStream)
     std::pair<std::string,std::string> fromType = nextType(line);
     rest = fromType.second;
     std::transform(fromType.first.begin(), fromType.first.end(), fromType.first.begin(), lower);
-    std::cout << "'" << fromType.first << "'";
+    //std::cout << "'" << fromType.first << "'";
     rest = dropSpaces(rest);
     if(conversionArrow(rest)) {
       rest = rest.substr(2);
@@ -36,17 +36,17 @@ ConfigParser::rules_t ConfigParser::parseFile(std::istream &configStream)
       std::cout << "Parse error: expected '->' but found '" << rest << "'" << std::endl;
       continue;
     }
-    std::cout << " -> ";
+    //std::cout << " -> ";
     std::pair<std::string,std::string> toType = nextType(rest);
     rest = toType.second;
     std::transform(toType.first.begin(), toType.first.end(), toType.first.begin(), lower);
-    std::cout << "'" << toType.first << "'";
+    //std::cout << "'" << toType.first << "'";
     warn_e warnType(warningType(rest));
     if( warnType == eUNKNOWN ) {
       std::cout << "unrecognized warning type, expected: ok, warn, or error" << std::endl;
       continue;
     }
-    std::cout << " : '" << warn_e_ToString(warnType) << "'" << std::endl;
+    //std::cout << " : '" << warn_e_ToString(warnType) << "'" << std::endl;
     cast_t cast(make_pair(fromType.first, toType.first));
     rules.insert(make_pair(cast, warnType));
   }

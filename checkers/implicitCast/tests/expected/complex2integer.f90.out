@@ -1,3 +1,3 @@
 Warning: environment variable COMPASS_PARAMETERS is not set, trying to use compass_parameters of the current path
  Running Prerequisite SgProject
-ImplicitCast: /home/dagit/research/checkers/implicitCast/tests/cases/complex2integer.f90:7.7: Implicit cast in Fortran code found:  expr 'from' from float _Complex to int
+ImplicitCast: /home/dagit/research/checkers/implicitCast/tests/cases/complex2integer.f90:7.2: Implicit cast in Fortran code found:  expr 'from' from complex to integer
