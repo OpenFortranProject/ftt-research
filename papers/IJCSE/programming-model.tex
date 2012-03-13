@@ -170,7 +170,7 @@ same rank and shape and {\tt s} is a scalar, then the statement
 results in the element-wise sum of {\tt A} and the product of {\tt s} times the
 elements of {\tt B} being stored in the corresponding elements of {\tt C}. The
 first element of {\tt C} will contain the value of the first element of {\tt A}
-added to the first element of {\tt c*B}.  Note that no explicit iteration over
+added to the first element of {\tt s*B}.  Note that no explicit iteration over
 array indices is needed and that the individual operators, plus, times, and
 assignment are applied by the compiler to individual elements of the arrays
 independently.  Thus the compiler is able to spread the computation in the
