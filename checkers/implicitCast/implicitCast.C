@@ -72,6 +72,7 @@ namespace CompassAnalyses {
                          SgExpression * const l_operand, SgExpression * const r_operand);
 
         SgType * buildType(const std::string &type) const {
+          if( type.size() < 1) return NULL;
           // TODO: there is some risk that these types do not match
           // the default kinds of the underlying fortran compiler
           if( type == "complex" ){
@@ -85,7 +86,23 @@ namespace CompassAnalyses {
           } else if( type == "character" ){
             return SageBuilder::buildCharType();
           }
-          return NULL;
+          // The above works for variables with no explicit kind information
+          // Now we handle the other cases.
+          const size_t pos = type.find_last_of("_");
+          if( pos <= 0 || pos >= type.npos ) return NULL;
+          const std::string kind = type.substr(pos+1);
+          if( kind.size() <= 0 ) return NULL;
+
+          const int kind_num = strtol(kind.c_str(), NULL, 10);
+          ROSE_ASSERT( kind_num > 0 && kind_num < 9999 ); // sanity check
+
+          SgType * const baseType = buildType(type.substr(0, pos));
+          if( baseType == NULL ) return NULL;
+
+          // At this point we have a valid kind and a valid SgType.
+          SgIntVal * const kindExpr = SageBuilder::buildIntVal(kind_num);
+          baseType->set_type_kind(kindExpr);
+          return baseType;
         }
 
         rules_t buildRules(const ConfigParser::rules_t& inputRules) const
