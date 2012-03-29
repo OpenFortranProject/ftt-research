@@ -12,6 +12,7 @@
 ## get command line options
 ##
 
+use File::Temp qw / tempdir /;
 use Getopt::Long;
 
 # options:
@@ -47,6 +48,13 @@ ENDER
 ##
 open STDERR, ">/dev/null";
 
+##
+## create a temp directory, and go into it.  set cleanup flag so that when the
+## script exits, the directory and its contents are all cleaned up.
+##
+$tempdir = tempdir( CLEANUP => 1 ) || die "Error creating temporary work directory.";
+chdir($tempdir) || die "Error changing to temporary location.";
+
 # upper bound on kind values to try
 $maxkinds = 32;
 if (defined $args{maxkinds}) {
@@ -58,11 +66,6 @@ $compiler = "gfortran";
 if (defined $args{compiler}) {
     $compiler = $args{compiler};
 }
-
-##
-## TODO: find perl routines that let you set up a sandbox for doing
-##       this kind of thing and then cleaning up afterwards.
-##
 
 ##
 ## given a type name, generate a kind tester with an empty kind string,
