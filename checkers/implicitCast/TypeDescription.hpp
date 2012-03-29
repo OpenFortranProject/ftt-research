@@ -25,7 +25,7 @@ private:
 
 };
 
-TypeDescription buildTypeDescription(SgType * const);
+TypeDescription buildTypeDescription(SgType * const, SgExpression * const);
 
 std::ostream& operator<<(std::ostream &out, const TypeDescription::intrinsic_e type);
 std::ostream& operator<<(std::ostream &out, const TypeDescription &typeDescription);

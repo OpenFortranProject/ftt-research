@@ -12,9 +12,19 @@ bool TypeDescription::operator==(const TypeDescription &td) const
    if( &td == this ) return true;
 
    if( td.get_fortran_type() == this->get_fortran_type() ){
-     // TODO: add a proper kind comparison
-     if( td.get_kind() == NULL && this->get_kind() == NULL ){
+     if( td.get_kind() == NULL && this->get_kind() == NULL )
        return true;
+     if( td.get_kind() == NULL || this->get_kind() == NULL ){
+       // Need the alias information to resolve this
+       ROSE_ASSERT( false );
+       return false;
+     }
+     SgValueExp* kindValue   = isSgValueExp(get_kind());
+     SgValueExp* tdKindValue = isSgValueExp(td.get_kind());
+     if (kindValue != NULL && tdKindValue != NULL)
+     {
+       return kindValue->get_constant_folded_value_as_string() ==
+              tdKindValue->get_constant_folded_value_as_string();
      }
    }
    return false;
@@ -23,6 +33,9 @@ bool TypeDescription::operator==(const TypeDescription &td) const
 bool TypeDescription::operator<(const TypeDescription &td) const
 {
   // TODO: does this need to incorporate kind information?
+  if( td.get_fortran_type() == this->get_fortran_type() ){
+    return this->get_kind() < td.get_kind();
+  }
   return this->get_fortran_type() < td.get_fortran_type();
 }
 
@@ -42,11 +55,11 @@ SgType * TypeDescription::get_rose_type() const
 }
 
 // Interrogates an SgType to build up a TypeDescription
-TypeDescription buildTypeDescription(SgType * const type)
+TypeDescription buildTypeDescription(SgType * const type, SgExpression * const kind)
 {
    ROSE_ASSERT( type != NULL );
 
-  SgExpression * kind = type->get_type_kind();
+  //SgExpression * kind = type->get_type_kind();
   TypeDescription::intrinsic_e fortranType = TypeDescription::eNOTINTRINSIC;
   // TODO: is this complete?
   if( isSgTypeChar(type)         != NULL ||
@@ -80,8 +93,14 @@ std::ostream& operator<<(std::ostream &out, const TypeDescription::intrinsic_e t
 
 std::ostream& operator<<(std::ostream &out, const TypeDescription &typeDescription) {
   out << typeDescription.get_fortran_type();
-  if( typeDescription.get_kind() != NULL )
-    out << "_kind";
+  if( typeDescription.get_kind() != NULL ){
+    SgValueExp* kindValue = isSgValueExp(typeDescription.get_kind());
+    if (kindValue != NULL){
+      out << "_" << kindValue->get_constant_folded_value_as_string();
+    } else {
+      out << "_kind";
+    }
+  }
   return out;
 }
 
