@@ -136,10 +136,10 @@ ENDER
 @typeset = ("real","integer","complex","character","logical");
 
 # define some maps that indicate which mappings are considered
-# erroneous or warnable, regardless of kind.  Note that "*" means
-# "all types".
-$error_maps{"character"} = ["*"];
-$error_maps{"logical"} = ["*"];
+# erroneous or warnable, regardless of kind. prec_drops is used to
+# deal with legal maps that are warnable due to precision loss.
+$error_maps{"character"} = \@typeset;
+$error_maps{"logical"} = \@typeset;
 $error_maps{"real"} = ["logical","character"];
 $error_maps{"integer"} = ["logical","character"];
 $error_maps{"complex"} = ["logical","character"];
@@ -147,6 +147,8 @@ $error_maps{"complex"} = ["logical","character"];
 $warn_maps{"real"} = ["integer"];
 $warn_maps{"complex"} = ["real","integer"];
 $warn_maps{"integer"} = ["real","complex"];
+
+$prec_drop{"real"} = ["complex"];
 
 # first, dump the aliases to map intrinsic types to a specific
 # kinded type
@@ -181,6 +183,9 @@ foreach $t (@typeset) {
 # now spin through the warn and error maps
 foreach $t (@typeset) {
     foreach $er (@{$error_maps{$t}}) {
+	if ($t eq $er) {
+	    next;
+	}
 	@src_vkinds = @{$vkinds{$t}};
 	@dest_vkinds = @{$vkinds{$er}};
 	foreach $sk (@src_vkinds) {
@@ -191,6 +196,9 @@ foreach $t (@typeset) {
     }
 
     foreach $wr (@{$warn_maps{$t}}) {
+	if ($t eq $wr) {
+	    next;
+	}
 	@src_vkinds = @{$vkinds{$t}};
 	@dest_vkinds = @{$vkinds{$wr}};
 	foreach $sk (@src_vkinds) {
@@ -198,5 +206,17 @@ foreach $t (@typeset) {
 		print $t."_".$sk." -> ".$wr."_".$dk." : warn\n";
 	    }
 	}
+    }
+
+    foreach $pr (@{$prec_drop{$t}}) {
+	@src_vkinds = @{$vkinds{$t}};
+	@dest_vkinds = @{$vkinds{$pr}};
+	foreach $sk (@src_vkinds) {
+	    foreach $dk (@dest_vkinds) {
+		if ($dk < $sk) {
+		    print $t."_".$sk." -> ".$pr."_".$dk." : warn\n";
+		}
+	    }
+	}	
     }
 }
