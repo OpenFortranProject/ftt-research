@@ -45,9 +45,10 @@ namespace CompassAnalyses {
 
       public:
         typedef std::map<std::pair<TypeDescription, TypeDescription>, ConfigParser::warn_e> rules_t;
+        typedef std::map<TypeDescription, TypeDescription> aliases_t;
 
         Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output,
-                  const ConfigParser::rules_t &rules);
+                  const ConfigParser::rules_t &rules, const ConfigParser::aliases_t &aliases);
 
         // Change the implementation of this function if you are using inherited attributes.
         void *initialInheritedAttribute() const {
@@ -66,7 +67,8 @@ namespace CompassAnalyses {
         // for AstTopDownProcessing.
         void visit(SgNode* n);
       private:
-        rules_t rules;
+        rules_t   rules;
+        aliases_t aliases;
 
         void handleTypes(const TypeDescription &td_l, const TypeDescription &td_r,
                          SgExpression * const l_operand, SgExpression * const r_operand);
@@ -88,15 +90,16 @@ namespace CompassAnalyses {
           }
           // The above works for variables with no explicit kind information
           // Now we handle the other cases.
+          const int kind_num = parseKind(type);
+          if( kind_num == 0 ) return NULL;
+
           const size_t pos = type.find_last_of("_");
           if( pos <= 0 || pos >= type.npos ) return NULL;
-          const std::string kind = type.substr(pos+1);
-          if( kind.size() <= 0 ) return NULL;
 
-          const int kind_num = strtol(kind.c_str(), NULL, 10);
-          ROSE_ASSERT( kind_num > 0 && kind_num < 9999 ); // sanity check
-
-          SgType * const baseType = buildType(type.substr(0, pos));
+          SgType * baseType = buildType(type.substr(0, pos));
+          if( baseType == NULL ) return NULL;
+          SgTreeCopy ch = SgTreeCopy();
+          baseType = isSgType(baseType->copy(ch));
           if( baseType == NULL ) return NULL;
 
           // At this point we have a valid kind and a valid SgType.
@@ -105,20 +108,53 @@ namespace CompassAnalyses {
           return baseType;
         }
 
-        rules_t buildRules(const ConfigParser::rules_t& inputRules) const
+        rules_t buildRules(const ConfigParser::rules_t& inputRules, aliases_t aliases) const
         {
           rules_t ret;
           for(ConfigParser::rules_t::const_iterator i = inputRules.begin(); i != inputRules.end(); i++)
           {
              SgType * const fromType = buildType(i->first.first);
              SgType * const toType   = buildType(i->first.second);
-             
-             const TypeDescription fromTD = buildTypeDescription(fromType);
-             const TypeDescription toTD   = buildTypeDescription(toType);
 
-             const std::pair<TypeDescription, TypeDescription> cast(std::make_pair(fromTD,toTD));
+             const int fromTypeKind = parseKind(i->first.first);
+             const int toTypeKind   = parseKind(i->first.second);
+
+             SgExpression * fromTypeKindExpr = fromTypeKind == 0 ? NULL : SageBuilder::buildIntVal(fromTypeKind);
+             SgExpression * toTypeKindExpr   = toTypeKind   == 0 ? NULL : SageBuilder::buildIntVal(toTypeKind);
+
+             const TypeDescription fromTD = buildTypeDescription(fromType, fromTypeKindExpr);
+             const TypeDescription toTD   = buildTypeDescription(toType, toTypeKindExpr);
+
+             // Jumping through this hoop allows us to avoid having a copy constructor, which in turn allows
+             // for immutable TypeDescriptions.  Yay?
+             const TypeDescription aliasFromTD = aliases.find(fromTD) != aliases.end() ? aliases.find(fromTD)->second : fromTD;
+             const TypeDescription aliasToTD   = aliases.find(toTD)   != aliases.end() ? aliases.find(toTD)->second   : toTD;
+
+             const std::pair<TypeDescription, TypeDescription> cast(std::make_pair(aliasFromTD,aliasToTD));
 
              ret.insert(std::make_pair(cast, i->second));
+          }
+          return ret;
+        }
+
+        aliases_t buildAliases(const ConfigParser::aliases_t& inputAliases) const
+        {
+          aliases_t ret;
+          for(ConfigParser::aliases_t::const_iterator i = inputAliases.begin(); i != inputAliases.end(); i++)
+          {
+             SgType * const fromType = buildType(i->first);
+             SgType * const toType   = buildType(i->second);
+
+             const int fromTypeKind = parseKind(i->first);
+             const int toTypeKind   = parseKind(i->second);
+
+             SgExpression * fromTypeKindExpr = fromTypeKind == 0 ? NULL : SageBuilder::buildIntVal(fromTypeKind);
+             SgExpression * toTypeKindExpr   = toTypeKind   == 0 ? NULL : SageBuilder::buildIntVal(toTypeKind);
+
+             const TypeDescription fromTD = buildTypeDescription(fromType,fromTypeKindExpr);
+             const TypeDescription toTD   = buildTypeDescription(toType, toTypeKindExpr);
+
+             ret.insert(std::make_pair(fromTD, toTD));
           }
           return ret;
         }
@@ -132,8 +168,11 @@ CheckerOutput::CheckerOutput ( SgNode * const node, const std::string & reason )
 {}
 
 CompassAnalyses::ImplicitCast::Traversal::
-Traversal(Compass::Parameters, Compass::OutputObject* output, const ConfigParser::rules_t &rules)
-  : output(output), rules(buildRules(rules)) {
+Traversal(Compass::Parameters, Compass::OutputObject* output,
+          const ConfigParser::rules_t &rules, const ConfigParser::aliases_t &aliases)
+  : output(output) {
+    this->aliases = buildAliases(aliases);
+    this->rules = buildRules(rules, this->aliases);
   // Initalize checker specific parameters here, for example:
   // YourParameter = Compass::parseInteger(inputParameters["ImplicitCast.YourParameter"]);
 
@@ -147,9 +186,7 @@ handleTypes(const TypeDescription &td_l, const TypeDescription &td_r,
 
   rules_t::const_iterator i = rules.find(cast);
   if( i != rules.end() ) {
-    //std::cout << "Found cast in rule set" << std::endl;
     ConfigParser::warn_e action = i->second;
-    //std::cout << td_r << " -> " << td_l << " : " << warn_e_ToString(action) << std::endl;
     switch(action) {
       case ConfigParser::eOK: /* Do nothing */ break;
       case ConfigParser::eWARN:
@@ -161,9 +198,6 @@ handleTypes(const TypeDescription &td_l, const TypeDescription &td_r,
       }
       default: break;
     }
-  } else {
-    //std::cout << "Unable to find cast in rule set" << std::endl;
-    //std::cout << td_r << " -> " << td_l << std::endl;
   }
 }
 
@@ -194,14 +228,20 @@ visit(SgNode* node) {
 
     // if the child node is SgFunctionType
     if (ftype_l != NULL ) {
-      handleTypes(buildTypeDescription(ftype_l->get_return_type()),
-                  buildTypeDescription(type_r_operand), l_operand, r_operand);
+      SgExpression * ftypeKind = ftype_l->get_return_type()->get_type_kind();
+      SgExpression * type_r_kind = type_r_operand->get_type_kind();
+      handleTypes(buildTypeDescription(ftype_l->get_return_type(), ftypeKind),
+                  buildTypeDescription(type_r_operand, type_r_kind), l_operand, r_operand);
     } else if (ftype_r != NULL ) {
-      handleTypes(buildTypeDescription(ftype_r->get_return_type()),
-                  buildTypeDescription(type_l_operand), r_operand, l_operand);
+      SgExpression * ftypeKind = ftype_r->get_return_type()->get_type_kind();
+      SgExpression * type_l_kind = type_l_operand->get_type_kind();
+      handleTypes(buildTypeDescription(ftype_r->get_return_type(), ftypeKind),
+                  buildTypeDescription(type_l_operand, type_l_kind), r_operand, l_operand);
     } else {
-      TypeDescription td_l(buildTypeDescription(type_l_operand));
-      TypeDescription td_r(buildTypeDescription(type_r_operand));
+      SgExpression * type_l_kind = type_l_operand->get_type_kind();
+      SgExpression * type_r_kind = type_r_operand->get_type_kind();
+      TypeDescription td_l(buildTypeDescription(type_l_operand, type_l_kind));
+      TypeDescription td_r(buildTypeDescription(type_r_operand, type_r_kind));
       handleTypes(td_l, td_r, l_operand, r_operand);
     }
   }
@@ -213,18 +253,16 @@ visit(SgNode* node) {
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
   std::ifstream configFile(CompassAnalyses::ImplicitCast::confFile);
   ConfigParser cp;
-  ConfigParser::rules_t rules(cp.parseFile(configFile));
-  //std::cout << "rules.size() = " << rules.size() << std::endl;
-  CompassAnalyses::ImplicitCast::Traversal(params, output, rules).run(Compass::projectPrerequisite.getProject());
+  std::pair<ConfigParser::rules_t, ConfigParser::aliases_t> config = cp.parseFile(configFile);
+  CompassAnalyses::ImplicitCast::Traversal(params, output, config.first, config.second).run(Compass::projectPrerequisite.getProject());
 }
 
 // Remove this function if your checker is not an AST traversal
 static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   std::ifstream configFile(CompassAnalyses::ImplicitCast::confFile);
   ConfigParser cp;
-  ConfigParser::rules_t rules(cp.parseFile(configFile));
-  //std::cout << "rules.size() = " << rules.size() << std::endl;
-  return new CompassAnalyses::ImplicitCast::Traversal(params, output, rules);
+  std::pair<ConfigParser::rules_t, ConfigParser::aliases_t> config = cp.parseFile(configFile);
+  return new CompassAnalyses::ImplicitCast::Traversal(params, output, config.first, config.second);
 }
 
 extern const Compass::Checker* const implicitCastChecker =
