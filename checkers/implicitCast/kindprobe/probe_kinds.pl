@@ -53,7 +53,7 @@ if (defined $args{maxkinds}) {
     $maxkinds = $args{maxkinds};
 }
 
-# compiler to invoke.  TODO: make this a parameter
+# compiler to invoke.
 $compiler = "gfortran";
 if (defined $args{compiler}) {
     $compiler = $args{compiler};
@@ -132,14 +132,24 @@ ENDER
 ## main program body
 #############################################################################
 
+# all the types we care about
 @typeset = ("real","integer","complex","character","logical");
 
-@valid_maps = (("real","complex"));
-@warn_maps = (("real","integer"),("complex","real"),("complex","integer"),
-	      ("integer","real"),("integer","complex"));
-@error_maps = (("character","*"),("*","character"),
-	       ("logical","*"),("*","logical"));
+# define some maps that indicate which mappings are considered
+# erroneous or warnable, regardless of kind.  Note that "*" means
+# "all types".
+$error_maps{"character"} = ["*"];
+$error_maps{"logical"} = ["*"];
+$error_maps{"real"} = ["logical","character"];
+$error_maps{"integer"} = ["logical","character"];
+$error_maps{"complex"} = ["logical","character"];
 
+$warn_maps{"real"} = ["integer"];
+$warn_maps{"complex"} = ["real","integer"];
+$warn_maps{"integer"} = ["real","complex"];
+
+# first, dump the aliases to map intrinsic types to a specific
+# kinded type
 foreach $t (@typeset) {
     $defkind = &probe_default_kind($t);
     print "$t = ".$t."_".$defkind."\n";
@@ -150,15 +160,43 @@ if (defined $args{onlyalias}) {
     exit(0);
 }
 
+# within each type, make sure high kind to low kind conversions
+# are considered legal but warnable.
 foreach $t (@typeset) {
     # sort kinds in numerically descending order.
     @validkinds = sort {$b <=> $a} (&probe_kind_range($t));
+
+    # store the set of valid kinds for later
+    $vkinds{$t} = \@validkinds;
 
     for ($i = 0; $i < $#validkinds; $i++) {
 	for ($j = $i+1; $j <= $#validkinds; $j++) {
 	    $ikindtype = $t."_".$validkinds[$i];
 	    $jkindtype = $t."_".$validkinds[$j];
 	    print "$ikindtype -> $jkindtype : error\n";
+	}
+    }
+}
+
+# now spin through the warn and error maps
+foreach $t (@typeset) {
+    foreach $er (@{$error_maps{$t}}) {
+	@src_vkinds = @{$vkinds{$t}};
+	@dest_vkinds = @{$vkinds{$er}};
+	foreach $sk (@src_vkinds) {
+	    foreach $dk (@dest_vkinds) {
+		print $t."_".$sk." -> ".$er."_".$dk." : error\n";
+	    }
+	}
+    }
+
+    foreach $wr (@{$warn_maps{$t}}) {
+	@src_vkinds = @{$vkinds{$t}};
+	@dest_vkinds = @{$vkinds{$wr}};
+	foreach $sk (@src_vkinds) {
+	    foreach $dk (@dest_vkinds) {
+		print $t."_".$sk." -> ".$wr."_".$dk." : warn\n";
+	    }
 	}
     }
 }
