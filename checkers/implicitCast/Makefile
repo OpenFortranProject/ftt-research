@@ -30,7 +30,7 @@ BOOST_INCLUDE_PATH ?= /usr
 
 CHECKER_NAME := testChecker
 
-CXX_FLAGS := -fPIC -Wall -Wextra -Werror -pedantic -pedantic-errors -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH)
+CXX_FLAGS := -g -fPIC -Wall -Wextra -Werror -pedantic -pedantic-errors -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH)
 
 LINKER_FLAGS := $(ROSE_LIB) $(ROSE_OPTIONAL_LIBS) $(LOCAL_COMPASS_LIB) $(PATH_TO_SPECIFIC_LIBSTDCXX)
 
