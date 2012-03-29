@@ -9,15 +9,55 @@
 #############################################################################
 
 ##
+## get command line options
+##
+
+use Getopt::Long;
+
+# options:
+#
+# -c [compiler] : set compiler
+# -m [maxkinds] : specify upper bound for kinds to test
+# -a            : dump aliases only, ignoring warnings for explicit kind maps
+
+my %args = ();
+
+GetOptions("c:s"=>\$args{compiler},
+	   "m:i"=>\$args{maxkinds},
+	   "onlyalias"=>\$args{onlyalias},
+           "help"=>\$args{help});
+
+if (defined $args{help}) {
+    print <<ENDER
+
+usage: probe_kinds.pl -c [compiler] -m [maxkinds] -onlyalias
+
+  -c compiler : specify Fortran compiler to probe. (DEFAULT: gfortran)
+  -m maxkinds : specify maximum kind value to probe.  (DEFAULT: 32)
+  -onlyalias : flag to only print type aliases that map intrinsic
+               types to their explicitly kind-annotated equivalent.
+
+ENDER
+	       ;
+    exit(1);
+}
+
+##
 ## make stderr go to /dev/null
 ##
 open STDERR, ">/dev/null";
 
 # upper bound on kind values to try
 $maxkinds = 32;
+if (defined $args{maxkinds}) {
+    $maxkinds = $args{maxkinds};
+}
 
 # compiler to invoke.  TODO: make this a parameter
 $compiler = "gfortran";
+if (defined $args{compiler}) {
+    $compiler = $args{compiler};
+}
 
 ##
 ## TODO: find perl routines that let you set up a sandbox for doing
@@ -94,13 +134,26 @@ ENDER
 
 @typeset = ("real","integer","complex","character","logical");
 
+@valid_maps = (("real","complex"));
+@warn_maps = (("real","integer"),("complex","real"),("complex","integer"),
+	      ("integer","real"),("integer","complex"));
+@error_maps = (("character","*"),("*","character"),
+	       ("logical","*"),("*","logical"));
+
 foreach $t (@typeset) {
     $defkind = &probe_default_kind($t);
+    print "$t = ".$t."_".$defkind."\n";
+}
 
+# if they want only aliases, bail out now
+if (defined $args{onlyalias}) {
+    exit(0);
+}
+
+foreach $t (@typeset) {
     # sort kinds in numerically descending order.
     @validkinds = sort {$b <=> $a} (&probe_kind_range($t));
 
-    print "$t = ".$t."_".$defkind."\n";
     for ($i = 0; $i < $#validkinds; $i++) {
 	for ($j = $i+1; $j <= $#validkinds; $j++) {
 	    $ikindtype = $t."_".$validkinds[$i];
