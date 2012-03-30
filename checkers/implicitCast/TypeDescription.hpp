@@ -11,16 +11,16 @@ public:
   TypeDescription(SgType * type, intrinsic_e fortranType, SgExpression * kind = NULL);
 
   bool operator==(const TypeDescription &td) const;
-  bool operator<(const TypeDescription &td) const;
+  //bool operator<(const TypeDescription &td) const;
 
   SgExpression * get_kind() const;
   intrinsic_e get_fortran_type() const;
   SgType * get_rose_type() const;
 
 private:
-  SgType * const roseType;
-  const intrinsic_e fortranType;
-  SgExpression * const kind;
+  SgType * roseType;
+  intrinsic_e fortranType;
+  SgExpression * kind;
   
 
 };

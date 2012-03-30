@@ -44,8 +44,8 @@ namespace CompassAnalyses {
         // Checker specific parameters should be allocated here.
 
       public:
-        typedef std::map<std::pair<TypeDescription, TypeDescription>, ConfigParser::warn_e> rules_t;
-        typedef std::map<TypeDescription, TypeDescription> aliases_t;
+        typedef std::vector< std::pair<std::pair<TypeDescription, TypeDescription>, ConfigParser::warn_e> > rules_t;
+        typedef std::vector< std::pair<TypeDescription, TypeDescription> > aliases_t;
 
         Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output,
                   const ConfigParser::rules_t &rules, const ConfigParser::aliases_t &aliases);
@@ -66,6 +66,30 @@ namespace CompassAnalyses {
         // void *evaluateInheritedAttribute(SgNode *, void *);
         // for AstTopDownProcessing.
         void visit(SgNode* n);
+
+        aliases_t::const_iterator lookupAlias(aliases_t::const_iterator begin,
+                                              aliases_t::const_iterator end,
+                                              const TypeDescription& td) const
+        {
+          aliases_t::const_iterator i = begin;
+          for(;i != end; i++){
+            if( i->first == td ) break;
+          }
+          return i;
+        }
+
+        rules_t::const_iterator lookupRule(rules_t::const_iterator begin,
+                                           rules_t::const_iterator end,
+                                           const TypeDescription& from, const TypeDescription &to) const
+        {
+          rules_t::const_iterator i = begin;
+          for(;i != end; i++){
+            if( i->first.first  == from &&
+                i->first.second == to) break;
+          }
+          return i;
+        }
+
       private:
         rules_t   rules;
         aliases_t aliases;
@@ -127,12 +151,14 @@ namespace CompassAnalyses {
 
              // Jumping through this hoop allows us to avoid having a copy constructor, which in turn allows
              // for immutable TypeDescriptions.  Yay?
-             const TypeDescription aliasFromTD = aliases.find(fromTD) != aliases.end() ? aliases.find(fromTD)->second : fromTD;
-             const TypeDescription aliasToTD   = aliases.find(toTD)   != aliases.end() ? aliases.find(toTD)->second   : toTD;
+             aliases_t::const_iterator fromTD_iter = lookupAlias(aliases.begin(), aliases.end(), fromTD);
+             aliases_t::const_iterator toTD_iter   = lookupAlias(aliases.begin(), aliases.end(), toTD);
+             const TypeDescription aliasFromTD = fromTD_iter != aliases.end() ? fromTD_iter->second : fromTD;
+             const TypeDescription aliasToTD   = toTD_iter   != aliases.end() ? toTD_iter->second   : toTD;
 
              const std::pair<TypeDescription, TypeDescription> cast(std::make_pair(aliasFromTD,aliasToTD));
 
-             ret.insert(std::make_pair(cast, i->second));
+             ret.push_back(std::make_pair(cast, i->second));
           }
           return ret;
         }
@@ -154,7 +180,8 @@ namespace CompassAnalyses {
              const TypeDescription fromTD = buildTypeDescription(fromType,fromTypeKindExpr);
              const TypeDescription toTD   = buildTypeDescription(toType, toTypeKindExpr);
 
-             ret.insert(std::make_pair(fromTD, toTD));
+             ret.push_back(std::make_pair(fromTD, toTD));
+             ROSE_ASSERT( lookupAlias(ret.begin(), ret.end(), fromTD) != ret.end() );
           }
           return ret;
         }
@@ -179,12 +206,13 @@ Traversal(Compass::Parameters, Compass::OutputObject* output,
 }
 
 void CompassAnalyses::ImplicitCast::Traversal::
-handleTypes(const TypeDescription &td_l, const TypeDescription &td_r,
+handleTypes(const TypeDescription &td_to, const TypeDescription &td_from,
             SgExpression * const l_operand, SgExpression * const r_operand)
 {
-  std::pair<TypeDescription, TypeDescription> cast(std::make_pair(td_r, td_l));
+  //std::pair<TypeDescription, TypeDescription> cast(std::make_pair(td_r, td_l));
+  //std::cout << "handleTypes: " << td_from << " -> " << td_to << std::endl;
 
-  rules_t::const_iterator i = rules.find(cast);
+  rules_t::const_iterator i = lookupRule(rules.begin(), rules.end(), td_from, td_to);
   if( i != rules.end() ) {
     ConfigParser::warn_e action = i->second;
     switch(action) {
@@ -193,11 +221,16 @@ handleTypes(const TypeDescription &td_l, const TypeDescription &td_r,
       case ConfigParser::eERROR: {
         std::stringstream reason;
         reason << " expr '" << r_operand->unparseToString() << "' from "
-               << td_r << " to " << td_l;
+               << td_from << " to " << td_to;
         output->addOutput(new CheckerOutput(l_operand,reason.str()));
       }
       default: break;
     }
+  } else {
+    //std::cout << "unable to find rule" << std::endl;
+    //for(rules_t::const_iterator j = rules.begin(); j != rules.end(); j++){
+    //  std::cout << j->first.first << " -> " << j->first.second << " : " << warn_e_ToString(j->second) << std::endl;
+    //}
   }
 }
 
@@ -230,19 +263,33 @@ visit(SgNode* node) {
     if (ftype_l != NULL ) {
       SgExpression * ftypeKind = ftype_l->get_return_type()->get_type_kind();
       SgExpression * type_r_kind = type_r_operand->get_type_kind();
-      handleTypes(buildTypeDescription(ftype_l->get_return_type(), ftypeKind),
-                  buildTypeDescription(type_r_operand, type_r_kind), l_operand, r_operand);
+      TypeDescription td_ft_l(buildTypeDescription(ftype_l->get_return_type(), ftypeKind));
+      TypeDescription td_r(buildTypeDescription(type_r_operand, type_r_kind));
+      aliases_t::const_iterator ft_l = lookupAlias(aliases.begin(), aliases.end(),td_ft_l);
+      aliases_t::const_iterator r    = lookupAlias(aliases.begin(), aliases.end(),td_r);
+      handleTypes(ft_l == aliases.end() ? td_ft_l : ft_l->second,
+                  r    == aliases.end() ? td_r    : r->second,
+                  l_operand, r_operand);
     } else if (ftype_r != NULL ) {
       SgExpression * ftypeKind = ftype_r->get_return_type()->get_type_kind();
       SgExpression * type_l_kind = type_l_operand->get_type_kind();
-      handleTypes(buildTypeDescription(ftype_r->get_return_type(), ftypeKind),
-                  buildTypeDescription(type_l_operand, type_l_kind), r_operand, l_operand);
+      TypeDescription td_ft_r(buildTypeDescription(ftype_r->get_return_type(), ftypeKind));
+      TypeDescription td_l(buildTypeDescription(type_l_operand, type_l_kind));
+      aliases_t::const_iterator ft_r = lookupAlias(aliases.begin(), aliases.end(),td_ft_r);
+      aliases_t::const_iterator l    = lookupAlias(aliases.begin(), aliases.end(),td_l);
+      handleTypes(ft_r == aliases.end() ? td_ft_r : ft_r->second,
+                  l    == aliases.end() ? td_l    : l->second,
+                  r_operand, l_operand);
     } else {
       SgExpression * type_l_kind = type_l_operand->get_type_kind();
       SgExpression * type_r_kind = type_r_operand->get_type_kind();
       TypeDescription td_l(buildTypeDescription(type_l_operand, type_l_kind));
       TypeDescription td_r(buildTypeDescription(type_r_operand, type_r_kind));
-      handleTypes(td_l, td_r, l_operand, r_operand);
+      aliases_t::const_iterator l = lookupAlias(aliases.begin(), aliases.end(),td_l);
+      aliases_t::const_iterator r = lookupAlias(aliases.begin(), aliases.end(),td_r);
+      handleTypes(l == aliases.end() ? td_l : l->second,
+                  r == aliases.end() ? td_r : r->second,
+                  l_operand, r_operand);
     }
   }
 } //End of the visit function.

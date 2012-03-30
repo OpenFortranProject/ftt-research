@@ -16,7 +16,8 @@ bool TypeDescription::operator==(const TypeDescription &td) const
        return true;
      if( td.get_kind() == NULL || this->get_kind() == NULL ){
        // Need the alias information to resolve this
-       ROSE_ASSERT( false );
+       // We conservatively, say that they are not equal
+       // because one side had NULL kind and the other non-NULL
        return false;
      }
      SgValueExp* kindValue   = isSgValueExp(get_kind());
@@ -30,15 +31,33 @@ bool TypeDescription::operator==(const TypeDescription &td) const
    return false;
 }
 
+/*  Let this be a lesson to those that would use std::map for 
+ *  lookups. You will need operator<, and that path leads to
+ *  madness. I know, for I have been there. JED 2012/3/29.
 bool TypeDescription::operator<(const TypeDescription &td) const
 {
+  ROSE_ASSERT( get_kind()    != NULL );
+  ROSE_ASSERT( td.get_kind() != NULL );
   // TODO: does this need to incorporate kind information?
-  if( td.get_fortran_type() == this->get_fortran_type() ){
-    return this->get_kind() < td.get_kind();
+  if( td.get_fortran_type() < this->get_fortran_type() ){
+    return true;
+  } else if( td.get_fortran_type() > this->get_fortran_type() ){
+    return false;
+  } else if( td.get_fortran_type() == this->get_fortran_type() ){
+    SgValueExp* kindValue   = isSgValueExp(get_kind());
+    SgValueExp* tdKindValue = isSgValueExp(td.get_kind());
+    if (kindValue != NULL && tdKindValue != NULL)
+    {
+      return kindValue->get_constant_folded_value_as_string() < 
+             tdKindValue->get_constant_folded_value_as_string();
+    }
+    return false;
   }
-  return this->get_fortran_type() < td.get_fortran_type();
+  //ROSE_ASSERT( false ); // if we get here it means we don't have
+                        // enough information to do the comparison
+  return true;
 }
-
+*/
 SgExpression * TypeDescription::get_kind() const
 {
    return kind;
