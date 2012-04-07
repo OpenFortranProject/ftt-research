@@ -312,7 +312,7 @@ static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Par
   return new CompassAnalyses::ImplicitCast::Traversal(params, output, config.first, config.second);
 }
 
-extern const Compass::Checker* const implicitCastChecker =
+const Compass::Checker* const implicitCastChecker =
   new Compass::CheckerUsingAstSimpleProcessing(
   CompassAnalyses::ImplicitCast::checkerName,
   // Descriptions should not include the newline character "\n".
