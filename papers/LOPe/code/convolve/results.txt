@@ -1,3 +1,16 @@
+OpenCL Device # 0 == Quadro FX 4800  status==0
+	device[0x1022600]: Type: GPU with 24 units/cores at 1204 MHz
+	float vector width == 1
+	Maximum work group size == 512
+	Maximum work item dimensions == 3
+	Maximum work item sizes == ( 512 512 64 )
+	Local mem size == 16384
+	Global mem size == 1610612736
+	Global mem cache size == 0
+	Global mem cache line size == 0
+	Extensions == cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_APPLE_gl_sharing cl_APPLE_SetMemObjectDestructor cl_APPLE_ContextLoggingFunctions cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics  size==254 status=0
+
+
    integer, parameter :: G_WIDTH = 512
    integer(c_int), parameter :: NXP = 1 + 2*NPAD
    integer(c_int), parameter :: NYP = NXP
@@ -86,6 +99,63 @@ PADDING     GPU avg time (ms)   CPU time (ms)   GPU bandwidth (GB/s)   speedup
   6            4.7                 37.5               0.4                 8.0
   7            6.1                 52.4               0.3                 8.6
 --------------------------------------------------------------------------------
+
+NOTE: Rerun with corrected convolution for CPU and OMP
+
+Filter convolution test: S set by convolving filter patch with image sub-section
+Notes: only 1 filter patch, preload image in local tile
+--------------------------------------------------------------------------------
+PADDING     GPU avg time (ms)   CPU time (ms)   GPU bandwidth (GB/s)   speedup
+                                       & OMP                                 & OMP
+  1            0.2                  1.1  7.1        10.3                  5.4  35.0
+  2            0.3                  2.6  5.4         7.3                  9.1  19.0
+  3            0.4                  6.0  6.1         4.8                 13.9  14.2
+  4            0.5                 20.1  9.9         4.0                 37.9  18.8
+  5            0.8                 25.3 13.1         2.7                 33.1  17.2
+  6            1.0                 30.0 10.6         2.1                 30.6  10.6
+  7            1.1                 37.4  9.2         1.8                 32.6   8.0
+--------------------------------------------------------------------------------
+
+
+
+
+On Darwin
+---------
+
+Linux cn82 2.6.35.10-74.fc14.x86_64 #1 SMP Thu Dec 23 16:04:50 UTC 2010 x86_64 x86_64 x86_64 GNU/Linux
+
+   integer(c_int), parameter :: NPAD = PADDING
+
+   integer, parameter :: G_WIDTH  = 512
+   integer, parameter :: G_HEIGHT = 512
+
+   integer(c_int), parameter :: NXP = 1 + 2*NPAD
+   integer(c_int), parameter :: NYP = NXP
+
+   integer(c_size_t), parameter :: NX   = G_WIDTH
+   integer(c_size_t), parameter :: NY   = G_HEIGHT
+   integer(c_size_t), parameter :: NXEX = NX + 2*NPAD
+   integer(c_size_t), parameter :: NYEX = NY + 2*NPAD
+   integer(c_size_t), parameter :: NXL  = 16
+   integer(c_size_t), parameter :: NYL  = 16
+
+   integer(c_size_t), parameter :: SIZE_ELEMENT = 4
+
+
+Filter convolution test: S set by convolving filter patch with image sub-section
+Notes: only 1 filter patch, preload image in local tile
+--------------------------------------------------------------------------------
+PADDING     GPU avg time (ms)   CPU time (ms)   GPU bandwidth (GB/s)   speedup
+                                       &  OMP                                &  OMP
+  1            0.13                 2.7   2.7       24.6                 31.5   31.3
+  2            0.17                10.3   9.9       12.4                 61.0   58.4
+  3            0.25                24.1  24.5        8.5                 99.5  100
+  4            0.3                 99.0  40.9        6.1                287    118
+  5            0.5                 66.1  83.4        4.5                139    175
+  6            0.6                136    94.6        3.4                222    154
+  7            0.8                237   131          2.6                299    166
+--------------------------------------------------------------------------------
+
 
 
 

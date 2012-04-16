@@ -1,4 +1,0 @@
-Warning: environment variable COMPASS_PARAMETERS is not set, trying to use compass_parameters of the current path
- Running Prerequisite SgProject
-ImplicitSave: /home/dagit/research/checkers/implicitSave/tests/cases/implicitSaveTest11.f90:9.7: improper operation to variable: expression 'CALL g(x)' intent mismatch [in] and [inout]
-ImplicitSave: /home/dagit/research/checkers/implicitSave/tests/cases/implicitSaveTest11.f90:15.2: improper operation to variable: expression 'x = x + 1' implicitly saved variable re-assigned

@@ -1,3 +1,6 @@
+! This checks that we notice the implicit cast of the
+! the function's returned value.
+
 function f()
   real :: x = 42.4
 

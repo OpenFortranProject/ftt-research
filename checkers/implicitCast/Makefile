@@ -30,7 +30,7 @@ BOOST_INCLUDE_PATH ?= /usr
 
 CHECKER_NAME := testChecker
 
-CXX_FLAGS := -fPIC -Wall -Wextra -Werror -pedantic -pedantic-errors -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH)
+CXX_FLAGS := -g -fPIC -Wall -Wextra -Werror -pedantic -pedantic-errors -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH)
 
 LINKER_FLAGS := $(ROSE_LIB) $(ROSE_OPTIONAL_LIBS) $(LOCAL_COMPASS_LIB) $(PATH_TO_SPECIFIC_LIBSTDCXX)
 
@@ -39,12 +39,18 @@ all: implicitCast
 libcompass.so: compass.h compass.C
 	g++ -shared -o libcompass.so compass.C $(CXX_FLAGS)
 
-implicitCast: implicitCast.C implicitCastMain.C libcompass.so
-	g++ -o implicitCast implicitCastMain.C implicitCast.C $(CXX_FLAGS) $(LINKER_FLAGS)
+TypeDescription.o: TypeDescription.cpp TypeDescription.hpp
+	g++ $(CXX_FLAGS) -c $< -o $@
+
+ConfigParser.o: ConfigParser.cpp ConfigParser.hpp
+	g++ $(CXX_FLAGS) -c $< -o $@
+
+implicitCast: implicitCast.C implicitCastMain.C libcompass.so ConfigParser.o TypeDescription.o
+	g++ -o implicitCast implicitCastMain.C implicitCast.C $(CXX_FLAGS) $(LINKER_FLAGS) ConfigParser.o TypeDescription.o
 
 test: implicitCast implicitCastTest1.f90
 	./implicitCast implicitCastTest1.f90
 
 clean:
-	-rm -f libcompass.so "implicitCast"
+	-rm -f libcompass.so "implicitCast" ConfigParser.o
 

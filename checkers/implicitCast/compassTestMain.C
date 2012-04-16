@@ -47,6 +47,6 @@ int main(int argc, char** argv) {
   Compass::Parameters params(Compass::findParameterFile());
   Compass::PrintingOutputObject output(std::cerr);
 // Compass::TraversalBase* trav = factory.create(params, &output);
-  Compass::runCheckerAndPrereqs(myChecker, sageProject, params, &output);
+  Compass::runCheckerAndPrereqs(implicitCastChecker, sageProject, params, &output);
   return 0;
 }

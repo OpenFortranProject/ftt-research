@@ -1,3 +1,5 @@
+! Make sure we don't warn about
+! explicit cast of y to integer.
 program test
 
   INTEGER :: x

@@ -1,0 +1,4 @@
+Warning: environment variable COMPASS_PARAMETERS is not set, trying to use compass_parameters of the current path
+ Running Prerequisite SgProject
+ImplicitCast: /home/dagit/research/checkers/implicitCast/tests/cases/implicitCastTest5.f90:21.2: Implicit cast in Fortran code found:  expr 'f() + 4' from real_4 to integer_4
+ImplicitCast: /home/dagit/research/checkers/implicitCast/tests/cases/implicitCastTest5.f90:21.6: Implicit cast in Fortran code found:  expr '4' from integer_4 to real_4

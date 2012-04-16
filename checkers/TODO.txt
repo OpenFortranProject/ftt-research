@@ -2,6 +2,14 @@ Ideas for new checkers.  The names of the checkers should be
 changed where a better name is appropriate.
 
 -----------------------------------------
+2012.1.12 - Check that Fortran BIND(C) interface is consistent with
+the equivalent C function declaration.  This came up in a talk I gave
+on lanuage interoperability in X division.  It would be a very nice
+use of ROSE's multiple language capability.  I would use it to check
+that the MPI-3 Fortran bindings are correct.
+-----------------------------------------
+
+-----------------------------------------
 see http://www.cs.rpi.edu/~szymansk/OOF90/bugs.html
 -----------------------------------------
 

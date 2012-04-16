@@ -117,7 +117,7 @@ OBJS = filter_params.o filter_type.o file_io_c.o file_io.o
 
 LIBS += $(OBJS) -L$(FOCL_DIR) -lforopencl -L/usr/local/lib -lgdal
 
-APPS = omp convolve variable_filter
+APPS = omp convolve_host variable_filter
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
@@ -125,7 +125,7 @@ APPS = omp convolve variable_filter
 
 all: $(OBJS) $(APPS)
 
-convolve: convolve.o $(OBJS)
+convolve_host: convolve_host.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
 omp: omp.o
@@ -148,7 +148,7 @@ file_io_c.o: file_io_c.c
 # dependencies
 #
 
-convolve.o: npad.h convolve.f90 filter_params.o file_io.o file_io_c.o filter_type.f90
+convolve_host.o: npad.h convolve_host.f90 filter_params.o file_io.o file_io_c.o filter_type.f90
 variable_filter.o: npad.h variable_filter.f90 filter_params.o filter_type.f90
 filter_type.o: filter_params.o filter_type.f90
 file_io.o: file_io.f90

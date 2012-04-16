@@ -1,3 +1,3 @@
 Warning: environment variable COMPASS_PARAMETERS is not set, trying to use compass_parameters of the current path
  Running Prerequisite SgProject
-ImplicitSave: /home/dagit/research/checkers/implicitSave/tests/cases/implicitSaveTest7.f90:10.2: improper operation to variable: expression 'x = x + 1' implicitly saved variable re-assigned
+ImplicitSave: /home/dagit/research/checkers/implicitSave/tests/cases/implicitSaveTest7.f90:13.4: improper operation to variable: expression 'x = x + 1' implicitly saved variable re-assigned
