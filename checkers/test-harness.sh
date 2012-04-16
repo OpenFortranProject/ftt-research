@@ -39,7 +39,13 @@ function run_cases {
     local actual=${where}/tests/actual/${test_name}.out
 
     echo -n "Running ${test_name} ... "
-    gfortran ${flags} ${test_file}
+    local gfortran_result=$(gfortran ${flags} ${test_file} &>${actual} ; echo $?)
+    if [ $gfortran_result != "0" ]
+    then
+      echo "FAILED"
+      num_failed=$(expr $num_failed + 1)
+      continue
+    fi
     # this pushd is here to prevent segfaults in ${tool} due
     # to not finding compass_parameters in pwd
     pushd ${where} > /dev/null
@@ -48,7 +54,7 @@ function run_cases {
 
     # check the output
     local result=$(diff -u ${expected} ${actual} ; echo $?)
-    if [ "$result" == "0" ]
+    if [ $gfortran_result == "0" ] && [ "$result" == "0" ]
     then
       echo "successful"
       num_passed=$(expr $num_passed + 1)

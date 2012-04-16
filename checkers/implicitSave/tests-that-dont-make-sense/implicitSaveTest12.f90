@@ -8,7 +8,7 @@ module test
   end subroutine f
   
   subroutine h(x)
-    integer, intent(out) :: x
+    integer, intent(in) :: x
     call g(x)
   end subroutine h
   
