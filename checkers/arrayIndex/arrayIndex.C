@@ -120,6 +120,7 @@ namespace CompassAnalyses {
       return exp_r->get_expressions();
     }
 
+    // TODO: keep this function
     int findArraySize(const SgArrayType* const atype, const std::string array_name) {
       int array_dimension = 0;  // IF array size cannot be determinded, return 0 as default
       int array_dimension_lowerbound, array_dimension_upperbound;  // DIMENSION(-2:3)
@@ -632,6 +633,22 @@ Traversal(Compass::Parameters, Compass::OutputObject* output)
 
 }
 
+void
+printNodes(const std::vector<SgNode *> &nodes)
+{
+  foreach(std::vector<SgNode *>::const_iterator::value_type n, nodes){
+#ifdef _DEBUG
+    if( isSgLocatedNode(n) ){
+      SgLocatedNode * ln = isSgLocatedNode(n);
+      Sg_File_Info  * fileInfo = ln->get_file_info();
+      std::cout << "Line " << fileInfo->get_line() << " "
+                << ln->sage_class_name() << ": "
+                << n->unparseToString() << std::endl;
+    }
+#endif
+  }
+}
+
 std::vector<SgNode *>
 CompassAnalyses::ArrayIndex::Traversal::
 getDominatorChain(const SgVariableSymbol* const var,
@@ -650,12 +667,12 @@ getDominatorChain(const SgVariableSymbol* const var,
     foreach(const SgInitializedName * const name, def.first) {
       // Select mattching def for var, TODO: is there a more efficient way to do this lookup?
       if( var != name->get_symbol_from_symbol_table() ) continue;
-#ifdef DEBUG
-      std::cout << "Found a match: " << var->get_name().getString()
-                << "[" << def.second->getRenamingNumber() << "]"
-                << " node type: " << var->sage_class_name()
-                << std::endl;
-      std::cout << "Definition is: " << def.second->getDefinitionNode()->unparseToString() << std::endl;
+#ifdef _DEBUG
+//      std::cout << "Found a match: " << var->get_name().getString()
+//                << "[" << def.second->getRenamingNumber() << "]"
+//                << " node type: " << var->sage_class_name()
+//                << std::endl;
+//      std::cout << "Definition is: " << def.second->getDefinitionNode()->unparseToString() << std::endl;
 #endif
       // Get all conditionals and check if they contain "name" (with
       // the correct renaming number)
@@ -677,17 +694,8 @@ getDominatorChain(const SgVariableSymbol* const var,
 
           // This is the effect we are really after. We store the node for later processing
           slice.push_back(n.getNode());
-#ifdef DEBUG
-          if( isSgLocatedNode(n.getNode()) ){
-            SgLocatedNode * ln = isSgLocatedNode(n.getNode());
-            Sg_File_Info * fileInfo = ln->get_file_info();
-            std::cout << "Line " << fileInfo->get_line() << " "
-                      << ln->sage_class_name() << ": "
-                      << n.getNode()->unparseToString() << std::endl;
-          }
-#endif
           if( n.getNode() == def.second->getDefinitionNode() ){
-#ifdef DEBUG
+#ifdef _DEBUG
             std::cout << "Found matching definition" << std::endl;
 #endif
             break;
@@ -715,11 +723,11 @@ visit(SgNode* node) {
       const SgExpressionPtrList exprs = getIndexExpressions(*arrRef);
       foreach(SgExpressionPtrList::const_iterator::value_type exp, exprs) {
         // 2. score each index expression and report the score
-#ifdef DEBUG
-        std::cout << "Expression Type: " << exp->sage_class_name()
-                  << std::endl
-                  << "Expression: " << exp->unparseToString()
-                  << std::endl;
+#ifdef _DEBUG
+//        std::cout << "Expression Type: " << exp->sage_class_name()
+//                  << std::endl
+//                  << "Expression: " << exp->unparseToString()
+//                  << std::endl;
 #endif
         // TODO: This next bit will skip over constants used in the indexes
         const Rose_STL_Container<SgNode*> varrefs =
@@ -728,22 +736,36 @@ visit(SgNode* node) {
           const SgVariableSymbol* const var = isSgVarRefExp(v)->get_symbol();
 
           if (var == NULL) continue;
-#ifdef DEBUG
-          std::cout << "Sub-expression symbol: " << var->get_name().getString()
-                    << std::endl;
+#ifdef _DEBUG
+//          std::cout << "Sub-expression symbol: " << var->get_name().getString()
+//                    << std::endl;
 #endif
           const StaticSingleAssignment::NodeReachingDefTable & defTable =
                                                  ssa->getReachingDefsAtNode_(v);
-#ifdef DEBUG
-          std::cout << "DefTable: " << std::endl;
+#ifdef _DEBUG
+//          std::cout << "DefTable: " << std::endl;
 #endif
           // 3. Match the variables in the expression up with their definition
           // For example, in the expression A(x,y), we first want to score x, then
           // separately score y, and not score A unless we had something like
           // B(A(x,y)).  This means that scoring should be based on the
           // "var" above.
-          std::vector<SgNode *> slice = getDominatorChain(var, fd, arrRef, defTable);
-          std::cout << slice.size() << std::endl;
+          const std::vector<SgNode *> slice = getDominatorChain(var, fd, arrRef, defTable);
+          printNodes(slice);
+
+          const SgVariableSymbol * const var_l = isSgVarRefExp(arrRef->get_lhs_operand())->get_symbol();
+
+          // Find array name and size
+          if( var_l == NULL ){
+            std::cout << "\t!Find array reference 'SgPntrArrRefExp' but lhs(array name) is unknown :" << arrRef->get_lhs_operand()->class_name() << std::endl;
+            continue;
+          }
+          const SgInitializedName * const init_l          = var_l->get_declaration();
+          const std::string               array_name      = var_l->get_name().getString();
+          const SgArrayType       * const atype           = init_l != NULL ? isSgArrayType(init_l->get_type()) : NULL;
+          const int                       array_dimension = findArraySize(atype, array_name);
+          std::cout << "array_dimension = " << array_dimension << std::endl;
+
         }
       }
     }
