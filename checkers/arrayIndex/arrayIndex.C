@@ -24,7 +24,7 @@
 #include "rose.h"
 #include "compass.h"
 #include <staticSingleAssignment.h>
-#include <backstrokeCFG.h>
+#include <backstroke/backstrokeCFG.h>
 #include <boost/foreach.hpp>
 
 #define foreach BOOST_FOREACH
@@ -91,6 +91,11 @@ namespace CompassAnalyses {
         // void *evaluateInheritedAttribute(SgNode *, void *);
         // for AstTopDownProcessing.
         void visit(SgNode* n);
+        std::vector<SgNode *> getDominatorChain(const SgVariableSymbol* const var,
+                                                SgFunctionDefinition * const fd,
+                                                SgPntrArrRefExp * const arrRef,
+                                                const StaticSingleAssignment::NodeReachingDefTable & defTable) const;
+
 
       private:
         std::auto_ptr<StaticSingleAssignment> ssa;
@@ -627,9 +632,77 @@ Traversal(Compass::Parameters, Compass::OutputObject* output)
 
 }
 
+std::vector<SgNode *>
+CompassAnalyses::ArrayIndex::Traversal::
+getDominatorChain(const SgVariableSymbol* const var,
+                  SgFunctionDefinition * const fd,
+                  SgPntrArrRefExp * const arrRef,
+                  const StaticSingleAssignment::NodeReachingDefTable & defTable) const
+{
+  std::vector<SgNode *> slice;
+  foreach(StaticSingleAssignment::NodeReachingDefTable::const_iterator::
+                                               value_type def, defTable) {
+    assert(def.first.size() == 1); // TODO: why is this always true?
+    // TODO: a) Find the correct def
+    //       b) find all uses of def that dominate the use in the array
+    //       c) check each of those uses to see if they are a conditional
+    //       d) grade each conditional based on the array declaration
+    foreach(const SgInitializedName * const name, def.first) {
+      // Select mattching def for var, TODO: is there a more efficient way to do this lookup?
+      if( var != name->get_symbol_from_symbol_table() ) continue;
+#ifdef DEBUG
+      std::cout << "Found a match: " << var->get_name().getString()
+                << "[" << def.second->getRenamingNumber() << "]"
+                << " node type: " << var->sage_class_name()
+                << std::endl;
+      std::cout << "Definition is: " << def.second->getDefinitionNode()->unparseToString() << std::endl;
+#endif
+      // Get all conditionals and check if they contain "name" (with
+      // the correct renaming number)
+      // Still have the issue of checking if the conditional
+      // dominates the use we care about
+      typedef ssa_private::DataflowCfgFilter CfgNodeT;
+      typedef Backstroke::CFG<CfgNodeT> ControlFlowGraph;
+      ControlFlowGraph cfg(fd);
+      ControlFlowGraph::VertexVertexMap
+               dominatorTreeMap = cfg.getDominatorTree();
+      foreach(const ControlFlowGraph::VertexVertexMap::value_type& nodeDominatorPair, dominatorTreeMap){
+        ControlFlowGraph::CFGNodeType node      = *cfg[nodeDominatorPair.first];
+        ControlFlowGraph::CFGNodeType dominator = *cfg[nodeDominatorPair.second];
+        if( node.getNode() != arrRef ) continue; // TODO: Without this we get into an infinite loop. Is
+                                                 // there a more direct/efficient lookup we could do?
+        for(ControlFlowGraph::VertexVertexMap::key_type v = dominatorTreeMap[nodeDominatorPair.second];;
+            v = dominatorTreeMap[v]){
+          ControlFlowGraph::CFGNodeType n = *cfg[v];
+
+          // This is the effect we are really after. We store the node for later processing
+          slice.push_back(n.getNode());
+#ifdef DEBUG
+          if( isSgLocatedNode(n.getNode()) ){
+            SgLocatedNode * ln = isSgLocatedNode(n.getNode());
+            Sg_File_Info * fileInfo = ln->get_file_info();
+            std::cout << "Line " << fileInfo->get_line() << " "
+                      << ln->sage_class_name() << ": "
+                      << n.getNode()->unparseToString() << std::endl;
+          }
+#endif
+          if( n.getNode() == def.second->getDefinitionNode() ){
+#ifdef DEBUG
+            std::cout << "Found matching definition" << std::endl;
+#endif
+            break;
+          }
+        }
+      }
+    }
+  }
+  return slice;
+}
+
 void
 CompassAnalyses::ArrayIndex::Traversal::
 visit(SgNode* node) {
+  // From this point on we are dealing with an array reference.
   const Rose_STL_Container<SgNode*> functionDefs =
                NodeQuery::querySubTree(node, V_SgFunctionDefinition);
   foreach(SgNode * const n, functionDefs) {
@@ -642,73 +715,39 @@ visit(SgNode* node) {
       const SgExpressionPtrList exprs = getIndexExpressions(*arrRef);
       foreach(SgExpressionPtrList::const_iterator::value_type exp, exprs) {
         // 2. score each index expression and report the score
+#ifdef DEBUG
         std::cout << "Expression Type: " << exp->sage_class_name()
                   << std::endl
                   << "Expression: " << exp->unparseToString()
                   << std::endl;
+#endif
         // TODO: This next bit will skip over constants used in the indexes
         const Rose_STL_Container<SgNode*> varrefs =
                      NodeQuery::querySubTree(exp, V_SgVarRefExp);
         foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type v, varrefs){
           const SgVariableSymbol* const var = isSgVarRefExp(v)->get_symbol();
 
-          if (var) {
-            std::cout << "Sub-expression symbol: " << var->get_name().getString()
-                      << std::endl;
-            const StaticSingleAssignment::NodeReachingDefTable & defTable =
-                                                   ssa->getReachingDefsAtNode_(v);
-            std::cout << "DefTable: " << std::endl;
-            // 3. Match the variables in the expression up with their definition
-            // For example, in the expression A(x,y), we first want to score x, then
-            // separately score y, and not score A unless we had something like
-            // B(A(x,y)).  This means that scoring should be based on the
-            // "var" above.
-            foreach(StaticSingleAssignment::NodeReachingDefTable::const_iterator::
-                                                         value_type def, defTable) {
-              assert(def.first.size() == 1); // TODO: why is this always true?
-              // TODO: a) Find the correct def
-              //       b) find all uses of def that dominate the use in the array
-              //       c) check each of those uses to see if they are a conditional
-              //       d) grade each conditional based on the array declaration
-              foreach(const SgInitializedName * const name, def.first) {
-                // Select mattching def for var
-                // TODO: Does this way of matching respect the renaming number?
-                //       that is, does it find the exact instance of the variable?
-                if( var == name->get_symbol_from_symbol_table() ){
-                  std::cout << "Found a match: " << var->get_name().getString()
-                            << "[" << def.second->getRenamingNumber() << "]"
-                            << std::endl;
-                  // Get all conditionals and check if they contain "name" (with
-                  // the correct renaming number)
-                  // Still have the issue of checking if the conditional
-                  // dominates the use we care about
-                  const Rose_STL_Container<SgNode*> dos =
-                               NodeQuery::querySubTree(node, V_SgFortranDo);
-                  const Rose_STL_Container<SgNode*> ifs =
-                               NodeQuery::querySubTree(node, V_SgIfStmt);
-                  typedef ssa_private::DataflowCfgFilter CfgNodeT;
-                  typedef Backstroke::CFG<CfgNodeT> ControlFlowGraph;
-                  ControlFlowGraph cfg(fd);
-                  const ControlFlowGraph::VertexVertexMap
-                           dominatorTreeMap = cfg.getDominatorTree();
-                  foreach(const ControlFlowGraph::VertexVertexMap::value_type& nodeDominatorPair, dominatorTreeMap) {
-                    ControlFlowGraph::CFGNodeType node = *cfg[nodeDominatorPair.first];
-                    ControlFlowGraph::CFGNodePtr dominator = cfg[nodeDominatorPair.second];
-                    if( node.getNode() == arrRef ) {
-                      std::cout << dominator->getNode()->unparseToString() << std::endl;
-                    }
-                  }
-                }
-              }
-            }
-          }
+          if (var == NULL) continue;
+#ifdef DEBUG
+          std::cout << "Sub-expression symbol: " << var->get_name().getString()
+                    << std::endl;
+#endif
+          const StaticSingleAssignment::NodeReachingDefTable & defTable =
+                                                 ssa->getReachingDefsAtNode_(v);
+#ifdef DEBUG
+          std::cout << "DefTable: " << std::endl;
+#endif
+          // 3. Match the variables in the expression up with their definition
+          // For example, in the expression A(x,y), we first want to score x, then
+          // separately score y, and not score A unless we had something like
+          // B(A(x,y)).  This means that scoring should be based on the
+          // "var" above.
+          std::vector<SgNode *> slice = getDominatorChain(var, fd, arrRef, defTable);
+          std::cout << slice.size() << std::endl;
         }
       }
     }
   }
-  // From this point on we are dealing with an array reference.
-
-
 
 /* This is the old traversal.  Useful for reference, but we are rewriting the
  * traversal to use ROSE's def-use and dominance analysis.
