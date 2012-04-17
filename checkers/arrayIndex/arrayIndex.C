@@ -757,7 +757,9 @@ visit(SgNode* node) {
 
           // Find array name and size
           if( var_l == NULL ){
-            std::cout << "\t!Find array reference 'SgPntrArrRefExp' but lhs(array name) is unknown :" << arrRef->get_lhs_operand()->class_name() << std::endl;
+            std::cout << "\t!Find array reference 'SgPntrArrRefExp' but lhs(array name) is unknown: "
+                      << arrRef->get_lhs_operand()->class_name()
+                      << std::endl;
             continue;
           }
           const SgInitializedName * const init_l          = var_l->get_declaration();
@@ -765,121 +767,67 @@ visit(SgNode* node) {
           const SgArrayType       * const atype           = init_l != NULL ? isSgArrayType(init_l->get_type()) : NULL;
           const int                       array_dimension = findArraySize(atype, array_name);
           std::cout << "array_dimension = " << array_dimension << std::endl;
-
-        }
-      }
-    }
-  }
-
-/* This is the old traversal.  Useful for reference, but we are rewriting the
- * traversal to use ROSE's def-use and dominance analysis.
- */
-/*
-  SgPntrArrRefExp* const pntr = isSgPntrArrRefExp(node);
-
-  if ( pntr == NULL ) {
-    return;
-  }
-
-  const SgInitializedName* init_l=NULL;
-  const SgInitializedName* init_r=NULL;
-
-  const SgVariableSymbol* var_l = NULL;
-  const SgVariableSymbol* var_r = NULL;
-  var_l = isSgVarRefExp(pntr->get_lhs_operand())->get_symbol();
-
-
-  int line_number_array = 0;   // line where array is referenced
-  line_number_array = pntr->get_file_info()->get_line();
-  std::string array_name = "";
-  int         array_dimension = 0;            // DIMENSION(5)
-
-  std::string index_name = "";
-
-  int check_flag = 0;
-  int level      = 0;
-
-  // Find array name and size
-  if (var_l) {
-    init_l = var_l->get_declaration();
-    array_name = var_l->get_name().getString();
-
-    // Find array size
-    const SgArrayType* const atype = isSgArrayType(init_l->get_type());
-    array_dimension = findArraySize(atype, array_name);
-
-  }
-
-  else {
-    std::cout << "\t!Find array reference 'SgPntrArrRefExp' but lhs(array name) is unknown :" << pntr->get_lhs_operand()->class_name() << std::endl;
-    return;
-  }
-
-
-  // For C
-  // var_r = isSgVarRefExp(pntr->get_rhs_operand())->get_symbol();
-
-  // For FORTRAN,
-  // ISSUE: this may only work for 1-D  array.  for 2D or 3D, there could be multiple var_r to be considered
-  // refer to compass code on how to treat 'argument'
-  // TBD : for 2-D, 3-D, try query subtree of pntr->get_rhs_operand() to search for isSgVarRefExp node
-  //         because it may not be direct child
-
-  //Find rhs of the referrenced array, i.e.,index node "I"
-  // for "A[I] = " or "A[I-1]", the rhs of SgPntrArrRefExp is SgExprListExp
-  // - for A[I] , index SgVarRefExp is the direct child of SgExprListExp
-  // - while for A[I-1] , need to go through its subtree to find index node SgVarRefExp
-  const SgExprListExp* const exp_r = isSgExprListExp(pntr->get_rhs_operand());
-  const SgExpressionPtrList list = exp_r->get_expressions();
-  for (SgExpressionPtrList::const_iterator i = list.begin(); i != list.end(); i++) {
-    if (isSgVarRefExp(*i)) { // A[I]
-      var_r = isSgVarRefExp(*i)->get_symbol();
-
-      // Find index variable name
-      if (var_r) {
-        init_r = var_r->get_declaration();
-        index_name = var_r->get_name().getString();
-
-        // not found both array and index variable then return
-        if ( (!init_l) || (!init_r) ) {
-          return;
-        }
-        checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
-      } else {
-        //std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expression is not handled:"
-        //            << pntr->get_rhs_operand()->class_name() << std::endl;
-        return;
-      }
-    } else { // A[I-1] or A(I,J,K), search subtree for SgVarRefExp
-      const Rose_STL_Container<SgNode*> subtree = NodeQuery::querySubTree ((*i),V_SgVarRefExp);
-      if (!subtree.empty()) {
-        for (Rose_STL_Container<SgNode*>::const_iterator j = subtree.begin(); j != subtree.end(); j++) {
-          var_r = isSgVarRefExp(*j)->get_symbol();
-
-          // Find index variable name
-          if (var_r) {
-            init_r = var_r->get_declaration();
-            index_name = var_r->get_name().getString();
-
-            // not found both array and index variable then return
-            if ( (!init_l) || (!init_r) ) {
-              return;
+/* Start old traversal, translated to new code -- but it's probably not doing anything useful */
+          //Find rhs of the referrenced array, i.e.,index node "I"
+          // for "A[I] = " or "A[I-1]", the rhs of SgPntrArrRefExp is SgExprListExp
+          // - for A[I] , index SgVarRefExp is the direct child of SgExprListExp
+          // - while for A[I-1] , need to go through its subtree to find index node SgVarRefExp
+          const SgExprListExp * const exp_r = isSgExprListExp(arrRef->get_rhs_operand());
+          if( exp_r == NULL ) ROSE_ASSERT( false ); // TODO: how can we get here?
+          const SgExpressionPtrList expr_list = exp_r->get_expressions();
+          foreach(const SgExpressionPtrList::const_iterator::value_type exp, expr_list){
+          //for (SgExpressionPtrList::const_iterator i = list.begin(); i != list.end(); i++) {
+            if (isSgVarRefExp(exp)) { // A[I]
+              const SgVariableSymbol * const var_r = isSgVarRefExp(exp)->get_symbol();
+        
+              // Find index variable name
+              if (var_r) {
+                const SgInitializedName * const init_r     = var_r->get_declaration();
+                const std::string               index_name = var_r->get_name().getString();
+        
+                // not found both array and index variable then return
+                if ( (!init_l) || (!init_r) ) {
+                  continue; // TODO: how did we get here?
+                }
+                //checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
+              } else {
+                std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expression is not handled: "
+                          << arrRef->get_rhs_operand()->class_name()
+                          << std::endl;
+                continue;
+              }
+            } else { // A[I-1] or A(I,J,K), search subtree for SgVarRefExp
+              const std::vector<SgNode*> subtree = NodeQuery::querySubTree(exp, V_SgVarRefExp);
+              if( !subtree.empty() ){
+                foreach(std::vector<SgNode *>::const_iterator::value_type node, subtree){
+                //for (Rose_STL_Container<SgNode*>::const_iterator j = subtree.begin(); j != subtree.end(); j++) {
+                  const SgVariableSymbol * const var_r = isSgVarRefExp(node)->get_symbol();
+        
+                  // Find index variable name
+                  if (var_r) {
+                    const SgInitializedName * const init_r     = var_r->get_declaration();
+                    const std::string               index_name = var_r->get_name().getString();
+        
+                    // not found both array and index variable then return
+                    if ( (!init_l) || (!init_r) ) {
+                      continue;
+                    }
+                    //checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
+                  } else {
+                    std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expreesion is not handled: "
+                              << arrRef->get_rhs_operand()->class_name()
+                              << std::endl;
+                    continue;
+                  }
+                }  // end of for
+              }
             }
-            checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
-          } else {
-            //std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expreesion is not handled:"
-            //            << pntr->get_rhs_operand()->class_name() << std::endl;
-            continue;
-          }
-        }  // end of for
+          } // end of for iterator i
+/* End old traversal code */
+        }
       }
     }
-  } // end of for iterator i
-
-  // not found both array and index variable then return
-  if ( (!init_l) || (!init_r) )
-    return;
-*/
+  }
 } //End of the visit function.
 
 // Checker main run function and metadata
