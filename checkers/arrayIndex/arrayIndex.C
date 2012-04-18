@@ -425,8 +425,82 @@ namespace CompassAnalyses {
       return cl;
     }
 
+    int checkNode(const SgVariableSymbol* const var,
+                  SgNode* const node,
+                  const SgNode * const dominator,
+                  Compass::OutputObject * const output)
+    {
+      // Find previous IF statement or WHILE statement
+      if( isSgIfStmt(dominator) ){
+        std::cout << "Dominator " << dominator->sage_class_name() << ": "
+                  << dominator->unparseToString() << std::endl
+                  << "ArrRef " << node->sage_class_name() << ": "
+                  << node->unparseToString() << std::endl
+                  << "Index " << var->get_name().getString() << std::endl;
+        const SgIfStmt*    const ifstmt    = isSgIfStmt(dominator);
+      } else if( isSgWhileStmt(dominator) ){
+        std::cout << "Dominator " << dominator->sage_class_name() << ": "
+                  << dominator->unparseToString() << std::endl
+                  << "ArrRef " << node->sage_class_name() << ": "
+                  << node->unparseToString() << std::endl
+                  << "Index " << var->get_name().getString() << std::endl;
+        const SgWhileStmt* const whilestmt = isSgWhileStmt(dominator);
+      } else if( isSgFortranDo(dominator) ){ 
+        std::cout << "Dominator " << dominator->sage_class_name() << ": "
+                  << dominator->unparseToString() << std::endl
+                  << "ArrRef " << node->sage_class_name() << ": "
+                  << node->unparseToString() << std::endl
+                  << "Index " << var->get_name().getString() << std::endl;
+        const SgFortranDo* const dostmt    = isSgFortranDo(dominator);
+      } else if( isSgAssignOp(dominator) ){
+        std::cout << "Dominator " << dominator->sage_class_name() << ": "
+                  << dominator->unparseToString() << std::endl
+                  << "ArrRef " << node->sage_class_name() << ": "
+                  << node->unparseToString() << std::endl
+                  << "Index " << var->get_name().getString() << std::endl;
+        const SgAssignOp*  const assignop  = isSgAssignOp(dominator);
+        // index  J reassigned a value used in DO bound before referenced
+        // DO I= ...I++
+        //    J = I - 1
+        //    A(J) = ...
+        const SgVarRefExp* const assignop_lhs_var = isSgVarRefExp(assignop->get_lhs_operand());
+        if( assignop_lhs_var == NULL ) return 0; // TODO: is this the right value to return?
+        const SgVariableSymbol* const assignop_lhs_var_symbol = assignop_lhs_var->get_symbol();
+        const std::string assignop_lhs_var_symbol_name = assignop_lhs_var_symbol->get_name().getString();
+
+        // TODO: we're trying to determine if the index we want to use is the same one assigned here, we should
+        // actually be using the def-use information.
+        const std::string node_name = ""; //node->get_name().getString();
+        if( assignop_lhs_var_symbol_name.compare(node_name) != 0 ) return 0; // TODO: is this the right value to return?
+
+        const int         line_number_check = assignop->get_file_info()->get_line();
+        const int         check_flag        = 1;
+        const int         level             = 1;
+        const std::string reason            = "level-"  + to_string(level) + " found for "+ node->unparseToString()
+                                            + ", checked on line "
+                                            +  to_string(line_number_check);
+        output->addOutput(new CheckerOutput(node,reason));
+        return 1; // TODO: ??
+      } else {
+        //std::cout << "Dominating node of unexpected type " << dominator->sage_class_name() << ": " 
+        //          << dominator->unparseToString() << std::endl;
+        return 0;
+      }
+      return 0;
+    }
+
+    void checkIndex(const SgVariableSymbol* const var,
+                    SgNode* const node, const std::vector<SgNode *>& slice,
+                    const std::string index_name, int check_flag, int level,
+                    int array_dimension, const std::string array_name, Compass::OutputObject* const output){
+      // Just here to silence unused variable warnings
+      //std::cout << node << slice.size() << index_name << check_flag << level << array_dimension << array_name << output << std::endl;
+      foreach(const SgNode * dominator, slice){
+        checkNode(var, node, dominator, output); 
+      }
+    }
     void checkIndex(SgNode* const node, const std::string index_name, int check_flag, int level,
-                    const int array_dimension, const std::string array_name, Compass::OutputObject* const output ) {
+                    int array_dimension, const std::string array_name, Compass::OutputObject* const output ) {
       //std::cout << "   Start to walk backward CFG..." << std::endl;
 
       //traverse cfg BK  and find next assign node involving index i
@@ -692,7 +766,7 @@ getDominatorChain(const SgVariableSymbol* const var,
             v = dominatorTreeMap[v]){
           ControlFlowGraph::CFGNodeType n = *cfg[v];
 
-          // This is the effect we are really after. We store the node for later processing
+          // This is what we are really after. We store the node for later processing
           slice.push_back(n.getNode());
           if( n.getNode() == def.second->getDefinitionNode() ){
 #ifdef _DEBUG
@@ -751,7 +825,7 @@ visit(SgNode* node) {
           // B(A(x,y)).  This means that scoring should be based on the
           // "var" above.
           const std::vector<SgNode *> slice = getDominatorChain(var, fd, arrRef, defTable);
-          printNodes(slice);
+          //printNodes(slice);
 
           const SgVariableSymbol * const var_l = isSgVarRefExp(arrRef->get_lhs_operand())->get_symbol();
 
@@ -764,65 +838,66 @@ visit(SgNode* node) {
           }
           const SgInitializedName * const init_l          = var_l->get_declaration();
           const std::string               array_name      = var_l->get_name().getString();
+          const SgVariableSymbol  * const var_r           = isSgVarRefExp(exp)->get_symbol();
+          const std::string               index_name      = var_r  != NULL ? var_r->get_name().getString()     : "";
           const SgArrayType       * const atype           = init_l != NULL ? isSgArrayType(init_l->get_type()) : NULL;
           const int                       array_dimension = findArraySize(atype, array_name);
-          std::cout << "array_dimension = " << array_dimension << std::endl;
+          //std::cout << "array_dimension = " << array_dimension << std::endl;
+          checkIndex(var, arrRef, slice, index_name, 0, 0, array_dimension, array_name, output);
 /* Start old traversal, translated to new code -- but it's probably not doing anything useful */
-          //Find rhs of the referrenced array, i.e.,index node "I"
-          // for "A[I] = " or "A[I-1]", the rhs of SgPntrArrRefExp is SgExprListExp
-          // - for A[I] , index SgVarRefExp is the direct child of SgExprListExp
-          // - while for A[I-1] , need to go through its subtree to find index node SgVarRefExp
-          const SgExprListExp * const exp_r = isSgExprListExp(arrRef->get_rhs_operand());
-          if( exp_r == NULL ) ROSE_ASSERT( false ); // TODO: how can we get here?
-          const SgExpressionPtrList expr_list = exp_r->get_expressions();
-          foreach(const SgExpressionPtrList::const_iterator::value_type exp, expr_list){
-          //for (SgExpressionPtrList::const_iterator i = list.begin(); i != list.end(); i++) {
-            if (isSgVarRefExp(exp)) { // A[I]
-              const SgVariableSymbol * const var_r = isSgVarRefExp(exp)->get_symbol();
-        
-              // Find index variable name
-              if (var_r) {
-                const SgInitializedName * const init_r     = var_r->get_declaration();
-                const std::string               index_name = var_r->get_name().getString();
-        
-                // not found both array and index variable then return
-                if ( (!init_l) || (!init_r) ) {
-                  continue; // TODO: how did we get here?
-                }
-                //checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
-              } else {
-                std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expression is not handled: "
-                          << arrRef->get_rhs_operand()->class_name()
-                          << std::endl;
-                continue;
-              }
-            } else { // A[I-1] or A(I,J,K), search subtree for SgVarRefExp
-              const std::vector<SgNode*> subtree = NodeQuery::querySubTree(exp, V_SgVarRefExp);
-              if( !subtree.empty() ){
-                foreach(std::vector<SgNode *>::const_iterator::value_type node, subtree){
-                //for (Rose_STL_Container<SgNode*>::const_iterator j = subtree.begin(); j != subtree.end(); j++) {
-                  const SgVariableSymbol * const var_r = isSgVarRefExp(node)->get_symbol();
-        
-                  // Find index variable name
-                  if (var_r) {
-                    const SgInitializedName * const init_r     = var_r->get_declaration();
-                    const std::string               index_name = var_r->get_name().getString();
-        
-                    // not found both array and index variable then return
-                    if ( (!init_l) || (!init_r) ) {
-                      continue;
-                    }
-                    //checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
-                  } else {
-                    std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expreesion is not handled: "
-                              << arrRef->get_rhs_operand()->class_name()
-                              << std::endl;
-                    continue;
-                  }
-                }  // end of for
-              }
-            }
-          } // end of for iterator i
+//          //Find rhs of the referrenced array, i.e.,index node "I"
+//          // for "A[I] = " or "A[I-1]", the rhs of SgPntrArrRefExp is SgExprListExp
+//          // - for A[I] , index SgVarRefExp is the direct child of SgExprListExp
+//          // - while for A[I-1] , need to go through its subtree to find index node SgVarRefExp
+//          const SgExprListExp * const exp_r = isSgExprListExp(arrRef->get_rhs_operand());
+//          if( exp_r == NULL ) ROSE_ASSERT( false ); // TODO: how can we get here?
+//          const SgExpressionPtrList expr_list = exp_r->get_expressions();
+//          foreach(const SgExpressionPtrList::const_iterator::value_type exp, expr_list){
+//            if (isSgVarRefExp(exp)) { // A[I]
+//              const SgVariableSymbol * const var_r = isSgVarRefExp(exp)->get_symbol();
+//        
+//              // Find index variable name
+//              if (var_r) {
+//                const SgInitializedName * const init_r     = var_r->get_declaration();
+//                const std::string               index_name = var_r->get_name().getString();
+//        
+//                // not found both array and index variable then return
+//                if ( (!init_l) || (!init_r) ) {
+//                  continue; // TODO: how did we get here?
+//                }
+//                //checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
+//              } else {
+//                std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expression is not handled: "
+//                          << arrRef->get_rhs_operand()->class_name()
+//                          << std::endl;
+//                continue;
+//              }
+//            } else { // A[I-1] or A(I,J,K), search subtree for SgVarRefExp
+//              const std::vector<SgNode*> subtree = NodeQuery::querySubTree(exp, V_SgVarRefExp);
+//              if( !subtree.empty() ){
+//                foreach(const std::vector<SgNode *>::const_iterator::value_type node, subtree){
+//                  const SgVariableSymbol * const var_r = isSgVarRefExp(node)->get_symbol();
+//        
+//                  // Find index variable name
+//                  if (var_r) {
+//                    const SgInitializedName * const init_r     = var_r->get_declaration();
+//                    const std::string               index_name = var_r->get_name().getString();
+//        
+//                    // not found both array and index variable then return
+//                    if ( (!init_l) || (!init_r) ) {
+//                      continue;
+//                    }
+//                    //checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
+//                  } else {
+//                    std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expreesion is not handled: "
+//                              << arrRef->get_rhs_operand()->class_name()
+//                              << std::endl;
+//                    continue;
+//                  }
+//                }  // end of for
+//              }
+//            }
+//          } // end of for iterator i
 /* End old traversal code */
         }
       }

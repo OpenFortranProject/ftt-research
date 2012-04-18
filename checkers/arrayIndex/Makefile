@@ -30,7 +30,7 @@ BOOST_INCLUDE_PATH ?= /usr
 
 CHECKER_NAME := testChecker
 
-CXX_FLAGS := -fPIC -Wall -Werror -Wextra -pedantic -pedantic-errors -Wno-deprecated -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH) -DDEBUG
+CXX_FLAGS := -fPIC -Wall -Werror -Wextra -pedantic -pedantic-errors -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH) -D_DEBUG
 
 LINKER_FLAGS := $(ROSE_LIB) $(ROSE_OPTIONAL_LIBS) $(LOCAL_COMPASS_LIB) $(PATH_TO_SPECIFIC_LIBSTDCXX)
 
@@ -40,7 +40,7 @@ libcompass.so: compass.h compass.C
 	g++ -shared -o libcompass.so compass.C $(CXX_FLAGS)
 
 arrayIndex: arrayIndex.C arrayIndexMain.C libcompass.so
-	g++ -o arrayIndex  arrayIndexMain.C arrayIndex.C $(CXX_FLAGS) $(LINKER_FLAGS)
+	g++ $(CXX_FLAGS) -o arrayIndex  arrayIndexMain.C arrayIndex.C $(LINKER_FLAGS)
 
 test: arrayIndex arrayIndexTest1.C
 	./arrayIndex arrayIndexTest1.C
