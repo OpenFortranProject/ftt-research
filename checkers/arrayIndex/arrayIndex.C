@@ -36,7 +36,7 @@ extern const Compass::Checker* const arrayIndexChecker;
 // rose/projects/compass/extensions/prerequisites/ProjectPrerequisite.h
 // I can't tell that it is defined anywhere in compass except the extern
 // declaration in ProjectPrerequisite.h
-Compass::ProjectPrerequisite Compass::projectPrerequisite;
+extern Compass::ProjectPrerequisite Compass::projectPrerequisite;
 
 #ifndef COMPASS_ARRAY_INDEX_H
 #define COMPASS_ARRAY_INDEX_H
@@ -60,11 +60,11 @@ namespace CompassAnalyses {
 
     class Traversal
         : public Compass::AstSimpleProcessingWithRunFunction {
-        Compass::OutputObject* output;
+        Compass::OutputObject& output;
         // Checker specific parameters should be allocated here.
 
       public:
-        Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+        Traversal(Compass::Parameters inputParameters, Compass::OutputObject& output);
 
         // Change the implementation of this function if you are using inherited attributes.
         void *initialInheritedAttribute() const {
@@ -209,12 +209,8 @@ namespace CompassAnalyses {
         std::string  warn;
         std::string  var_name;
         //        int  var_line_number;
-        CheckLevel(const int init_check, const int init_level, const std::string init_var_name) {
-          check_flag = init_check;
-          level      = init_level;
-          warn       = "";
-          var_name   = init_var_name;
-          //             var_line_number = init_var_line_number;
+        CheckLevel(const int init_check, const int init_level, const std::string init_var_name)
+        : check_flag(init_check), level(init_level), warn(""), var_name(init_var_name) {
         }
         void setFlag(const int s_check_flag, const int s_level) {
           check_flag = s_check_flag;
@@ -428,7 +424,7 @@ namespace CompassAnalyses {
     int checkNode(const SgVariableSymbol* const var,
                   SgNode* const node,
                   const SgNode * const dominator,
-                  Compass::OutputObject * const output)
+                  Compass::OutputObject & output)
     {
       // Find previous IF statement or WHILE statement
       if( isSgIfStmt(dominator) ){
@@ -479,7 +475,7 @@ namespace CompassAnalyses {
         const std::string reason            = "level-"  + to_string(level) + " found for "+ node->unparseToString()
                                             + ", checked on line "
                                             +  to_string(line_number_check);
-        output->addOutput(new CheckerOutput(node,reason));
+        output.addOutput(new CheckerOutput(node,reason));
         return 1; // TODO: ??
       } else {
         //std::cout << "Dominating node of unexpected type " << dominator->sage_class_name() << ": " 
@@ -492,7 +488,7 @@ namespace CompassAnalyses {
     void checkIndex(const SgVariableSymbol* const var,
                     SgNode* const node, const std::vector<SgNode *>& slice,
                     const std::string index_name, int check_flag, int level,
-                    int array_dimension, const std::string array_name, Compass::OutputObject* const output){
+                    int array_dimension, const std::string array_name, Compass::OutputObject& output){
       // Just here to silence unused variable warnings
       //std::cout << node << slice.size() << index_name << check_flag << level << array_dimension << array_name << output << std::endl;
       foreach(const SgNode * dominator, slice){
@@ -500,7 +496,7 @@ namespace CompassAnalyses {
       }
     }
     void checkIndex(SgNode* const node, const std::string index_name, int check_flag, int level,
-                    int array_dimension, const std::string array_name, Compass::OutputObject* const output ) {
+                    int array_dimension, const std::string array_name, Compass::OutputObject& output ) {
       //std::cout << "   Start to walk backward CFG..." << std::endl;
 
       //traverse cfg BK  and find next assign node involving index i
@@ -555,7 +551,7 @@ namespace CompassAnalyses {
               reason = "level-"  + to_string(level) + " found for "+ node->unparseToString()
                        + ", checked on line "
                        +  to_string(line_number_check)  ;
-              output->addOutput(new CheckerOutput(node,reason));
+              output.addOutput(new CheckerOutput(node,reason));
               return;
 
             }
@@ -615,7 +611,7 @@ namespace CompassAnalyses {
                            + ", checked on line "
                            +  to_string(line_number_check) + return_cl->warn ;
 
-                  output->addOutput(new CheckerOutput(node,reason));
+                  output.addOutput(new CheckerOutput(node,reason));
                   return;
                 }
               }
@@ -646,7 +642,7 @@ namespace CompassAnalyses {
                          + ", index " + index_name + " checked on line "
                          +  to_string(line_number_check) + return_cl->warn ;
 
-                output->addOutput(new CheckerOutput(node,reason));
+                output.addOutput(new CheckerOutput(node,reason));
                 return;
               }
             }
@@ -684,7 +680,7 @@ namespace CompassAnalyses {
         reason = "Warning:level-"  + to_string(level) + " for "+ node->unparseToString()
                  + " index " + index_name + " : No bound check";
 
-        output->addOutput(new CheckerOutput(node,reason));
+        output.addOutput(new CheckerOutput(node,reason));
       }
       return;
     }
@@ -699,8 +695,8 @@ CheckerOutput::CheckerOutput ( SgNode* node,  const std::string & reason)
 {}
 
 CompassAnalyses::ArrayIndex::Traversal::
-Traversal(Compass::Parameters, Compass::OutputObject* output)
-  : output(output) {
+Traversal(Compass::Parameters, Compass::OutputObject& output)
+  : output(output), ssa(NULL) {
   // Initalize checker specific parameters here, for example:
   // YourParameter = Compass::parseInteger(inputParameters["ArrayIndex.YourParameter"]);
 
@@ -908,12 +904,12 @@ visit(SgNode* node) {
 // Checker main run function and metadata
 
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
-  CompassAnalyses::ArrayIndex::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+  CompassAnalyses::ArrayIndex::Traversal(params, *output).run(Compass::projectPrerequisite.getProject());
 }
 
 // Remove this function if your checker is not an AST traversal
 static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
-  return new CompassAnalyses::ArrayIndex::Traversal(params, output);
+  return new CompassAnalyses::ArrayIndex::Traversal(params, *output);
 }
 
 extern const Compass::Checker* const arrayIndexChecker =
