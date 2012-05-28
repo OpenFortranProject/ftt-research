@@ -1,0 +1,4 @@
+# ignore binaries
+#
+test_halos
+test_halos_c
