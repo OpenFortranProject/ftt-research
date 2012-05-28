@@ -30,9 +30,11 @@ Module Parallel
 !
 !   W. Weseloh, LA-CC-05-074, "Parallel Library"
 !
+! History :
+!        2005-03-01, original version
+!
 !=====================================================================
- 
-Use :: MPI_F08
+Use MPI_F08
 Implicit None
 Save
  
@@ -238,19 +240,9 @@ endif
 !... Creates a balanced distribution of processors for a Cartesian topology
 Call MPI_DIMS_CREATE (numproc, ndim, dims, ierror) 
  
-print *, "TOPOLOGY--------------------------------------"
-print *, "DIMS", dims
-print *, "PERS", periods
-print *, "NDIM", ndim, reorder, MPI_COMM_WORLD, MPI_COMM_CART
-
-return
-
 !... Creates a Cartesian 3D topology (handle = MPI_COMM_CART)_
 Call MPI_CART_CREATE (MPI_COMM_WORLD, ndim, dims, periods, reorder, MPI_COMM_CART, ierror)
  
-print *, "NDIM", ndim, reorder, MPI_COMM_WORLD, MPI_COMM_CART
-return
-
 !... Rank of this processor in the new communicator MPI_COMM_CART
 Call MPI_COMM_RANK (MPI_COMM_CART, my_id, ierror)
  
@@ -289,7 +281,7 @@ Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Front,  ierror)
 !... Z+direction (Back)
 neighbor = [i,j,k+1]
 Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Back,   ierror)
- 
+
 End Subroutine Topology
  
 Logical Function Dims_Check (dims)
@@ -531,7 +523,6 @@ Subroutine Exchange3D (Array, sx,ex, sy,ey, sz,ez)
 !        communication pattern DO NOT lead to deadlock. 
 !
 !=====================================================================
- 
 Use MPI_F08
 Implicit None
  
@@ -655,7 +646,6 @@ Subroutine Parallel_Diag (lun, nx,ny,nz)
 !         Passing Interface", by W. Gropp, E. Lusk, A. Skejellum.
 !
 !=====================================================================
-
 Use MPI_F08
 Implicit None
  
@@ -764,10 +754,8 @@ Subroutine Broadcast_Integer (n)
 !         Passing Interface", by W. Gropp, E. Lusk, A. Skejellum.
 !
 !=====================================================================
-
 Use MPI_F08
 Implicit None
- 
 
 Integer, Intent(In Out) :: n
  
@@ -801,7 +789,6 @@ Subroutine Broadcast_Real (x)
 !         Passing Interface", by W. Gropp, E. Lusk, A. Skejellum.
 !
 !=====================================================================
-
 Use MPI_F08
 Implicit None
  
@@ -836,7 +823,6 @@ Subroutine Broadcast_Logical (state)
 !         Passing Interface", by W. Gropp, E. Lusk, A. Skejellum.
 !
 !=====================================================================
- 
 Use MPI_F08
 Implicit None
  
@@ -871,7 +857,6 @@ Subroutine Broadcast_String (string)
 !         Passing Interface", by W. Gropp, E. Lusk, A. Skejellum.
 !
 !=====================================================================
-
 Use MPI_F08
 Implicit None
  
