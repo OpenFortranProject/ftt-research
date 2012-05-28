@@ -241,7 +241,9 @@ Call MPI_DIMS_CREATE (numproc, ndim, dims, ierror)
 print *, "TOPOLOGY--------------------------------------"
 print *, "DIMS", dims
 print *, "PERS", periods
-print *, "NDIM", ndim, reorder, MPI_COMM_WORLD%val, MPI_COMM_CART%val
+print *, "NDIM", ndim, reorder, MPI_COMM_WORLD, MPI_COMM_CART
+
+return
 
 !... Creates a Cartesian 3D topology (handle = MPI_COMM_CART)_
 Call MPI_CART_CREATE (MPI_COMM_WORLD, ndim, dims, periods, reorder, MPI_COMM_CART, ierror)
