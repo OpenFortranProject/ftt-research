@@ -1,7 +1,7 @@
 FC = mpifort
 CC = mpicc
 
-OBJS = parallel.o parallel_halo_types.o parallel_halo.o
+OBJS = parallel_mpif08.o parallel_halo_types.o parallel_halo.o
 
 %.o : %.f90
 	$(FC) -c $<
@@ -28,7 +28,7 @@ check: test_halos test_halos_c
 
 
 # dependencies
-parallel_halo.o : parallel.o parallel_halo_types.o
+parallel_halo.o : parallel_mpif08.o parallel_halo_types.o
 test_halos.o    : parallel_halo.o
 
 clean :
