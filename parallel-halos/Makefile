@@ -32,4 +32,4 @@ parallel_halo.o : parallel_mpif08.o parallel_halo_types.o
 test_halos.o    : parallel_halo.o
 
 clean :
-	rm -rf *.o *.mod test_halos
+	rm -rf *.o *.mod test_halos test_halos_c
