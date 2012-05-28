@@ -28,8 +28,21 @@ check: test_halos test_halos_c
 
 
 # dependencies
-parallel_halo.o : parallel.o parallel_halo_types.o
-test_halos.o    : parallel_halo.o
+#
+parallel_halo_types.o : ../parallel_halo_types.f90
+	$(FC) -c -o $@ $<
+
+parallel_halo.o : ../parallel_halo.f90 parallel.o parallel_halo_types.o
+	$(FC) -c -o $@ $<
+
+test_halos.o : ../test_halos.f90 parallel_halo.o
+	$(FC) -c -o $@ $<
+
+test_halos_fc.o : ../test_halos_fc.f90
+	$(FC) -c -o $@ $<
+
+test_halos_c.o : ../test_halos_c.c
+	$(CC) -c -o $@ $<
 
 clean :
 	rm -rf *.o *.mod test_halos test_halos_c
