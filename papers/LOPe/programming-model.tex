@@ -134,6 +134,20 @@ execution.  In addition, while any thread may load from an extended region
 about \emph{its} element with the {\tt HALO} function, it may only store into
 its own elemental location.
 
+%% A note from a conversation with Matt regarding memory management
+%%
+\subsection{Memory Management}
+
+The Fortran language has much tighter restrictions on aliasing than does C.
+So unless a variable has the pointer or target attribute, it cannot be aliased.
+Thus the compiler is able to agressively optimized for memory movement between
+the CPU and accelerator.  However, because the design philosophy of coarrays
+is that memory transfer between images can be expensive, the programmer must
+explicitly transfer memory between images with explicit syntax with square
+bracket notation, i.e., $a[1] = a[2]$.  So we allow the compiler to manage
+memory within an image but require the use of {\tt halo_exchange} for the
+transfer of halo memory between images.
+
 \subsection{Code Restructuring Tools}
 
 This example is provided in some detail as it highlights several of the tools
