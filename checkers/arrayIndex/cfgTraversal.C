@@ -1,14 +1,21 @@
 #include "cfgTraversal.h"
+#include <boost/foreach.hpp>
+
+#define foreach BOOST_FOREACH
 
 cfgTraversal::cfgTraversal()
-: pths(0), tltnodes(0)
+: paths()
 {}
 
-//The path analysis function, relatively self explanatory                                                                                                                
-void cfgTraversal::analyzePath(std::vector<Vertex>& pth) {
-    tltnodes += pth.size();
-    pths++;
+void cfgTraversal::analyzePath(PathT& path) {
+  paths.push_back(path);
 }
 
-
-
+int cfgTraversal::getNumberOfPaths() const
+{
+  return paths.size();
+}
+std::vector<cfgTraversal::PathT> cfgTraversal::getAllPaths() const
+{
+  return paths;
+}

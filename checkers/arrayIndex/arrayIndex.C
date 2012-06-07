@@ -93,10 +93,11 @@ namespace CompassAnalyses {
         // void *evaluateInheritedAttribute(SgNode *, void *);
         // for AstTopDownProcessing.
         void visit(SgNode* n);
-        std::vector<SgNode *> getDominatorChain(const SgVariableSymbol* const var,
-                                                SgFunctionDefinition * const fd,
-                                                SgPntrArrRefExp * const arrRef,
-                                                const StaticSingleAssignment::NodeReachingDefTable & defTable) const;
+        std::vector<std::vector<SgNode *> >
+        getDominatorChain(const SgVariableSymbol* const var,
+                          SgFunctionDefinition * const fd,
+                          SgPntrArrRefExp * const arrRef,
+                          const StaticSingleAssignment::NodeReachingDefTable & defTable) const;
 
 
       private:
@@ -493,12 +494,13 @@ namespace CompassAnalyses {
     }
 
     void checkIndex(const SgVariableSymbol* const var,
-                    SgNode* const node, const std::vector<SgNode *>& slice,
+                    SgNode* const node, const std::vector<std::vector<SgNode *> >& slice,
                     const std::string index_name, int check_flag, int level,
                     int array_dimension, const std::string array_name, Compass::OutputObject& output){
-      foreach(const SgNode * dominator, slice){
-        checkNode(var, node, dominator, output); 
-      }
+      foreach(std::vector< SgNode * > path, slice)
+        foreach(const SgNode * dominator, path){
+          checkNode(var, node, dominator, output); 
+        }
     }
     // this is the old version and it is going away real soon now...
     void checkIndex(SgNode* const node, const std::string index_name, int check_flag, int level,
@@ -726,14 +728,14 @@ printNodes(const std::vector<SgNode *> &nodes)
 }
 
 
-std::vector<SgNode *>
+std::vector<std::vector<SgNode *> >
 CompassAnalyses::ArrayIndex::Traversal::
 getDominatorChain(const SgVariableSymbol* const var,
                   SgFunctionDefinition * const fd,
                   SgPntrArrRefExp * const arrRef,
                   const StaticSingleAssignment::NodeReachingDefTable & defTable) const
 {
-  std::vector<SgNode *> slice;
+  std::vector<std::vector<SgNode *> > chains;
   unsigned int use = 0;
   std::vector<unsigned int> definitions;
   foreach(StaticSingleAssignment::NodeReachingDefTable::const_iterator::
@@ -763,7 +765,9 @@ getDominatorChain(const SgVariableSymbol* const var,
         }
       } else {
         defs.insert(def.second->getDefinitionNode());
-        std::cout << "Definition is: " << def.second->getDefinitionNode()->unparseToString() << std::endl;
+        std::cout << "Definition on line "
+                  << def.second->getDefinitionNode()->get_file_info()->get_line()
+                  << ": " << def.second->getDefinitionNode()->unparseToString() << std::endl;
         //std::cout << "is PhiFunction? " << (def.second->isPhiFunction() ? "yes" : "no") << std::endl;
       }
 #endif
@@ -797,6 +801,7 @@ getDominatorChain(const SgVariableSymbol* const var,
           definitions.push_back(nodeDominatorPair.first);
         }
       }
+      std::vector<std::vector<unsigned int> > allPaths;
       foreach(const unsigned int d, definitions){
         cfgTraversal trav; 
         trav.constructPathAnalyzer(&cfg, false, d, use);
@@ -804,11 +809,29 @@ getDominatorChain(const SgVariableSymbol* const var,
                   << cfg[d]->getNode()->get_file_info()->get_line()
                   << " and line "
                   << cfg[use]->getNode()->get_file_info()->get_line()
-                  << ": " << trav.pths << std::endl;
+                  << ": " << trav.getNumberOfPaths() << std::endl;
+        allPaths = trav.getAllPaths();
+      }
+      int pathNum = 0;
+      foreach(std::vector<unsigned int>& path, allPaths){
+        pathNum++;
+        std::vector< SgNode *> nodes;
+        foreach(const unsigned int p, path){
+          nodes.push_back(cfg[p]->getNode());
+          std::cout << "Path " << pathNum << ": "
+                    << "cfg[" << p << "] on line "
+                    << cfg[p]->getNode()->get_file_info()->get_line()
+                    << " of type "
+                    << cfg[p]->getNode()->sage_class_name()
+                    << " = '"
+                    << cfg[p]->getNode()->unparseToString()
+                    << "'" << std::endl;
+        }
+        chains.push_back(nodes);
       }
     }
   }
-  return slice;
+  return chains;
 }
 
 void
@@ -856,7 +879,7 @@ visit(SgNode* node) {
           // separately score y, and not score A unless we had something like
           // B(A(x,y)).  This means that scoring should be based on the
           // "var" above.
-          const std::vector<SgNode *> slice = getDominatorChain(var, fd, arrRef, defTable);
+          const std::vector< std::vector<SgNode *> > slice = getDominatorChain(var, fd, arrRef, defTable);
           //printNodes(slice);
 
           const SgVariableSymbol * const var_l = isSgVarRefExp(arrRef->get_lhs_operand())->get_symbol();

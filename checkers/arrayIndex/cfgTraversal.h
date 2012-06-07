@@ -16,10 +16,16 @@ typedef ControlFlowGraph::CFGEdgeType Edge;
 class cfgTraversal : public SgGraphTraversal<ControlFlowGraph>
 {
   public:
-    int pths;
-    int tltnodes;
+    typedef std::vector<Vertex> PathT;
+  private:
+    std::vector<PathT> paths;
+  public:
     cfgTraversal();
 
-    virtual void analyzePath( std::vector<Vertex>& pth);
+    virtual void analyzePath(PathT& path);
+
+    int getNumberOfPaths() const;
+    std::vector<PathT> getAllPaths() const;
+
 };
 
