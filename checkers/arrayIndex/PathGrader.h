@@ -6,21 +6,18 @@
 //renaming to Vertex and Edge to save space
 typedef ssa_private::DataflowCfgFilter CfgNodeT;
 typedef Backstroke::CFG<CfgNodeT> ControlFlowGraph;
-//typedef boost::graph_traits<ControlFlowGraph::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */
-//typedef boost::graph_traits<ControlFlowGraph::Graph>::edge_descriptor   Edge;     /**< Graph edge type. */
+
 typedef ControlFlowGraph::CFGNodeType Vertex;
 typedef ControlFlowGraph::CFGEdgeType Edge;
 
-//visitor class, analyze path runs on the paths as they are completed, it is declared in the graphProcessing.h as a virtual function
-//that will be implemented by the user
-class cfgTraversal : public SgGraphTraversal<ControlFlowGraph>
+class PathGrader : public SgGraphTraversal<ControlFlowGraph>
 {
   public:
     typedef std::vector<Vertex> PathT;
   private:
     std::vector<PathT> paths;
   public:
-    cfgTraversal();
+    PathGrader();
 
     virtual void analyzePath(PathT& path);
 

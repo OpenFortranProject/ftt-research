@@ -44,15 +44,15 @@ all: arrayIndex
 libcompass.so: $(addprefix $(COMPASS_DIR)/,compass.C compass.h)
 	g++ -shared -o libcompass.so $< $(CXX_FLAGS)
 
-cfgTraversal.o: cfgTraversal.C cfgTraversal.h
-	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) $< -c -o cfgTraversal.o
+PathGrader.o: PathGrader.C PathGrader.h
+	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) $< -c -o $@
 
-arrayIndex: arrayIndex.C arrayIndexMain.C libcompass.so cfgTraversal.o
-	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) -o arrayIndex  arrayIndexMain.C arrayIndex.C cfgTraversal.o $(LINKER_FLAGS)
+arrayIndex: arrayIndex.C arrayIndexMain.C libcompass.so PathGrader.o
+	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) -o arrayIndex  arrayIndexMain.C arrayIndex.C PathGrader.o $(LINKER_FLAGS)
 
 test: arrayIndex arrayIndexTest1.C
 	./arrayIndex arrayIndexTest1.C
 
 clean:
-	-rm -f libcompass.so "arrayIndex"
+	-rm -f libcompass.so "arrayIndex" PathGrader.o
 

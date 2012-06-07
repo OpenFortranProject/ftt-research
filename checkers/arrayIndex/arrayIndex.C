@@ -23,7 +23,7 @@
 
 #include "rose.h"
 #include "compass.h"
-#include "cfgTraversal.h"
+#include "PathGrader.h"
 #include <staticSingleAssignment.h>
 #include <backstroke/backstrokeCFG.h>
 #include <boost/foreach.hpp>
@@ -803,14 +803,14 @@ getDominatorChain(const SgVariableSymbol* const var,
       }
       std::vector<std::vector<unsigned int> > allPaths;
       foreach(const unsigned int d, definitions){
-        cfgTraversal trav; 
-        trav.constructPathAnalyzer(&cfg, false, d, use);
+        PathGrader grader; 
+        grader.constructPathAnalyzer(&cfg, false, d, use);
         std::cout << "Number of paths between line "
                   << cfg[d]->getNode()->get_file_info()->get_line()
                   << " and line "
                   << cfg[use]->getNode()->get_file_info()->get_line()
-                  << ": " << trav.getNumberOfPaths() << std::endl;
-        allPaths = trav.getAllPaths();
+                  << ": " << grader.getNumberOfPaths() << std::endl;
+        allPaths = grader.getAllPaths();
       }
       int pathNum = 0;
       foreach(std::vector<unsigned int>& path, allPaths){
