@@ -23,6 +23,7 @@
 
 #include "rose.h"
 #include "compass.h"
+#include "cfgTraversal.h"
 #include <staticSingleAssignment.h>
 #include <backstroke/backstrokeCFG.h>
 #include <boost/foreach.hpp>
@@ -79,6 +80,7 @@ namespace CompassAnalyses {
             SgProject * const project = isSgProject(n);
             ssa = std::auto_ptr<StaticSingleAssignment>(new StaticSingleAssignment(project));
             ssa->run(true, true);
+            //ssa->toDOT("out.dot");
             this->visit(n);
             //this->traverse(n, preorder);
           } else {
@@ -428,32 +430,32 @@ namespace CompassAnalyses {
     {
       // Find previous IF statement or WHILE statement
       if( isSgIfStmt(dominator) ){
-        std::cout << "Dominator " << dominator->sage_class_name() << ": "
+        std::cout << "\tDominator " << dominator->sage_class_name() << ": "
                   << dominator->unparseToString() << std::endl
-                  << "ArrRef " << node->sage_class_name() << ": "
+                  << "\tArrRef " << node->sage_class_name() << ": "
                   << node->unparseToString() << std::endl
-                  << "Index " << var->get_name().getString() << std::endl;
+                  << "\tIndex " << var->get_name().getString() << std::endl;
         const SgIfStmt*    const ifstmt    = isSgIfStmt(dominator);
       } else if( isSgWhileStmt(dominator) ){
-        std::cout << "Dominator " << dominator->sage_class_name() << ": "
+        std::cout << "\tDominator " << dominator->sage_class_name() << ": "
                   << dominator->unparseToString() << std::endl
-                  << "ArrRef " << node->sage_class_name() << ": "
+                  << "\tArrRef " << node->sage_class_name() << ": "
                   << node->unparseToString() << std::endl
-                  << "Index " << var->get_name().getString() << std::endl;
+                  << "\tIndex " << var->get_name().getString() << std::endl;
         const SgWhileStmt* const whilestmt = isSgWhileStmt(dominator);
       } else if( isSgFortranDo(dominator) ){ 
-        std::cout << "Dominator " << dominator->sage_class_name() << ": "
+        std::cout << "\tDominator " << dominator->sage_class_name() << ": "
                   << dominator->unparseToString() << std::endl
-                  << "ArrRef " << node->sage_class_name() << ": "
+                  << "\tArrRef " << node->sage_class_name() << ": "
                   << node->unparseToString() << std::endl
-                  << "Index " << var->get_name().getString() << std::endl;
+                  << "\tIndex " << var->get_name().getString() << std::endl;
         const SgFortranDo* const dostmt    = isSgFortranDo(dominator);
       } else if( isSgAssignOp(dominator) ){
-        std::cout << "Dominator " << dominator->sage_class_name() << ": "
+        std::cout << "\tDominator " << dominator->sage_class_name() << ": "
                   << dominator->unparseToString() << std::endl
-                  << "ArrRef " << node->sage_class_name() << ": "
+                  << "\tArrRef " << node->sage_class_name() << ": "
                   << node->unparseToString() << std::endl
-                  << "Index " << var->get_name().getString() << std::endl;
+                  << "\tIndex " << var->get_name().getString() << std::endl;
         const SgAssignOp*  const assignop  = isSgAssignOp(dominator);
         // index  J reassigned a value used in DO bound before referenced
         // DO I= ...I++
@@ -463,23 +465,28 @@ namespace CompassAnalyses {
         if( assignop_lhs_var == NULL ) return 0; // TODO: is this the right value to return?
         const SgVariableSymbol* const assignop_lhs_var_symbol = assignop_lhs_var->get_symbol();
         const std::string assignop_lhs_var_symbol_name = assignop_lhs_var_symbol->get_name().getString();
+        std::cout << "Assign var symbol name: " << assignop_lhs_var_symbol_name << std::endl;
 
         // TODO: we're trying to determine if the index we want to use is the same one assigned here, we should
         // actually be using the def-use information.
-        const std::string node_name = ""; //node->get_name().getString();
+        // Can we do a symbol table look up here using var and the lhs?
+        const std::string node_name = var->get_name().getString();
         if( assignop_lhs_var_symbol_name.compare(node_name) != 0 ) return 0; // TODO: is this the right value to return?
 
         const int         line_number_check = assignop->get_file_info()->get_line();
         const int         check_flag        = 1;
         const int         level             = 1;
-        const std::string reason            = "level-"  + to_string(level) + " found for "+ node->unparseToString()
+        const std::string reason            = "level "  + to_string(level) + " found for "+ node->unparseToString()
                                             + ", checked on line "
                                             +  to_string(line_number_check);
         output.addOutput(new CheckerOutput(node,reason));
         return 1; // TODO: ??
       } else {
-        //std::cout << "Dominating node of unexpected type " << dominator->sage_class_name() << ": " 
-        //          << dominator->unparseToString() << std::endl;
+        std::cout << "Dominating node of unexpected type " << dominator->sage_class_name() << ": ";
+        if( !isSgFunctionParameterList(dominator) ){
+          std::cout << dominator->unparseToString();
+        }
+        std::cout << std::endl;
         return 0;
       }
       return 0;
@@ -489,12 +496,11 @@ namespace CompassAnalyses {
                     SgNode* const node, const std::vector<SgNode *>& slice,
                     const std::string index_name, int check_flag, int level,
                     int array_dimension, const std::string array_name, Compass::OutputObject& output){
-      // Just here to silence unused variable warnings
-      //std::cout << node << slice.size() << index_name << check_flag << level << array_dimension << array_name << output << std::endl;
       foreach(const SgNode * dominator, slice){
         checkNode(var, node, dominator, output); 
       }
     }
+    // this is the old version and it is going away real soon now...
     void checkIndex(SgNode* const node, const std::string index_name, int check_flag, int level,
                     int array_dimension, const std::string array_name, Compass::OutputObject& output ) {
       //std::cout << "   Start to walk backward CFG..." << std::endl;
@@ -711,13 +717,14 @@ printNodes(const std::vector<SgNode *> &nodes)
     if( isSgLocatedNode(n) ){
       SgLocatedNode * ln = isSgLocatedNode(n);
       Sg_File_Info  * fileInfo = ln->get_file_info();
-      std::cout << "Line " << fileInfo->get_line() << " "
+      std::cout << "printNodes: Line " << fileInfo->get_line() << " "
                 << ln->sage_class_name() << ": "
                 << n->unparseToString() << std::endl;
     }
 #endif
   }
 }
+
 
 std::vector<SgNode *>
 CompassAnalyses::ArrayIndex::Traversal::
@@ -727,22 +734,38 @@ getDominatorChain(const SgVariableSymbol* const var,
                   const StaticSingleAssignment::NodeReachingDefTable & defTable) const
 {
   std::vector<SgNode *> slice;
+  unsigned int use = 0;
+  std::vector<unsigned int> definitions;
   foreach(StaticSingleAssignment::NodeReachingDefTable::const_iterator::
                                                value_type def, defTable) {
-    assert(def.first.size() == 1); // TODO: why is this always true?
+    ROSE_ASSERT(def.first.size() == 1); // TODO: why is this always true?
     // TODO: a) Find the correct def
     //       b) find all uses of def that dominate the use in the array
     //       c) check each of those uses to see if they are a conditional
     //       d) grade each conditional based on the array declaration
     foreach(const SgInitializedName * const name, def.first) {
-      // Select mattching def for var, TODO: is there a more efficient way to do this lookup?
+      // Select matching def for var, TODO: is there a more efficient way to do this lookup?
+      std::set< SgNode *> defs;
+//      std::cout << "name = " << name->get_name() << std::endl;
       if( var != name->get_symbol_from_symbol_table() ) continue;
 #ifdef _DEBUG
 //      std::cout << "Found a match: " << var->get_name().getString()
 //                << "[" << def.second->getRenamingNumber() << "]"
 //                << " node type: " << var->sage_class_name()
 //                << std::endl;
-//      std::cout << "Definition is: " << def.second->getDefinitionNode()->unparseToString() << std::endl;
+      if( def.second->isPhiFunction() ){
+//        std::cout << "isPhiFunction: true" << std::endl;
+        defs = def.second->getActualDefinitions();
+        foreach(const SgNode * const ndef, defs){
+          std::cout << ndef->get_file_info()->get_line()
+                    << ": "
+                    << ndef->unparseToString() << std::endl;
+        }
+      } else {
+        defs.insert(def.second->getDefinitionNode());
+        std::cout << "Definition is: " << def.second->getDefinitionNode()->unparseToString() << std::endl;
+        //std::cout << "is PhiFunction? " << (def.second->isPhiFunction() ? "yes" : "no") << std::endl;
+      }
 #endif
       // Get all conditionals and check if they contain "name" (with
       // the correct renaming number)
@@ -753,24 +776,35 @@ getDominatorChain(const SgVariableSymbol* const var,
       ControlFlowGraph cfg(fd);
       ControlFlowGraph::VertexVertexMap
                dominatorTreeMap = cfg.getDominatorTree();
+//      std::cout << "dominators for: "
+//                << "Line " << arrRef->get_file_info()->get_line() << ": "
+//                << arrRef->unparseToString() << std::endl;
       foreach(const ControlFlowGraph::VertexVertexMap::value_type& nodeDominatorPair, dominatorTreeMap){
         ControlFlowGraph::CFGNodeType node      = *cfg[nodeDominatorPair.first];
         ControlFlowGraph::CFGNodeType dominator = *cfg[nodeDominatorPair.second];
-        if( node.getNode() != arrRef ) continue; // TODO: Without this we get into an infinite loop. Is
-                                                 // there a more direct/efficient lookup we could do?
-        for(ControlFlowGraph::VertexVertexMap::key_type v = dominatorTreeMap[nodeDominatorPair.second];;
-            v = dominatorTreeMap[v]){
-          ControlFlowGraph::CFGNodeType n = *cfg[v];
-
-          // This is what we are really after. We store the node for later processing
-          slice.push_back(n.getNode());
-          if( n.getNode() == def.second->getDefinitionNode() ){
-#ifdef _DEBUG
-            std::cout << "Found matching definition" << std::endl;
-#endif
-            break;
-          }
+        // TODO: Without this we get into an infinite loop. Is
+        // there a more direct/efficient lookup we could do?
+        if( node.getNode() == arrRef ){
+          use = nodeDominatorPair.first;
+          break;
         }
+      }
+      ROSE_ASSERT( use != 0 );
+      foreach(const ControlFlowGraph::VertexVertexMap::value_type& nodeDominatorPair, dominatorTreeMap){
+        ControlFlowGraph::CFGNodeType node      = *cfg[nodeDominatorPair.first];
+        ControlFlowGraph::CFGNodeType dominator = *cfg[nodeDominatorPair.second];
+        if( find(defs.begin(), defs.end(), node.getNode()) != defs.end() ){
+          definitions.push_back(nodeDominatorPair.first);
+        }
+      }
+      foreach(const unsigned int d, definitions){
+        cfgTraversal trav; 
+        trav.constructPathAnalyzer(&cfg, false, d, use);
+        std::cout << "Number of paths between line "
+                  << cfg[d]->getNode()->get_file_info()->get_line()
+                  << " and line "
+                  << cfg[use]->getNode()->get_file_info()->get_line()
+                  << ": " << trav.pths << std::endl;
       }
     }
   }
@@ -804,6 +838,8 @@ visit(SgNode* node) {
                      NodeQuery::querySubTree(exp, V_SgVarRefExp);
         foreach(Rose_STL_Container<SgNode*>::const_iterator::value_type v, varrefs){
           const SgVariableSymbol* const var = isSgVarRefExp(v)->get_symbol();
+          std::cout << "Line " << v->get_file_info()->get_line()
+                    << ": " << v->unparseToString() << std::endl;
 
           if (var == NULL) continue;
 #ifdef _DEBUG

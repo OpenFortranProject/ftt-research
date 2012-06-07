@@ -32,7 +32,7 @@ COMPASS_DIR := compass
 
 CHECKER_NAME := testChecker
 
-USER_CODE_FLAGS := -Wall -Weffc++ -Werror -Wextra -pedantic -pedantic-errors
+USER_CODE_FLAGS := -Wall -Weffc++ -Werror -Wextra -pedantic -pedantic-errors -ggdb3
 # TODO: Disable this once the code is ready
 USER_CODE_FLAGS += -Wno-unused-variable -Wno-unused-parameter
 CXX_FLAGS := -fPIC -Wno-deprecated -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH) -D_DEBUG -isystem $(COMPASS_DIR)
@@ -44,8 +44,11 @@ all: arrayIndex
 libcompass.so: $(addprefix $(COMPASS_DIR)/,compass.C compass.h)
 	g++ -shared -o libcompass.so $< $(CXX_FLAGS)
 
-arrayIndex: arrayIndex.C arrayIndexMain.C libcompass.so
-	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) -o arrayIndex  arrayIndexMain.C arrayIndex.C $(LINKER_FLAGS)
+cfgTraversal.o: cfgTraversal.C cfgTraversal.h
+	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) $< -c -o cfgTraversal.o
+
+arrayIndex: arrayIndex.C arrayIndexMain.C libcompass.so cfgTraversal.o
+	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) -o arrayIndex  arrayIndexMain.C arrayIndex.C cfgTraversal.o $(LINKER_FLAGS)
 
 test: arrayIndex arrayIndexTest1.C
 	./arrayIndex arrayIndexTest1.C
