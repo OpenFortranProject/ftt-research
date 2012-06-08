@@ -83,7 +83,8 @@ namespace CompassAnalyses {
         void scorePath(const SgVariableSymbol* const var,
                        SgFunctionDefinition * const fd,
                        SgPntrArrRefExp * const arrRef,
-                       const StaticSingleAssignment::NodeReachingDefTable & defTable) const;
+                       const StaticSingleAssignment::NodeReachingDefTable & defTable,
+                       const std::string& index_name) const;
 
 
       private:

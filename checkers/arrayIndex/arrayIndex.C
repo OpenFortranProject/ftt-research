@@ -558,7 +558,8 @@ CompassAnalyses::ArrayIndex::Traversal::
 scorePath(const SgVariableSymbol* const var,
           SgFunctionDefinition * const fd,
           SgPntrArrRefExp * const arrRef,
-          const StaticSingleAssignment::NodeReachingDefTable & defTable) const
+          const StaticSingleAssignment::NodeReachingDefTable & defTable,
+          const std::string& index_name) const
 {
   unsigned int use = 0;
   std::vector<unsigned int> definitions;
@@ -626,7 +627,22 @@ scorePath(const SgVariableSymbol* const var,
         }
       }
       foreach(const unsigned int d, definitions){
-        PathGrader grader; 
+        const SgVariableSymbol * const var_l = isSgVarRefExp(arrRef->get_lhs_operand())->get_symbol();
+        
+        // Find array name and size
+        if( var_l == NULL ){
+          std::cout << "\t!Find array reference 'SgPntrArrRefExp' but lhs(array name) is unknown: "
+                    << arrRef->get_lhs_operand()->class_name()
+                    << std::endl;
+          continue;
+        }
+        const SgInitializedName * const init_l          = var_l->get_declaration();
+        const std::string               array_name      = var_l->get_name().getString();
+        const SgArrayType       * const atype           = init_l != NULL ? isSgArrayType(init_l->get_type()) : NULL;
+        const int                       array_dimension = findArraySize(atype, array_name);
+        ROSE_ASSERT( var    != NULL );
+        ROSE_ASSERT( arrRef != NULL );
+        PathGrader grader(cfg, *var, *arrRef, index_name, 0, 0, array_dimension, array_name, output); 
         grader.constructPathAnalyzer(&cfg, false, d, use);
         std::cout << "Number of paths between line "
                   << cfg[d]->getNode()->get_file_info()->get_line()
@@ -634,24 +650,7 @@ scorePath(const SgVariableSymbol* const var,
                   << cfg[use]->getNode()->get_file_info()->get_line()
                   << ": " << grader.getNumberOfPaths() << std::endl;
         std::cout << "Path score: " << grader.getScore() << std::endl;
-        //allPaths = grader.getAllPaths();
       }
-      //int pathNum = 0;
-      //foreach(std::vector<unsigned int>& path, allPaths){
-      //  pathNum++;
-      //  std::vector< SgNode *> nodes;
-      //  foreach(const unsigned int p, path){
-      //    nodes.push_back(cfg[p]->getNode());
-      //    std::cout << "Path " << pathNum << ": "
-      //              << "cfg[" << p << "] on line "
-      //              << cfg[p]->getNode()->get_file_info()->get_line()
-      //              << " of type "
-      //              << cfg[p]->getNode()->sage_class_name()
-      //              << " = '"
-      //              << cfg[p]->getNode()->unparseToString()
-      //              << "'" << std::endl;
-      //  }
-      //}
     }
   }
 }
@@ -701,7 +700,9 @@ visit(SgNode* node) {
           // separately score y, and not score A unless we had something like
           // B(A(x,y)).  This means that scoring should be based on the
           // "var" above.
-          scorePath(var, fd, arrRef, defTable);
+          const SgVariableSymbol  * const var_r           = isSgVarRefExp(exp)->get_symbol();
+          const std::string               index_name      = var_r  != NULL ? var_r->get_name().getString()     : "";
+          scorePath(var, fd, arrRef, defTable, index_name);
           //printNodes(slice);
 
 //          const SgVariableSymbol * const var_l = isSgVarRefExp(arrRef->get_lhs_operand())->get_symbol();

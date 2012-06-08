@@ -1,3 +1,5 @@
+#include <climits>
+
 #include "PathGrader.h"
 #include "arrayIndex.h"
 #include <boost/foreach.hpp>
@@ -8,30 +10,39 @@
 
 using namespace CompassAnalyses::ArrayIndex;
 
-PathGrader::PathGrader()
-: paths()
+PathGrader::PathGrader(const ControlFlowGraph& cfg,
+                       const SgVariableSymbol& var,
+                       SgNode& node,
+                       const std::string& index_name,
+                       int check_flag, int level, int array_dimension,
+                       const std::string& array_name,
+                       Compass::OutputObject& output)
+: score(UINT_MAX), numPaths(0), cfg(cfg), var(var), node(node), index_name(index_name),
+  check_flag(check_flag), level(level), array_dimension(array_dimension),
+  array_name(array_name), output(output)
 {}
 
 void PathGrader::analyzePath(PathT& path) {
-  paths.push_back(path);
+  numPaths++;
+
+  // We don't know which path will be taken at runtime so we (conservatively)
+  // assume it will be the path with the weakest check. Therefore, this should be
+  // the min of the paths
+  score = min(score, checkIndex(path));
 }
 
 int PathGrader::getNumberOfPaths() const
 {
-  return paths.size();
+  return numPaths;
 }
 
 int PathGrader::getScore() const
 {
-  return 0;
+  return score;
 }
 
-std::vector<PathGrader::PathT> PathGrader::getAllPaths() const
-{
-  return paths;
-}
-
-int PathGrader::
+unsigned int
+PathGrader::
 checkNode(const SgVariableSymbol* const var,
           SgNode* const node,
           const SgNode * const dominator,
@@ -101,14 +112,14 @@ checkNode(const SgVariableSymbol* const var,
   return 0;
 }
 
-void
-PathGrader::checkIndex(const SgVariableSymbol* const var,
-                       SgNode* const node, const std::vector<std::vector<SgNode *> >& slice,
-                       const std::string index_name, int check_flag, int level,
-                       int array_dimension, const std::string array_name, Compass::OutputObject& output){
-  foreach(std::vector< SgNode * > path, slice)
-    foreach(const SgNode * dominator, path){
-      checkNode(var, node, dominator, output); 
-    }
+unsigned int
+PathGrader::
+checkIndex(const PathGrader::PathT& path){
+  unsigned int best = 0;
+  foreach(const Vertex& vert, path){
+    const SgNode * n = cfg[vert]->getNode();
+    best = max(checkNode(&var, &node, n, output), best);
+  }
+  return best;
 }
 

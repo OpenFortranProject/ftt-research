@@ -16,27 +16,42 @@ typedef ControlFlowGraph::CFGEdgeType Edge;
 class PathGrader : public SgGraphTraversal<ControlFlowGraph>
 {
   public:
-    typedef std::vector<Vertex> PathT;
+    typedef std::vector< Vertex > PathT;
   private:
-    std::vector<PathT> paths;
+    unsigned int score;
+    unsigned int numPaths;
+    const ControlFlowGraph& cfg;
+    const SgVariableSymbol& var;
+    SgNode& node;
+    const std::string& index_name;
+    int check_flag;
+    int level;
+    int array_dimension;
+    const std::string& array_name;
+    Compass::OutputObject& output;
+
+    unsigned int
+    checkNode(const SgVariableSymbol* const var,
+              SgNode* const node,
+              const SgNode * const dominator,
+              Compass::OutputObject & output);
+
+    unsigned int
+    checkIndex(const PathT& path);
+   
   public:
-    PathGrader();
+    PathGrader(const ControlFlowGraph& cfg,
+               const SgVariableSymbol& var,
+               SgNode& node,
+               const std::string& index_name,
+               int check_flag, int level, int array_dimension,
+               const std::string& array_name,
+               Compass::OutputObject& output);
 
     virtual void analyzePath(PathT& path);
 
     int getNumberOfPaths() const;
     int getScore() const;
-
-    std::vector<PathT> getAllPaths() const;
-    int checkNode(const SgVariableSymbol* const var,
-                  SgNode* const node,
-                  const SgNode * const dominator,
-                  Compass::OutputObject & output);
-    void checkIndex(const SgVariableSymbol* const var,
-                    SgNode* const node, const std::vector<std::vector<SgNode *> >& slice,
-                    const std::string index_name, int check_flag, int level,
-                    int array_dimension, const std::string array_name, Compass::OutputObject& output);
-    
 };
 
 template <class T>
