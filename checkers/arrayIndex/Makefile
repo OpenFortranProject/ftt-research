@@ -47,7 +47,7 @@ libcompass.so: $(addprefix $(COMPASS_DIR)/,compass.C compass.h)
 PathGrader.o: PathGrader.C PathGrader.h
 	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) $< -c -o $@
 
-arrayIndex: arrayIndex.C arrayIndexMain.C libcompass.so PathGrader.o
+arrayIndex: arrayIndex.C arrayIndex.h arrayIndexMain.C libcompass.so PathGrader.o
 	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) -o arrayIndex  arrayIndexMain.C arrayIndex.C PathGrader.o $(LINKER_FLAGS)
 
 test: arrayIndex arrayIndexTest1.C
