@@ -31,10 +31,36 @@ class PathGrader : public SgGraphTraversal<ControlFlowGraph>
     Compass::OutputObject& output;
 
     unsigned int
-    checkNode(const SgVariableSymbol* const var,
-              SgNode* const node,
-              const SgNode * const dominator,
+    checkNode(const SgNode& var,
+              SgNode& node,
+              const SgFortranDo& dominator,
               Compass::OutputObject & output);
+    unsigned int
+    checkNode(const SgNode& var,
+              SgNode& node,
+              const SgWhileStmt& dominator,
+              Compass::OutputObject & output);
+    unsigned int
+    checkNode(const SgNode& var,
+              SgNode& node,
+              const SgIfStmt& dominator,
+              Compass::OutputObject & output);
+    unsigned int
+    checkNode(const SgNode& var,
+              SgNode& node,
+              const SgSwitchStatement& dominator,
+              Compass::OutputObject & output);
+    unsigned int
+    checkNode(const SgNode& var,
+              SgNode& node,
+              const SgNode & dominator,
+              Compass::OutputObject & output);
+
+    //unsigned int
+    //checkNode(const SgVariableSymbol* const var,
+    //          SgNode* const node,
+    //          const SgNode * const dominator,
+    //          Compass::OutputObject & output);
 
     unsigned int
     checkIndex(const PathT& path);
