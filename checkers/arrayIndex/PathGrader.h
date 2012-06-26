@@ -30,41 +30,49 @@ class PathGrader : public SgGraphTraversal<ControlFlowGraph>
     const std::string& array_name;
     Compass::OutputObject& output;
 
+    std::vector<SgName> intrinsics;
+
     unsigned int
     checkNode(const SgNode& var,
               SgNode& node,
               const SgFortranDo& dominator,
-              Compass::OutputObject & output);
+              int & checkedOnLine);
     unsigned int
     checkNode(const SgNode& var,
               SgNode& node,
               const SgWhileStmt& dominator,
-              Compass::OutputObject & output);
+              int & checkedOnLine);
     unsigned int
     checkNode(const SgNode& var,
               SgNode& node,
               const SgIfStmt& dominator,
-              Compass::OutputObject & output);
+              int & checkedOnLine);
     unsigned int
     checkNode(const SgNode& var,
               SgNode& node,
               const SgSwitchStatement& dominator,
-              Compass::OutputObject & output);
+              int & checkedOnLine);
     unsigned int
     checkNode(const SgNode& var,
               SgNode& node,
               const SgNode & dominator,
-              Compass::OutputObject & output);
+              int & checkedOnLine);
 
-    //unsigned int
-    //checkNode(const SgVariableSymbol* const var,
-    //          SgNode* const node,
-    //          const SgNode * const dominator,
-    //          Compass::OutputObject & output);
+    int
+    checkConditional(const SgExpression * const conditional);
 
     unsigned int
-    checkIndex(const PathT& path);
+    checkIndex(const PathT& path, int & checkedOnLine);
+
+    bool
+    hasIndexVar(SgExpression * const expr, const SgNode * const var);
    
+    bool
+    isLiteralConstant(const SgExpression * const expr);
+
+    bool
+    isIntrinsic(const SgExpression * const expr);
+
   public:
     PathGrader(const ControlFlowGraph& cfg,
                const SgVariableSymbol& var,

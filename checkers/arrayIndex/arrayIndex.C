@@ -11,7 +11,6 @@ namespace CompassAnalyses {
       return exp_r->get_expressions();
     }
 
-    // TODO: keep this function
     int findArraySize(const SgArrayType* const atype, const std::string array_name) {
       int array_dimension = 0;  // IF array size cannot be determinded, return 0 as default
       int array_dimension_lowerbound, array_dimension_upperbound;  // DIMENSION(-2:3)
@@ -259,61 +258,6 @@ visit(SgNode* node) {
           const SgVariableSymbol  * const var_r           = isSgVarRefExp(exp)->get_symbol();
           const std::string               index_name      = var_r  != NULL ? var_r->get_name().getString()     : "";
           scorePath(var, fd, arrRef, defTable, index_name);
-/* Start old traversal, translated to new code -- but it's probably not doing anything useful */
-//          //Find rhs of the referrenced array, i.e.,index node "I"
-//          // for "A[I] = " or "A[I-1]", the rhs of SgPntrArrRefExp is SgExprListExp
-//          // - for A[I] , index SgVarRefExp is the direct child of SgExprListExp
-//          // - while for A[I-1] , need to go through its subtree to find index node SgVarRefExp
-//          const SgExprListExp * const exp_r = isSgExprListExp(arrRef->get_rhs_operand());
-//          if( exp_r == NULL ) ROSE_ASSERT( false ); // TODO: how can we get here?
-//          const SgExpressionPtrList expr_list = exp_r->get_expressions();
-//          foreach(const SgExpressionPtrList::const_iterator::value_type exp, expr_list){
-//            if (isSgVarRefExp(exp)) { // A[I]
-//              const SgVariableSymbol * const var_r = isSgVarRefExp(exp)->get_symbol();
-//        
-//              // Find index variable name
-//              if (var_r) {
-//                const SgInitializedName * const init_r     = var_r->get_declaration();
-//                const std::string               index_name = var_r->get_name().getString();
-//        
-//                // not found both array and index variable then return
-//                if ( (!init_l) || (!init_r) ) {
-//                  continue; // TODO: how did we get here?
-//                }
-//                //checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
-//              } else {
-//                std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expression is not handled: "
-//                          << arrRef->get_rhs_operand()->class_name()
-//                          << std::endl;
-//                continue;
-//              }
-//            } else { // A[I-1] or A(I,J,K), search subtree for SgVarRefExp
-//              const std::vector<SgNode*> subtree = NodeQuery::querySubTree(exp, V_SgVarRefExp);
-//              if( !subtree.empty() ){
-//                foreach(const std::vector<SgNode *>::const_iterator::value_type node, subtree){
-//                  const SgVariableSymbol * const var_r = isSgVarRefExp(node)->get_symbol();
-//        
-//                  // Find index variable name
-//                  if (var_r) {
-//                    const SgInitializedName * const init_r     = var_r->get_declaration();
-//                    const std::string               index_name = var_r->get_name().getString();
-//        
-//                    // not found both array and index variable then return
-//                    if ( (!init_l) || (!init_r) ) {
-//                      continue;
-//                    }
-//                    //checkIndex(pntr, index_name,check_flag, level,array_dimension,array_name,output);
-//                  } else {
-//                    std::cout << "\t!Find array reference 'SgPntrArrRefExp' but this kind of array index expreesion is not handled: "
-//                              << arrRef->get_rhs_operand()->class_name()
-//                              << std::endl;
-//                    continue;
-//                  }
-//                }  // end of for
-//              }
-//            }
-//          } // end of for iterator i
-/* End old traversal code */
         }
       }
     }
