@@ -12,7 +12,7 @@ ROSE_INSTALL ?= $(HOME)/ftt/rose-trunk/compileTree
 LOCAL_COMPASS_LIB := -L`pwd` -Wl,-rpath `pwd` -lcompass 
 
 # Link syntax required for ROSE (using instaled version of ROSE)
-ROSE_LIB := -L$(ROSE_INSTALL)/lib -Wl,-rpath $(ROSE_INSTALL)/lib -lrose 
+ROSE_LIB := -L$(ROSE_INSTALL)/lib -Wl,-rpath $(ROSE_INSTALL)/lib -lrose
 
 # Specify specific path to find libstdc++.so (required when not using the default system compiler)
 # This is required at least on the LLNL computers using non-default versions of GNU compilers.
@@ -28,23 +28,31 @@ BOOST_INCLUDE_PATH ?= /usr
 # **********  Users should NOT have to modify the makefile below this point **********
 # ************************************************************************************
 
+COMPASS_DIR := compass
+
 CHECKER_NAME := testChecker
 
-CXX_FLAGS := -fPIC -Wall -Werror -Wextra -pedantic -pedantic-errors -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH)
+USER_CODE_FLAGS := -Wall -Weffc++ -Werror -Wextra -pedantic -pedantic-errors -ggdb3
+# TODO: Disable this once the code is ready
+USER_CODE_FLAGS += -Wno-unused-variable -Wno-unused-parameter
+CXX_FLAGS := -fPIC -Wno-deprecated -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH) -D_DEBUG -isystem $(COMPASS_DIR)
 
 LINKER_FLAGS := $(ROSE_LIB) $(ROSE_OPTIONAL_LIBS) $(LOCAL_COMPASS_LIB) $(PATH_TO_SPECIFIC_LIBSTDCXX)
 
 all: arrayIndex
 
-libcompass.so: compass.h compass.C
-	g++ -shared -o libcompass.so compass.C $(CXX_FLAGS)
+libcompass.so: $(addprefix $(COMPASS_DIR)/,compass.C compass.h)
+	g++ -shared -o libcompass.so $< $(CXX_FLAGS)
 
-arrayIndex: arrayIndex.C arrayIndexMain.C libcompass.so
-	g++ -o arrayIndex  arrayIndexMain.C arrayIndex.C $(CXX_FLAGS) $(LINKER_FLAGS)
+PathGrader.o: PathGrader.C PathGrader.h
+	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) $< -c -o $@
+
+arrayIndex: arrayIndex.C arrayIndex.h arrayIndexMain.C libcompass.so PathGrader.o
+	g++ $(USER_CODE_FLAGS) $(CXX_FLAGS) -o arrayIndex  arrayIndexMain.C arrayIndex.C PathGrader.o $(LINKER_FLAGS)
 
 test: arrayIndex arrayIndexTest1.C
 	./arrayIndex arrayIndexTest1.C
 
 clean:
-	-rm -f libcompass.so "arrayIndex"
+	-rm -f libcompass.so "arrayIndex" PathGrader.o
 
