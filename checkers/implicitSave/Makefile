@@ -4,7 +4,7 @@
 
 # Set variable ROSE_INSTALL to your ROSE_INSTALL installation like this.
 # ROSE_INSTALL = /home/fangling/ROSE/ROSE_CompileTree/svn_LINUX-64bit-4.2.2_install
-ROSE_INSTALL ?= $(HOME)/ftt/rose-trunk/compileTree
+ROSE_INSTALL ?= $(HOME)/ftt/rose/compileTree
 
 # If ROSE is configured with Dwarf support then we need libdwarf.a
 # ROSE_OPTIONAL_LIBS = /home/fangling/ROSE/DWARF/dwarf-20081013/libdwarf/libdwarf.a -lelf
@@ -31,7 +31,7 @@ BOOST_INCLUDE_PATH ?= /usr
 
 CHECKER_NAME := testChecker
 
-CXX_FLAGS := -fPIC -Wall -Werror -Wextra -pedantic -pedantic-errors -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH)
+CXX_FLAGS := -ggdb3 -fPIC -Wall -Wextra -pedantic -pedantic-errors -Wno-deprecated -isystem $(ROSE_INSTALL)/include $(ROSE_OPTIONAL_LIBS_INCLUDE) -isystem $(BOOST_INCLUDE_PATH)
 
 LINKER_FLAGS = $(ROSE_LIB) $(ROSE_OPTIONAL_LIBS) $(LOCAL_COMPASS_LIB) $(PATH_TO_SPECIFIC_LIBSTDCXX)
 

@@ -130,7 +130,8 @@ visit(SgNode* node) { // this visit is to set attribute
     const SgAssignInitializer* const ainit    = isSgAssignInitializer(node);
     const SgInitializedName*   const var_init = isSgInitializedName(ainit->get_parent());
     if (var_init != NULL) {
-      const SgVariableDeclaration* const var_decl          = isSgVariableDeclaration(var_init->get_parent());
+      const SgDeclarationStatement* const var_decl         = isSgDeclarationStatement(var_init->get_parent());
+      ROSE_ASSERT( var_decl != NULL );
       const SgDeclarationModifier        var_decl_mod      = var_decl->get_declarationModifier();
       const SgTypeModifier               var_decl_mod_type = var_decl_mod.get_typeModifier();
       //mark the node SgVariableSymbol by adding myAstAttribute
@@ -159,7 +160,8 @@ visit(SgNode* node) { // this visit is to set attribute
         SgInitializedName* const init = isSgInitializedName(*j);
 
         if (init != NULL) {
-          const SgVariableDeclaration* const var_decl          = isSgVariableDeclaration(init->get_parent());
+          const SgDeclarationStatement* const var_decl         = isSgDeclarationStatement(init->get_parent());
+          ROSE_ASSERT( var_decl != NULL );
           const SgDeclarationModifier        var_decl_mod      = var_decl->get_declarationModifier();
           const SgTypeModifier               var_decl_mod_type = var_decl_mod.get_typeModifier();
 
@@ -242,7 +244,8 @@ visit(SgNode* node) { // this visit is to get attribute
           }
           SgInitializedName* const init = isSgInitializedName(*j);
           if (init != NULL) {
-            const SgVariableDeclaration* const var_decl          = isSgVariableDeclaration(init->get_parent());
+            const SgDeclarationStatement* const var_decl         = isSgDeclarationStatement(init->get_parent());
+            ROSE_ASSERT( var_decl != NULL );
             const SgDeclarationModifier        var_decl_mod      = var_decl->get_declarationModifier();
             const SgTypeModifier               var_decl_mod_type = var_decl_mod.get_typeModifier();
 
