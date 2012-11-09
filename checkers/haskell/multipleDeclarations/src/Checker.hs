@@ -3,7 +3,7 @@ module Main where
 import System.Console.GetOpt
 import System.Environment ( getArgs )
 
-import Control.Monad ( when, liftM )
+import Control.Monad ( when )
 import Control.Monad.Trans.RWS.Strict
 import Control.Monad.IO.Class
 import Control.Applicative
@@ -12,7 +12,7 @@ import Data.List ( foldl', isSuffixOf )
 import Data.Maybe ( catMaybes )
 
 -- Project specific imports
-import ATerm.AbstractSyntax -- ( ATermTable, getATerm )
+import ATerm.AbstractSyntax ( ATermTable, getATermByIndex1 )
 import ATerm.Utilities hiding (foldl', mapM_, mapM, map, concatMap)
 import ATerm.Matching
 import qualified ATerm.Utilities as U
