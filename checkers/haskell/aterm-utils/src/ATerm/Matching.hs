@@ -13,7 +13,7 @@ module ATerm.Matching
 , exactlyI     -- Integer -> ATermMatcher
 , exactlyL     -- [ATermMatcher] -> ATermMatcher
 , exactlyA     -- String -> Match ATermMatcher] -> ATermMatcher
-, contains     -- [ATermMatcher] -> ATermMatcher
+, contains     -- [ATermMatcher] -> Match [ATermMatcher]
 , containsL    -- [ATermMatcher] -> ATermMatcher
 , containsA    -- Match String -> [ATermMatcher] -> ATermMatcher
 , bindT        -- ATermMatcher
