@@ -53,39 +53,30 @@ bindMatches = go
   -- AMInt cases:
   go (AMInt Any) t
     | ShAInt i _ <- getATerm t = Just [BoundInt i]
-    | otherwise                = Nothing
   go (AMInt (Exactly i)) t
     | ShAInt i' _ <- getATerm t
-    , i == i'   = Just [] -- we match, but no wild cards means no binders
-    | otherwise = Nothing
+    , i == i' = Just [] -- we match, but no wild cards means no binders
   go (AMInt (Contains i)) t -- this doesn't really make much sense, but we allow it
     | ShAInt i' _ <- getATerm t
-    , i == i'   = Just [] -- they have to be ints so no wild cards possible
-    | otherwise = Nothing
+    , i == i' = Just [] -- they have to be ints so no wild cards possible
   -- AMList cases:
   go (AMList Any) t
     | ShAList l _ <- getATerm t = Just [BoundList l]
-    | otherwise                 = Nothing
   go (AMList (Exactly ms)) t
     | ShAList is _ <- getATerm t
     , length ms == length is = matchChildren ms is t
-    | otherwise              = Nothing
   go (AMList (Contains ls)) t
     | ShAList is _ <- getATerm t = Just $ containsChildren ls is t
-    | otherwise = Nothing
   -- AMAppl cases:
   go (AMAppl Any Any) t
     | ShAAppl _ _ _ <- getATerm t = Just [BoundAppl (getTopIndex t)]
-    | otherwise                   = Nothing
   go (AMAppl (Exactly s) Any) t
     | ShAAppl s' ls _ <- getATerm t
-    , s == s'   = Just [BoundList ls]
-    | otherwise = Nothing
+    , s == s' = Just [BoundList ls]
   go (AMAppl Any (Exactly ms)) t
     | ShAAppl _ is _ <- getATerm t
     , length ms == length is = (BoundAppl (getTopIndex t) :) <$> matchChildren ms is t
-    | otherwise              = Nothing
-  -- This is the case for strings in the tree
+  -- Matching strings requires this special case
   go (AMAppl (Exactly s) (Exactly [])) t
     | ShAAppl s' [] _ <- getATerm t
     , s == s' = Just [BoundStr s]
@@ -93,28 +84,23 @@ bindMatches = go
     | ShAAppl s' is _ <- getATerm t
     , s == s'
     , length ms == length is = matchChildren ms is t
-    | otherwise              = Nothing
   go (AMAppl (Contains s) Any) t -- this doesn't really make much sense, but we allow it
     | ShAAppl s' _ _ <- getATerm t
-    , s == s'   = Just [] -- they have to be strings so no wild cards possible
-    | otherwise = Nothing
+    , s == s' = Just [] -- they have to be strings so no wild cards possible
   go (AMAppl (Contains s) (Exactly [])) t
     | ShAAppl s' [] _ <- getATerm t
-    , s == s'   = Just [] -- they have to be strings so no wild cards possible
-    | otherwise = Nothing
+    , s == s' = Just [] -- they have to be strings so no wild cards possible
   go (AMAppl (Contains s) (Exactly ms)) t
     | ShAAppl s' is _ <- getATerm t
     , s == s'
     , length ms == length is = matchChildren ms is t
-    | otherwise              = Nothing
   go (AMAppl Any (Contains ls)) t
     | ShAAppl _ is _ <- getATerm t = Just $ (BoundAppl (getTopIndex t)) : containsChildren ls is t
-    | otherwise = Nothing
   go (AMAppl (Exactly s) (Contains ls)) t
     | ShAAppl s' is _ <- getATerm t
-    , s' == s   = Just $ containsChildren ls is t
-    | otherwise = Nothing
+    , s' == s = Just $ containsChildren ls is t
   go (AMAppl (Contains s) (Contains ls)) t -- this doesn't really make sense, but we allow it
     | ShAAppl s' is _ <- getATerm t
-    , s == s'   = Just $ containsChildren ls is t
-    | otherwise = Nothing
+    , s == s' = Just $ containsChildren ls is t
+  -- catch all failure case
+  go _ _ = Nothing -- Welp, no takers
