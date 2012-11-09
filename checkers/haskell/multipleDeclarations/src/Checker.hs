@@ -64,7 +64,7 @@ main = do
 -- Analysis
 ---------------------------------------------------------------------
 initialized_name :: ATermMatcher
-initialized_name = AMAppl (Exactly "initialized_name") Any
+initialized_name = exactlyA "initialized_name" Any
 
 isInitName :: ATermTable -> Bool
 isInitName = matches initialized_name
@@ -80,10 +80,10 @@ extractFileInfo' at (BoundAppl i) = extractFileInfo (getATermByIndex1 i at)
 extractFileInfo' _  _             = Nothing
 
 isVariableDeclaration :: ATermTable -> Maybe [Binding]
-isVariableDeclaration = bindMatches (AMAppl (Exactly "variable_declaration") subterms)
+isVariableDeclaration = bindMatches (exactlyA "variable_declaration" subterms)
   where
   subterms :: Match [ATermMatcher]
-  subterms = Contains [AMList (Contains [AMAppl Any Any]), AMAppl Any Any]
+  subterms = contains [containsL [bindA], bindA]
 
 execDeclWarn :: ATermTable -> IO [String]
 execDeclWarn at = do
