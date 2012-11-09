@@ -12,8 +12,9 @@ import Data.List ( foldl', isSuffixOf )
 import Data.Maybe ( catMaybes )
 
 -- Project specific imports
-import ATerm.AbstractSyntax ( ATermTable )
-import ATerm.Utilities hiding (foldl', mapM_, mapM, map)
+import ATerm.AbstractSyntax -- ( ATermTable, getATerm )
+import ATerm.Utilities hiding (foldl', mapM_, mapM, map, concatMap)
+import ATerm.Matching
 import qualified ATerm.Utilities as U
 
 ---------------------------------------------------------------------
@@ -62,27 +63,44 @@ main = do
 ---------------------------------------------------------------------
 -- Analysis
 ---------------------------------------------------------------------
-isInitName :: ATermTable -> Bool
-isInitName = isNamed "initialized_name"
+initialized_name :: ATermMatcher
+initialized_name = AMAppl (Exactly "initialized_name") Any
 
-isVariableDeclaration :: ATermTable -> Bool
-isVariableDeclaration = isNamed "variable_declaration"
+isInitName :: ATermTable -> Bool
+isInitName = matches initialized_name
+
+isInitName' :: ATermTable -> Binding -> Bool
+isInitName' at (BoundTerm i) = matches initialized_name (getATermByIndex1 i at)
+isInitName' at (BoundAppl i) = matches initialized_name (getATermByIndex1 i at)
+isInitName' _  _             = False
+
+extractFileInfo' :: ATermTable -> Binding -> Maybe (String, Integer, Integer)
+extractFileInfo' at (BoundTerm i) = extractFileInfo (getATermByIndex1 i at)
+extractFileInfo' at (BoundAppl i) = extractFileInfo (getATermByIndex1 i at)
+extractFileInfo' _  _             = Nothing
+
+isVariableDeclaration :: ATermTable -> Maybe [Binding]
+isVariableDeclaration = bindMatches (AMAppl (Exactly "variable_declaration") subterms)
+  where
+  subterms :: Match [ATermMatcher]
+  subterms = Contains [AMList (Contains [AMAppl Any Any]), AMAppl Any Any]
 
 execDeclWarn :: ATermTable -> IO [String]
 execDeclWarn at = do
   (_, w) <- execRWST (everywhere_ declWarn) at ()
   return w
 
-declWarn :: (MonadIO m) => CheckM [String] st m (Maybe ())
-declWarn = satisfy isVariableDeclaration $ inSubtree_ checkInitNames
+declWarn :: (MonadIO m) => CheckM [String] st m ()
+declWarn = do
+  t <- currentTerm
+  case isVariableDeclaration t of
+    Just xs -> do
+      let initNames = map (isInitName' t) xs
+          fis       = catMaybes (map (extractFileInfo' t) xs)
+      when (length (filter id initNames) > 1) $ do
+        tell (map format fis)
+    _      -> return ()
   where
-  checkInitNames = do
-    kids <- childrenM
-    bs   <- mapM (appM isInitName) kids
-    when (length (filter id bs) > 1) $ do
-      mfis <- inSubtree (extractFileInfo `liftM` currentTerm)
-      let fis = catMaybes (concat mfis)
-      tell (map format fis)
   -- Utility functions
   format (s,l,c) = "Multiple Declarations: " ++ (unquoteL . unquoteR) s
                                              ++ ":" ++ show l ++ "." ++ show c

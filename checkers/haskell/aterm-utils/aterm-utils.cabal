@@ -13,6 +13,7 @@ cabal-version:       >=1.8
 
 library
   exposed-modules:   ATerm.Utilities
+                   , ATerm.Matching
   Build-depends:       base < 5                                                                                                                                          
                      , aterm
                      , transformers
