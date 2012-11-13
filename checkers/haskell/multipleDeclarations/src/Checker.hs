@@ -9,10 +9,10 @@ import Control.Monad.IO.Class
 import Control.Applicative
 
 import Data.List ( foldl', isSuffixOf )
-import Data.Maybe ( catMaybes )
+import Data.Maybe ( catMaybes, isJust )
 
 -- Project specific imports
-import ATerm.AbstractSyntax ( ATermTable, getATermByIndex1 )
+import ATerm.AbstractSyntax -- ( ATermTable, getATermByIndex1, getATerm )
 import ATerm.Utilities hiding (foldl', mapM_, mapM, map, concatMap)
 import ATerm.Matching
 import qualified ATerm.Utilities as U
@@ -63,27 +63,28 @@ main = do
 ---------------------------------------------------------------------
 -- Analysis
 ---------------------------------------------------------------------
-initialized_name :: ATermMatcher
-initialized_name = exactlyA "initialized_name" Any
+initialized_name :: ATermTable -> Maybe Binding
+initialized_name t = exactlyNamed "initialized_name" t
 
-isInitName :: ATermTable -> Bool
-isInitName = matches initialized_name
-
-isInitName' :: ATermTable -> Binding -> Bool
-isInitName' at (BoundTerm i) = matches initialized_name (getATermByIndex1 i at)
-isInitName' at (BoundAppl i) = matches initialized_name (getATermByIndex1 i at)
-isInitName' _  _             = False
+isInitName :: ATermTable -> Binding -> Bool
+isInitName at (BoundTerm i) = isJust (initialized_name (getATermByIndex1 i at))
+isInitName at (BoundAppl i) = isJust (initialized_name (getATermByIndex1 i at))
+isInitName _  _             = False
 
 extractFileInfo' :: ATermTable -> Binding -> Maybe (String, Integer, Integer)
 extractFileInfo' at (BoundTerm i) = extractFileInfo (getATermByIndex1 i at)
 extractFileInfo' at (BoundAppl i) = extractFileInfo (getATermByIndex1 i at)
 extractFileInfo' _  _             = Nothing
 
+
 isVariableDeclaration :: ATermTable -> Maybe [Binding]
-isVariableDeclaration = bindMatches (exactlyA "variable_declaration" subterms)
+isVariableDeclaration t = fmap concat (varDecl t)
   where
-  subterms :: Match [ATermMatcher]
-  subterms = contains [containsL [bindA], bindA]
+  varDecl a = do
+    _ <- exactlyNamed "variable_declaration" a
+    contains [ containsL [bindA]
+             , fmap return . bindA
+             ] a
 
 execDeclWarn :: ATermTable -> IO [String]
 execDeclWarn at = do
@@ -95,7 +96,7 @@ declWarn = do
   t <- currentTerm
   case isVariableDeclaration t of
     Just xs -> do
-      let initNames = map (isInitName' t) xs
+      let initNames = map (isInitName t) xs
           fis       = catMaybes (map (extractFileInfo' t) xs)
       when (length (filter id initNames) > 1) $ do
         tell (map format fis)
