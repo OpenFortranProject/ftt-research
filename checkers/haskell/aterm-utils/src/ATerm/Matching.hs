@@ -37,8 +37,8 @@ data Binding = NoBinding         -- ^ This mempty for this type
 
 -- | Turns anything with an Eq instance into a
 -- matcher by using (==). No binding is generated.
-exactly :: (MonadPlus m, Eq a) => a -> a -> m Binding
-exactly a b = guard (a == b) >> return NoBinding
+exactly :: (MonadPlus m, Eq a) => a -> a -> m ()
+exactly a b = guard (a == b) >> return ()
 
 -- * ATermMatcher Combinators
 
@@ -47,13 +47,13 @@ exactly a b = guard (a == b) >> return NoBinding
 ---------------------------------------------------------------------
 
 -- | Matches exactly the string 's' within the ATerm
-exactlyS :: MonadPlus m => String -> ATermTable -> m Binding
+exactlyS :: MonadPlus m => String -> ATermTable -> m ()
 exactlyS s t = case getATerm t of
   ShAAppl s' [] _ -> exactly s s'
   _               -> mzero
 
 -- | Matches exactly the integer 'i' within the ATerm
-exactlyI :: MonadPlus m => Integer -> ATermTable -> m Binding
+exactlyI :: MonadPlus m => Integer -> ATermTable -> m ()
 exactlyI i t = case getATerm t of
   ShAInt i' _ -> exactly i i'
   _           -> mzero
@@ -76,11 +76,11 @@ exactlyA s ms t = case getATerm t of
   _ -> mzero
 
 -- | Looks for an Appl with name 's' and any children
-exactlyNamed :: MonadPlus m => String -> ATermTable -> m Binding
+exactlyNamed :: MonadPlus m => String -> ATermTable -> m ()
 exactlyNamed s t = case getATerm t of
   ShAAppl s' _ _ -> do
     _ <- exactly s s'
-    return NoBinding
+    return ()
   _ -> mzero
 
 ---------------------------------------------------------------------

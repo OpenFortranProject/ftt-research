@@ -67,26 +67,31 @@ main = do
 ---------------------------------------------------------------------
 variableTypes :: ATermTable -> [(ATermTable, ATermTable)]
 variableTypes t = do
-  _ <- exactlyNamed "variable_declaration" t
+  exactlyNamed "variable_declaration" t
   l <- getATermFromTable t <$> U.children t
   guard . isList . getATerm $ l
   c <- getATermFromTable l <$> U.children l
-  _ <- exactlyNamed "initialized_name" c
+  exactlyNamed "initialized_name" c
   annot <- getATermFromTable c <$> U.children c
-  _ <- exactlyNamed "initialized_name_annotation" annot
+  exactlyNamed "initialized_name_annotation" annot
   (ty:name:_) <- return $ U.children annot
-  return ( getATermFromTable annot ty
-         , getATermFromTable annot name)
+  return ( getATermFromTable annot name
+         , getATermFromTable annot ty)
   where
   isList (ShAList {}) = True
   isList _            = False
 
+realExprs :: ATermTable -> [ATermTable]
+realExprs t = do
+  exactlyNamed "expr_statement" t
+  c <- getATermFromTable t <$> U.children t
+  return c
+
 unit :: (MonadIO m) => CheckM [String] st m ()
 unit = do
   t <- currentTerm
-  case variableTypes t of
-    [] -> return ()
-    xs -> tell (map (\(x,y) -> show (ppATerm x, ppATerm y)) xs)
+  tell (map (\(x,y) -> show (ppATerm x, ppATerm y)) (variableTypes t))
+  tell (map (show . ppATerm) (realExprs t))
 
 exec :: ATermTable -> IO [String]
 exec at = do
