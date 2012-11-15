@@ -34,7 +34,7 @@ nestAppl t s is = children ds
   where
   children []  = text s <> lparen <> rparen
   children [d] = text s <> lparen <> d <> rparen
-  children _   = text s <//>
+  children _   = text s <>
     lparen                                                               <$>
       indent 2 (align (cat (zipWith (<>) (text " " : repeat comma) ds))) <$>
     (indent 1 rparen)

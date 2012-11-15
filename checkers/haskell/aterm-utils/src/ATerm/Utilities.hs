@@ -27,11 +27,13 @@ module ATerm.Utilities
 , extractInteger  -- ATermTable -> Maybe Integer
 , extractFileInfo -- ATermTable -> Maybe (String, Integer, Integer)
 , isNamed         -- String -> ATermTable -> Bool
-, ppATerm         -- ATermTable -> String
+, showATerm       -- ATermTable -> String
 , children        -- ATermTable -> [Int]
 -- * Read and write
 , readATerm
 , writeSharedATerm
+-- * Misc
+, getATermFromTable
 ) where
 
 import ATerm.ReadWrite
@@ -183,7 +185,7 @@ everywhere' c = currentTerm >>= mapM (const c)
 ---------------------------------------------------------------------
 -- Turn ATerms into normal values, we make assumptions
 -- about the format that ROSE emits ATerms in.
---------------------------------------------------------------------
+---------------------------------------------------------------------
 
 -- | Extracts the label of Application nodes
 extractString :: ATermTable -> Maybe String
@@ -219,8 +221,8 @@ isNamed name t =
   _             -> False 
 
 -- | It's not acually pretty, but that's not our fault.
-ppATerm :: ATermTable -> String
-ppATerm = render . writeSharedATermSDoc
+showATerm :: ATermTable -> String
+showATerm = render . writeSharedATermSDoc
 
 -- | This pattern comes up in most traversals.  Simply return the stable names
 -- so we don't break sharing.
@@ -230,3 +232,9 @@ children t =
   ShAAppl _ l _ -> l
   ShAList   l _ -> l
   ShAInt  _   _ -> []
+
+---------------------------------------------------------------------
+-- Misc
+---------------------------------------------------------------------
+getATermFromTable :: ATermTable -> Int -> ATermTable
+getATermFromTable = flip getATermByIndex1
