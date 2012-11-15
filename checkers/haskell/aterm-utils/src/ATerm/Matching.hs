@@ -22,13 +22,10 @@ module ATerm.Matching
 import ATerm.AbstractSyntax
 import qualified ATerm.Utilities as U
 import Control.Monad -- For MonadPlus
-import Data.Maybe ( catMaybes )
 
 -- | Binding type gives you back the parts of the ATerm that
--- that match. There is also a case for when no bindings are
--- generated.
-data Binding = NoBinding         -- ^ This mempty for this type
-             | BoundTerm Int     -- ^ The index into the ATermTable of the matching ATerm
+-- that match.
+data Binding = BoundTerm Int     -- ^ The index into the ATermTable of the matching ATerm
              | BoundList [Int]   -- ^ The list of indexes into the ATermTable that match
              | BoundInt  Integer -- ^ The matching Integer
              | BoundStr  String  -- ^ The matching String
@@ -87,14 +84,17 @@ exactlyNamed s t = case getATerm t of
 -- ** Partial matchers, ie., they just specify part of the structure
 ---------------------------------------------------------------------
 
-containsChildren :: [ATermTable -> Maybe a] -> [Int] -> ATermTable -> Maybe [a]
-containsChildren ms is t = return $
-  catMaybes [ m (getATermByIndex1 i t) | i <- is, m <- ms ]
+containsChildren :: Monad m
+                 => m (ATermTable -> b) -> m Int -> ATermTable -> m b
+containsChildren ms is t = do
+  i <- is
+  m <- ms
+  return (m (getATermByIndex1 i t))
 
 -- | Matches a partial specification against the children. The
 -- matching is maximised so that if the pattern occurs more than
 -- once it is matched each time it appears.
-contains :: [ATermTable -> Maybe a] -> ATermTable -> Maybe [a]
+contains :: [ATermTable -> a] -> ATermTable -> [a]
 contains ms t = case getATerm t of
   ShAAppl _ ls _ -> containsChildren ms ls t
   ShAList   ls _ -> containsChildren ms ls t
@@ -103,7 +103,7 @@ contains ms t = case getATerm t of
 -- | Matches a partial specification of a sub aterm List. The
 -- matching is maximised so that if the pattern occurs more than
 -- once it is matched each time it appears.
-containsL :: [ATermTable -> Maybe a] -> ATermTable -> Maybe [a]
+containsL :: [ATermTable -> a] -> ATermTable -> [a]
 containsL ms t = case getATerm t of
   ShAList ls _ -> containsChildren ms ls t
   _            -> mzero
@@ -111,7 +111,7 @@ containsL ms t = case getATerm t of
 -- | Matches a partial specification of an Appl. The matching is
 -- maximised so that if the pattern occurs more than once it is match
 -- each time it appears.
-containsA :: String -> [ATermTable -> Maybe a] -> ATermTable -> Maybe [a]
+containsA :: String -> [ATermTable -> a] -> ATermTable -> [a]
 containsA s ams t = case getATerm t of
   ShAAppl s' ls _ -> do
     _ <- exactly s s'

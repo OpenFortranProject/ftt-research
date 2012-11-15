@@ -63,7 +63,7 @@ main = do
 ---------------------------------------------------------------------
 -- Analysis
 ---------------------------------------------------------------------
-initialized_name :: ATermTable -> Maybe Binding
+initialized_name :: ATermTable -> Maybe ()
 initialized_name t = exactlyNamed "initialized_name" t
 
 isInitName :: ATermTable -> Binding -> Bool
@@ -77,8 +77,8 @@ extractFileInfo' at (BoundAppl i) = extractFileInfo (getATermByIndex1 i at)
 extractFileInfo' _  _             = Nothing
 
 
-isVariableDeclaration :: ATermTable -> Maybe [Binding]
-isVariableDeclaration t = fmap concat (varDecl t)
+isVariableDeclaration :: ATermTable -> [Binding]
+isVariableDeclaration t = concat $ fmap concat (varDecl t)
   where
   varDecl a = do
     _ <- exactlyNamed "variable_declaration" a
@@ -95,12 +95,12 @@ declWarn :: (MonadIO m) => CheckM [String] st m ()
 declWarn = do
   t <- currentTerm
   case isVariableDeclaration t of
-    Just xs -> do
+    [] -> return ()
+    xs -> do
       let initNames = map (isInitName t) xs
           fis       = catMaybes (map (extractFileInfo' t) xs)
       when (length (filter id initNames) > 1) $ do
         tell (map format fis)
-    _      -> return ()
   where
   -- Utility functions
   format (s,l,c) = "Multiple Declarations: " ++ (unquoteL . unquoteR) s
