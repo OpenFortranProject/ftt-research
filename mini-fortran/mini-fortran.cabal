@@ -1,0 +1,28 @@
+name:                mini-fortran
+version:             0.1.0.0
+-- synopsis:            
+-- description:         
+license:             BSD3
+license-file:        LICENSE
+author:              Jason Dagit
+maintainer:          dagit@galois.com
+-- copyright:           
+category:            Language
+build-type:          Simple
+cabal-version:       >=1.8
+
+executable f2cl
+  main-is:             Main.hs
+  build-depends:       base < 5
+                     , language-c-quote
+                     , containers
+                     , mini-fortran
+  hs-source-dirs:      src
+
+library
+  exposed-modules:     Language.MiniFortran
+                       Language.MiniFortran.ToOpenCL
+  build-depends:       base >= 3 && < 5
+                     , language-c-quote
+                     , containers
+  hs-source-dirs:      src
