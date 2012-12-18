@@ -121,6 +121,14 @@ ppLiteralType TyChar         = text "character"
 ppArrayType :: ArrayType -> Doc
 ppArrayType (TyArray d lt) = ppLiteralType lt -- TODO: not done yet, need name + attributes
 
+ppFuncType :: FuncType -> Doc
+-- TODO: properly show the return type, it needs to be a
+-- var decl the same as the function name
+ppFuncType (FuncType args ret) = encloseSep lparen rparen comma (map ppDataType args)
+
+ppProcType :: ProcType -> Doc
+ppProcType (ProcType args) = encloseSep lparen rparen comma (map ppDataType args)
+
 ppDimension :: Dimension -> Doc
 ppDimension (Dim bounds) =
   encloseSep lparen rparen comma (map ppBounds bounds)
@@ -136,6 +144,27 @@ ppUserDefinedType :: UserDefinedType -> Doc
 ppUserDefinedType (UserDefinedType name _) = text name
 
 ppVarDecl :: VarDecl -> Doc
-ppVarDecl (Decl {..}) = ppDataType declType <+> text "::" <+> text declName 
-{-
--}
+-- TODO: print attributes
+ppVarDecl Decl {..} = ppDataType declType <+> text "::" <+> text declName 
+
+ppFuncDecl :: FuncDecl -> Doc
+ppFuncDecl Decl {..} =
+  text "function" <+> text declName <> parens (ppFuncType declType)
+
+ppProcDecl :: ProcDecl -> Doc
+ppProcDecl Decl {..} =
+  text "procedure" <+> text declName <> parens (ppProcType declType)
+
+ppFuncDef :: FuncDef -> Doc
+ppFuncDef Def {..} =
+  ppFuncDecl defDecl                          <$$>
+  indent 3 (vsep (map ppVarDecl defVarDecls)) <$$>
+  indent 3 (ppBlock defBody)                  <$$>
+  text "end function"
+
+ppProcDef :: ProcDef -> Doc
+ppProcDef Def {..} =
+  ppProcDecl defDecl                          <$$>
+  indent 3 (vsep (map ppVarDecl defVarDecls)) <$$>
+  indent 3 (ppBlock defBody)                  <$$>
+  text "end procedure"

@@ -141,7 +141,7 @@ data UserDefinedType = UserDefinedType Variable [(Variable, DataType)]
 data ProcType = ProcType [DataType]
   deriving (Read, Show, Eq, Ord, Typeable)
 
-data FuncType = FuncType ([DataType], DataType)
+data FuncType = FuncType [DataType] DataType
   deriving (Read, Show, Eq, Ord, Typeable)
 
 data Type
