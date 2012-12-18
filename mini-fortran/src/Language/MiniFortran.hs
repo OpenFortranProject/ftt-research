@@ -18,6 +18,9 @@ data NumericExpr
   | NumericVal   ValueExpr
   deriving (Read, Show, Eq, Ord, Typeable)
 
+infixl 6 :+:, :-:
+infixl 7 :*:, :/:
+
 data LogicExpr
   = LogicExpr :&&: LogicExpr
   | LogicExpr :||: LogicExpr
@@ -32,6 +35,10 @@ data LogicExpr
   | NumericExpr :==: NumericExpr
   | NumericExpr :/=: NumericExpr
   deriving (Read, Show, Eq, Ord, Typeable)
+
+infixr 3 :&&:, :^:
+infixr 2 :||:
+infix 4 :>:, :<:, :>=:, :<=:, :==:, :/=:
 
 data Expr
   -- | Arithmetic
