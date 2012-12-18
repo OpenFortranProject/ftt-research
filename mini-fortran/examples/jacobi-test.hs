@@ -60,10 +60,15 @@ body = [
          (NumE ((((xim1j :+: xip1j) :+: xijm1) :+: xijp1) :/: (NumericVal (nconst 4))))
       ]
     ],
-    VarRef "eps" :=: (NumericVal $ 
+    VarRef "eps" :=: (NumE $ NumericVal $
                        Func "sqrt" [NumE $ NumericVal $ Func "sum" [
-                                   NumE $ (nvr "x" :-: nvr "tmp") :*: (nvr "x" :-: nvr "tmp") ]])
+                                   NumE $ (nvr "x" :-: nvr "tmp") :*: (nvr "x" :-: nvr "tmp") ]]),
+    VarRef "x" :=: (NumE $ nvr "tmp")
   ] 
   ]
 
 s = ppBlock body
+
+main = do
+  print s
+  return ()

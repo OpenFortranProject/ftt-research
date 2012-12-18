@@ -4,6 +4,9 @@ module Language.MiniFortran.PrettyPrinter where
 import Language.MiniFortran
 import Text.PrettyPrint.Leijen 
 
+ppList :: [Doc] -> Doc
+ppList xs = parens (hcat (punctuate comma xs))
+
 ppNumericExpr :: NumericExpr -> Doc
 ppNumericExpr (n1 :+: n2)      = parens (ppNumericExpr n1) <+> text "+" <+> parens (ppNumericExpr n2)
 ppNumericExpr (n1 :-: n2)      = parens (ppNumericExpr n1) <+> text "-" <+> parens (ppNumericExpr n2)
@@ -33,11 +36,11 @@ ppValueExpr :: ValueExpr -> Doc
 ppValueExpr (RefExpr r)   = ppRef r
 ppValueExpr (Lit l)       = ppLiteral l
 ppValueExpr (Slice sexpr) = ppSliceExpr sexpr
-ppValueExpr (Func v args) = text v <> encloseSep lparen rparen comma (map ppExpr args)
+ppValueExpr (Func v args) = text v <> ppList (map ppExpr args)
 
 ppRef :: Ref -> Doc
 ppRef (VarRef v)      = text v
-ppRef (ArrayRef v is) = text v <> encloseSep lparen rparen comma (map ppIndexExpr is)
+ppRef (ArrayRef v is) = text v <> ppList (map ppIndexExpr is)
 
 ppIndexExpr :: IndexExpr -> Doc
 ppIndexExpr (IdxExpr n)      = ppNumericExpr n
@@ -86,7 +89,7 @@ ppStmt (DoWhile expr stmts) =
   (indent 3 (ppBlock stmts))           <$$>
   text "end do"
 ppStmt (Call proc args) =
-  text "call" <+> text proc <> encloseSep lparen rparen comma (map ppExpr args)
+  text "call" <+> text proc <> ppList (map ppExpr args)
 ppStmt (v :=: expr) =
   ppRef v <+> text "=" <+> ppExpr expr
 
@@ -124,14 +127,14 @@ ppArrayType (TyArray d lt) = ppLiteralType lt -- TODO: not done yet, need name +
 ppFuncType :: FuncType -> Doc
 -- TODO: properly show the return type, it needs to be a
 -- var decl the same as the function name
-ppFuncType (FuncType args ret) = encloseSep lparen rparen comma (map ppDataType args)
+ppFuncType (FuncType args ret) = ppList (map ppDataType args)
 
 ppProcType :: ProcType -> Doc
-ppProcType (ProcType args) = encloseSep lparen rparen comma (map ppDataType args)
+ppProcType (ProcType args) = ppList (map ppDataType args)
 
 ppDimension :: Dimension -> Doc
 ppDimension (Dim bounds) =
-  encloseSep lparen rparen comma (map ppBounds bounds)
+  ppList (map ppBounds bounds)
   where
   ppBounds (lb, ub) = ppLowerBound lb <> colon <> ppUpperBound ub
 

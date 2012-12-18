@@ -28,3 +28,10 @@ library
                      , containers
                      , wl-pprint
   hs-source-dirs:      src
+
+executable jacobi
+  main-is:             jacobi-test.hs
+  build-depends:       base < 5
+                     , containers
+                     , mini-fortran
+  hs-source-dirs:      examples
