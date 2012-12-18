@@ -42,11 +42,15 @@ data Expr
   deriving (Read, Show, Eq, Ord, Typeable)
 
 data ValueExpr
-  = Var    Variable
+  = RefExpr Ref
   | Lit    Literal
-  | ArrRef Variable [IndexExpr] -- ^ array name and list of indices
   | Slice  SliceExpr
   | Func   Variable [Expr]
+  deriving (Read, Show, Eq, Ord, Typeable)
+
+data Ref
+  = VarRef   Variable
+  | ArrayRef Variable [IndexExpr] -- ^ array name and list of indices
   deriving (Read, Show, Eq, Ord, Typeable)
 
 data IndexExpr
@@ -84,7 +88,8 @@ type Block = [Stmt]
 -- by having Nothing for the LoopBounds in the Do construct.
 data LoopBounds
   = LB
-  { lbFrom :: NumericExpr
+  { lbVar  :: Variable
+  , lbFrom :: NumericExpr
   , lbTo   :: NumericExpr
   , lbStep :: NumericExpr -- ^ Default is 1
   }
@@ -100,7 +105,7 @@ data Stmt
   | Do      (Maybe LoopBounds) Block
   | DoWhile LogicExpr          Block -- ^ loops with a conditional expr
   | Call Variable [Expr] -- ^ Procedure/Function calls
-  | Variable :=: Expr
+  | Ref :=: Expr
   deriving (Read, Show, Eq, Ord, Typeable)
 
 data NumericType

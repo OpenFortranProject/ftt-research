@@ -30,11 +30,14 @@ ppExpr (NumE n) = ppNumericExpr n
 ppExpr (LogE l) = ppLogicExpr l
 
 ppValueExpr :: ValueExpr -> Doc
-ppValueExpr (Var v)       = text v
+ppValueExpr (RefExpr r)   = ppRef r
 ppValueExpr (Lit l)       = ppLiteral l
-ppValueExpr (ArrRef v is) = text v <> encloseSep lparen rparen comma (map ppIndexExpr is)
 ppValueExpr (Slice sexpr) = ppSliceExpr sexpr
 ppValueExpr (Func v args) = text v <> encloseSep lparen rparen comma (map ppExpr args)
+
+ppRef :: Ref -> Doc
+ppRef (VarRef v)      = text v
+ppRef (ArrayRef v is) = text v <> encloseSep lparen rparen comma (map ppIndexExpr is)
 
 ppIndexExpr :: IndexExpr -> Doc
 ppIndexExpr (IdxExpr n)      = ppNumericExpr n
@@ -68,7 +71,8 @@ ppStmt (If expr tb fb) =
   text "end if"
 ppStmt (Select expr cases) =
   text "select case" <+> parens (ppNumericExpr expr) <$$>
-  indent 3 (vsep (map ppCase cases))
+  indent 3 (vsep (map ppCase cases))                 <$$>
+  text "end select"
 ppStmt (Do Nothing stmts) =
   text "do"                  <$$>
   (indent 3 (ppBlock stmts)) <$$>
@@ -84,13 +88,18 @@ ppStmt (DoWhile expr stmts) =
 ppStmt (Call proc args) =
   text "call" <+> text proc <> encloseSep lparen rparen comma (map ppExpr args)
 ppStmt (v :=: expr) =
-  text v <+> text "=" <+> ppExpr expr
+  ppRef v <+> text "=" <+> ppExpr expr
 
 ppLiteral :: Literal -> Doc
-ppLiteral = const empty -- TODO: implement me
+ppLiteral (Literal s) = text s
 
 ppCase :: (NumericExpr, Block) -> Doc
-ppCase = const empty -- TODO: implement me
+ppCase (n, stmts) =
+  text "case" <+> parens (ppNumericExpr n) <$$>
+  indent 3 (ppBlock stmts)
 
 ppLoopBounds :: LoopBounds -> Doc
-ppLoopBounds = const empty -- TODO: implement me
+ppLoopBounds LB {..} =
+  text lbVar <+> text "=" <+> ppNumericExpr lbFrom <> comma <+>
+  ppNumericExpr lbTo <> comma <+> ppNumericExpr lbStep
+
