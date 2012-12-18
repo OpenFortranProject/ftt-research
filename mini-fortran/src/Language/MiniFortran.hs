@@ -7,8 +7,7 @@ import Data.Typeable
 
 type Variable = String
 
-newtype Literal = Literal String -- ^ uninterpreted literal constants
-  deriving (Read, Show, Eq, Ord, Typeable)
+type Literal = String -- ^ uninterpreted literal constants
 
 data NumericExpr 
   = NumericExpr :+: NumericExpr

@@ -91,7 +91,7 @@ ppStmt (v :=: expr) =
   ppRef v <+> text "=" <+> ppExpr expr
 
 ppLiteral :: Literal -> Doc
-ppLiteral (Literal s) = text s
+ppLiteral s = text s
 
 ppCase :: (NumericExpr, Block) -> Doc
 ppCase (n, stmts) =
@@ -103,3 +103,39 @@ ppLoopBounds LB {..} =
   text lbVar <+> text "=" <+> ppNumericExpr lbFrom <> comma <+>
   ppNumericExpr lbTo <> comma <+> ppNumericExpr lbStep
 
+ppNumericType :: NumericType -> Doc
+ppNumericType TyInt     = text "integer"
+ppNumericType TyFloat   = text "real"
+ppNumericType TyDouble  = text "real(8)"
+ppNumericType TyComplex = text "complex"
+
+ppLogicalType :: LogicalType -> Doc
+ppLogicalType TyBool = text "logical"
+
+ppLiteralType :: LiteralType -> Doc
+ppLiteralType (TyNumeric nt) = ppNumericType nt
+ppLiteralType (TyLogical lt) = ppLogicalType lt
+ppLiteralType TyString       = text "character(*)"
+ppLiteralType TyChar         = text "character"
+
+ppArrayType :: ArrayType -> Doc
+ppArrayType (TyArray d lt) = ppLiteralType lt -- TODO: not done yet, need name + attributes
+
+ppDimension :: Dimension -> Doc
+ppDimension (Dim bounds) =
+  encloseSep lparen rparen comma (map ppBounds bounds)
+  where
+  ppBounds (lb, ub) = ppLowerBound lb <> colon <> ppUpperBound ub
+
+ppDataType :: DataType -> Doc
+ppDataType (TyArr arrty) = ppArrayType arrty -- TODO: need name + attributes
+ppDataType (TyLit lt)    = ppLiteralType lt
+ppDataType (TyUser ut)   = ppUserDefinedType ut
+
+ppUserDefinedType :: UserDefinedType -> Doc
+ppUserDefinedType (UserDefinedType name _) = text name
+
+ppVarDecl :: VarDecl -> Doc
+ppVarDecl (Decl {..}) = ppDataType declType <+> text "::" <+> text declName 
+{-
+-}
