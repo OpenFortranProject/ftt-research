@@ -5,8 +5,6 @@ import Data.Map ( Map )
 import qualified Data.Map as M
 import Data.Typeable
 
--- | It would be 'nice' to upgrade this to something with
--- type info
 type Variable = String
 
 newtype Literal = Literal String -- ^ uninterpreted literal constants
@@ -33,7 +31,7 @@ data LogicExpr
   | NumericExpr :>=: NumericExpr
   | NumericExpr :<=: NumericExpr
   | NumericExpr :==: NumericExpr
-  | NumericExpr :!=: NumericExpr
+  | NumericExpr :/=: NumericExpr
   deriving (Read, Show, Eq, Ord, Typeable)
 
 data Expr
@@ -75,7 +73,7 @@ data LowerBound
   deriving (Read, Show, Eq, Ord, Typeable)
 
 -- | a group of statements, not a basic block
-type Block = [Expr]
+type Block = [Stmt]
 
 -- | We assume that implicit bounds have been
 -- reduced to some cannonical form, eg., lbStep has
@@ -95,13 +93,12 @@ data LoopBounds
 data Stmt
   = Write String -- ^ What else...
   | Read  String -- ^ What else...
-  | If Expr Stmt Stmt
-  | Select Expr [(NumericExpr, Block)]
+  | If LogicExpr Block Block
+  | Select NumericExpr [(NumericExpr, Block)]
   -- | We assume that all loops have been normalized to this form:
-  | Do (Maybe LoopBounds) -- ^ From/to and step by, Nothing is the
-                          -- infinite loop case
-       Block
-  | DoWhile LogicExpr Block -- ^ loops with a conditional expr
+  -- From/to and step by, Nothing is the infinite loop case
+  | Do      (Maybe LoopBounds) Block
+  | DoWhile LogicExpr          Block -- ^ loops with a conditional expr
   | Call Variable [Expr] -- ^ Procedure/Function calls
   | Variable :=: Expr
   deriving (Read, Show, Eq, Ord, Typeable)

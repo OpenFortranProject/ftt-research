@@ -21,8 +21,10 @@ executable f2cl
 
 library
   exposed-modules:     Language.MiniFortran
+                       Language.MiniFortran.PrettyPrinter
                        Language.MiniFortran.ToOpenCL
   build-depends:       base >= 3 && < 5
                      , language-c-quote
                      , containers
+                     , wl-pprint
   hs-source-dirs:      src
