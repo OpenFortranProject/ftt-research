@@ -38,7 +38,7 @@ data LogicExpr
 
 infixr 3 :&&:, :^:
 infixr 2 :||:
-infix 4 :>:, :<:, :>=:, :<=:, :==:, :/=:
+infix  4 :>:, :<:, :>=:, :<=:, :==:, :/=:
 
 data Expr
   -- | Arithmetic

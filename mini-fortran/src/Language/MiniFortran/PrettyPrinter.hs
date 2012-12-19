@@ -5,28 +5,72 @@ import Language.MiniFortran
 import Text.PrettyPrint.Leijen 
 
 ppList :: [Doc] -> Doc
-ppList xs = parens (hcat (punctuate comma xs))
+ppList xs = parens (hcat (punctuate (comma <> space) xs))
 
 ppNumericExpr :: NumericExpr -> Doc
-ppNumericExpr (n1 :+: n2)      = parens (ppNumericExpr n1) <+> text "+" <+> parens (ppNumericExpr n2)
-ppNumericExpr (n1 :-: n2)      = parens (ppNumericExpr n1) <+> text "-" <+> parens (ppNumericExpr n2)
-ppNumericExpr (n1 :*: n2)      = parens (ppNumericExpr n1) <+> text "*" <+> parens (ppNumericExpr n2)
-ppNumericExpr (n1 :/: n2)      = parens (ppNumericExpr n1) <+> text "/" <+> parens (ppNumericExpr n2)
-ppNumericExpr (NumericMinus n) = text "-" <+> parens (ppNumericExpr n)
-ppNumericExpr (NumericVal val) = ppValueExpr val
+ppNumericExpr = ppNumericExprPrec 0
+
+plusPrec   = 6
+minusPrec  = 6
+multPrec   = 7
+divPrec    = 7
+uMinusPrec = 10 -- should this be lower?
+numValPrec = 11 -- what should this be?
+
+ppParens :: Bool -> Doc -> Doc
+ppParens True  d = parens d
+ppParens False d = d
+
+ppNumericExprPrec :: Int -> NumericExpr -> Doc
+ppNumericExprPrec d (n1 :+: n2) = ppParens (d > plusPrec) $
+  ppNumericExprPrec (plusPrec + 1) n1 <+> text "+" <+> ppNumericExprPrec (plusPrec + 1) n2
+ppNumericExprPrec d (n1 :-: n2) = ppParens (d > minusPrec) $
+  ppNumericExprPrec (minusPrec + 1) n1 <+> text "-" <+> ppNumericExprPrec (minusPrec + 1) n2
+ppNumericExprPrec d (n1 :*: n2) = ppParens (d > multPrec) $
+  ppNumericExprPrec (multPrec + 1) n1 <+> text "*" <+> ppNumericExprPrec (multPrec + 1) n2
+ppNumericExprPrec d (n1 :/: n2) = ppParens (d > divPrec) $
+  ppNumericExprPrec (divPrec + 1) n1 <+> text "/" <+> ppNumericExprPrec (divPrec + 1) n2
+ppNumericExprPrec d (NumericMinus n) = ppParens (d > uMinusPrec) $
+  text "-" <+> ppNumericExprPrec (uMinusPrec + 1) n
+ppNumericExprPrec d (NumericVal val) =
+  ppParens (d > numValPrec) $ ppValueExpr val
 
 ppLogicExpr :: LogicExpr -> Doc
-ppLogicExpr (l1 :&&: l2)   = parens (ppLogicExpr l1) <+> text ".AND." <+> parens (ppLogicExpr l2)
-ppLogicExpr (l1 :||: l2)   = parens (ppLogicExpr l1) <+> text ".OR."  <+> parens (ppLogicExpr l2)
-ppLogicExpr (l1 :^: l2)    = parens (ppLogicExpr l1) <+> text ".XOR." <+> parens (ppLogicExpr l2)
-ppLogicExpr (Not l)        = text ".NOT." <+> parens (ppLogicExpr l)
-ppLogicExpr (LogicVal val) = ppValueExpr val
-ppLogicExpr (n1 :>:  n2)   = parens (ppNumericExpr n1) <+> text ">"  <+> parens (ppNumericExpr n2)
-ppLogicExpr (n1 :<:  n2)   = parens (ppNumericExpr n1) <+> text "<"  <+> parens (ppNumericExpr n2)
-ppLogicExpr (n1 :>=: n2)   = parens (ppNumericExpr n1) <+> text ">=" <+> parens (ppNumericExpr n2)
-ppLogicExpr (n1 :<=: n2)   = parens (ppNumericExpr n1) <+> text "<=" <+> parens (ppNumericExpr n2)
-ppLogicExpr (n1 :==: n2)   = parens (ppNumericExpr n1) <+> text "==" <+> parens (ppNumericExpr n2)
-ppLogicExpr (n1 :/=: n2)   = parens (ppNumericExpr n1) <+> text "/=" <+> parens (ppNumericExpr n2)
+ppLogicExpr = ppLogicExprPrec 0
+
+andPrec      = 3
+xorPrec      = 3
+orPrec       = 2
+gtPrec       = 4
+ltPrec       = 4
+gePrec       = 4
+lePrec       = 4
+eqPrec       = 4
+neqPrec      = 4
+notPrec      = 10
+logicValPrec = 11
+
+ppLogicExprPrec :: Int -> LogicExpr -> Doc
+ppLogicExprPrec d (l1 :&&: l2)   = ppParens (d > andPrec) $
+  ppLogicExprPrec (andPrec + 1) l1 <+> text ".AND." <+> ppLogicExprPrec (andPrec + 1) l2
+ppLogicExprPrec d (l1 :||: l2)   = ppParens (d > orPrec) $
+  ppLogicExprPrec (orPrec + 1) l1 <+> text ".OR."  <+> ppLogicExprPrec (orPrec + 1) l2
+ppLogicExprPrec d (l1 :^:  l2)   = ppParens (d > xorPrec) $
+  ppLogicExprPrec (xorPrec + 1) l1 <+> text ".XOR." <+> ppLogicExprPrec (xorPrec + 1) l2
+ppLogicExprPrec d (n1 :>:  n2)   = ppParens (d > gtPrec) $ 
+  ppNumericExprPrec (gtPrec + 1) n1 <+> text ">"  <+> ppNumericExprPrec (gtPrec + 1) n2
+ppLogicExprPrec d (n1 :<:  n2)   = ppParens (d > ltPrec) $
+  ppNumericExprPrec (ltPrec + 1) n1 <+> text "<"  <+> ppNumericExprPrec (ltPrec + 1) n2
+ppLogicExprPrec d (n1 :>=: n2)   = ppParens (d > gePrec) $
+  ppNumericExprPrec (gePrec + 1) n1 <+> text ">=" <+> ppNumericExprPrec (gePrec + 1) n2
+ppLogicExprPrec d (n1 :<=: n2)   = ppParens (d > lePrec) $
+  ppNumericExprPrec (lePrec + 1) n1 <+> text "<=" <+> ppNumericExprPrec (lePrec + 1) n2
+ppLogicExprPrec d (n1 :==: n2)   = ppParens (d > eqPrec) $
+  ppNumericExprPrec (eqPrec + 1) n1 <+> text "==" <+> ppNumericExprPrec (eqPrec + 1) n2
+ppLogicExprPrec d (n1 :/=: n2)   = ppParens (d > neqPrec) $
+  ppNumericExprPrec (neqPrec + 1) n1 <+> text "/=" <+> ppNumericExprPrec (neqPrec + 1) n2
+ppLogicExprPrec d (Not l)        = ppParens (d > notPrec) $ text ".NOT." <+> ppLogicExprPrec (notPrec + 1) l
+ppLogicExprPrec d (LogicVal val) = ppParens (d > logicValPrec) $ ppValueExpr val
 
 ppExpr :: Expr -> Doc
 ppExpr (NumE n) = ppNumericExpr n
@@ -50,7 +94,10 @@ ppSliceExpr :: SliceExpr -> Doc
 ppSliceExpr SliceExpr {..} =
            ppLowerBound seLower <>
   colon <> ppUpperBound seUpper <>
-  colon <> ppNumericExpr seStride
+  ppOptionalStride seStride
+  where
+  ppOptionalStride (NumericVal (Lit "1")) = empty
+  ppOptionalStride n                      = colon <> ppNumericExpr n
 
 ppUpperBound :: UpperBound -> Doc
 ppUpperBound (UBExpr n) = ppNumericExpr n
