@@ -40,7 +40,37 @@ xijp1 = (NumericVal
                              IdxExpr (NumericVal (RefExpr $ VarRef "j") :+: (NumericVal (nconst 1)))
                              ]))
 
+varDecls =
+  [
+    Decl { declName       = "n"
+         , declType       = TyLit (TyNumeric TyInt)
+         , declAttributes = []
+         }
+  , Decl { declName       = "x"
+         , declType       = TyArr (TyArray (Dim [arrBounds, arrBounds]) (TyNumeric TyFloat))
+         , declAttributes = []
+         }
+  , Decl { declName       = "tmp"
+         , declType       = TyArr (TyArray (Dim [arrBounds, arrBounds]) (TyNumeric TyFloat))
+         , declAttributes = []
+         }
+  , Decl { declName       = "i"
+         , declType       = TyLit (TyNumeric TyInt)
+         , declAttributes = []
+         }
+  , Decl { declName       = "j"
+         , declType       = TyLit (TyNumeric TyInt)
+         , declAttributes = []
+         }
+  , Decl { declName       = "eps"
+         , declType       = TyLit (TyNumeric TyFloat)
+         , declAttributes = []
+         }
+  ]
+  where arrBounds = (LowerBound, UBExpr (NumericVal (Lit "100")))
+
 body = [
+  VarRef "n" :=: (NumE $ NumericVal $ nconst 100),
   VarRef "x" :=: (NumE $ NumericVal $ nconst 0),
   ArrayRef "x" toprow :=: (NumE $ NumericVal $ nconst 100),
   VarRef "eps" :=: (NumE $ NumericVal $ nconst 1),
@@ -67,7 +97,17 @@ body = [
   ] 
   ]
 
-s = ppBlock body
+jacobiDef = Def
+  { defDecl = Decl
+    { declName       = "jacobi"
+    , declType       = ProcType []
+    , declAttributes = []
+    }
+  , defVarDecls = varDecls
+  , defBody     = body
+  }
+
+s = ppProcDef jacobiDef
 
 main = do
   print s

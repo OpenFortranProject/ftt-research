@@ -169,7 +169,8 @@ ppLiteralType TyString       = text "character(*)"
 ppLiteralType TyChar         = text "character"
 
 ppArrayType :: ArrayType -> Doc
-ppArrayType (TyArray d lt) = ppLiteralType lt -- TODO: not done yet, need name + attributes
+-- TODO: not done yet, need name + attributes
+ppArrayType (TyArray d lt) = ppLiteralType lt <> comma <+> ppDimension d
 
 ppFuncType :: FuncType -> Doc
 -- TODO: properly show the return type, it needs to be a
@@ -177,11 +178,12 @@ ppFuncType :: FuncType -> Doc
 ppFuncType (FuncType args ret) = ppList (map ppDataType args)
 
 ppProcType :: ProcType -> Doc
+ppProcType (ProcType [])   = empty
 ppProcType (ProcType args) = ppList (map ppDataType args)
 
 ppDimension :: Dimension -> Doc
 ppDimension (Dim bounds) =
-  ppList (map ppBounds bounds)
+  text "dimension" <> ppList (map ppBounds bounds)
   where
   ppBounds (lb, ub) = ppLowerBound lb <> colon <> ppUpperBound ub
 
