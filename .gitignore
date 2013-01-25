@@ -3,7 +3,17 @@
 *.o
 *.mod
 *.orig
-*.o
-*.so
 a.out
 *.swp
+# Compiled Object files
+*.slo
+*.lo
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
