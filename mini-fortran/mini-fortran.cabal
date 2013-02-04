@@ -14,7 +14,7 @@ cabal-version:       >=1.8
 executable f2cl
   main-is:             Main.hs
   build-depends:       base < 5
-                     , language-c-quote
+--                     , language-c-quote
                      , containers
                      , mini-fortran
   hs-source-dirs:      src
@@ -24,7 +24,7 @@ library
                        Language.MiniFortran.PrettyPrinter
                        Language.MiniFortran.ToOpenCL
   build-depends:       base >= 3 && < 5
-                     , language-c-quote
+--                     , language-c-quote
                      , containers
                      , wl-pprint
   hs-source-dirs:      src
