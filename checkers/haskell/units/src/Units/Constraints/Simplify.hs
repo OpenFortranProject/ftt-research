@@ -17,11 +17,11 @@ type IVMap = Map Int RHS
 type VarMap = Map String Int
 
 simplify :: CheckerState -> ([(Int, Int)], [Constraint])
-simplify st = substituteEqual (variableMap st) (eliminateIVs st)
+simplify st = substituteEqual (eliminateIVs st)
 
 -- substitute constraints of the form v1 = v2
-substituteEqual :: VarMap -> [Constraint] -> ([(Int, Int)], [Constraint])
-substituteEqual varMap cs = (eqs, foldr substitute rest eqs)
+substituteEqual :: [Constraint] -> ([(Int, Int)], [Constraint])
+substituteEqual cs = (eqs, foldr substitute rest eqs)
   where
     (eqs, rest) = partitionWith eq cs 
     eq ([x] :== [y]) = Left (x, y)
