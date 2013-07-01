@@ -36,8 +36,25 @@ numeric (e1 :+: e2) = do
     addConstraint $ [x1] :== [x2]
     addConstraint $ [n] :== [x2]
     return n
--- TODO
-numeric x = error $ show x
+numeric (e1 :-: e2) = do
+    x1 <- numeric e1
+    x2 <- numeric e2
+    n <- fresh
+    addConstraint $ [x1] :== [x2]
+    addConstraint $ [n] :== [x2]
+    return n
+numeric (e1 :/: e2) = do
+    x1 <- numeric e1
+    x2 <- numeric e2
+    n <- fresh
+    addConstraint $ [x1] :== [n, x2]
+    return n
+numeric (NumericMinus e) = do
+    x <- numeric e
+    n <- fresh
+    addConstraint $ [n] :== [x]
+    return n
+numeric x = error $ "numeric: " ++ show x
 
 -- TODO ArrayRef?
 getAssignments :: Data a => a -> [(String, NumericExpr)]
