@@ -16,22 +16,26 @@ type IVMap = Map Int RHS
 -- TODO move this
 type VarMap = Map String Int
 
-merge :: VarMap -> [Constraint] -> ([(Int, Int)], [Constraint])
-merge varMap cs = (eqs, foldr substitute rest eqs)
+simplify :: CheckerState -> ([(Int, Int)], [Constraint])
+simplify st = substituteEqual (variableMap st) (eliminateIVs st)
+
+-- substitute constraints of the form v1 = v2
+substituteEqual :: VarMap -> [Constraint] -> ([(Int, Int)], [Constraint])
+substituteEqual varMap cs = (eqs, foldr substitute rest eqs)
   where
     (eqs, rest) = partitionWith eq cs 
     eq ([x] :== [y]) = Left (x, y)
     eq x = Right x
 
 substitute :: (Int, Int) -> [Constraint] -> [Constraint]
-substitute (x, y) cs = everywhere (mkT replace) cs
+substitute (x, y) cs = everywhere (mkT subst) cs
   where
-    replace u
+    subst u
         | u == x = y
         | otherwise = u
 
-simplify :: CheckerState -> [Constraint]
-simplify st = map (\(x :== cs) -> x :== substituteIVs ivmap cs) svcs
+eliminateIVs :: CheckerState -> [Constraint]
+eliminateIVs st = map (\(x :== cs) -> x :== substituteIVs ivmap cs) svcs
   where
     (ivmap, svcs) = splitConstraints st
 
