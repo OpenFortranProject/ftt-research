@@ -14,6 +14,9 @@ Contains
 !
 !    call prolongate(U1h(j1h)[device], U2h(j2h)[device], [0.5, 1.0, 0.5], J, 0) [[device]]
 !
+! CAN'T call with device like this because don't know how many cores to use
+! unless this is an elemental function, then can use the number of elements
+! in ALL of the arrays (must conform).
 !
 Pure Subroutine prolongate_1D_assign(U1h, U2h, S, N, device)
   real, intent(out)   :: U1h(0:N)     ! fine grid
