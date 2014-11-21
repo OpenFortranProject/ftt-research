@@ -36,11 +36,7 @@ program test_prolongate
          
    !! Test array assignment
    !
-!   call prolongate(U1h(j1h:j1h), U2h(j2h:j2h), [0.5, 1.0, 0.5], J, 0)
    call prolongate(U1h, U2h, [0.5, 1.0, 0.5], J, 0)
-
-   print *
-   print *, U1h
 
    do j1h = 1, J-1
       error = j1h - U1h(j1h)
