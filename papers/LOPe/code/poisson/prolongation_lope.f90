@@ -10,23 +10,16 @@ Contains
 ! This version will require "loop" fusion to optimize so there is
 ! only one kernel to run.
 !
-! Call with:
-!
-!    call prolongate(U1h(j1h)[device], U2h(j2h)[device], [0.5, 1.0, 0.5], J, 0) [[device]]
-!
-! CAN'T call with device like this because don't know how many cores to use
-! unless this is an elemental function, then can use the number of elements
-! in ALL of the arrays (must conform).
-!
 Pure Subroutine prolongate_1D_assign(U1h, U2h, S, N, device)
-  real, intent(out)   :: U1h(0:N)     ! fine grid
-  real, intent(in )   :: U2h(0:N/2)   ! coarse grid
+  real, intent(out)   :: U1h(0:N)     ! fine grid   (includes halo)
+  real, intent(in )   :: U2h(0:N/2)   ! coarse grid (includes halo)
   real, intent(in )   :: S(3)         ! stencil
   integer, intent(in) :: N            ! fine grid size (N-1 interior pts)
   integer, intent(in) :: device       ! execution device
 
-  U1h(1:N-1:2) = S(1)*U2h(0:N/2-2) + S(3)*U2h(1:N/2-1)   ! take from left and right
-  U1h(2:N-2:2) = S(2)*U2h(1:N/2-1)                       ! take from center
+  U1h(1:N-1:2) = S(1)*U2h(0:N/2-2)  &
+               + S(3)*U2h(1:N/2-1)    ! take from left and right
+  U1h(2:N-2:2) = S(2)*U2h(1:N/2-1)    ! take from center
 
 End Subroutine prolongate_1D_assign
 
