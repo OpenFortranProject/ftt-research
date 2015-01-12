@@ -1,0 +1,50 @@
+program test_elemental_add_1d
+
+   integer, parameter :: M = 64
+   integer :: device, j
+   real, allocatable, dimension(:), codimension[:] :: A, B, C
+
+   device = get_subimage(1)
+
+   !! Allocate memory on local and remote images
+   !  ------------------------------------------
+   allocate(A(M)[*],B(M)[*],C(M)[*])
+
+   !! Allocate memory on subimage if available
+   !  ----------------------------------------
+   if (device /= THIS_IMAGE()) then
+      allocate(A, HALO_MOLD=A[THIS_IMAGE])   [[device]]
+      allocate(B, HALO_MOLD=B[THIS_IMAGE])   [[device]]
+      allocate(C, HALO_MOLD=C[THIS_IMAGE])   [[device]]
+   end if
+
+   !! Initialize and transfer memory to device
+   !  ----------------------------------------
+   A = 1
+   B = 2
+
+   A[device] = A
+   B[device] = B
+
+   call HALO_EXCHANGE(A, B, C)
+
+   do concurrent (j = 1:M)  [[device]]
+      call elemental_add_1d(A(j)[device], B(j)[device], C(j)[device])
+   end do
+
+   call HALO_EXCHANGE(A, B, C)
+
+   !! Copy calculated value from device
+   !  ---------------------------------
+   C = C[device]
+
+   !! Deallocate memory on all images (including subimages)
+   !  -----------------------------------------------------
+
+   deallocate(A, B, C)
+
+   if (device /= THIS_IMAGE()) then
+      deallocate(A, B, C)   [[device]]
+   end if
+
+end program
