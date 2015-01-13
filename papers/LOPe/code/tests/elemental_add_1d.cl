@@ -8,36 +8,37 @@ __kernel void elemental_add_1d (__global float * A,  __global float * B,    __gl
 {
    if (K1_ < N1_) {
 
+
      // copy incoming halo regions
      // ----------------------------------------------------------------------------------------------
-     if (K1_ < A_H1L_) {
+     if (K1_ < HALO1_L(A)) {
         A[K1_] = A_H_[K1_];
      }
-     if (K1_ >= N1_ - A_H1R_) {
-        A[K1_ + A_H1R_ + A_H1L_] = A_H_[K1_ - (N1_ - A_H1R_) + A_H1L_];
+     if (K1_ >= N1_ - HALO1_R(A)) {
+        A[IDX1(0,A) + HALO1_R(A)] = A_H_[IDX1(0,A) - (N1_ - HALO1_R(A))];
      }
-     if (K1_ < B_H1L_) {
+     if (K1_ < HALO1_L(B)) {
         B[K1_] = B_H_[K1_];
      }
-     if (K1_ >= N1_ - B_H1R_) {
-        B[K1_ + B_H1R_ + B_H1L_] = B_H_[K1_ - (N1_ - B_H1R_) + B_H1L_];
+     if (K1_ >= N1_ - HALO1_R(B)) {
+        B[IDX1(0,B) + HALO1_R(B)] = B_H_[IDX1(0,B) - (N1_ - HALO1_R(B))];
      }
+
 
      // run algorithm
      // ----------------------------------------------------------------------------------------------
 
-     C[(0 + K1_ + C_H1L_)*C_S1_] = A[(0 + K1_ + A_H1L_)*A_S1_]
-                                 + B[(0 + K1_ + B_H1L_)*B_S1_];
-                                 
+     C[IDX1(0,C)] = A[IDX1(0,A)] + B[IDX1(0,B)];
            
+
      // copy outgoing halo regions
      // ----------------------------------------------------------------------------------------------
 
      if (K1_ < C_H1L_) {
-        C_H_[K1_] = C[K1_ + C_H1L_];
+        C_H_[K1_] = C[IDX1(0,C)];
      }
-     if (K1_ >= N1_ - C_H1R_) {
-        C_H_[K1_ - (N1_ - C_H1R_) + C_H1L_] = C[K1_ + C_H1L_];
+     if (K1_ >= N1_ - HALO1_R(C)) {
+        C_H_[IDX1(0,C) - (N1_ - HALO1_R(C))] = C[IDX1(0,C)];
      }
 
    }
