@@ -1,5 +1,5 @@
 program elemental_add
-   use OpenCL
+   use ForOpenCL
    use Timer_mod
    implicit none
 
