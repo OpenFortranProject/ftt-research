@@ -7,7 +7,7 @@ program elemental_add_1d
 
    ! layer size
    integer(c_size_t), parameter :: NX  = 16
-   integer(c_size_t), parameter :: NH  = 2
+   integer(c_size_t), parameter :: NH  = 1
   
    ! work group size
    integer(c_size_t), parameter :: NXL = 16
@@ -50,10 +50,10 @@ program elemental_add_1d
       B(i) = i + 100
    end do
 
-!   A_H = [-1.0*NX, -1.]
-!   B_H = [-100-1.0*NX, -101.]
-   A_H = [-NX+1.0, -1.0*NX, -1., -2.]
-   B_H = [-100-NX+1.0, -100-1.0*NX, -101., -102.]
+   A_H = [-1.0*NX, -1.]
+   B_H = [-100-1.0*NX, -101.]
+!   A_H = [-NX+1.0, -1.0*NX, -1., -2.]
+!   B_H = [-100-NX+1.0, -100-1.0*NX, -101., -102.]
 
    ! create memory buffers
    !
