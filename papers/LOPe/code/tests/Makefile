@@ -16,14 +16,17 @@ FCFLAGS = -g -I $(FOR_OCL_DIR)
 	$(FC) -c $(FCFLAGS) -o $@ $<
 
 
-all : elemental_add_1d
+all : elemental_add_1d elemental_add_2d
 
 elemental_add_1d : elemental_add_1d.f90
 	$(FC) elemental_add_1d.f90 -o elemental_add_1d $(FCFLAGS) $(LDFLAGS)
+
+elemental_add_2d : elemental_add_2d.f90
+	$(FC) elemental_add_2d.f90 -o elemental_add_2d $(FCFLAGS) $(LDFLAGS)
 
 check : elemental_add_1d
 	@elemental_add_1d
 
 clean :
-	rm -f elemental_add_1d
+	rm -f elemental_add_1d elemental_add_2d
 	rm -f *.o *.mod
