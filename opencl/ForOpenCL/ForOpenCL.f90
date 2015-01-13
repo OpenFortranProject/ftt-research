@@ -30,10 +30,26 @@
 ! typedef double                  cl_double;
 !
 
-module OpenCL
+module ForOpenCL
    use, intrinsic :: ISO_C_BINDING
    use :: OpenCLTypes
    use :: CLDevice_mod
    use :: CLKernel_mod
    use :: CLBuffer_mod
-end module OpenCL
+
+contains
+
+function get_subimage(device_id, cl_device_)
+   use CLDevice_mod, only : init_device, CLDevice
+   implicit none
+   integer, intent(in) :: device_id
+   type(CLDevice), intent(out) :: cl_device_
+   integer :: get_subimage
+   integer(cl_int) :: status
+
+   status = init_device(cl_device_, int(device_id,c_int))
+   get_subimage = device_id
+
+end function get_subimage
+
+end module ForOpenCL
