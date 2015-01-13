@@ -1,0 +1,36 @@
+#define K1_ (get_global_id(0))
+#define K2_ (get_global_id(1))
+
+#define N1_ (16)
+#define N2_ (4)
+
+#define A_H1L_ 1
+#define A_H1R_ 1
+#define A_H2L_ 1
+#define A_H2R_ 1
+#define A_S1_  1
+#define A_S2_  (A_H1L_ + A_H1R_ + N1_)
+
+
+#define B_H1L_ 1
+#define B_H1R_ 1
+#define B_H2L_ 1
+#define B_H2R_ 1
+#define B_S1_  1
+#define B_S2_  (B_H1L_ + B_H1R_ + N1_)
+
+#define C_H1L_ 1
+#define C_H1R_ 1
+#define C_H2L_ 1
+#define C_H2R_ 1
+#define C_S1_  1
+#define C_S2_  (C_H1L_ + C_H1R_ + N1_)
+
+#define HALO1_L(NAME)      ( (NAME ## _H1L_) )
+#define HALO1_R(NAME)      ( (NAME ## _H1R_) )
+
+#define IDX1(OFF,NAME)   ( (OFF) + (K1_) + (NAME ## _H1L_) )
+
+// When 2D implemented will need stride for second dimension
+//#define IDX1(OFF,NAME)   ( ((OFF) + (K1_) + (NAME ## _H1L_)) * (NAME ## _S1_) )
+
