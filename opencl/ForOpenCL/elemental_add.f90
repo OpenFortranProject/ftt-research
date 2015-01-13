@@ -34,13 +34,13 @@ program elemental_add
 
    nxg = NX
    nyg = NY
-   if (device_id == 0) then
+   if (device_id /= 0) then
       nxLocal = NXL; nyLocal = NYL
    else
       nxLocal = 1; nyLocal = 1
    end if
 
-   status = init(device, device_id)
+   status = init_device(device, device_id)
 
    A = 1
    B = 2
@@ -53,9 +53,7 @@ program elemental_add
 
    ! create the kernel
    !
-   kernel = createKernel(device, &
-                         "elemental_add.cl" // C_NULL_CHAR, &
-                         "elemental_add"    // C_NULL_CHAR)
+   kernel = createKernel(device, "elemental_add", "elemental_add.cl")
 
    ! add arguments
    !
@@ -68,7 +66,7 @@ program elemental_add
    print *
    print *, "Measuring time to compute elemental add..."
    call init(timer)
-   call start(timer)
+!   call start(timer)
    do i = 1, nLoops
       status = run(kernel, NX, NY, nxLocal, nyLocal) + status
    end do
