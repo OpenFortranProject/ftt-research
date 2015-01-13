@@ -5,9 +5,9 @@ module CLDevice_mod
    use :: CLKernel_mod
    use :: CLBuffer_mod
 
-   interface init
-      module procedure init_device
-   end interface init
+   interface createKernel
+      module procedure createKernelWithFile, createKernel
+   end interface createKernel
 
 contains
 
@@ -78,18 +78,34 @@ contains
       query = query_device_info(this%device_id, this%device_ids(1+this%device_id))
    end function query
 
-   function createKernel(this, filename, name) result(kernel)
+   function createKernelWithFile(this, name, filename) result(kernel)
       use CLKernel_mod
       implicit none
       !class(CLDevice) :: this
       type(CLDevice) :: this
-      character(*) :: filename
+      character(*) :: name, filename
+      type(CLKernel) :: kernel
+      integer(c_int) :: status
+
+      status = init_kernel(kernel, this%context, this%commands, &
+                           this%device_ids(1+this%device_id),   &
+                           filename // C_NULL_CHAR,             &
+                           name // C_NULL_CHAR )
+
+   end function createKernelWithFile
+
+   function createKernel(this, name) result(kernel)
+      use CLKernel_mod
+      implicit none
+      type(CLDevice) :: this
       character(*) :: name
       type(CLKernel) :: kernel
       integer(c_int) :: status
       
-      status = init(kernel, this%context, this%commands, &
-                    this%device_ids(1+this%device_id), filename, name)
+      status = init_kernel(kernel, this%context, this%commands, &
+                           this%device_ids(1+this%device_id),   &
+                           name // ".cl" // C_NULL_CHAR,        &
+                           name          // C_NULL_CHAR )
 
    end function createKernel
 
@@ -104,7 +120,7 @@ contains
       type(CLBuffer) :: cl_buf
       integer(c_int) :: status
       
-      status = init(cl_buf, this%context, this%commands, flags, size, host_ptr)
+      status = init_buffer(cl_buf, this%context, this%commands, flags, size, host_ptr)
 
    end function createBuffer
 
@@ -118,7 +134,7 @@ contains
       type(CLBuffer) :: cl_buf
       integer(c_int) :: status
       
-      status = init(cl_buf, this%context, this%commands, CL_MEM_USE_HOST_PTR, size, host_ptr)
+      status = init_buffer(cl_buf, this%context, this%commands, CL_MEM_USE_HOST_PTR, size, host_ptr)
 
    end function createBufferMapped
 
