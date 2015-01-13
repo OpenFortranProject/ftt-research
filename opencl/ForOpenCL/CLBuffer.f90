@@ -3,10 +3,6 @@ module CLBuffer_mod
    use :: OpenCLTypes
    use :: OpenCLInterfaces
 
-   interface init
-      module procedure init_buffer
-   end interface init
-
 contains
 
    function init_buffer(this, context, commands, flags, size, host_ptr) result(status)
@@ -29,6 +25,18 @@ contains
          call stop_on_error(status)
       end if
    end function init_buffer
+
+   function releaseMemObject(this) result(status)
+      implicit none
+      type(CLBuffer) :: this
+      integer(cl_int) :: status
+
+      status = clReleaseMemObject(this%d_buf)
+      if (status /= CL_SUCCESS) then
+         print *, "CLBuffer::releaseMemObject: Failed to release memory object!"
+         call stop_on_error(status)
+      end if
+   end function releaseMemObject
 
    function clMemObject(this) result(mem_obj_rtn)
       implicit none
@@ -53,6 +61,22 @@ contains
          call stop_on_error(status)
       end if
    end function readBuffer
+
+   function writeBuffer(this, src, size) result(status)
+      implicit none
+      type(CLBuffer) :: this
+      type(c_ptr) :: src
+      integer(c_size_t) :: size, offset
+      integer(cl_int) :: status
+
+      offset = 0
+      status = clEnqueueWriteBuffer(this%commands, this%d_buf, CL_TRUE, offset, size, &
+                                    src, 0, C_NULL_PTR, this%event)
+      if (status /= CL_SUCCESS) then
+         print *, "CLBuffer::readBuffer: Failed to enqueue read buffer!"
+         call stop_on_error(status)
+      end if
+   end function writeBuffer
 
    function copyBuffer(src, dst, size) result(status)
       implicit none
