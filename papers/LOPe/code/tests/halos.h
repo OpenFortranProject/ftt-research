@@ -26,10 +26,11 @@
 #define C_S1_  1
 #define C_S2_  (C_H1L_ + C_H1R_ + N1_)
 
-#define HALO1_L(NAME)      ( (NAME ## _H1L_) )
-#define HALO1_R(NAME)      ( (NAME ## _H1R_) )
+// 1D halo size for the given SIDE of the array NAME
+#define HALO1(NAME,SIDE)   ( (NAME ## _H1 ## SIDE ## _) )
 
-#define IDX1(OFF,NAME)   ( (OFF) + (K1_) + (NAME ## _H1L_) )
+// 1D index for the array NAME and offset OFF
+#define IDX1(OFF,NAME)     ( (OFF) + (K1_) + (NAME ## _H1L_) )
 
 // When 2D implemented will need stride for second dimension
 //#define IDX1(OFF,NAME)   ( ((OFF) + (K1_) + (NAME ## _H1L_)) * (NAME ## _S1_) )
