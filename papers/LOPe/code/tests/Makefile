@@ -29,4 +29,4 @@ check : elemental_add_1d
 
 clean :
 	rm -f elemental_add_1d elemental_add_2d
-	rm -f *.o *.mod
+	rm -f *.o *.mod *.dwarf
