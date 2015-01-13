@@ -243,6 +243,17 @@ interface
       type(c_ptr) :: buffer_ret
    end function clCreateBuffer
 
+   ! cl_int
+   ! clReleaseMemObject(cl_mem /* memobj */);
+   !
+   function clReleaseMemObject(memobj) &
+            result(status) bind(C,name="clReleaseMemObject")
+      use, intrinsic :: ISO_C_BINDING
+      use :: OpenCLTypes
+      implicit none
+      type(c_ptr), value :: memobj
+      integer(cl_int) :: status
+   end function clReleaseMemObject
 
    ! Profiling APIs
    !
