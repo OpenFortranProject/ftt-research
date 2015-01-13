@@ -58,7 +58,7 @@ LIB_ARCH := $(OSARCH)
 ifeq ($(DARWIN),)
    ARCH_FLAGS += -m64
 else
-   ARCH_FLAGS += -m64
+   ARCH_FLAGS +=
 endif
 
 # Compiler-specific flags
@@ -102,7 +102,7 @@ FCFLAGS  += $(COMMONFLAGS)
 LIB_OBJS = Timer.o OpenCLTypes.o CLBuffer.o CLKernel.o CLDevice.o \
            opencl_utils.o opencl_test.o
 
-OBJS += OpenCLInterfaces.o $(LIB_OBJS) OpenCL.o
+OBJS += OpenCLInterfaces.o $(LIB_OBJS) ForOpenCL.o
 
 LIBS += $(OBJS)
 
@@ -129,6 +129,10 @@ opencl_test.o: opencl_test.c
 
 # dependencies
 #
+
+OpenCLInterfaces.o: Timer.o OpenCLTypes.o
+
+CLBuffer.o: OpenCLTypes.o OpenCLInterfaces.o
 
 elemental_add.o: elemental_add.f90 $(OBJS)
 
