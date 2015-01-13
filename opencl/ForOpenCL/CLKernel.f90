@@ -3,14 +3,18 @@ module CLKernel_mod
    use :: OpenCLTypes
    use :: OpenCLInterfaces
 
-!   interface setKernelArg
-!      module procedure setKernelArgInt, setKernelArgMem, setKernelArgLoc, &
-!                       setKernelArgReal
-!   end interface
+   interface setKernelArg
+      module procedure setKernelArgInt, setKernelArgMem, setKernelArgLoc, &
+                       setKernelArgReal
+   end interface
 
-   interface init
-      module procedure init_kernel
-   end interface init
+   interface run
+      module procedure run_1D, run_2D, run
+   end interface
+
+!   interface init
+!      module procedure init_kernel
+!   end interface init
 
 contains
 
@@ -54,6 +58,7 @@ contains
       !
       status = clBuildProgram(this%program, 0, C_NULL_PTR, &
                               "-cl-fast-relaxed-math" // C_NULL_CHAR, C_NULL_FUNPTR, C_NULL_PTR)
+
       if (status /= CL_SUCCESS) then
          status_save = status
 
@@ -147,11 +152,57 @@ contains
       end if
    end function setKernelArgReal
 
-   function run(this, gWorkSizeX, gWorkSizeY, lWorkSizeX, lWorkSizeY) result(status)
+   function run(this, ndim, global_offset, global_size, local_size) result(status)
       implicit none
       !class(CLKernel) :: this
-      type(CLKernel) :: this
-      integer(c_size_t) :: gWorkSizeX, gWorkSizeY, lWorkSizeX, lWorkSizeY
+      type(CLKernel), intent(inout) :: this
+      integer, intent(in) :: ndim
+      integer(c_size_t), intent(in), dimension(ndim) :: global_offset, global_size, local_size
+      integer(cl_int) :: status
+
+      integer(cl_ulong), target :: prof_start, prof_end
+      integer(c_size_t) :: param_size
+
+      ! execute the kernel
+      !
+      call start(this%timer)
+      status = clEnqueueNDRangeKernel(this%commands, this%kernel, ndim, global_offset, &
+                                      global_size, local_size, 0, C_NULL_PTR, C_NULL_PTR)
+      call stop(this%timer)
+
+      if (status /= CL_SUCCESS) then
+         print *, "CLKernel::run(): Failed to execute kernel!"
+         print *, "CLKernel::run(): global_work_offset==", global_offset
+         print *, "CLKernel::run(): global_work_size==", global_size
+         print *, "CLKernel::run(): local_work_size==", local_size
+         call stop_on_error(status)
+      end if
+
+      ! wait for the command commands to get serviced before reading back results
+      !
+!      call start(this%timer)
+!      status = clFinish(this%commands)
+!      call stop(this%timer)
+
+      if (this%profiling) then
+         status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_START, &
+                                          c_sizeof_cl_ulong(), c_loc(prof_start), param_size)
+         status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_END,   &
+                                          c_sizeof_cl_ulong(), c_loc(prof_end), param_size)
+         if (status == 0) then
+            this%elapsed = (prof_end - prof_start) / 1000   ! microseconds
+            ! print *, "kernel::run: elapsed=", this%elapsed
+         endif
+
+      end if
+
+   end function run
+
+   function run_2D(this, gWorkSizeX, gWorkSizeY, lWorkSizeX, lWorkSizeY) result(status)
+      implicit none
+      !class(CLKernel) :: this
+      type(CLKernel), intent(inout) :: this
+      integer(c_size_t), intent(in) :: gWorkSizeX, gWorkSizeY, lWorkSizeX, lWorkSizeY
       integer(cl_int) :: status
 
       integer(c_size_t), dimension(2) :: global_work_offset, local_work_size, global_work_size
@@ -194,6 +245,55 @@ contains
 
       end if
 
-   end function run
+   end function run_2D
+
+   function run_1D(this, gWorkSizeX, lWorkSizeX) result(status)
+      implicit none
+      !class(CLKernel) :: this
+      type(CLKernel), intent(inout) :: this
+      integer(c_size_t), intent(in) :: gWorkSizeX, lWorkSizeX
+      integer(cl_int) :: status
+
+      integer(c_size_t), dimension(1) :: global_work_offset, local_work_size, global_work_size
+      integer(cl_ulong), target :: prof_start, prof_end
+      integer(c_size_t) :: param_size
+
+      global_work_offset = 0
+      global_work_size = [gWorkSizeX]
+      local_work_size  = [lWorkSizeX]
+
+      ! execute the kernel
+      !
+      call start(this%timer)
+      status = clEnqueueNDRangeKernel(this%commands, this%kernel, 1, global_work_offset, &
+                                      global_work_size, local_work_size, 0, C_NULL_PTR, C_NULL_PTR)
+      call stop(this%timer)
+
+      if (status /= CL_SUCCESS) then
+         print *, "CLKernel::run(): Failed to execute kernel!"
+         print *, "CLKernel::run(): local_work_size==", local_work_size
+         print *, "CLKernel::run(): global_work_size==", global_work_size
+         call stop_on_error(status)
+      end if
+
+      ! wait for the command commands to get serviced before reading back results
+      !
+!      call start(this%timer)
+!      status = clFinish(this%commands)
+!      call stop(this%timer)
+
+      if (this%profiling) then
+         status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_START, &
+                                          c_sizeof_cl_ulong(), c_loc(prof_start), param_size)
+         status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_END,   &
+                                          c_sizeof_cl_ulong(), c_loc(prof_end), param_size)
+         if (status == 0) then
+            this%elapsed = (prof_end - prof_start) / 1000   ! microseconds
+            ! print *, "kernel::run: elapsed=", this%elapsed
+         endif
+
+      end if
+
+   end function run_1D
 
 end module CLKernel_mod
