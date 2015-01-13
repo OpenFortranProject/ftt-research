@@ -116,6 +116,8 @@ clCreateCommandQueue_test(cl_context                   context,
 }
 
 
+#ifdef USE_OBSOLETE
+#define CL_USE_DEPRECATED_OPENCL_1_0_APIS
 cl_int
 clSetCommandQueueProperty_test(cl_command_queue               command_queue,
                                cl_command_queue_properties    properties, 
@@ -124,10 +126,16 @@ clSetCommandQueueProperty_test(cl_command_queue               command_queue,
 {
    cl_int status;
    printf("clSetCommandQueueProperty_test: properties==%ld enable==%d\n", (long) properties, enable);
+   /*
+    *  WARNING: this has been dropped from the API because it is not thread safe
+    *  Software developers previously relying on this API are instructed to set the command queue
+    *  properties when creating the queue, instead.
+    */
    status = clSetCommandQueueProperty(command_queue, properties, enable, old_properties);
+
    return status;
 }
-
+#endif
 
 cl_program
 clCreateProgramWithSource_test(cl_context        context,
@@ -226,6 +234,7 @@ clEnqueueMapBuffer_test(cl_command_queue  command_queue,
                         cl_int *          errcode_ret)
 {
    void * host_ptr_ret;
+   assert(event==NULL);
    /* WARNING, event not specified correctly for non-blocking map */
    host_ptr_ret = clEnqueueMapBuffer(command_queue, buffer, blocking_map, map_flags, offset, cb,
                               num_events_in_wait_list, event_wait_list, NULL /*event*/, errcode_ret);
@@ -269,8 +278,7 @@ clEnqueueNDRangeKernel_test(cl_command_queue command_queue,
                                  local_work_size,
                                  num_events_in_wait_list,
                                  event_wait_list,
-                                 //                                 event);
-                                 NULL);
+                                 /* event */ NULL);
 }
 
 cl_int
