@@ -97,15 +97,19 @@ program elemental_add_2d
    status = readBuffer(cl_C_H_, c_loc(C_H), HALO_SIZE*SIZE_FLOAT)
 
    print *
-   print *, A(:,1)
+   print *, A(:,4)
    print *
-   print *, B(:,1)
+   print *, B(:,4)
    print *
-   print *, C(:,1)
+   print *, C(1,:)
    print *
    print *, C_H(1:NX)
    print *
-   print *, C_H(NX:2*NX)
+   print *, C_H(NX+1:2*NX)
+   print *
+   print *, C_H(2*NX+1:2*NX+NY)
+   print *
+   print *, C_H(2*NX+1+NY:2*NX+2*NY)
    print *
 
    do j = 1, ny
