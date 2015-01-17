@@ -30,10 +30,17 @@ Interface
       Type(Context) :: aContext
    End Subroutine Parallel_End
 
-   Subroutine Parallel_Topology(aContext) Bind(C,name='Parallel_Topology')
+   Subroutine Parallel_Topology(aContext, ndims, dims) Bind(C,name='Parallel_Topology')
+      Import Context
+      Type(Context)                    :: aContext
+      Integer, intent(in)              :: ndims
+      Integer, intent(inout), optional :: dims(ndims)
+   End Subroutine Parallel_Topology
+
+   Subroutine Parallel_Topology_Defaults(aContext) Bind(C,name='Parallel_Topology_Defaults')
       Import Context
       Type(Context) :: aContext
-   End Subroutine Parallel_Topology
+   End Subroutine Parallel_Topology_Defaults
 
 End Interface
 
@@ -69,16 +76,29 @@ Call Parallel_End_Base
 End Subroutine Parallel_End
 
 
-Subroutine Parallel_Topology(aContext) Bind(C,name='Parallel_Topology')
+Subroutine Parallel_Topology(aContext, ndims, dims) Bind(C,name='Parallel_Topology')
 Use  ::  Parallel_Halo  , only : Context
 Use  ::  Parallel       , only : my_id, numproc
 Use  ::  Parallel       , only : Topology
 Implicit None
 
-Type(Context) :: aContext
+Type(Context)                    :: aContext
+Integer, intent(in)              :: ndims
+Integer, intent(inout), optional :: dims(ndims)
 
-Call Topology
+Call Topology(ndims, dims)
 
 End Subroutine Parallel_Topology
 
 
+Subroutine Parallel_Topology_Defaults(aContext) Bind(C,name='Parallel_Topology_Defaults')
+Use  ::  Parallel_Halo  , only : Context
+Use  ::  Parallel       , only : my_id, numproc
+Use  ::  Parallel       , only : Topology_Defaults
+Implicit None
+
+Type(Context) :: aContext
+
+Call Topology_Defaults
+
+End Subroutine Parallel_Topology_Defaults
