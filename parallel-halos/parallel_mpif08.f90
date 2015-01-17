@@ -10,18 +10,18 @@ Module Parallel
 !   here.  The SOFTWARE has been approved for release with associated
 !   LA-CC number 05-074.
 !
-!   Unless otherwise indicated, this SOFTWARE has been authored by an 
+!   Unless otherwise indicated, this SOFTWARE has been authored by an
 !   employee of the University of California, operator of Los Alamos
 !   National Laboratory under Contract No. W-7405-ENG-36 with the U.S.
 !   Department of Energy.  The U.S. Government has rights of use,
 !   reproduce, and distribute this SOFTWARE.  The public may copy,
-!   distribute, prepare derived works and publicly display this 
+!   distribute, prepare derived works and publicly display this
 !   SOFTWARE without charge, provided that this Notice and any other
 !   statements of authorship are reproduced on all copies.  Neither
-!   the Government nor the University makes any warranty, express or 
+!   the Government nor the University makes any warranty, express or
 !   implied, or assumes any liability or responsibility for the use
 !   of this SOFTWARE.
-! 
+!
 !   If SOFTWARE is modified to produce derivative works, such modified
 !   SOFTWARE should be clearly marked, so as not to confuse it with
 !   the version available from LANL.
@@ -30,23 +30,29 @@ Module Parallel
 !
 !   W. Weseloh, LA-CC-05-074, "Parallel Library"
 !
+! Author :
+!        Wayne Weseloh, Los Alamos National Laboratory
+!        Craig Rasmussen, University of Oregon (2015 additions)
+!
 ! History :
 !        2005-03-01, original version
+!        2015-01-16, added parameters for fine control of topology
 !
 !=====================================================================
 Use MPI_F08
 Implicit None
 Save
- 
+
 !... Basic MPI information
 Integer :: my_id                  ! Rank of this processor
 Integer :: numproc                ! Number of processors
- 
+
 !... Cartesian decomposition
+Integer :: ndim = 3               ! Number of dimensions in topology
 Integer :: npex = 0               ! Number of processors X direction
 Integer :: npey = 0               ! Number of processors Y direction
 Integer :: npez = 0               ! Number of processors Z direction
- 
+
 !... Cartesian topology
 Integer :: Left, Right            ! Neighbor ranks (x-direction)
 Integer :: Bottom, Top            ! Neighbor ranks (y-direction)
@@ -54,7 +60,12 @@ Integer :: Front, Back            ! Neighbor ranks (z-direction)
 
 Type(MPI_COMM) :: MPI_COMM_CART   ! Communicator with Cartesian topology
 
- 
+!... Generic Topology
+Interface Topology
+   Module Procedure Topology_Defaults
+   Module Procedure Topology
+End Interface
+
 !... Generic Broadcast
 Interface Parallel_Broadcast
    Module Procedure Broadcast_Integer
@@ -62,13 +73,13 @@ Interface Parallel_Broadcast
    Module Procedure Broadcast_Logical
    Module Procedure Broadcast_String
 End Interface
- 
+
 Contains
- 
-Subroutine Parallel_Start 
+
+Subroutine Parallel_Start
 !=====================================================================
-! 
-!        Parallel_Start 
+!
+!        Parallel_Start
 !
 ! Subroutine Parallel_Start creates the parallel (MPI) process. Serial
 ! code may be executed before a call to Parallel_Start, however, this
@@ -90,27 +101,27 @@ Subroutine Parallel_Start
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
+
 Integer :: ierror
 !---------------------------------------------------------------------
- 
+
 !... Initialize MPI
 Call MPI_INIT (ierror)
- 
+
 !... Rank (my_id) of the process
 Call MPI_COMM_RANK (MPI_COMM_WORLD, my_id, ierror)
- 
+
 !... Number of processors (numproc)
 Call MPI_COMM_SIZE (MPI_COMM_WORLD, numproc, ierror)
- 
+
 !... Initialize the Cartesian communicator (handle)
 MPI_COMM_CART = MPI_COMM_NULL
- 
+
 End Subroutine Parallel_Start
- 
-Subroutine Parallel_End 
+
+Subroutine Parallel_End
 !=====================================================================
-! 
+!
 !        Parallel_End
 !
 ! Subroutine Parallel_End completes the parallel (MPI) process. Serial
@@ -134,26 +145,48 @@ Subroutine Parallel_End
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
+
 Integer :: ierror
 !---------------------------------------------------------------------
- 
+
 !... Release the Cartesian communicator (if it exists)
 if (MPI_COMM_CART%MPI_VAL /= MPI_COMM_NULL%MPI_VAL) then
    Call MPI_COMM_FREE (MPI_COMM_CART, ierror)
 endif
- 
+
 !... Synchronize
 Call MPI_BARRIER (MPI_COMM_WORLD, ierror)
- 
+
 !... Finish MPI
 Call MPI_FINALIZE (ierror)
- 
+
 End Subroutine Parallel_End
- 
-Subroutine Topology
+
+Subroutine Topology_Defaults
 !=====================================================================
-! 
+!
+!        Topology_Defaults
+!
+! Original Topology functionality (now wrapper, implementation below)
+!
+! Author :
+!        Craig Rasmussen, University of Oregon (2015 additions)
+!
+! History :
+!        2015-01-16, wrapper version created
+!
+!=====================================================================
+Implicit None
+
+!---------------------------------------------------------------------
+
+Call Topology(3)
+
+End Subroutine Topology_Defaults
+
+Subroutine Topology(in_ndim, inout_dims)
+!=====================================================================
+!
 !        Topology
 !
 ! Subroutine Topology creates a 3D Cartesian topology based on the
@@ -163,26 +196,32 @@ Subroutine Topology
 !
 ! Author :
 !        Wayne Weseloh, Los Alamos National Laboratory
+!        Craig Rasmussen, University of Oregon (2015 additions)
 !
 ! History :
 !        2005-03-01, original version
+!        2015-01-16, added parameters for fine control of topology
 !
 ! Inputs :
+!        n_dim    number of dimensions (input)
+!        dims     array of size n_dim specifying (npex,npey,npez)
+!
+! Outputs :
+!        ndim     number of dimensions
 !        npex     number of processors in the X-direction  [0-numproc]
 !        npey     number of processors in the Y-direction  [0-numproc]
 !        npez     number of processors in the Z-direction  [0-numproc]
 !
-! Outputs :
-!        MPI_COMM_CART     communicator with new Cartesian topology     
-!        Left              processor rank next to my_id (X+direction)        
-!        Right             processor rank next to my_id (X-direction)        
-!        Bottom            processor rank next to my_id (Y+direction)        
-!        Top               processor rank next to my_id (Y-direction)        
-!        Front             processor rank next to my_id (Z+direction)       
-!        Back              processor rank next to my_id (Z-direction)        
+!        MPI_COMM_CART     communicator with new Cartesian topology
+!        Left              processor rank next to my_id (X+direction)
+!        Right             processor rank next to my_id (X-direction)
+!        Bottom            processor rank next to my_id (Y+direction)
+!        Top               processor rank next to my_id (Y-direction)
+!        Front             processor rank next to my_id (Z+direction)
+!        Back              processor rank next to my_id (Z-direction)
 !
 ! Externals :
-!        MPI_DIMS_CREATE, MPI_CART_CREATE, MPI_COMM_RANK, 
+!        MPI_DIMS_CREATE, MPI_CART_CREATE, MPI_COMM_RANK,
 !        MPI_CART_GET, MPI_CART_RANK, MPI_FINALIZE, MPI_INITIALIZED,
 !        Dims_Check
 !
@@ -198,66 +237,80 @@ Subroutine Topology
 !        The Cartesian grid is defined as periodic.
 !        The processor dimensions (npex,npey,npez) should be set
 !        before the call to Topology.  However, the default values
-!        of npex=npey=npez=0 does create an acceptable topology.  
+!        of npex=npey=npez=0 does create an acceptable topology.
 !
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
-Integer, parameter       :: ndim = 3         
-Integer, Dimension(ndim) :: coords     
-Integer, Dimension(ndim) :: dims       
-Logical, Dimension(ndim) :: periods
- 
+
+Integer, intent(in)              :: in_ndim
+Integer, intent(inout), optional :: inout_dims(ndim)
+
+!... Local Variables
+!-------------------
+Integer, parameter         :: maxdim = 3
+Integer, Dimension(maxdim) :: dims
+Integer, Dimension(maxdim) :: coords
+Logical, Dimension(maxdim) :: periods
+
 Integer :: ierror
-Logical :: active, reorder 
- 
-Integer, Dimension(ndim) :: neighbor
+Logical :: active, reorder
+
+Integer, Dimension(maxdim) :: neighbor
 Integer :: i,j,k
 !---------------------------------------------------------------------
- 
+
 !... Check on MPI initialization
 Call MPI_INITIALIZED (active, ierror)
 if (.NOT.active) then
-   Write(unit=*,fmt='(/1x,"MPI has not been initialized (Parallel_Start)"/)') 
-   STOP ' Error Exit [topology] ' 
+   Write(unit=*,fmt='(/1x,"MPI has not been initialized (Parallel_Start)"/)')
+   STOP ' Error Exit [topology] '
 endif
- 
+
 !... Arguments used to describe the Cartesian grid
 dims   (:) = [ npex,  npey,  npez ]  ! Number of processes in each dimension
 periods(:) = [.TRUE.,.TRUE.,.TRUE.]  ! Periodic in all directions
 reorder    = .TRUE.                  ! Allows ranks to be reordered
- 
+
+!... Adjust module variables based on input parameters
+ndim = in_ndim
+if (present(inout_dims)) then
+   dims(:)      = [0,0,0]
+   dims(1:ndim) = inout_dims(1:ndim)
+end if
+
 !... Check dimensions
 if (.NOT.Dims_Check(dims)) then
    Call MPI_FINALIZE (ierror)
-   STOP 'Error exit [dims] ' 
+   STOP 'Error exit [dims] '
 endif
- 
+
 !... Create a 3D Cartesian topology and communicator
 !---------------------------------------------------
- 
+
 !... Creates a balanced distribution of processors for a Cartesian topology
-Call MPI_DIMS_CREATE (numproc, ndim, dims, ierror) 
- 
+Call MPI_DIMS_CREATE (numproc, ndim, dims, ierror)
+npex = dims(1); npey = dims(2); npez = dims(3)
+inout_dims(:) = dims(:)
+
 !... Creates a Cartesian 3D topology (handle = MPI_COMM_CART)_
 Call MPI_CART_CREATE (MPI_COMM_WORLD, ndim, dims, periods, reorder, MPI_COMM_CART, ierror)
- 
+
 !... Rank of this processor in the new communicator MPI_COMM_CART
 Call MPI_COMM_RANK (MPI_COMM_CART, my_id, ierror)
- 
+
 !... Find the neighbors in the 3D Cartesian decomposition
 !--------------------------------------------------------
- 
+
 !... Look up the ranks for the neighbors. Own process coordinates are (i,j,k)
 !    and the neighbors are Left=(i-1,j,k), Right=(i+1,j,k), Bottom=(i,j-1,k),
 !    Top=(i,j+1,k), Front=(i,j,k-1), and Back=(i,j,k+1).
- 
+
 Call MPI_CART_GET (MPI_COMM_CART, ndim, dims, periods, coords, ierror)
 i = coords(1)
 j = coords(2)
 k = coords(3)
- 
+
 !... X-direction (Left)
 neighbor = [i-1,j,k]
 Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Left,   ierror)
@@ -265,31 +318,31 @@ Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Left,   ierror)
 !... X+direction (Right)
 neighbor = [i+1,j,k]
 Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Right,  ierror)
- 
+
 !... Y-direction (Bottom)
 neighbor = [i,j-1,k]
 Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Bottom, ierror)
- 
+
 !... Y+direction (Top)
 neighbor = [i,j+1,k]
 Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Top,    ierror)
- 
+
 !... Z-direction (Front)
 neighbor = [i,j,k-1]
 Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Front,  ierror)
- 
+
 !... Z+direction (Back)
 neighbor = [i,j,k+1]
 Call MPI_CART_RANK (MPI_COMM_CART, neighbor, Back,   ierror)
 
 End Subroutine Topology
- 
+
 Logical Function Dims_Check (dims)
 !=====================================================================
-! 
+!
 !        Dims_Check
 !
-! Subroutine Dims_Check examines the processor dimensions for 
+! Subroutine Dims_Check examines the processor dimensions for
 ! conflicts with the number of processors requested (numproc).
 !
 ! Author :
@@ -299,7 +352,7 @@ Logical Function Dims_Check (dims)
 !        2005-03-01, original version
 !
 ! Inputs :
-!        dims     processor decomposition (i.e. npex,npey,npez)   
+!        dims     processor decomposition (i.e. npex,npey,npez)
 !
 ! Outputs :
 !        Dims_Check     Logical, .TRUE. if no problems found.
@@ -312,9 +365,9 @@ Logical Function Dims_Check (dims)
 !         Passing Interface", by W. Gropp, E. Lusk, A. Skejellum.
 !
 ! Notes :
-!        By default the dims are all zero, this is acceptable. 
-!        If any of the dims are greater than the number of processors, 
-!        then an error is generated and Dims_Check = .FALSE.  
+!        By default the dims are all zero, this is acceptable.
+!        If any of the dims are greater than the number of processors,
+!        then an error is generated and Dims_Check = .FALSE.
 !        If the product of the non-zero dims is greater than the
 !        number of processors, then an error is generated and
 !        Dims_Check = .FALSE.
@@ -323,24 +376,24 @@ Logical Function Dims_Check (dims)
 Implicit None
 
 Integer, Dimension(:), Intent(In)  :: dims
- 
+
 Integer :: ierror, n
 !---------------------------------------------------------------------
- 
+
 !... If the dims are all zero, then accept the configuration
 Dims_Check = ALL(dims(:) == 0)
 if (Dims_Check) RETURN
- 
-!... Check on proposed Cartesian grid 
+
+!... Check on proposed Cartesian grid
 if (ANY(dims(:) > numproc)) then
    if (my_id == 0) then
       Write (unit=6,fmt='(1x,"*** Error - A processor dimension cannot ",      &
            &            "be greater than the number of processors ",i0)') numproc
    endif
    Call MPI_FINALIZE (ierror)
-   STOP 'Error exit [numproc] ' 
+   STOP 'Error exit [numproc] '
 endif
- 
+
 !... Check if the product of the dimensions exceeds numproc
 n = PRODUCT(dims(:),mask=dims > 0)
 if (n > numproc) then
@@ -349,17 +402,17 @@ if (n > numproc) then
            &            "dimensions exceeds the number of processors ",i0)') numproc
    endif
    Call MPI_FINALIZE (ierror)
-   STOP 'Error exit [npex*npey*npez] ' 
+   STOP 'Error exit [npex*npey*npez] '
 endif
- 
+
 !... Passed all the tests
 Dims_Check = .TRUE.
- 
+
 End Function Dims_Check
 
 Subroutine Get_local_extents (nx,ny,nz, sx,ex, sy,ey, sz,ez, Error)
 !=====================================================================
-! 
+!
 !        Get_Local_Extents
 !
 ! Subroutine Get_Local_Extents finds the lower and upper arrays bounds
@@ -372,11 +425,11 @@ Subroutine Get_local_extents (nx,ny,nz, sx,ex, sy,ey, sz,ez, Error)
 !        2005-03-01, original version
 !
 ! Inputs :
-!        nx,ny,nz     grid dimensions (0 < n < 2**31)   
+!        nx,ny,nz     grid dimensions (0 < n < 2**31)
 !
 ! Outputs :
-!        sx,ex      starting/ending X array bounds for rank = my_id 
-!        sy,ey      starting/ending Y array bounds for rank = my_id 
+!        sx,ex      starting/ending X array bounds for rank = my_id
+!        sy,ey      starting/ending Y array bounds for rank = my_id
 !        sz,ez      starting/ending Z array bounds for rank = my_id
 !        Error      logical flag, TRUE = extents tangled
 !
@@ -394,28 +447,28 @@ Subroutine Get_local_extents (nx,ny,nz, sx,ex, sy,ey, sz,ez, Error)
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
+
 Integer, Intent(In)  :: nx, ny, nz
 Integer, Intent(Out) :: sx, ex, sy, ey, sz, ez
 Logical, Intent(Out) :: Error
- 
-Integer, parameter       :: ndim = 3         
-Integer, Dimension(ndim) :: coords     
-Integer, Dimension(ndim) :: dims       
+
+Integer, parameter       :: ndim = 3
+Integer, Dimension(ndim) :: coords
+Integer, Dimension(ndim) :: dims
 Logical, Dimension(ndim) :: periods
- 
+
 Integer :: ierror
 Logical :: myError
 !---------------------------------------------------------------------
- 
+
 !... Cartesian topology information associated with MPI_COMM_CART
 Call MPI_CART_GET (MPI_COMM_CART, ndim, dims, periods, coords, ierror)
- 
+
 !... Decompose the global grid into its constituent parts
 Call Decomp1D (nx, dims(1), coords(1), sx, ex)
 Call Decomp1D (ny, dims(2), coords(2), sy, ey)
 Call Decomp1D (nz, dims(3), coords(3), sz, ez)
- 
+
 !... Check the extents
 myError = (ex < sx) .OR. (ey < sy) .OR. (ez < sz)
 if (myError) then
@@ -423,25 +476,25 @@ if (myError) then
         &              2x,": sx,ex,sy,ey,sz,ez = ",6(i0,:,", "))')        &
         &              my_id,sx,ex,sy,ey,sz,ez
 endif
- 
+
 !... Any processors have an error ?
 Call MPI_ALLREDUCE (myError, Error, 1, MPI_LOGICAL, MPI_LOR,              &
                   & MPI_COMM_WORLD, ierror)
- 
+
 !... Update PE decomposition, if originally set to zero
 if (npex == 0) npex = dims(1)
 if (npey == 0) npey = dims(2)
 if (npez == 0) npez = dims(3)
- 
+
 End Subroutine Get_local_extents
 
 Subroutine Decomp1D (n, numdir, id, s, e)
 !=====================================================================
-! 
+!
 !        Decomp1D
 !
-! Subroutine Decomp1D computes the starting and ending array bounds 
-! for each processor rank in one dimension.  
+! Subroutine Decomp1D computes the starting and ending array bounds
+! for each processor rank in one dimension.
 !
 ! Inputs :
 !        n          grid dimension in the 1D direction
@@ -459,28 +512,28 @@ Subroutine Decomp1D (n, numdir, id, s, e)
 !
 !=====================================================================
 Implicit None
- 
+
 Integer, Intent(In)  :: n, numdir, id
 Integer, Intent(Out) :: s, e
- 
+
 Integer :: nlocal, deficit
 !---------------------------------------------------------------------
- 
+
 nlocal  = n / numdir
 s       = id * nlocal + 1
 deficit = MOD(n,numdir)
 s       = s + MIN(id,deficit)
- 
+
 if (id < deficit) nlocal = nlocal + 1
- 
+
 e = s + nlocal - 1
 if (e > n .OR. id == (numdir - 1)) e = n
- 
+
 End Subroutine Decomp1D
 
 Subroutine Exchange3D (Array, sx,ex, sy,ey, sz,ez)
 !=====================================================================
-! 
+!
 !        Exchange3D
 !
 ! Subroutine Exchange3D controls the exchange of information between
@@ -520,106 +573,208 @@ Subroutine Exchange3D (Array, sx,ex, sy,ey, sz,ez)
 !        creating and using MPI derived datatypes.
 !        When SENDRECV is used, data flows simultaneously in both
 !        directions (logically, at least) and cycles in the MPI
-!        communication pattern DO NOT lead to deadlock. 
+!        communication pattern DO NOT lead to deadlock.
 !
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
+
 Integer, Intent(In) :: sx,ex,sy,ey,sz,ez
- 
+
 Real, Dimension(sx-1:ex+1,sy-1:ey+1,sz-1:ez+1), Intent(In Out) :: Array
- 
+
 !... local send/receive arrays
 Real, Dimension((ey-sy+1)*(ez-sz+1)) :: xsend, xrecv
 Real, Dimension((ez-sz+1)*(ex-sx+1)) :: ysend, yrecv
 Real, Dimension((ex-sx+1)*(ey-sy+1)) :: zsend, zrecv
 
 Type(MPI_Status) :: status
- 
+
 Integer :: ierror
 Integer :: mx, my, mz, n
 !---------------------------------------------------------------------
- 
+
 !... number of elements
 mx = ex - sx + 1
 my = ey - sy + 1
 mz = ez - sz + 1
- 
-!... X-direction 
+
+!... X-direction
 !---------------
 n = my * mz
 xsend(:) = RESHAPE(source=Array(ex,sy:ey,sz:ez),shape=[n])
- 
+
 Call MPI_SENDRECV (xsend, n, MPI_REAL,  Right, 1, &
                  & xrecv, n, MPI_REAL,   Left, 1, &
                  & MPI_COMM_CART, status, ierror)
- 
+
 Array(sx-1,sy:ey,sz:ez) = RESHAPE(source=xrecv(:),shape=[my,mz])
- 
+
 !... X+direction
 !---------------
 n = my * mz
 xsend(:) = RESHAPE(source=Array(sx,sy:ey,sz:ez),shape=[n])
- 
+
 Call MPI_SENDRECV (xsend, n, MPI_REAL,   Left, 2, &
                  & xrecv, n, MPI_REAL,  Right, 2, &
                  & MPI_COMM_CART, status, ierror)
- 
+
 Array(ex+1,sy:ey,sz:ez) = RESHAPE(source=xrecv(:),shape=[my,mz])
- 
- 
+
 !... Y-direction
 !---------------
 n = mx * mz
 ysend(:) = RESHAPE(source=Array(sx:ex,ey,sz:ez),shape=[n])
- 
+
 Call MPI_SENDRECV (ysend, n, MPI_REAL,    Top, 3, &
                  & yrecv, n, MPI_REAL, Bottom, 3, &
                  & MPI_COMM_CART, status, ierror)
- 
+
 Array(sx:ex,sy-1,sz:ez) = RESHAPE(source=yrecv(:),shape=[mx,mz])
- 
+
 !... Y+direction
 !---------------
 n = mx * mz
 ysend(:) = RESHAPE(source=Array(sx:ex,sy,sz:ez),shape=[n])
- 
+
 Call MPI_SENDRECV (ysend, n, MPI_REAL, Bottom, 4, &
                  & yrecv, n, MPI_REAL,    Top, 4, &
                  & MPI_COMM_CART, status, ierror)
- 
+
 Array(sx:ex,ey+1,sz:ez) = RESHAPE(source=yrecv(:),shape=[mx,mz])
- 
- 
+
 !... Z-direction
 !---------------
 n = mx * my
 zsend(:) = RESHAPE(source=Array(sx:ex,sy:ey,ez),shape=[n])
- 
+
 Call MPI_SENDRECV (zsend, n, MPI_REAL,   Back, 5, &
                  & zrecv, n, MPI_REAL,  Front, 5, &
                  & MPI_COMM_CART, status, ierror)
- 
+
 Array(sx:ex,sy:ey,sz-1) = RESHAPE(source=zrecv(:),shape=[mx,my])
- 
+
 !... Z+direction
 !---------------
 n = mx * my
 zsend(:) = RESHAPE(source=Array(sx:ex,sy:ey,sz),shape=[n])
- 
+
 Call MPI_SENDRECV (zsend, n, MPI_REAL,  Front, 6, &
                  & zrecv, n, MPI_REAL,   Back, 6, &
                  & MPI_COMM_CART, status, ierror)
- 
+
 Array(sx:ex,sy:ey,ez+1) = RESHAPE(source=zrecv(:),shape=[mx,my])
- 
  
 End Subroutine Exchange3D
 
+Subroutine Halo_Exchange2D (sendbuf, recvbuf, nx,hx, ny,hy)
+!=====================================================================
+!
+!        Exchange3D
+!
+! Subroutine Exchange2D_Buffer controls the exchange of information between
+! processors for data in the variable "Buffer".  Each process sends data to
+! its neighbors (Right/Left/Bottom/Top) and receives data from
+! its neighbors (Left/Right/Top/Bottom).
+!
+! Author :
+!        Craig Rasmussen, University of Oregon
+!
+! History :
+!        2015-01-16, original version
+!
+! Inputs :
+!        sendbuf  Buffer containing outgoing (to neighbors) halo-cell information
+!        nx,ny    Array size in x,y
+!        hx,hy    halo width in x,y
+!
+! Outputs :
+!        recvbuf  Buffer for incoming (from neighbors) halo-cell information
+!
+! Externals :
+!        MPI_SENDRECV
+!
+! References :
+!        "Using MPI, Portable Parallel Programming with the Message-
+!         Passing Interface", by W. Gropp, E. Lusk, A. Skejellum.
+!         (based on the code exchng2 listed in twod.f)
+!
+! Notes :
+!        This procedure assumes that the halos for the arrays have
+!        already been combined into a single array.  The order
+!        in the halo buffer is (Left,Right,Bottom,Top) and the halo
+!        widths of each halo region can be greater than 1.  Using
+!        a precombined halo buffer for an array can be more efficient
+!        in the case of multiple memory levels where only the halo
+!        buffers need to be exchanged.  In this instance the corresponding
+!        array may not even be available.
+!
+!        When SENDRECV is used, data flows simultaneously in both
+!        directions (logically, at least) and cycles in the MPI
+!        communication pattern DO NOT lead to deadlock.
+!
+!=====================================================================
+Use MPI_F08
+Implicit None
+
+Integer, Intent(In) :: nx,hx, ny,hy
+Real, Dimension(*), Intent(In ) :: sendbuf  ! size is (2*ny*hx+2*nx*hy)
+Real, Dimension(*), Intent(Out) :: recvbuf  ! size is (2*ny*hx+2*nx*hy)
+
+!... Local Variables
+!-------------------
+Type(MPI_Status) :: status
+
+Integer :: sendoff, recvoff
+Integer :: ierror
+Integer :: n
+!---------------------------------------------------------------------
+
+!... X-direction
+!---------------
+sendoff = 0
+recvoff = sendoff + ny*hx
+
+n = ny * hx
+
+Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Left, 1, &
+                 & recvbuf(recvoff), n, MPI_REAL, Right, 1, &
+                 & MPI_COMM_CART, status, ierror)
+
+!... X+direction
+!---------------
+sendoff = sendoff + n
+recvoff = recvoff - n
+
+Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Right, 2, &
+                 & recvbuf(recvoff), n, MPI_REAL,   Left, 2, &
+                 & MPI_COMM_CART, status, ierror)
+
+!... Y-direction
+!---------------
+sendoff = sendoff + n
+recvoff = sendoff + nx*hy
+
+n = nx * hy
+
+Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL, Bottom, 3, &
+                 & recvbuf(recvoff), n, MPI_REAL,    Top, 3, &
+                 & MPI_COMM_CART, status, ierror)
+
+!... Y+direction
+!---------------
+sendoff = sendoff + n
+recvoff = recvoff - n
+
+Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,    Top, 4, &
+                 & recvbuf(recvoff), n, MPI_REAL, Bottom, 4, &
+                 & MPI_COMM_CART, status, ierror)
+
+End Subroutine Halo_Exchange2D
+
 Subroutine Parallel_Diag (lun, nx,ny,nz)
 !=====================================================================
-! 
+!
 !        Parallel_Diag
 !
 ! Subroutine Parallel_Diag
@@ -648,30 +803,30 @@ Subroutine Parallel_Diag (lun, nx,ny,nz)
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
+
 Integer, Intent(In)  :: lun, nx,ny,nz
- 
-Integer :: i1,i2, j1,j2, k1,k2 
+
+Integer :: i1,i2, j1,j2, k1,k2
 Integer :: n, ierror
 Logical :: active, Error
 Integer, Dimension(6) :: ext, nbr
 Integer, Dimension(6*numproc) :: temp
 Integer, Dimension(:,:), Allocatable :: bounds, neighbors
 !---------------------------------------------------------------------
- 
+
 !... check on MPI initialization
 Call MPI_INITIALIZED (active, ierror)
 if (.NOT.active) then
-   Write(unit=*,fmt='(/1x,"MPI has not been initialized (Parallel_Start)"/)') 
-   STOP ' Error Exit [parallel_diag] ' 
+   Write(unit=*,fmt='(/1x,"MPI has not been initialized (Parallel_Start)"/)')
+   STOP ' Error Exit [parallel_diag] '
 endif
- 
+
 !... header
 if (my_id == 0) then
    Write (unit=lun,fmt='(/1x,"< Parallel Diagnostics >")')
    Write (unit=lun,fmt='(/5x,"Numproc = ",i0)') numproc
 endif
- 
+
 !... communicators
 if (my_id == 0) then
    Write (unit=lun,fmt='(/1x,"Communicators (handles)")')
@@ -679,7 +834,7 @@ if (my_id == 0) then
    Write (unit=lun,fmt='( 5x,"MPI_COMM_CART  = ",i0)') MPI_COMM_CART
    Write (unit=lun,fmt='( 5x,"MPI_COMM_NULL  = ",i0)') MPI_COMM_NULL
 endif
- 
+
 !... processor decomposition
 if (my_id == 0) then
    Write (unit=lun,fmt='(/1x,"Processor decomposition")')
@@ -687,7 +842,7 @@ if (my_id == 0) then
    Write (unit=lun,fmt='( 5x,"Npey = ",i0)') npey
    Write (unit=lun,fmt='( 5x,"Npez = ",i0)') npez
 endif
- 
+
 !... local extents
 Call Get_local_extents (nx,ny,nz, i1,i2, j1,j2, k1,k2, Error)
 ext(1:6) = [i1,i2, j1,j2, k1,k2]
@@ -698,7 +853,7 @@ if (my_id == 0) then
    ALLOCATE(bounds(6,numproc))
    bounds(:,:) = RESHAPE(source=temp(1:6*numproc),shape=[6,numproc])
    Write (unit=lun,fmt='(/1x,"Subgrid bounds (without ghost cells)")')
-   Write (unit=lun,fmt='(/5x,"id     sx:ex      sy:ey      sz:ez")') 
+   Write (unit=lun,fmt='(/5x,"id     sx:ex      sy:ey      sz:ez")')
    do n = 1,numproc
       Write (unit=lun,fmt='(2x,i5,3x,3(i4,":",i4,2x))') (n-1),bounds(1:6,n)
    enddo
@@ -707,7 +862,7 @@ if (my_id == 0) then
       Write (unit=lun,fmt='(/5x,"*** Error(s) in the extents ***"/)')
    endif
 endif
- 
+
 !... neighbors
 nbr(1:6) = [Right, Left, Bottom, Top, Front, Back]
 Call MPI_GATHER (nbr,  6, MPI_INTEGER,           &
@@ -716,26 +871,26 @@ Call MPI_GATHER (nbr,  6, MPI_INTEGER,           &
 if (my_id == 0) then
    ALLOCATE(neighbors(6,numproc))
    neighbors(:,:) = RESHAPE(source=temp(1:6*numproc),shape=[6,numproc])
-   Write (unit=lun,fmt='(/1x,"Subgrid neighbors")') 
-   Write (unit=lun,fmt='(/5x,"id   Right    Left  Bottom     Top   Front    Back")') 
+   Write (unit=lun,fmt='(/1x,"Subgrid neighbors")')
+   Write (unit=lun,fmt='(/5x,"id   Right    Left  Bottom     Top   Front    Back")')
    do n = 1,numproc
       Write (unit=lun,fmt='(2x,i5,6(4x,i4))') (n-1),neighbors(1:6,n)
    enddo
    DEALLOCATE(neighbors)
 endif
- 
+
 !... synchronize
 Call MPI_BARRIER (MPI_COMM_WORLD,ierror)
- 
+
 if (my_id == 0) then
    Write (unit=lun,fmt='(/1x,"< End Parallel Diagnostics >")')
 endif
 
 End Subroutine Parallel_Diag
- 
+
 Subroutine Broadcast_Integer (n)
 !=====================================================================
-! 
+!
 !        Broadcast_Integer
 !
 ! Subroutine Broadcast_Integer
@@ -758,19 +913,19 @@ Use MPI_F08
 Implicit None
 
 Integer, Intent(In Out) :: n
- 
+
 Integer :: ierror
 !---------------------------------------------------------------------
- 
-!... Broadcast an single integer 
+
+!... Broadcast an single integer
 Call MPI_BCAST (n, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierror)
- 
+
 End Subroutine Broadcast_Integer
- 
+
 
 Subroutine Broadcast_Real (x)
 !=====================================================================
-! 
+!
 !        Broadcast_Real
 !
 ! Subroutine Broadcast_Real
@@ -791,20 +946,20 @@ Subroutine Broadcast_Real (x)
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
+
 Real, Intent(In Out) :: x
- 
+
 Integer :: ierror
 !---------------------------------------------------------------------
- 
-!... Broadcast an single real 
+
+!... Broadcast an single real
 Call MPI_BCAST (x, 1, MPI_REAL, 0, MPI_COMM_WORLD, ierror)
- 
+
 End Subroutine Broadcast_Real
- 
+
 Subroutine Broadcast_Logical (state)
 !=====================================================================
-! 
+!
 !        Broadcast_Logical
 !
 ! Subroutine Broadcast_Logical
@@ -825,20 +980,20 @@ Subroutine Broadcast_Logical (state)
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
+
 Logical, Intent(In Out) :: state
- 
+
 Integer :: ierror
 !---------------------------------------------------------------------
- 
-!... Broadcast an single logical 
+
+!... Broadcast an single logical
 Call MPI_BCAST (state, 1, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierror)
- 
+
 End Subroutine Broadcast_Logical
- 
+
 Subroutine Broadcast_String (string)
 !=====================================================================
-! 
+!
 !        Broadcast_String
 !
 ! Subroutine Broadcast_String
@@ -859,15 +1014,15 @@ Subroutine Broadcast_String (string)
 !=====================================================================
 Use MPI_F08
 Implicit None
- 
+
 Character(len=*), Intent(In Out) :: string
- 
+
 Integer :: ierror
 !---------------------------------------------------------------------
- 
+
 !... Broadcast an character string
 Call MPI_BCAST (string, LEN(string), MPI_CHARACTER, 0, MPI_COMM_WORLD, ierror)
- 
+
 End Subroutine Broadcast_String
- 
+
 End Module Parallel
