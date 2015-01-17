@@ -670,11 +670,11 @@ End Subroutine Exchange3D
 Subroutine Halo_Exchange2D (sendbuf, recvbuf, nx,hx, ny,hy)
 !=====================================================================
 !
-!        Exchange3D
+!        Halo_Exchange3D
 !
-! Subroutine Exchange2D_Buffer controls the exchange of information between
-! processors for data in the variable "Buffer".  Each process sends data to
-! its neighbors (Right/Left/Bottom/Top) and receives data from
+! Subroutine Halo_Exchange2D controls the exchange of information between
+! processors for an array with halo data sendbuf and recvbuf.  Each process
+! sends data to its neighbors (Right/Left/Bottom/Top) and receives data from
 ! its neighbors (Left/Right/Top/Bottom).
 !
 ! Author :
