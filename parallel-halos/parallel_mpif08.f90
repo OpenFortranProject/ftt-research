@@ -670,7 +670,7 @@ End Subroutine Exchange3D
 Subroutine Halo_Exchange2D (sendbuf, recvbuf, nx,hx, ny,hy)
 !=====================================================================
 !
-!        Halo_Exchange3D
+!        Halo_Exchange2D
 !
 ! Subroutine Halo_Exchange2D controls the exchange of information between
 ! processors for an array with halo data sendbuf and recvbuf.  Each process
@@ -771,6 +771,91 @@ Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,    Top, 4, &
                  & MPI_COMM_CART, status, ierror)
 
 End Subroutine Halo_Exchange2D
+
+Subroutine Halo_Exchange1D (sendbuf, recvbuf, nx, hx)
+!=====================================================================
+!
+!        Halo_Exchange1D
+!
+! Subroutine Halo_Exchange1D controls the exchange of information between
+! processors for an array with halo data sendbuf and recvbuf.  Each process
+! sends data to its neighbors (Right/Left) and receives data from its
+! neighbors (Left/Right).
+!
+! Author :
+!        Craig Rasmussen, University of Oregon
+!
+! History :
+!        2015-01-16, original version
+!
+! Inputs :
+!        sendbuf  Buffer containing outgoing (to neighbors) halo-cell information
+!        nx       Array size in x
+!        hx       halo width in x
+!
+! Outputs :
+!        recvbuf  Buffer for incoming (from neighbors) halo-cell information
+!
+! Externals :
+!        MPI_SENDRECV
+!
+! References :
+!        "Using MPI, Portable Parallel Programming with the Message-
+!         Passing Interface", by W. Gropp, E. Lusk, A. Skejellum.
+!         (based on the code exchng2 listed in twod.f)
+!
+! Notes :
+!        This procedure assumes that the halos for the arrays have
+!        already been combined into a single array.  The order
+!        in the halo buffer is (Left,Right) and the halo widths
+!        of each halo region can be greater than 1.  Using a
+!        precombined halo buffer for an array can be more efficient
+!        in the case of multiple memory levels where only the halo
+!        buffers need to be exchanged.  In this instance the corresponding
+!        array may not even be available.
+!
+!        When SENDRECV is used, data flows simultaneously in both
+!        directions (logically, at least) and cycles in the MPI
+!        communication pattern DO NOT lead to deadlock.
+!
+!=====================================================================
+Use MPI_F08
+Implicit None
+
+Integer, Intent(In) :: nx, hx
+Real, Dimension(*), Intent(In ) :: sendbuf  ! size is (2*hx)
+Real, Dimension(*), Intent(Out) :: recvbuf  ! size is (2*hx)
+
+!... Local Variables
+!-------------------
+Type(MPI_Status) :: status
+
+Integer :: sendoff, recvoff
+Integer :: ierror
+Integer :: n
+!---------------------------------------------------------------------
+
+!... X-direction
+!---------------
+sendoff = 0
+recvoff = sendoff + hx
+
+n = hx
+
+Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Left, 1, &
+                 & recvbuf(recvoff), n, MPI_REAL, Right, 1, &
+                 & MPI_COMM_CART, status, ierror)
+
+!... X+direction
+!---------------
+sendoff = sendoff + n
+recvoff = recvoff - n
+
+Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Right, 2, &
+                 & recvbuf(recvoff), n, MPI_REAL,   Left, 2, &
+                 & MPI_COMM_CART, status, ierror)
+
+End Subroutine Halo_Exchange1D
 
 Subroutine Parallel_Diag (lun, nx,ny,nz)
 !=====================================================================
