@@ -1,10 +1,13 @@
 FC = mpifort
 CC = mpicc
 
+FC_FLAGS = -g
+LK_FLAGS = -Wl,-no_pie
+
 OBJS = parallel_mpif08.o parallel_halo_types.o parallel_halo.o
 
 %.o : %.f90
-	$(FC) -c $<
+	$(FC) -c $< $(FC_FLAGS)
 
 %.o : %.c
 	$(CC) -c $<
@@ -12,7 +15,7 @@ OBJS = parallel_mpif08.o parallel_halo_types.o parallel_halo.o
 all : $(OBJS) test_halos test_halos_c
 
 test_halos : test_halos.o $(OBJS)
-	$(FC) -o $@ $< $(OBJS)
+	$(FC) $(LK_FLAGS) -o $@ $< $(OBJS)
 
 test_halos_c : test_halos_fc.o test_halos_c.o $(OBJS)
 	$(FC) -o $@ $< $(OBJS) test_halos_c.o
@@ -20,7 +23,7 @@ test_halos_c : test_halos_fc.o test_halos_c.o $(OBJS)
 check: test_halos test_halos_c
 	@echo
 	@echo "Testing Fortran API.........................."
-	@mpirun -np 8 test_halos
+	@mpirun -np 4 test_halos
 	@echo
 #	@echo "Testing C       API.........................."
 #	@mpirun -np 2 test_halos_c
