@@ -1,4 +1,6 @@
-#include "halos.h"
+#include "halos_1d.h"
+
+#define COPY_HALOS
 
 /**
  * simple kernel that computes the sum of array elements
@@ -8,21 +10,16 @@ __kernel void elemental_add_1d (__global float * A,  __global float * B,    __gl
 {
    if (K1_ < N1_) {
 
-
-     // copy incoming halo regions
+#ifdef COPY_HALOS
+     // copy incoming halo regions (to halo region of array)
      // ----------------------------------------------------------------------------------------------
-     if (K1_ < HALO1(A,L)) {
-        A[K1_] = A_H_[K1_];
+     if (K1_ < HALO1(C,L)) {
+        C[K1_] = C_H_[K1_];
      }
-     if (K1_ >= N1_ - HALO1(A,R)) {
-        A[IDX1(A,0) + HALO1(A,R)] = A_H_[IDX1(A,0) - (N1_ - HALO1(A,R))];
+     if (K1_ >= N1_ - HALO1(C,R)) {
+        C[IDX1(C,0) + HALO1(C,R)] = C_H_[IDX1(C,0) - (N1_ - HALO1(C,R))];
      }
-     if (K1_ < HALO1(B,L)) {
-        B[K1_] = B_H_[K1_];
-     }
-     if (K1_ >= N1_ - HALO1(B,R)) {
-        B[IDX1(B,0) + HALO1(B,R)] = B_H_[IDX1(B,0) - (N1_ - HALO1(B,R))];
-     }
+#endif
 
 
      // run algorithm
@@ -34,12 +31,14 @@ __kernel void elemental_add_1d (__global float * A,  __global float * B,    __gl
      // copy outgoing halo regions
      // ----------------------------------------------------------------------------------------------
 
+#ifdef COPY_HALOS
      if (K1_ < HALO1(C,L)) {
         C_H_[K1_] = C[IDX1(C,0)];
      }
      if (K1_ >= N1_ - HALO1(C,R)) {
         C_H_[IDX1(C,0) - (N1_ - HALO1(C,R))] = C[IDX1(C,0)];
      }
+#endif
 
    }
 }
