@@ -1,0 +1,89 @@
+NX              NH      time (ms)       NOTES
+-------------------------------------------
+16              1       .045            no halo transfer from device, no MPI
+16              1       .2              1 array-halo transfer,  no MPI
+16              1       .28             2 array-halo transfers, no MPI
+16              1       .35             3 array-halo transfers, no MPI
+
+32              1       .048            no halo transfer from device, no MPI (warmup=0, nLoops=100)
+64              1       .048            no halo transfer from device, no MPI
+128             1       .048            no halo transfer from device, no MPI
+256             1       .048            no halo transfer from device, no MPI
+512             1       .048            no halo transfer from device, no MPI
+1024            1       .048            no halo transfer from device, no MPI
+2* 1024         1       .048            no halo transfer from device, no MPI
+4* 1024         1       .049            no halo transfer from device, no MPI
+8* 1024         1       .052            no halo transfer from device, no MPI
+16*1024         1       .067            no halo transfer from device, no MPI
+32*1024         1       .052            no halo transfer from device, no MPI
+
+
+32   *1024      1       .027            no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+64   *1024      1       .038            no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+128  *1024      1       .064            no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+256  *1024      1       .115            no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+512  *1024      1       .215            no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+1 *1024*1024    1       .410            no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+2 *1024*1024    1       .80             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+4 *1024*1024    1      1.57             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+8 *1024*1024    1      3.13             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+16*1024*1024    1      6.26             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+
+NOTES: no halo transfer on device (#undef COPY_HALOS)
+     : nxLocal=16
+-----------------------------------------------------
+4 *1024*1024    1       .71             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+8 *1024*1024    1      1.43             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+16*1024*1024    1      2.86             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+
+NOTES: no halo transfer on device (#undef COPY_HALOS)
+     : nxLocal=32
+-----------------------------------------------------
+4 *1024*1024    1       .42             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+8 *1024*1024    1       .85             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+16*1024*1024    1      1.7              no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+
+NOTES: no halo transfer on device (#undef COPY_HALOS)
+     : NX = 16*1024*1024
+nxLocal
+-----------------------------------------------------
+8               1      5.6              no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+16              1      2.85             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+32              1      1.7              no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+64              1      1.84             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+128             1      1.69             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+
+CONCLUSION: Use NxLocal=32
+
+NOTES: halo transfer on device (#define COPY_HALOS)
+     : nxLocal=32
+------------------------------------------------------
+4 *1024*1024    1      1.57             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+8 *1024*1024    1      3.14             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+16*1024*1024    1      6.26             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+
+NOTES: halo transfer on device (#define COPY_HALOS)
+     : nxLocal=32 : inout for HALO C only
+------------------------------------------------------
+4 *1024*1024    1      1.22             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+8 *1024*1024    1      2.44             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+16*1024*1024    1      4.90             no halo transfer from device, no MPI (warmup=100, nLoops=1000)
+
+NOTES: halo transfer on device (#define COPY_HALOS)
+     : nxLocal=32 : inout for HALO C only
+------------------------------------------------------
+        1024    1       .21             halo transfer to/from device, no MPI (warmup=100, nLoops=1000)
+4 *1024*1024    1      1.59             halo transfer to/from device, no MPI (warmup=100, nLoops=1000)
+8 *1024*1024    1      2.87             halo transfer to/from device, no MPI (warmup=100, nLoops=1000)
+16*1024*1024    1      5.57             halo transfer to/from device, no MPI (warmup=100, nLoops=1000)
+
+
+NOTES: halo transfer on device (#define COPY_HALOS)
+     : halo transfer with MPI
+     : inout for HALO C only
+     : nxLocal=32
+------------------------------------------------------
+        1024    1       .23             halo transfer to/from device, MPI (warmup=100, nLoops=1000)
+4 *1024*1024    1      1.59             halo transfer to/from device, MPI (warmup=100, nLoops=1000)
+8 *1024*1024    1      2.88             halo transfer to/from device, MPI (warmup=100, nLoops=1000)
+16*1024*1024    1      5.56             halo transfer to/from device, MPI (warmup=100, nLoops=1000)
