@@ -1,7 +1,8 @@
 #define K1_ (get_global_id(0))
 #define K2_ (get_global_id(1))
 
-#define N1_ (16*1024*1024)
+//#define N1_ (16*1024*1024)
+#define N1_ (32)
 #define N2_ (4)
 
 #define A_H1L_ 1

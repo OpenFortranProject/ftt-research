@@ -34,4 +34,5 @@
 #define IDX1(NAME,OFF)     ( (OFF) + (K1_) + (NAME ## _H1L_) )
 
 // When 2D implemented will need stride for second dimension
-#define IDX2(NAME,OFF)     ( ((OFF) + (K1_) + (NAME ## _H1L_)) * (NAME ## _S1_) )
+#define IDX2(NAME,OFF1,OFF2) (  ((OFF1) + (K1_) + (NAME ## _H1L_)) * (NAME ## _S1_) \
+                              + ((OFF2) + (K2_) + (NAME ## _H2L_)) * (NAME ## _S2_)  )
