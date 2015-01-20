@@ -7,7 +7,8 @@ program elemental_add_1d
    use Timer_mod
    implicit none
 
-   integer(c_size_t), parameter :: NX  = 16*1024*1024
+!   integer(c_size_t), parameter :: NX  = 16*1024*1024
+   integer(c_size_t), parameter :: NX  = 32
 
 !...TODO-GENERATE
    integer :: cl_status_
@@ -31,14 +32,14 @@ program elemental_add_1d
    type(CPUTimer) :: timer
    real(c_double) :: h_time
 
-   integer :: device_id, i, nLoops = 1000, nWarm = 100
+   integer :: device, i, nLoops = 1000, nWarm = 100
 
 !...TODO-GENERATE
    real(c_float), allocatable :: in_A_H_(:), out_A_H_(:)
    real(c_float), allocatable :: in_B_H_(:), out_B_H_(:)
    real(c_float), allocatable :: in_C_H_(:), out_C_H_(:)
 
-   type(CLDevice) :: device
+   type(CLDevice) :: cl_device_
    type(CLKernel) :: kernel
    type(CLBuffer) :: cl_A_, cl_B_, cl_C_
    type(CLBuffer) :: cl_A_H_, cl_B_H_, cl_C_H_
@@ -57,16 +58,16 @@ program elemental_add_1d
    Call Parallel_Topology(aContext, ndims, dims)
 !...TODO-END-GENERATE
 
-   device_id = 1
+   device = 1
 
    nxGlobal = NX
-   if (device_id /= 0) then
+   if (device /= 0) then
       nxLocal = NXL
    else
       nxLocal = 1
    end if
 
-   cl_status_ = init_device(device, device_id)
+   cl_status_ = init_device(cl_device_, device)
 
    A = 0
    B = 0
@@ -83,18 +84,18 @@ program elemental_add_1d
 
    ! create memory buffers
    !
-   cl_A_ = createBuffer(device, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(A))
-   cl_B_ = createBuffer(device, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(B))
-   cl_C_ = createBuffer(device, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(C))
-!   cl_C_ = createBuffer(device, CL_MEM_WRITE_ONLY, mem_size, C_NULL_PTR)
+   cl_A_ = createBuffer(cl_device_, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(A))
+   cl_B_ = createBuffer(cl_device_, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(B))
+   cl_C_ = createBuffer(cl_device_, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(C))
+!   cl_C_ = createBuffer(cl_device_, CL_MEM_WRITE_ONLY, mem_size, C_NULL_PTR)
 
-   cl_A_H_ = createBuffer(device, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_A_H_))
-   cl_B_H_ = createBuffer(device, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_B_H_))
-   cl_C_H_ = createBuffer(device, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_C_H_))
+   cl_A_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_A_H_))
+   cl_B_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_B_H_))
+   cl_C_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_C_H_))
 
    ! create the kernel
    !
-   kernel = createKernel(device, "elemental_add_1d")
+   kernel = createKernel(cl_device_, "elemental_add_1d")
 
    ! add arguments
    !
@@ -146,12 +147,12 @@ program elemental_add_1d
    C(1-NH:0) = -in_C_H_(1+NH:)
    C(NX+1:)  = -in_C_H_(1:NH)
 
-!   print *, A(:)
-!   print *
-!   print *, B(:)
-!   print *
-!   print *, C(:)
-!   print *
+   print *, A(:)
+   print *
+   print *, B(:)
+   print *
+   print *, C(:)
+   print *
    print *, in_A_H_(:)
    print *
    print *, in_B_H_(:)
