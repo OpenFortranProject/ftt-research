@@ -1,91 +1,115 @@
 program elemental_add_2d
+!...TODO-GENERATE
    use ForOpenCL
+   use Parallel_Halo , only : Context, Parallel_Start, Parallel_End, Parallel_Topology
+   use Parallel      , only : Halo_Exchange1D
+!...TODO-END-GENERATE
    use Timer_mod
    implicit none
-
-   integer :: status
 
    ! layer size
    integer(c_size_t), parameter :: NX  = 16
    integer(c_size_t), parameter :: NY  = 4
-   integer(c_size_t), parameter :: NH  = 1
 
-   integer(c_size_t), parameter :: HALO_SIZE = NX*(NH+NH) + NY*(NH+NH)
-  
+!...TODO-GENERATE
+   integer :: cl_status_
+
+   integer(c_size_t), parameter :: NHX = 1
+   integer(c_size_t), parameter :: NHY = 1
+
+   integer(c_size_t), parameter ::  SIZE_FLOAT = 4
+   integer(c_size_t), parameter :: N_HALO_ELEM = NX*(2*NHX) + NY*(2*NHY)
+   integer(c_size_t), parameter ::   HALO_SIZE = N_HALO_ELEM*SIZE_FLOAT
+
    ! work group size
    integer(c_size_t), parameter :: NXL = 16
-   integer(c_size_t), parameter :: NYL = 8
-   integer(c_size_t) :: nxLocal, nyLocal
-   integer(c_int) :: nxg, nyg
+   integer(c_size_t), parameter :: NYL = 4
+   integer(c_size_t) :: nxGlobal, nyGlobal, nxLocal, nyLocal
 
-   integer(c_size_t), parameter :: SIZE_FLOAT = 4
+   Type(Context) :: aContext
+   Integer       :: ndims, dims(3)
+!...TODO-END-GENERATE
 
-   real(c_float), target, dimension(NX,NY) :: A, B, C
-   type(CLBuffer) :: cl_A_, cl_B_, cl_C_
-
-   real(c_float), target, dimension(HALO_SIZE) :: A_H, B_H, C_H
-   type(CLBuffer) :: cl_A_H_, cl_B_H_, cl_C_H_
+   real(c_float), target, allocatable, dimension(:,:) :: A, B, C
 
    type(CPUTimer) :: timer
    real(c_double) :: h_time
 
-   type(CLDevice) :: device
+   integer :: device, i, j, nLoops = 100, nWarm = 100
+
+!...TODO-GENERATE
+   real(c_float), allocatable :: in_C_H_(:), out_C_H_(:)
+
+   type(CLDevice) :: cl_device_
    type(CLKernel) :: kernel
+   type(CLBuffer) :: cl_A_, cl_B_, cl_C_
+   type(CLBuffer) :: cl_C_H_
 
-   integer(c_size_t) :: mem_size = NX*NY * SIZE_FLOAT
+   integer(c_size_t) :: mem_size = (NX+2*NHX) * (NY+2*NHY) * SIZE_FLOAT
 
-   integer :: device_id, i, j, nLoops = 100
+   allocate(in_C_H_(N_HALO_ELEM), out_C_H_(N_HALO_ELEM))
 
-   device_id = 0
+!   Call Parallel_Start(aContext)
 
-   nxg = NX
-   nyg = NY
-   if (device_id /= 0) then
+   ndims = 1
+   dims  = [0,0,0]
+
+!   Call Parallel_Topology(aContext, ndims, dims)
+!...TODO-END-GENERATE
+
+   device = 1
+
+   nxGlobal = NX; nyGlobal = NY
+   if (device /= 0) then
       nxLocal = NXL; nyLocal = NYL
    else
       nxLocal = 1; nyLocal = 1
    end if
 
-   status = init_device(device, device_id)
+   cl_status_ = init_device(cl_device_, device)
+
+   allocate(A(1-NHX:NX+NHX,1-NHY:NY+NHY))
+   allocate(B(1-NHX:NX+NHX,1-NHY:NY+NHY))
+   allocate(C(1-NHX:NX+NHX,1-NHY:NY+NHY))
 
    A = 0
    B = 1
    do j = 1, NY
       do i = 1, NX
-         A(i,j) = i + 100*j - 1
+         A(i,j) = i + 100*j
       end do
    end do
 
    ! create memory buffers
    !
-   cl_A_ = createBuffer(device, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(A))
-   cl_B_ = createBuffer(device, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(B))
-   cl_C_ = createBuffer(device, CL_MEM_WRITE_ONLY, mem_size, C_NULL_PTR)
+   cl_A_ = createBuffer(cl_device_, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(A))
+   cl_B_ = createBuffer(cl_device_, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(B))
+   cl_C_ = createBuffer(cl_device_, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(C))
+!   cl_C_ = createBuffer(cl_device_, CL_MEM_WRITE_ONLY, mem_size, C_NULL_PTR)
 
-   cl_C_H_ = createBuffer(device, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR &
-                                , HALO_SIZE*SIZE_FLOAT, c_loc(C_H))
+   cl_C_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_C_H_))
 
    ! create the kernel
    !
-   kernel = createKernel(device, "elemental_add_2d")
+   kernel = createKernel(cl_device_, "elemental_add_2d")
 
    ! add arguments
    !
-   status = setKernelArgMem(kernel, 0, clMemObject(cl_A_))
-   status = setKernelArgMem(kernel, 1, clMemObject(cl_B_))
-   status = setKernelArgMem(kernel, 2, clMemObject(cl_C_))
-   status = setKernelArgMem(kernel, 3, clMemObject(cl_C_H_))
+   cl_status_ = setKernelArgMem(kernel, 0, clMemObject(cl_A_))
+   cl_status_ = setKernelArgMem(kernel, 1, clMemObject(cl_B_))
+   cl_status_ = setKernelArgMem(kernel, 2, clMemObject(cl_C_))
+   cl_status_ = setKernelArgMem(kernel, 3, clMemObject(cl_C_H_))
 
    ! run the kernel on the device
    !
    print *
    print *, "Measuring time to compute elemental add..."
    call init(timer)
-!   call start(timer)
+   call start(timer)
    do i = 1, nLoops
-      status = run(kernel, NX, NY, nxLocal, nyLocal) + status
+      cl_status_ = run(kernel, nxGlobal, nyGlobal, nxLocal, nyLocal)
    end do
-   status = clFinish(kernel%commands)
+   cl_status_ = clFinish(kernel%commands)
    call stop(timer)
 
    h_time = elapsed_time(timer)
@@ -93,23 +117,25 @@ program elemental_add_2d
 
    ! get the results
    !
-   status = readBuffer(cl_C_, c_loc(C), mem_size)
-   status = readBuffer(cl_C_H_, c_loc(C_H), HALO_SIZE*SIZE_FLOAT)
+   cl_status_ = readBuffer(cl_C_, c_loc(C), mem_size)
+   cl_status_ = readBuffer(cl_C_H_, c_loc(in_C_H_), HALO_SIZE)
 
    print *
-   print *, A(:,4)
+   print *, A(:,1)
    print *
-   print *, B(:,4)
+   print *, B(:,1)
    print *
-   print *, C(1,:)
+   print *, C(:,1)
    print *
-   print *, C_H(1:NX)
+   print *, C(:,0)
    print *
-   print *, C_H(NX+1:2*NX)
+   print *, in_C_H_(1:NX)
    print *
-   print *, C_H(2*NX+1:2*NX+NY)
+   print *, in_C_H_(NX+1:2*NX)
    print *
-   print *, C_H(2*NX+1+NY:2*NX+2*NY)
+   print *, in_C_H_(2*NX+1:2*NX+NY)
+   print *
+   print *, in_C_H_(2*NX+1+NY:2*NX+2*NY)
    print *
 
    do j = 1, ny
@@ -121,9 +147,11 @@ program elemental_add_2d
       end do
    end do
 
-   if (status == CL_SUCCESS) then
+   if (cl_status_ == CL_SUCCESS) then
       print *, "Correctness verified..."
    end if
    print *
+
+   deallocate(A, B, C)
 
 end program
