@@ -737,8 +737,8 @@ recvoff = sendoff + ny*hx
 
 n = ny * hx
 
-Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Left, 1, &
-                 & recvbuf(recvoff), n, MPI_REAL, Right, 1, &
+Call MPI_Sendrecv (sendbuf(1+sendoff), n, MPI_REAL,  Left, 1, &
+                 & recvbuf(1+recvoff), n, MPI_REAL, Right, 1, &
                  & MPI_COMM_CART, status, ierror)
 
 !... X+direction
@@ -746,8 +746,8 @@ Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Left, 1, &
 sendoff = sendoff + n
 recvoff = recvoff - n
 
-Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Right, 2, &
-                 & recvbuf(recvoff), n, MPI_REAL,   Left, 2, &
+Call MPI_Sendrecv (sendbuf(1+sendoff), n, MPI_REAL,  Right, 2, &
+                 & recvbuf(1+recvoff), n, MPI_REAL,   Left, 2, &
                  & MPI_COMM_CART, status, ierror)
 
 !... Y-direction
@@ -757,8 +757,8 @@ recvoff = sendoff + nx*hy
 
 n = nx * hy
 
-Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL, Bottom, 3, &
-                 & recvbuf(recvoff), n, MPI_REAL,    Top, 3, &
+Call MPI_Sendrecv (sendbuf(1+sendoff), n, MPI_REAL, Bottom, 3, &
+                 & recvbuf(1+recvoff), n, MPI_REAL,    Top, 3, &
                  & MPI_COMM_CART, status, ierror)
 
 !... Y+direction
@@ -766,8 +766,8 @@ Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL, Bottom, 3, &
 sendoff = sendoff + n
 recvoff = recvoff - n
 
-Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,    Top, 4, &
-                 & recvbuf(recvoff), n, MPI_REAL, Bottom, 4, &
+Call MPI_Sendrecv (sendbuf(1+sendoff), n, MPI_REAL,    Top, 4, &
+                 & recvbuf(1+recvoff), n, MPI_REAL, Bottom, 4, &
                  & MPI_COMM_CART, status, ierror)
 
 End Subroutine Halo_Exchange2D
@@ -842,8 +842,8 @@ recvoff = sendoff + hx
 
 n = hx
 
-Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Left, 1, &
-                 & recvbuf(recvoff), n, MPI_REAL, Right, 1, &
+Call MPI_Sendrecv (sendbuf(1+sendoff), n, MPI_REAL,  Left, 1, &
+                 & recvbuf(1+recvoff), n, MPI_REAL, Right, 1, &
                  & MPI_COMM_CART, status, ierror)
 
 !... X+direction
@@ -851,8 +851,8 @@ Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Left, 1, &
 sendoff = sendoff + n
 recvoff = recvoff - n
 
-Call MPI_Sendrecv (sendbuf(sendoff), n, MPI_REAL,  Right, 2, &
-                 & recvbuf(recvoff), n, MPI_REAL,   Left, 2, &
+Call MPI_Sendrecv (sendbuf(1+sendoff), n, MPI_REAL,  Right, 2, &
+                 & recvbuf(1+recvoff), n, MPI_REAL,   Left, 2, &
                  & MPI_COMM_CART, status, ierror)
 
 End Subroutine Halo_Exchange1D
