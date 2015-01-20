@@ -1,0 +1,53 @@
+Mac Pro in UO Office: 3.5 GHz 6-Core Intel Xeon E5, 32 GB 1866 MHz DDR3 ECC, AMD FirePro D700 6144 MB
+-----------------------------------------------------------------------------------------------------
+
+NX      NY              NH      time (ms)       NOTES
+-----------------------------------------------------
+
+NOTES: no halo transfer on device (#undef COPY_HALOS)
+     : nxLocal=16, nyLocal=16 : no halo transfer from device, no MPI
+--------------------------------------------------------------------
+16      16              1       .026
+32      32              1       .026
+64      64              1       .027
+128     182             1       .032
+256     256             1       .038
+512     512             1       .032
+ 1*1024 1024            1       .094
+ 2*1024 1024            1       .174
+ 4*1024 1024            1       .345
+ 8*1024 1024            1       .677
+16*1024 1024            1      1.42
+32*1024 1024            1      3.58
+64*1024 1024            1      8.46
+
+
+NOTES: no halo transfer on device (#undef COPY_HALOS)
+     : nxLocal=32, nyLocal=8 : no halo transfer from device, no MPI
+-------------------------------------------------------------------
+16*1024 1024            1      1.28
+32*1024 1024            1      2.82
+64*1024 1024            1      6.70
+
+
+NOTES: halo transfer on device (#define COPY_HALOS)
+     : nxLocal=32, nyLocal=8 : no halo transfer from device, no MPI
+-------------------------------------------------------------------
+16*1024 1024            1      1.27
+32*1024 1024            1      2.82
+64*1024 1024            1      6.70
+
+NOTES: halo transfer on device (#define COPY_HALOS)
+     : nxLocal=32, nyLocal=8 : halo transfer to/from device, no MPI
+-------------------------------------------------------------------
+16*1024 1024            1      1.58
+32*1024 1024            1      3.21
+64*1024 1024            1      7.13
+
+
+NOTES: halo transfer on device (#define COPY_HALOS)
+     : nxLocal=32, nyLocal=8 : halo transfer to/from device, MPI
+-------------------------------------------------------------------
+16*1024 1024            1      1.62
+32*1024 1024            1      3.29
+64*1024 1024            1      7.17
