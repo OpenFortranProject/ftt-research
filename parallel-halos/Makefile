@@ -12,13 +12,17 @@ OBJS = parallel_mpif08.o parallel_halo_types.o parallel_halo.o
 %.o : %.c
 	$(CC) -c $<
 
-all : $(OBJS) test_halos test_halos_c
+all : $(OBJS) test_halos test_halos_c libhalos.a
 
 test_halos : test_halos.o $(OBJS)
 	$(FC) $(LK_FLAGS) -o $@ $< $(OBJS)
 
 test_halos_c : test_halos_fc.o test_halos_c.o $(OBJS)
 	$(FC) -o $@ $< $(OBJS) test_halos_c.o
+
+libhalos.a: $(OBJS)
+	ar -r libhalos.a $(OBJS)
+	ranlib libhalos.a
 
 check: test_halos test_halos_c
 	@echo
