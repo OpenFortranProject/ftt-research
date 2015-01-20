@@ -2,14 +2,14 @@ program elemental_add_2d
 !...TODO-GENERATE
    use ForOpenCL
    use Parallel_Halo , only : Context, Parallel_Start, Parallel_End, Parallel_Topology
-   use Parallel      , only : Halo_Exchange1D
+   use Parallel      , only : Halo_Exchange2D
 !...TODO-END-GENERATE
    use Timer_mod
    implicit none
 
    ! layer size
-   integer(c_size_t), parameter :: NX  = 16
-   integer(c_size_t), parameter :: NY  = 4
+   integer(c_size_t), parameter :: NX  = 64*1024
+   integer(c_size_t), parameter :: NY  = 1024
 
 !...TODO-GENERATE
    integer :: cl_status_
@@ -22,8 +22,8 @@ program elemental_add_2d
    integer(c_size_t), parameter ::   HALO_SIZE = N_HALO_ELEM*SIZE_FLOAT
 
    ! work group size
-   integer(c_size_t), parameter :: NXL = 16
-   integer(c_size_t), parameter :: NYL = 4
+   integer(c_size_t), parameter :: NXL = 32
+   integer(c_size_t), parameter :: NYL = 8
    integer(c_size_t) :: nxGlobal, nyGlobal, nxLocal, nyLocal
 
    Type(Context) :: aContext
@@ -35,7 +35,7 @@ program elemental_add_2d
    type(CPUTimer) :: timer
    real(c_double) :: h_time
 
-   integer :: device, i, j, nLoops = 100, nWarm = 100
+   integer :: device, i, j, nLoops = 1000, nWarm = 100
 
 !...TODO-GENERATE
    real(c_float), allocatable :: in_C_H_(:), out_C_H_(:)
@@ -49,12 +49,12 @@ program elemental_add_2d
 
    allocate(in_C_H_(N_HALO_ELEM), out_C_H_(N_HALO_ELEM))
 
-!   Call Parallel_Start(aContext)
+   Call Parallel_Start(aContext)
 
    ndims = 1
    dims  = [0,0,0]
 
-!   Call Parallel_Topology(aContext, ndims, dims)
+   Call Parallel_Topology(aContext, ndims, dims)
 !...TODO-END-GENERATE
 
    device = 1
@@ -103,11 +103,14 @@ program elemental_add_2d
    ! run the kernel on the device
    !
    print *
-   print *, "Measuring time to compute elemental add..."
+   print "('Measuring time to compute elemental add (NX,NY):', 2I6)", NX, NY
    call init(timer)
    call start(timer)
    do i = 1, nLoops
+      cl_status_ = writeBuffer(cl_C_H_, c_loc(out_C_H_), HALO_SIZE)
       cl_status_ = run(kernel, nxGlobal, nyGlobal, nxLocal, nyLocal)
+      cl_status_ = readBuffer(cl_C_H_, c_loc(in_C_H_), HALO_SIZE)
+      call Halo_Exchange2D (in_C_H_, out_C_H_, NX,NHX, NY,NHY)
    end do
    cl_status_ = clFinish(kernel%commands)
    call stop(timer)
@@ -120,23 +123,21 @@ program elemental_add_2d
    cl_status_ = readBuffer(cl_C_, c_loc(C), mem_size)
    cl_status_ = readBuffer(cl_C_H_, c_loc(in_C_H_), HALO_SIZE)
 
-   print *
-   print *, A(:,1)
-   print *
-   print *, B(:,1)
-   print *
-   print *, C(:,1)
-   print *
-   print *, C(:,0)
-   print *
-   print *, in_C_H_(1:NX)
-   print *
-   print *, in_C_H_(NX+1:2*NX)
-   print *
-   print *, in_C_H_(2*NX+1:2*NX+NY)
-   print *
-   print *, in_C_H_(2*NX+1+NY:2*NX+2*NY)
-   print *
+!   print *
+!   print *, A(:,4)
+!   print *
+!   print *, B(:,4)
+!   print *
+!   print *, C(:,4)
+!   print *
+!   print *, in_C_H_(1:NX)
+!   print *
+!   print *, in_C_H_(NX+1:2*NX)
+!   print *
+!   print *, in_C_H_(2*NX+1:2*NX+NY)
+!   print *
+!   print *, in_C_H_(2*NX+1+NY:2*NX+2*NY)
+!   print *
 
    do j = 1, ny
       do i = 1, nx
@@ -153,5 +154,9 @@ program elemental_add_2d
    print *
 
    deallocate(A, B, C)
+
+!...TODO-GENERATE
+   Call Parallel_End(aContext)
+!...TODO-END-GENERATE
 
 end program
