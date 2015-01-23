@@ -1,5 +1,21 @@
 \section{Motivation}
 
+The concepts in this paper were motivated by problems encountered during
+the development of PetaVision, a C++ software framework designed for simulating
+large networks of spiking neurons in the visual cortex of primates.  PetaVision
+was designed to run on massively parallel hardware architectures and a primitive
+version of PetaVision achieved over a Petaflop/s of sustained single precision
+performance on Roadrunner, the fastest computer in the world for a brief
+period of time.
+
+Describe neural layers, spiking neurons, synaptic connections, weights,
+and plasticity.  Reference Heubel.
+
+Give a simple 1D (cartoon) example of connections within a neural network in
+Figure 1.  Describe the size of visual cortex in terms of the number of neurons,
+the number of synaptic connections, and performance.  Reference SC Gorden Bell
+paper from IBM.
+
 The LOPe programming model restricts the programmer --- while implementing a stencil
 algorithm --- to a local view of the array index space.  Within a concurrent function,
 only the local array element plus a small halo region is visible to the programmer.
