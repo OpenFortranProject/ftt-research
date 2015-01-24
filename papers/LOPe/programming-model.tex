@@ -49,11 +49,10 @@ specification.
 
 \subsubsection{CONCURRENT.}
 
-The second keyword employed by LOPe (although in this case extended) is \texttt{CONCURRENT}.  The
-\texttt{concurrent} keyword already exists in the form of a \texttt{do concurrent} loop construct (a
-Fortran 2008 feature).  By using \texttt{do concurrent}, the programmer asserts that specific
-iterations of the loop body may be executed by the compiler in \emph{any order;} even
-\emph{concurrently.}  For example, the following,
+The second keyword employed by LOPe is \texttt{CONCURRENT}.  The \texttt{concurrent} keyword already
+exists in the form of a \texttt{do concurrent} loop construct (a Fortran 2008 feature).  By using
+\texttt{do concurrent}, the programmer asserts that specific iterations of the loop body may be
+executed by the compiler in \emph{any order;} even \emph{concurrently.}  For example, the following,
 \begin{verbatim}
   pure CONCURRENT subroutine Laplace(U)
      real, HALO(:,:) :: U
@@ -65,98 +64,25 @@ iterations of the loop body may be executed by the compiler in \emph{any order;}
 defines a function that can be used as part of an iterative solution of Laplace's equation in two
 dimensions.  A function with the \texttt{pure} and \texttt{CONCURRENT} attributes may be called from
 with a \texttt{do concurrent} loop.  One should imagine that this function is called \emph{for each}
-\texttt{(i,j)} iterate of the loop.
+\texttt{(i,j)} iterate of the loop.  An example of this usage will be given later in the text.
 
 \subsubsection{LOPe index notation.}
-In the \texttt{Laplace} example shown above, the \texttt{(0,0)} array element is the \emph{local} 
-array element and only the local element may be modified.  
+In the \texttt{Laplace} example shown above, the \texttt{U(0,0)} array element is the \emph{local}
+array element and only the local element may be modified.  The default zero-based indexing scheme
+for the local array element is somewhat different that normal Fortran notation in that by default,
+array indices start a 1.  For LOPe, this default convention is modified; indices for arrays declared
+with the \texttt{HALO} attribute (within the context of a \texttt{CONCURRENT} procedure) range (in
+one dimension) from \texttt{-M} to \texttt{+N} where the halo attribute has been declared as
+\texttt{M:*:N} by the originating type declaration.  The other array elements (in the halo region of
+the example) are \texttt{U(-1,0)} and \texttt{U(+1,0)} (left and right of local) and
+\texttt{U(0,-1)} and \texttt{U(0,+1)} (bottom and top of local).  The geometric positioning of the
+array elements can be seen by the arrangement of the expressions on the right-hand side of the
+\texttt{Laplace} example.
 
 \input{coarray-comparison}
 
+Note that the use of halo cells is the normal way that large and complex MPI and CAF
+programs are implemented.  LOPe proposes to formalize this common pattern into the Fortran
+language thus providing the compiler information in order to spread computation over more
+hardware resources and reduce complexity for the programmer.
 
-
-\subsection{Locally-Oriented Programming}
-
-%%We highlight the Fortran elemental source-code abstraction because it provides a local orientation similar to that of OpenCL or CUDA kernel functions that were designed to exploit streaming, highly-threaded architectures like GPUs.  Elemental functions are pure in that they are guaranteed to be free of side effects such as I/O.  Consider a convolution where a 3x3 filter is applied to individual pixel elements in a photograph to average of blur the original photograph.  A convolution is similar to stencil operations in computational fluid dynamics that are used to obtain spatial derivatives of state variables.  Simple code is shown with extentions to Fortran shown in capital letters.  The extensions could be provided to C or Fortran functions via compiler directives rather than explicit language syntax.
-
-Consider a simple average over a five point stencil in two dimensions.  The algorithm updates the
-stencil interior point $A(0,0)$ as shown in the following:
-
-
-The 
-
-\begin{verbatim}
-   real, allocatable, HALO(-1:*:1) :: A(:)[:], B(:)[:]
-
-   !! Allocate local memory
-   !  -------------------------------------------
-   allocate(A(N)[*], B(N)[*])
-\end{verbatim}
-
-\begin{verbatim}
-   device = get_subimage(1)          ! THIS_IMAGE() if device unavailable
-
-   !! Allocate memory on subimage if available
-   !  ----------------------------------------
-   if (device /= THIS_IMAGE()) then
-      allocate(U1h(0:J)  [device], HALO=(-1:*:1))   [[device]]
-      allocate(U2h(0:J/2)[device], HALO=(-1:*:1))   [[device]]
-   end if
-
-   !! Initialize and transfer memory
-   !  ------------------------------
-   do j1h = 0, J
-      U1h(j1h) = j1h
-   end do
-   U1h[device] = U1h
-
-   do concurrent (j2h = 1:J/2-1)  [[device]]
-      call restrict(U1h(2*j2h)[device], U2h(j2h)[device])
-   end do
-
-   do concurrent (j2h = 1:J/2-1)  [[device]]
-      call restrict(U1h(2*j2h)[device], U2h(j2h)[device], [0.25, 0.5, 0.25])
-   end do
-
-   deallocate(U1h, U2h)
-
-   if (device /= THIS_IMAGE()) then
-      deallocate(U1h[device], U2h[device])   [[device]]
-   end if
-         
-end program
-\end{verbatim}
-
-
-
-%%where {\tt A} and {\tt Avg} are arrays, but where the {\tt a} argument in the {\tt convolve} definition is declared as a scalar.  The {\tt HALO} function returns a copy of the 3x3 region of {\tt a} and its surrounding neighbors.  The {\tt convolve} function is free of race conditions because of the copy semantics of {\tt HALO} and the implied synchronization of the {\tt CONCURRENT} attribute, whereby no output variables can be updated before all threads have completed execution.  In addition, while any thread may load from an extended region about \emph{its} element with the {\tt HALO} function, it may only store into its own elemental location.
-
-\subsection{Memory Management}
-
-This section describes the hierarchical memory layout and how memory consistency between the 3-levels of memory is maintained.  It describes what is the compiler's responsibility and what is the programmer's responsibility.
-
-%% A note from a conversation with Matt regarding memory management
-%%
-
-%The Fortran language has much tighter restrictions on aliasing than does C.
-%So unless a variable has the pointer or target attribute, it cannot be aliased.
-%Thus the compiler is able to agressively optimized for memory movement between
-%the CPU and accelerator.  However, because the design philosophy of coarrays
-%is that memory transfer between images can be expensive, the programmer must
-%explicitly transfer memory between images with explicit syntax with square
-%bracket notation, i.e., $a[1] = a[2]$.  So we allow the compiler to manage
-%memory within an image but require the use of {\tt halo\_exchange} for the
-%transfer of halo memory between images.
-
-
-%Fortran currently supports:
-
-%1. Array syntax: e.g., C = A + B, where A, B, C are arrays.  Note that this is implicitly a loop structure, but that no loop indices need be provided.  Also the programmer need not specify where in memory these arrays reside.  Thus this high level syntax allows the compiler more freedom in both memory placement (even across distributed memory nodes) and in runtime code execution (individual array element may be computed by different hardward threads).  This is a simple example and it is a research question as to what compiler directives would be useful for memory placement and other directions to the compiler for efficient code generation.
-
-%2. Pure procedures:  Fortran has syntax for specifying procedures that have no side effects during execution.  Specifying code that is side-effect free code is important information to provide to the compiler so that it can generate efficient multi-threaded code.
-
-%3. Pure elemental procedures: Fortran has syntax for specifying procedures that take only scalar arguments, but may be applied across array elements.  Elemental procedures are ideal for writing code to be executed within a hardware thread.  They resemble OpenCL kernels, but are simpler because they leave all indexing up to the compiler.
-
-%We have determined that additional syntax is needed, in addition to the three language features described above, to allow programmers the ability to express code in Fortran to be targeted for multi-threaded hardware architectures like GPUs.  This additional syntax is provided by functions that return a copy of a small region of memory surrounding an array element (as seen within an elemental procedure) and with functions for thread synchronization.  This additional syntax will allow pure procedures to perform stencil and other convolution-like operations on a copy of memory, synchronize, then store the computed results back to the array element associated with the given thread.
-
-%In addition Fortran has syntax like the target attribute the specifies when variables can be aliased.  This allows for much easier program analysis as the compiler knows that ordinary variables cannot be aliased.  Fortran also has excellent facilities for interoperability with C so that programming in a mixed language invironment is easily accomplished, including interoperability with native Fortran arrays.

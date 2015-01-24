@@ -1,111 +1,108 @@
-
 \subsection{Comparison to Coarray Fortran}
 
-Below is the motivational example from the original Numrich and Reic paper.
-{NOTE: This should sortof/kindof show how it would work between nodes?  Next
-section shows OpenMP example for parallelism at the thread level.}
+LOPe provides a purely \emph{local} viewpoint; the programmer is only provided read and write access
+to the local array element and write access to a small halo region surrounding the local element.
+There is simply \emph{no} mechanism provided for the programmer to even know \emph{where} the local
+element is in the context of the broader array.  On a distributed memory architecture, the halo
+elements may not even be physically located on the same processor.  If executed on a cluster
+containing hybrid processing elements (e.g. GPUs), the halo elements may be as far as three hops
+away: one to get to the host processor and another two to get to memory on the hybrid processor
+executing on another distributed memory node.  LOPe provides a complete separation between algorithm
+development and memory management and synchronization (between memory copies of the same logical
+array region covered by halos).  By explicitly describing the existance and size of an array's halo
+region, the compiler is provided with enough information to manage most of the hard and detailed work
+involved in memory transfer and synchronization.
 
-{\small
-\begin{verbatim}
+Additionally, the semantics of the LOPe execution model (on which more will be said later)
+remove even the \emph{possibility} of race conditions developing during execution of a concurrent
+procedure.
 
-subroutine laplace (nrow,ncol,u)
-   integer, intent(in) real, intent(inout) real integer
-   ! that refers to the current image
-   left = me-1
+We emphasize some of these advantages by compairing the \texttt{Laplace} implementation shown above
+with the implementation of the same algorithm from the original Numrich and Reid paper describing
+coarrays in Fortran.  We should point out that this comparison is somewhat unfair because
+Numrich and Reid were describing the advantages of coarray notation for transferring memory
+on distributed memory architectures, not how ideally to use coarrays within a major code.  But
+this example serves to highlight the advantages of LOPe as described.  In the coarray example
+shown below type declarations have been removed to save space:
+{\small \begin{verbatim}
+subroutine Laplace (nrow,ncol,U)
+   left = me-1     ! me refers to the current image
    if (me == 1) left = ncol
    right = me + 1
    if (me == ncol) right = 1
-   call sync_all( (/left,right/) ) ! Wait if left and right
-   ! have not already reached here
+   call sync_all( [left,right] ) ! Wait if left and right have
+                                 ! not already reached here
    new_u(1:nrow)=new_u(1:nrow)+u(1:nrow)[left]+u(1:nrow)[right]
-   call sync_all( (/left,right/) )
+   call sync_all( [left,right] )
    u(1:nrow) = new_u(1:nrow) - 4.0*u(1:nrow)
-end subroutine laplace
+end subroutine
+\end{verbatim}}
 
-\end{verbatim}
-}
+The advantages of LOPe over this example are now described.  Please note the the following
+is not a criticism of Coarray Fortran (CAF) as CAF is a general purpose parallel programming
+language and LOPe only pertains to the halo pattern useful in stencil-based algorithms.
 
-
-Below is the equivalent implementation in LOPe.
-
-
-{\small
-\begin{verbatim}
-
-pure CONCURRENT subroutine laplace(U)
-   real, intent(inout), HALO(-1:*:1,-1:*:1) :: U(0:,0:)
-
-   U(0:0) = U(-1,0) + U(+1,0) + U(0,-1) + U(0,+1) - 3*U(0,0)
-
-end subroutine laplace
-
-\end{verbatim}
-}
-
-NOTE: Following not a criticism of CAF as CAF is a general purpose parallel
-programming language and LOPe only pertains to the halo parallel pattern.
-
-\subsubsection{Improvements}
+%%Please note that this example is somewhat unfair because in practice CAF is usually refactored in a locally oriented way by so that communication and synchronization separated into separate procedures.  Locally-oriented programming should be viewed as programming methodology with LOPe as a particular instance.
+\subsubsection{LOPe advantages.}
 \begin{itemize}
 
 \item
-LOPe requires that the implementation of the algorithm to be separate from the
-call to effect the halo transfer.  Removing boundary condition specification
-(e.g., the cyclic boundary conditions implemented in the CAF example) from the
-algorithm allows the boundary conditions to be changed and without changing
-algorithm code.
+LOPe requires that the implementation of the algorithm to be separate from the call to
+effect the halo transfer.  Removing boundary condition specification (e.g., the cyclic
+boundary conditions implemented in the CAF example) from the algorithm allows the boundary
+conditions to be changed and without changing algorithm code.
 
 \item
-LOPe applies the transfer of halo memory across multiple (possibly) levels of
-memory with the intrinsic {\tt transfer\_halo} function (not shown here).  Thus
-the LOPe algorithm can be run on a machine with many interconnected nodes, each
-containing hybrid processor cores.  The coarray example can only be run on
-multiple nodes (called images in Fortran) without accelerator cores.
+LOPe applies the transfer of halo memory across multiple (possibly) levels of memory with
+the LOPe intrinsic \texttt{TRANSFER\_HALO} function (described later).  Thus the LOPe
+algorithm can be run on a machine with many interconnected nodes, each containing hybrid
+processor cores.  The coarray example can only be run on multiple nodes (called images in
+Fortran) without accelerator cores.
 
 \item
-The algorithm implementation is separate from user-specified synchronization,
-e.g., {\tt call sync\_all}.  In LOPe, synchronization is subsummed in the
-semantics of the CONCURRENT attribute and the {\tt transfer\_halo} function.
+The algorithm implementation is separate from user-specified synchronization, e.g.,
+\texttt{call sync\_all}.  In LOPe, synchronization is subsummed in the semantics of the
+\texttt{CONCURRENT} attribute and the \texttt{TRANSFER\_HALO} function described later.
 
 \item
-The algorithm implementation is separate from any specification as to where the
-array memory is located.  The CAF example explicity denotes where memory is
-located with the {\tt [left]} and {\tt [right]} syntax where left and right
-specifiy a processor topology.
+The algorithm implementation is separate from any specification as to where the array
+memory is located.  The CAF example explicity denotes where memory is located with the
+\texttt{[left]} and \texttt{[right]} syntax where left and right specifiy a processor
+topology.
 
 \item
-The algorithm implementation is separate from any specification as to where the
-algorithm is to be executed.  The CAF example explicity denotes where a statement is to
-executed with control flow construct like {\tt if (me == 1)}.
+The algorithm implementation is separate from any specification as to where the algorithm
+is to be executed.  The CAF example explicity denotes where a statement is to executed
+with control flow construct like \texttt{if (me == 1)}.
 
 \item
-The LOPe implementation is easier to understand and frequently follows the
-mathematical algorithm directly.  For example, the CAF example adds 4 neighbors
-plus the center value to make the implementation with direct remote coarray
-access possible, while the LOPe example is able to implement the same algorithm
-with fewer operations by adding 4 neighbors (not including the center array
-element) and then only subtracting 3 center values.
+The LOPe implementation is easier to understand and frequently follows the mathematical
+algorithm directly.  For example, the CAF example adds 4 neighbors plus the center value
+to make the implementation with direct remote coarray access possible, while the LOPe
+example is able to implement the same algorithm with fewer operations by adding 4
+neighbors (not including the center array element) and then only subtracting 3 center
+values.
 
 \item
-The semantics of LOPe makes explicit management of array temporaries (e.g., {\tt
-  u} and {\tt new\_u} by programmers unnecessary (though still possible).
-Because in LOPe the halo region is a language construct, the compiler is better
-able to manage temporary buffers than users on the target hardware platform.
+The semantics of LOPe makes explicit management of array temporaries (e.g., \texttt{U} and
+\texttt{new\_U} by programmers unnecessary (though still possible).  Because in LOPe the
+halo region is a language construct, the compiler is better able to manage temporary
+buffers than users on the target hardware platform.
 
 \end{itemize}
 
-\subsubsection{Errors that are constrained by the language}
+\subsubsection{Errors that are constrained by the language.}
 \begin{itemize}
 
 \item
-A programmer is not able to store data to the halo region.  If this were
-allowed, one thread could overwrite another threads data at undefined times.
-The compiler is able to catch this class of error.
+A programmer is not able to store data to the halo region.  If this were allowed, one
+thread could overwrite another threads data at undefined times.  The compiler is able to
+catch this class of error.
 
 \item
-A programmer can't make indexing errors in a concurrent routine by going out of
-bounds of the array plus halo memory.  The compiler is able to catch this class of
-error at compile time unless the halo shape is assumed (e.g., HALO(:,:)).
+A programmer can't make indexing errors in a concurrent routine by going out of bounds of
+the array plus halo memory.  The compiler is able to catch this class of error at compile
+time as long as compile-time constants are used to specify halo sizes.
 
 \item
 A programmer is not able to cause race conditions by forgetting to create and
@@ -114,21 +111,11 @@ store data in temporary memory.
 
 \item
 A programmer can't make synchronization errors as synchronization is implicit in
-the CONCURRENT attribute.  A thread running a CONCURRENT procedure is provided
+the \texttt{CONCURRENT} attribute.  A thread running a concurrent procedure is provided
 with a copy of it's array element (plus halo) that is consistent with the state
 of memory at the time of invocation of procedure.  Stores to an individual
-thread's array element (by that thread) is never visible to other threads.
-It is possible to relax this restraint with a halo synchronization intrisic.
-However, LOPE encourages the creation of small functions and lets the compiler
-fuse the procedures together and provide the necessary synchronization.
+thread's local array element (by that thread) is never visible to other threads.
+LOPE encourages the creation of small functions and lets the compiler
+fuse the procedures together to provide the necessary synchronization.
 
 \end{itemize}
-
-Please note that this example is somewhat unfair because in practice CAF is usually
-refactored in a locally oriented way by so that communication and
-synchronization separated into separate procedures.  Locally-oriented programming should be viewed as programming methodology with LOPe as a particular instance.
-
-This is the normal way that large complex MPI and CAF programs are implemented, i.e., using
-halo cells.  LOPe proposes to formalize this common pattern into the Fortran
-language providing the compiler information in order to spread computation over
-more hardware resources and reduce complexity for the programmer.
