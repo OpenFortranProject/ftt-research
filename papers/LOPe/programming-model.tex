@@ -1,5 +1,80 @@
 \section{Programming Model}
 
+The LOPe (for Locally-Oriented Programming extensions) programming model restricts the programmer ---
+when implementing a stencil algorithm --- to a local view of the array index space.  Within a LOPe
+function, only the local array element (plus a small halo region surrounding the local element) is
+visible to the programmer.  This serves to reduce complexity by removing all boundary conditions and
+processor topology information from the implementation of the algorithm.
+
+%%This reduction in complexity reduces programming errors.  While developing the convolution example described later in the paper we made an indexing error in applying the 2D stencil loops in the standard serial Fortran test implementation.  This error required over 3 hours of programming time to repair.  First the error had to be isolated to the function implementing the convolution (it was first thought to be in the complicated tiff image output routine as the convolution code was ``thought'' to be too simple to wrong.  Then the index error has to be understood.  As will be seen, LOPe makes it more difficult to make these errors as Fortran array intrics can be used.  In some instance, the restricted semantics of LOPe allows the compiler to catch errors (e.g., some errors involving race conditions).
+
+LOPe was implemented as an embedded domain specific language (DSL).  Fortran was chosen as the base
+language for LOPe, although in principle, the same techniques could be applied to language such as C
+or C++ (in conjuction with some form of array extensions such as those proposed by Intel).  Fortran
+was chosen because it already provides a rich array-based syntax.  Readers who are unfamiliar with
+Fortran syntax may wish to consult Appendix A for a brief description of Fortran notation.
+
+\subsection{LOPe Syntax Extensions}
+
+There are only a few syntax additions required for LOPe.  In the code examples describing these
+additions (and throughout this paper as well), DSL syntax additions are highlighted by the usage of
+capitalization for all new keywords.
+
+\subsubsection{HALO.}
+
+The principle semantic element of LOPe is the concept of a halo region.  A halo is an ``artificial''
+or ``virtual'' region surrounding an array that contains boundary-value information.  Halo (also
+called ghost-cell) regions are commonly employed to unify array indexing schemes in the vicinity of
+an array boundary, so that the array may be referenced using indicies that fall ``outside'' of the
+domain of the array.  In LOPe, the halo region is given explicit syntax so that the compiler can
+exploit this knowledge.  For example, a halo region can be explicitly provided in a declaration
+statement of the form,
+\begin{verbatim}
+  real, allocatable, dimension(:), HALO(1:*:1) :: A
+\end{verbatim}
+This statement indicates that array \texttt{A} is one dimensional, will be allocated later when it
+is provided with a specific size, and has a halo region of 1 surrounding the array on both sides.
+The notation \texttt{M:*:N} is to be read as describing a halo region of size \texttt{M} to the
+left, size \texttt{N} to the right, and with an arbitrary size in the middle (denoted by the $*$
+symbol).  When used to describe a formal parameter of a function, the \texttt{HALO} keyword may
+``assumed'' (from the actual argument by the compiler) as is the following statement,
+\begin{verbatim}
+  real, HALO(:,:) :: U
+\end{verbatim}
+which in this instance indicates that \texttt{U} is a two-dimensional array, with a halo region
+whose size is ``assumed'' by the compiler from the explicit halo size of the actual array argument
+(provided at the calling site of the function).  In LOPe, there is no need in this instance for a
+repetitive \texttt{dimension(:,:)} specification as it is inferred by the \texttt{HALO}
+specification.
+
+\subsubsection{CONCURRENT.}
+
+The second keyword employed by LOPe (although in this case extended) is \texttt{CONCURRENT}.  The
+\texttt{concurrent} keyword already exists in the form of a \texttt{do concurrent} loop construct (a
+Fortran 2008 feature).  By using \texttt{do concurrent}, the programmer asserts that specific
+iterations of the loop body may be executed by the compiler in \emph{any order;} even
+\emph{concurrently.}  For example, the following,
+\begin{verbatim}
+  pure CONCURRENT subroutine Laplace(U)
+     real, HALO(:,:) :: U
+     U(0,0) =                 U(0,+1)               &
+              +  U(-1,0)  - 3*U(0, 0)  +  U(+1,0)   &
+                          +   U(0,-1)
+  end subroutine Laplace
+\end{verbatim}
+defines a function that can be used as part of an iterative solution of Laplace's equation in two
+dimensions.  A function with the \texttt{pure} and \texttt{CONCURRENT} attributes may be called from
+with a \texttt{do concurrent} loop.  One should imagine that this function is called \emph{for each}
+\texttt{(i,j)} iterate of the loop.
+
+\subsubsection{LOPe index notation.}
+In the \texttt{Laplace} example shown above, the \texttt{(0,0)} array element is the \emph{local} 
+array element and only the local element may be modified.  
+
+\input{coarray-comparison}
+
+
+
 \subsection{Locally-Oriented Programming}
 
 %%We highlight the Fortran elemental source-code abstraction because it provides a local orientation similar to that of OpenCL or CUDA kernel functions that were designed to exploit streaming, highly-threaded architectures like GPUs.  Elemental functions are pure in that they are guaranteed to be free of side effects such as I/O.  Consider a convolution where a 3x3 filter is applied to individual pixel elements in a photograph to average of blur the original photograph.  A convolution is similar to stencil operations in computational fluid dynamics that are used to obtain spatial derivatives of state variables.  Simple code is shown with extentions to Fortran shown in capital letters.  The extensions could be provided to C or Fortran functions via compiler directives rather than explicit language syntax.
@@ -7,18 +82,6 @@
 Consider a simple average over a five point stencil in two dimensions.  The algorithm updates the
 stencil interior point $A(0,0)$ as shown in the following:
 
-\begin{verbatim}
-  pure CONCURRENT subroutine average(A)
-     real, HALO(:,:) :: A
-
-     A(0,0) =              A(+1,0)                &
-               + A(0,-1) + A( 0,0)   +  A(0,+1)   &
-                         + A(-1,0)
-
-     A(0,0) = (1./5.) * A(0,0)
-
-  end subroutine
-\end{verbatim}
 
 The 
 
@@ -70,7 +133,7 @@ end program
 
 \subsection{Memory Management}
 
-This section describes the hierarchical memory layout and how memory consistency between the 3-levels of memory is maintained.  It describes what is the compiler's responsibility and which is the user's responsibility.
+This section describes the hierarchical memory layout and how memory consistency between the 3-levels of memory is maintained.  It describes what is the compiler's responsibility and what is the programmer's responsibility.
 
 %% A note from a conversation with Matt regarding memory management
 %%
