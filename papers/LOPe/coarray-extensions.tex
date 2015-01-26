@@ -38,45 +38,73 @@ $MP*NP = P$, where $P$ is the total number of participating processes (images).
 
 So far --- except for the \texttt{HALO} attribute --- this is totally standard Fortran (2008).  For CAFe,
 we extend the concept of Fortran images to be hierachical.  By this we mean that each image \emph{may}
-have a subimage (or subimages), but this subimage is not visible to other normal Fortran images.
+have a subimage (or subimages), but this subimage is not visible to other regular Fortran images.
 Subimages also execute differently than normal images.  Subimages are task based while images all
 execute a single program but with different (multiple) data (SPMD).  A task can be given to a subimage,
-but execution on the subimage terminates once the task is finished.  Memory on a subimage, however, is
-permanent and must be specifically allocated and deallocated.
+but execution on the subimage terminates once the task is finished.  Memory on a subimage is
+permanent, however, and must be specifically allocated and deallocated.
 
-One obtains a subimage by executing,
+One obtains a subimage by executing a function call,
 \begin{verbatim}
-   device = get_subimage(1)          ! THIS_IMAGE() if device unavailable
+   device = get_subimage(1)
 \end{verbatim}
+where the integer argument representing one of attached hardware devices.  If the function
+fails (e.g., the requested device is unavailable) it returns the image number,
+\texttt{this\_image()}, of the process that is executing the current program.  Returning
+the current image allows program execution to proceed correctly even if there are no
+attached devices.
 
+Once a subimage is obtained, memory on the device may be allocated,
 \begin{verbatim}
+  if (device /= this_image()) then
+    allocate(U[device], HALO_SRC=U)   [[device]]
+  end if
+\end{verbatim}
+There are four points to note regarding this memory allocation: 1. Memory is only
+allocated if a subimage has been obtained; 2. The location where memory is allocated is
+denoted by the regular coarray notation \texttt{U[device]}; 3. The allocated size and halo
+attribute of the new array are assumed from the previously allocated local array
+\texttt{U} via the notation \texttt{HALO\_SRC=U} (using \texttt{HALO\_SRC} will also copy
+the memory to the device); and finally 4. The allocation itself is \emph{executed} on the
+subimage device with the notation \texttt{[[device]]}.
 
-   !! Allocate memory on subimage if available
-   !  ----------------------------------------
-   if (device /= THIS_IMAGE()) then
-      allocate(U[device], HALO_SRC=U)   [[device]]
-   end if
+Fortran uses square bracket notation \texttt{[image]} to specify on what process the
+memory reference is physically located.  Square brackets are a visual clue to the
+programmer that the memory reference may be remote and therefore potentially suffer a
+performance penalty.  CAFe extends this by employing double-bracket notation to indicate
+possibly \emph{remote subimage execution}.
 
-   !! Initialize and transfer memory
-   !  ------------------------------
-   do j1h = 0, J
-      U1h(j1h) = j1h
-   end do
-   U1h[device] = U1h
-
-   do i = 1, nLoops
+Execution of the Laplace task (defined previously) is done using the Fortran \texttt{do
+concurrent} construct as shown below,
+\begin{verbatim}
+   do while (.not. converged)
       do concurrent (i=1:M, j=1:N)   [[device]]
          call Laplace(U(i,j)[device])
       end do
       call HALO_TRANSFER(U, BC=CYCLIC)
    end do
+\end{verbatim}
+There are several points that require highlighting: 1. Iteration occurs over the interior
+of the array domain, \texttt{(i=1:M, j=1:N)}; 2. Execution of the loop occurs on the
+specific subimage indicated by \texttt{[[device]]}; 3. Execution of the iterates may occur
+in any order, even \emph{concurrently}; 4. The \texttt{local element} of the array (as
+described above in reference to the definition of the \texttt{CONCURRENT} procedure
+\texttt{Laplace} is given by the indices \texttt{(i,j)}; 5. Location of memory for the
+task is to be taken from the subimage as noted by \texttt{[device]}; and 6. Transfer of
+all requisite halo regions is effected by the call to the new LOPe intrinsic function
+\texttt{HALO\_TRANSFER()}.
 
+The transfer of halo memory is necessary after each completion of the do concurrent loop.
+Completion of a do concurrent construct indicates that all executing threads (if a threading
+model is used by the compiler) have completed and that all memory on the executing subimage is
+in a consistent state.
+
+Finally, deallocation of memory is similar to memory allocation:
+\begin{verbatim}
    deallocate(U)
-   if (device /= THIS_IMAGE()) then
+   if (device /= this_image()) then
       deallocate(U[device])   [[device]]
    end if
-         
-end program
 \end{verbatim}
 
 
