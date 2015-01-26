@@ -2,21 +2,54 @@
 
 %%We highlight the Fortran elemental source-code abstraction because it provides a local orientation similar to that of OpenCL or CUDA kernel functions that were designed to exploit streaming, highly-threaded architectures like GPUs.  Elemental functions are pure in that they are guaranteed to be free of side effects such as I/O.  Consider a convolution where a 3x3 filter is applied to individual pixel elements in a photograph to average of blur the original photograph.  A convolution is similar to stencil operations in computational fluid dynamics that are used to obtain spatial derivatives of state variables.  Simple code is shown with extentions to Fortran shown in capital letters.  The extensions could be provided to C or Fortran functions via compiler directives rather than explicit language syntax.
 
-Consider a simple average over a five point stencil in two dimensions.  The algorithm updates the
-stencil interior point $A(0,0)$ as shown in the following:
+Consider the \texttt{Laplace} concurrent function whose implementation was provided above.
+In this section we demonstrate how this function can be called in a context that allows
+full access to all of the enterior elements of the array, as well as array element within
+the halo boundary region.  Topics highlighted in this section are: 1. Distributed memory
+array allocation; 2. The placement or location(s) (possibly multiple) of the memory
+allocated for the distributed array; 3. Remote memory transfer; and 4. Remote execution.
+This description is within the context of a Domain Specific Language (DSL) extending
+Fortran 2008.  These specific extensions are called CAFe, (Coarray Fortran extensions).
 
-The 
-
+We start with the declaration of an array (to be allocated later),
 \begin{verbatim}
-   real, allocatable, HALO(1:*:1,1:*:1) :: U(:,:)[:]
+  real, allocatable, HALO(1:*:1,1:*:1), dimension(:,:), codimensions(:,:) :: U
+\end{verbatim}
+with an explicit halo size and with two local dimensions (rank) and two distributed memory
+codimensions (corank).  The corank of the array is chosen to be identical to the rank of
+the array so that the logical process topology aligns is a way that allows a natural
+halo exchange between logically neighboring processes.  For example, if my process
+location is \texttt{[pcol,prow]}, then the right-hand halo for my local array \texttt{U}
+can be obtained by the assignment \texttt{U(M+1,:) = U(1,:)[pcol-1,prow]} where the size
+and cosize of \texttt{U} are given by the allocation statement,
+\begin{verbatim}
+  allocate(U(0:M+1,0:N+1)[MP,*])
+\end{verbatim}
 
-   !! Allocate normal coarray memory
-   !  -------------------------------------------
-   allocate(U(M,N)[*])
+This allocation statement specifies that (given the 1 element halo size provided earlier for
+\texttt{U}) the local, left halo is \texttt{U(0,:)}, the right is \texttt{U(M+1,:)},
+the bottom is \texttt{U(:,0)} and the top is \texttt{U(:,N+1)}, leaving the enterior
+region to be \texttt{U(1:M,1:N)}.  In this allocation statement the total number of
+process rows \texttt{NP} can be obtained at runtime and is not a compile time parameter
+because the actual number of participating processes (in Fortran called images) is
+variable, depending on how many processes are requested at startup.  In this discussion,
+it is \emph{assumed} that there are no holes in the logical processor topology, thus
+$MP*NP = P$, where $P$ is the total number of participating processes (images).
+
+So far --- except for the \texttt{HALO} attribute --- this is totally standard Fortran (2008).  For CAFe,
+we extend the concept of Fortran images to be hierachical.  By this we mean that each image \emph{may}
+have a subimage (or subimages), but this subimage is not visible to other normal Fortran images.
+Subimages also execute differently than normal images.  Subimages are task based while images all
+execute a single program but with different (multiple) data (SPMD).  A task can be given to a subimage,
+but execution on the subimage terminates once the task is finished.  Memory on a subimage, however, is
+permanent and must be specifically allocated and deallocated.
+
+One obtains a subimage by executing,
+\begin{verbatim}
+   device = get_subimage(1)          ! THIS_IMAGE() if device unavailable
 \end{verbatim}
 
 \begin{verbatim}
-   device = get_subimage(1)          ! THIS_IMAGE() if device unavailable
 
    !! Allocate memory on subimage if available
    !  ----------------------------------------
