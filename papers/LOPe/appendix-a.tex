@@ -1,3 +1,15 @@
 \section*{Appendix: A Fortran Primer for the C Programmer}
 
-This section provides a brief description of Fortran syntax for readers unfamiliar with Fortran syntax.
+This section provides a brief description of Fortran syntax for readers unfamiliar with Fortran
+syntax.  The most common source of confusion is array notation.  Fortran uses parentheses
+\texttt{()} for both functions arguments and array indexing; thus the confusing expression
+\texttt{foo(i,j)} can either be an array reference or a function call depending on context.  Where C
+reserves square brackets \texttt{[]} to denote an array reference, Fortran uses square brackets to
+reference coarray memory on a remote, distributed memory process (called an image in Fortran).
+
+Otherwise, Fortran syntax is usually straightforward though it may appear strange to the uninitiated
+programmer.  A subroutine is a function with no return value and must be called in a statement
+rather than as an expression.  Simple syntatic elements are: \texttt{!} the line comment symbol;
+\texttt{\&} the line continuation symbol; and \texttt{::} is syntatic sugar used for the separation
+of elements, e.g., separating type attributes from the variable list in a type declaration
+statement.
