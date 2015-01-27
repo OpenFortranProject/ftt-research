@@ -8,7 +8,7 @@ elements may not even be physically located on the same processor.  If executed 
 containing hybrid processing elements (e.g. GPUs), the halo elements may be as far as three hops
 away: one to get to the host processor and another two to get to memory on the hybrid processor
 executing on another distributed memory node.  LOPe provides a complete separation between algorithm
-development and memory management and synchronization (between memory copies of the same logical
+development and memory management (synchronization between memory copies of the same logical
 array region covered by halos).  By explicitly describing the existance and size of an array's halo
 region, the compiler is provided with enough information to manage most of the hard and detailed
 work involved in memory transfer and synchronization.  Additionally, the semantics of the LOPe
@@ -16,10 +16,10 @@ execution model remove the possibility of race conditions developing during exec
 concurrent procedure.
 
 We emphasize some of these advantages by comparing the \texttt{Laplace} implementation with the
-implementation of the same algorithm from the original Numrich and Reid paper describing coarrays in
-Fortran.  We should point out that this comparison is somewhat unfair, because Numrich and Reid were
-introducing coarray notation for transferring memory on distributed memory architectures, not
-demonstrating how ideally to use coarrays within a large application.
+implementation of the same algorithm from the original Numrich and Reid paper first describing
+coarrays in Fortran.  We should point out that this comparison is somewhat unfair, because Numrich
+and Reid were introducing coarray notation for transferring memory on distributed memory
+architectures, not demonstrating how ideally one should use coarrays within a large application.
 %%Please note that this example is somewhat unfair because in practice CAF is usually refactored in a locally oriented way by so that communication and synchronization separated into separate procedures.  Locally-oriented programming should be viewed as programming methodology with LOPe as a particular instance.
 However this example serves
 to highlight some of the advantages of LOPe and CAFe as introduced above.  Note that in the coarray
@@ -39,7 +39,7 @@ example shown below, type declarations have been removed to save space:
 
 The advantages of LOPe and CAFe over this example are now described.  Please note that the following
 is not a criticism of coarray Fortran as CAF is a general purpose parallel programming language and
-LOPe only pertains to the halo pattern useful in stencil-based algorithms.
+LOPe only pertains to the halo pattern most useful in the implementation of stencil-based algorithms.
 
 \subsubsection{LOPe advantages.}
 \begin{itemize}
@@ -54,12 +54,12 @@ without changing algorithm code.
 LOPe applies the transfer of halo memory across possibly multiple levels of memory with the LOPe
 intrinsic \texttt{TRANSFER\_HALO} function.  Thus the LOPe algorithm can be run on a machine with
 many interconnected nodes, each containing hybrid processor cores.  The coarray example can only be
-run on multiple nodes (called images in Fortran) without accelerator cores.
+run on multiple nodes without accelerator cores.
 
 \item
 Algorithm implementation is separate from user-specified synchronization, e.g., \texttt{call
   sync\_all}.  In LOPe, synchronization is subsummed in the semantics of the \texttt{CONCURRENT}
-attribute and the \texttt{TRANSFER\_HALO}.
+attribute and the \texttt{TRANSFER\_HALO} function call.
 
 \item
 The algorithm implementation is separate from any specification as to where the array
@@ -73,12 +73,10 @@ is to be executed.  The CAF example explicity denotes where a statement is to ex
 with control flow construct like \texttt{if (me == 1)}.
 
 \item
-The LOPe implementation is easier to understand and frequently follows the mathematical
-algorithm directly.  For example, the CAF example adds 4 neighbors plus the center value
-to make the implementation with direct remote coarray access possible, while the LOPe
-example is able to implement the same algorithm with fewer operations by adding 4
-neighbors (not including the center array element) and then only subtracting 3 center
-values.
+The LOPe implementation is easier to understand and frequently follows the mathematical algorithm
+directly.  For example, the CAF implementation of Numrich and Reid adds 4 neighbors plus the center
+value to make the implementation with direct remote coarray access possible, while the LOPe example
+is able to implement the same algorithm with one statement and no intervening synchronization.
 
 \item
 The semantics of LOPe makes explicit management of array temporaries (e.g., \texttt{u} and
@@ -103,7 +101,7 @@ compile-time constants are used to specify halo sizes.
 
 \item
 A programmer is not able to cause race conditions by forgetting to create and use temporary arrays
-properly.  In LOPe it is the comilers responsibility to store data in temporary memory.
+properly.  In LOPe it is the compilers responsibility to store data in temporary memory.
 
 \item
 A programmer can't make synchronization errors as synchronization is implicit in the
