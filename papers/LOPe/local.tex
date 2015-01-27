@@ -70,19 +70,19 @@ conversations with respect to programming models.}%
 
 \begin{abstract}
 
-Emerging hybrid accelerator architectures for high performance computing are often well suited for
-usage of a data-parallel programming model.  However, programmers for these emerging architectures
-face a steep learning curve that frequently requires learning a new language, e.g., OpenCL or CUDA,
-or employing OpenMP compiler directives.  Furthermore, the distributed (and frequently multi-level)
-nature of the memory organization of clusters of these architectures provides an additional level of
-complexity for the programmer.  This paper presents preliminary work examining how programming with
-a local orientation can be employed to provide simple access to accelerator architectures.  A
-locally-oriented programming model is especially useful for stencil-based codes or algorithms
-requiring the application of convolution kernels.  In this programming model, a programmer codes the
-algorithm by modifying \emph{only a single array element}, but has read-only access to a small
-sub-array surrounding the given array element, so that a stencil can be applied.  We demonstrate how
-a locally-oriented programming model can be adopted as an embedded, domain-specific language using
-source-to-source program transformations.
+Emerging hybrid accelerator architectures for high performance computing are often suited for the
+use of a data-parallel programming model.  Unfortunately, programmers for these emerging
+architectures face a steep learning curve that frequently requires learning a new language, e.g.,
+OpenCL or CUDA, or employing OpenMP compiler directives.  Furthermore, the distributed (and
+frequently multi-level) nature of the memory organization of clusters of these architectures
+provides an additional level of complexity for the programmer.  This paper presents preliminary work
+examining how programming with a local orientation can be employed to provide simple access to
+accelerator architectures.  A locally-oriented programming model is especially useful for the
+solution of algorithms requiring the application of a convolution kernel.  In this programming
+model, a programmer codes the algorithm by modifying \emph{only a single array element} (called the
+local element), but has read-only access to a small sub-array surrounding the local element so that
+a stencil can be applied.  We demonstrate how a locally-oriented programming model can be adopted as
+an embedded, domain-specific language using source-to-source program transformations.
 
 
 \keywords{domain specific language, stencil compilers, distributed memory parallelism}

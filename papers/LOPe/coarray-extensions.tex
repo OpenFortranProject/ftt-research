@@ -94,10 +94,11 @@ task is to be taken from the subimage as noted by \texttt{[device]}; and 6. Tran
 all requisite halo regions is effected by the call to the new LOPe intrinsic function
 \texttt{HALO\_TRANSFER()}.
 
-The transfer of halo memory is necessary after each completion of the do concurrent loop.
-Completion of a do concurrent construct indicates that all executing threads (if a threading
-model is used by the compiler) have completed and that all memory on the executing subimage is
-in a consistent state.
+Note that a transfer of halo memory is necessary after each completion of the do concurrent loop.
+This must be done in order for the halo region of a coarray on a given process to be consistent
+with the corresponding interior of the coarray on a logically neighboring process.
+
+%% However, recall that with the LOPe programming model only the local element is mutable; thus, the halo region of an array needs update.
 
 Finally, deallocation of memory is similar to memory allocation:
 \begin{verbatim}
@@ -108,12 +109,16 @@ Finally, deallocation of memory is similar to memory allocation:
 \end{verbatim}
 
 
+\subsection{Execution Symantics and Memory Management}
 
-%%where {\tt A} and {\tt Avg} are arrays, but where the {\tt a} argument in the {\tt convolve} definition is declared as a scalar.  The {\tt HALO} function returns a copy of the 3x3 region of {\tt a} and its surrounding neighbors.  The {\tt convolve} function is free of race conditions because of the copy semantics of {\tt HALO} and the implied synchronization of the {\tt CONCURRENT} attribute, whereby no output variables can be updated before all threads have completed execution.  In addition, while any thread may load from an extended region about \emph{its} element with the {\tt HALO} function, it may only store into its own elemental location.
+This section describes the hierarchical memory layout and how memory consistency between
+the 3-levels of memory is maintained.  It describes what is the compiler's responsibility
+and what is the programmer's responsibility.
 
-\subsection{Memory Management}
+%% Completion of a do concurrent construct indicates that all executing threads (if a threading model is used by the compiler) have completed and that all memory on the executing subimage is in a consistent state.
 
-This section describes the hierarchical memory layout and how memory consistency between the 3-levels of memory is maintained.  It describes what is the compiler's responsibility and what is the programmer's responsibility.
+%%The {\tt HALO} function returns a copy of the 3x3 region of {\tt a} and its surrounding neighbors.  The {\tt convolve} function is free of race conditions because of the copy semantics of {\tt HALO} and the implied synchronization of the {\tt CONCURRENT} attribute, whereby no output variables can be updated before all threads have completed execution.  In addition, while any thread may load from an extended region about \emph{its} element with the {\tt HALO} function, it may only store into its own elemental location.
+
 
 %% A note from a conversation with Matt regarding memory management
 %%
@@ -140,3 +145,10 @@ This section describes the hierarchical memory layout and how memory consistency
 %We have determined that additional syntax is needed, in addition to the three language features described above, to allow programmers the ability to express code in Fortran to be targeted for multi-threaded hardware architectures like GPUs.  This additional syntax is provided by functions that return a copy of a small region of memory surrounding an array element (as seen within an elemental procedure) and with functions for thread synchronization.  This additional syntax will allow pure procedures to perform stencil and other convolution-like operations on a copy of memory, synchronize, then store the computed results back to the array element associated with the given thread.
 
 %In addition Fortran has syntax like the target attribute the specifies when variables can be aliased.  This allows for much easier program analysis as the compiler knows that ordinary variables cannot be aliased.  Fortran also has excellent facilities for interoperability with C so that programming in a mixed language invironment is easily accomplished, including interoperability with native Fortran arrays.
+
+\input{coarray-comparison}
+
+Note that the use of halo cells is the normal way that large and complex MPI and CAF
+programs are implemented.  LOPe proposes to formalize this common pattern into the Fortran
+language thus providing the compiler information in order to spread computation over more
+hardware resources and reduce complexity for the programmer.

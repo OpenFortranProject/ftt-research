@@ -1,10 +1,11 @@
 \section{Programming Model}
 
-The LOPe (for Locally-Oriented Programming extensions) programming model restricts the programmer ---
-when implementing a stencil algorithm --- to a local view of the array index space.  Within a LOPe
-function, only the local array element (plus a small halo region surrounding the local element) is
-visible to the programmer.  This serves to reduce complexity by removing all boundary conditions and
-processor topology information from the implementation of the algorithm.
+The LOPe programming model (for Locally-Oriented Programming extensions) restricts the programmer to
+a local view of the index space of an array.  Within a LOPe function, only a single array element (called
+the local element) is mutable.  In addition, a small halo region surrounding the local element is
+visible to the programmer, but this region is immutable.  Restricting the programmer to a local
+index space serves to reduce complexity by removing all boundary-value and processor-topology
+information from the implementation of the algorithm.
 
 %%This reduction in complexity reduces programming errors.  While developing the convolution example described later in the paper we made an indexing error in applying the 2D stencil loops in the standard serial Fortran test implementation.  This error required over 3 hours of programming time to repair.  First the error had to be isolated to the function implementing the convolution (it was first thought to be in the complicated tiff image output routine as the convolution code was ``thought'' to be too simple to wrong.  Then the index error has to be understood.  As will be seen, LOPe makes it more difficult to make these errors as Fortran array intrics can be used.  In some instance, the restricted semantics of LOPe allows the compiler to catch errors (e.g., some errors involving race conditions).
 
@@ -16,43 +17,46 @@ Fortran syntax may wish to consult Appendix A for a brief description of Fortran
 
 \subsection{LOPe Syntax Extensions}
 
-There are only a few syntax additions required for LOPe.  In the code examples describing these
-additions (and throughout this paper as well), DSL syntax additions are highlighted by the usage of
-capitalization for all new keywords.
+There are only a few syntax additions required for a LOPe program.  These additions include syntax for
+describing halo regions and concurrent procedures.  In all of the code examples that follow, DSL
+syntax additions are highlighted by the usage of capitalization for keywords that are either new or
+that acquire new usage.
 
-\subsubsection{HALO.}
+\subsubsection{Halo regions.}
 
 The principle semantic element of LOPe is the concept of a halo region.  A halo is an ``artificial''
 or ``virtual'' region surrounding an array that contains boundary-value information.  Halo (also
 called ghost-cell) regions are commonly employed to unify array indexing schemes in the vicinity of
-an array boundary, so that the array may be referenced using indicies that fall ``outside'' of the
+an array boundary, so that an array may be referenced using indices that fall ``outside'' of the
 domain of the array.  In LOPe, the halo region is given explicit syntax so that the compiler can
-exploit this knowledge.  For example, a halo region can be explicitly provided in a declaration
-statement of the form,
+exploit this knowledge.  For example, a halo region can be declared with a statement of the form,
 \begin{verbatim}
   real, allocatable, dimension(:), HALO(1:*:1) :: A
 \end{verbatim}
-This statement indicates that array \texttt{A} is one dimensional, will be allocated later when it
-is provided with a specific size, and has a halo region of 1 surrounding the array on both sides.
-The notation \texttt{M:*:N} is to be read as describing a halo region of size \texttt{M} to the
-left, size \texttt{N} to the right, and with an arbitrary size in the middle (denoted by the $*$
-symbol).  When used to describe a formal parameter of a function, the \texttt{HALO} keyword may
-``assumed'' (from the actual argument by the compiler) as is the following statement,
+This statement indicates that \texttt{A} is a rank one array, will be allocated later (when it will
+be provided with a specific size), and has a halo region of one element surrounding the array on
+either side.  Notation such as \texttt{M:*:N} is to be read as describing a halo region of size
+\texttt{M} to the left, size \texttt{N} to the right, and with an arbitrary size in the middle
+(denoted by the $*$ symbol).  When used to describe a formal parameter of a function, the size may
+be ``assumed'' (denoted by a ``:'' symbol substituted in place of an explicit size) as is the
+following,
 \begin{verbatim}
   real, HALO(:,:) :: U
 \end{verbatim}
 which in this instance indicates that \texttt{U} is a two-dimensional array, with a halo region
-whose size is ``assumed'' by the compiler from the explicit halo size of the actual array argument
-(provided at the calling site of the function).  In LOPe, there is no need in this instance for a
-repetitive \texttt{dimension(:,:)} specification as it is inferred by the \texttt{HALO}
+whose size is obtained by the compiler from the explicit halo size of the actual array argument
+provided at the calling site of the function.  In LOPe, there is no need (in this instance) for a
+repetitive \texttt{dimension(:,:)} specification as it is inferred from the \texttt{HALO}
 specification.
 
-\subsubsection{CONCURRENT.}
+\subsubsection{Concurrent functions.}
 
-The second keyword employed by LOPe is \texttt{CONCURRENT}.  The \texttt{concurrent} keyword already
-exists in the form of a \texttt{do concurrent} loop construct (a Fortran 2008 feature).  By using
-\texttt{do concurrent}, the programmer asserts that specific iterations of the loop body may be
-executed by the compiler in \emph{any order;} even \emph{concurrently.}  For example, the following,
+The second keyword employed by LOPe is \texttt{concurrent}.  This keyword already exists in the form
+of a \texttt{do} \texttt{concurrent} loop construct.  By using this construct, the programmer
+asserts that specific iterations of the loop body may be executed by the compiler in \emph{any
+  order;} even \emph{concurrently.}
+%%LOPe allows the \texttt{concurrent} attribute to be attached to a function declaration so that the function can be called from within a concurrent loop without fear of race conditions.
+For example, the following,
 \begin{verbatim}
   pure CONCURRENT subroutine Laplace(U)
      real, HALO(:,:) :: U
@@ -62,27 +66,24 @@ executed by the compiler in \emph{any order;} even \emph{concurrently.}  For exa
   end subroutine Laplace
 \end{verbatim}
 defines a function that can be used as part of an iterative solution of Laplace's equation in two
-dimensions.  A function with the \texttt{pure} and \texttt{CONCURRENT} attributes may be called from
-with a \texttt{do concurrent} loop.  One should imagine that this function is called \emph{for each}
-\texttt{(i,j)} iterate of the loop.  An example of this usage will be given later in the text.
+dimensions.  LOPe allows a function with the \texttt{pure} and \texttt{concurrent} attributes to be
+called from within a \texttt{do} \texttt{concurrent} loop body.  One should imagine that this
+function is called \emph{for each} \texttt{(i,j)} index of the interior of the array \texttt{U}.
+(An example of this usage will be given later in the text.)  Note that this usage introduces a race
+condition as new values of elements of \texttt{U} are created on the left-hand side of the
+assignment statement that may use \emph{new or old} values of \texttt{U} on the right-hand side.
+LOPe requires the compiler to guarantee that race conditions won't occur by using, e.g.,
+double-buffering techniques as needed.
 
 \subsubsection{LOPe index notation.}
 In the \texttt{Laplace} example shown above, the \texttt{U(0,0)} array element is the \emph{local}
-array element and only the local element may be modified.  The default zero-based indexing scheme
-for the local array element is somewhat different that normal Fortran notation in that by default,
-array indices start a 1.  For LOPe, this default convention is modified; indices for arrays declared
-with the \texttt{HALO} attribute (within the context of a \texttt{CONCURRENT} procedure) range (in
-one dimension) from \texttt{-M} to \texttt{+N} where the halo attribute has been declared as
+array element and only the local element may be modified.  This zero-based indexing for the
+local-array element is different than conventional Fortran, where by default, array indices start at
+1.  For LOPe, this default convention is modified; indices for arrays declared with the
+\texttt{HALO} attribute (within the context of a \texttt{CONCURRENT} procedure) range (in one
+dimension) from \texttt{-M} to \texttt{+N} where the halo attribute has been declared as
 \texttt{M:*:N} by the originating type declaration.  The other array elements (in the halo region of
-the example) are \texttt{U(-1,0)} and \texttt{U(+1,0)} (left and right of local) and
-\texttt{U(0,-1)} and \texttt{U(0,+1)} (bottom and top of local).  The geometric positioning of the
-array elements can be seen by the arrangement of the expressions on the right-hand side of the
-\texttt{Laplace} example.
-
-\input{coarray-comparison}
-
-Note that the use of halo cells is the normal way that large and complex MPI and CAF
-programs are implemented.  LOPe proposes to formalize this common pattern into the Fortran
-language thus providing the compiler information in order to spread computation over more
-hardware resources and reduce complexity for the programmer.
-
+the example) are \texttt{U(-1,0)} and \texttt{U(+1,0)} (left and right of local, respectively) and
+\texttt{U(0,-1)} and \texttt{U(0,+1)} (bottom and top of local, respectively).  The geometric
+positioning of the array elements can be seen by examining the arrangement of the expressions on the
+right-hand side of the \texttt{Laplace} example.
