@@ -1,7 +1,7 @@
 \subsection{Comparison to Coarray Fortran}
 
 LOPe provides a purely \emph{local} viewpoint; the programmer is only provided read and write access
-to the local array element and write access to a small halo region surrounding the local element.
+to the local array element and read access to a small halo region surrounding the local element.
 There is simply \emph{no} mechanism provided for the programmer to even know \emph{where} the local
 element is in the context of the broader array.  On a distributed memory architecture, the halo
 elements may not even be physically located on the same processor.  If executed on a cluster
@@ -106,7 +106,7 @@ properly.  In LOPe it is the compilers responsibility to store data in temporary
 \item
 A programmer can't make synchronization errors as synchronization is implicit in the
 \texttt{CONCURRENT} attribute.  A thread running a concurrent procedure is provided with a copy of
-it's array element (plus halo) that is consistent with the state of memory \emph{at the time of
+it's local array element plus halo that is consistent with the state of memory \emph{at the time of
   invocation of the procedure}.  Stores to an individual thread's local array element (by that
 thread) is never visible to other threads.  LOPE encourages the creation of small functions and lets
 the compiler fuse the functions together to improve performance and to provide necessary

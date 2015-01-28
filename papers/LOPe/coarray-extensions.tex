@@ -15,13 +15,13 @@ As shorthand, these specific extensions are referred to as CAFe, for Coarray For
 We start with the declaration of an array (to be allocated later),
 \begin{verbatim}
   real, allocatable, HALO(1:*:1,1:*:1),          &
-        dimension(:,:), codimension(:,:) :: U
+        dimension(:,:), codimension[:,:] :: U
 \end{verbatim}
 with an explicit halo size and with two local dimensions (rank) and two distributed memory
 codimensions (corank).  The corank of the array is chosen to be identical to the rank of
 the array so that the logical process topology aligns in a way that allows a natural
-halo exchange between logically neighboring processes.  For example, if my process
-location is \texttt{[pcol,prow]}, then the right-hand halo for my local array \texttt{U}
+halo exchange between logically neighboring processes.  For example, if the process
+location is \texttt{[pcol,prow]}, then the right-hand halo for the local array \texttt{U}
 can be obtained by the assignment \texttt{U(M+1,:) = U(1,:)[pcol+1,prow]} where the size
 and cosize of \texttt{U} are given by the allocation statement,
 \begin{verbatim}
@@ -34,7 +34,7 @@ bottom row is \texttt{U(:,0)} and the top row is \texttt{U(:,N+1)}, leaving the 
 \texttt{U(1:M,1:N)}.  In this allocation statement, the total number of process rows \texttt{NP} can
 be obtained at runtime, but \emph{may not} be explicitly provided (according to CAF rules) because the
 actual number of participating processes (in Fortran called images) is variable, depending on how
-many processes are requested at startup.  In this discussion, it is \emph{assumed} that there are no
+many processes are requested at program startup.  In this discussion, it is \emph{assumed} that there are no
 holes in the logical processor topology, thus $MP*NP = P$, where $P$ is the total number of
 participating processes (images).
 
