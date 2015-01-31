@@ -33,7 +33,7 @@
 #define HALO2(NAME,SIDE)   ( (NAME ## _H2 ## SIDE ## _) )
 
 // 1D index for the array NAME and offset OFF
-#define IDX1(NAME,OFF)     ( (OFF) + (K1_) + (NAME ## _H1L_) )
+#define IDX1(NAME,OFF1)    ( (OFF1) + (K1_) + (NAME ## _H1L_) )
 
 // 2D index for the array NAME and offset OFF
 #define IDX2(NAME,OFF1,OFF2) (  ((OFF1) + (K1_) + (NAME ## _H1L_)) * (NAME ## _S1_) \
