@@ -90,9 +90,10 @@ buffers than users on the target hardware platform.
 \begin{itemize}
 
 \item
-A programmer is not able to store data to the halo region during execution of a LOPe concurrent
-function.  If this were allowed, one thread could overwrite another threads data at undefined times.
-The compiler is able to catch this class of error.
+A programmer is not able to store data to the halo region during
+execution of a LOPe concurrent function.  If this were allowed, one
+thread could overwrite another threads data at undefined times.  The
+compiler is able to catch this class of data race error.
 
 \item
 A programmer can't make indexing errors in a concurrent routine by going out of bounds of the array
@@ -104,12 +105,16 @@ A programmer is not able to cause race conditions by forgetting to create and us
 properly.  In LOPe it is the compilers responsibility to store data in temporary memory.
 
 \item
-A programmer can't make synchronization errors as synchronization is implicit in the
-\texttt{CONCURRENT} attribute.  A thread running a concurrent procedure is provided with a copy of
-it's local array element plus halo that is consistent with the state of memory \emph{at the time of
-  invocation of the procedure}.  Stores to an individual thread's local array element (by that
-thread) is never visible to other threads.  LOPE encourages the creation of small functions and lets
-the compiler fuse the functions together to improve performance and to provide necessary
+A programmer can't make synchronization errors as synchronization is
+implicit in the \texttt{CONCURRENT} attribute\todo{clarify what sync
+  errors are prevented.  restricted concurrency model === less room
+  for errors.}.  A thread running a concurrent procedure is provided
+with a copy of it's local array element plus halo that is consistent
+with the state of memory \emph{at the time of invocation of the
+  procedure}.  Stores to an individual thread's local array element
+(by that thread) is never visible to other threads.  LOPE encourages
+the creation of small functions and lets the compiler fuse the
+functions together to improve performance and to provide necessary
 synchronization.
 
 \end{itemize}
