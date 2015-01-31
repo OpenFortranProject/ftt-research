@@ -15,7 +15,7 @@ LDFLAGS = -Wl,-no_pie -L$(FOR_OCL_DIR) -lforopencl -framework OpenCL -L../../../
 	$(FC) -c $(FCFLAGS) -o $@ $<
 
 
-all : elemental_add_1d elemental_add_2d
+all : elemental_add_1d elemental_add_2d elemental_add_3d
 
 elemental_add_1d : elemental_add_1d.f90
 	$(FC) elemental_add_1d.f90 -o elemental_add_1d $(FCFLAGS) $(LDFLAGS)
@@ -23,9 +23,12 @@ elemental_add_1d : elemental_add_1d.f90
 elemental_add_2d : elemental_add_2d.f90
 	$(FC) elemental_add_2d.f90 -o elemental_add_2d $(FCFLAGS) $(LDFLAGS)
 
+elemental_add_3d : elemental_add_3d.f90
+	$(FC) elemental_add_3d.f90 -o elemental_add_3d $(FCFLAGS) $(LDFLAGS)
+
 check : elemental_add_2d
 	@elemental_add_2d
 
 clean :
-	rm -f elemental_add_1d elemental_add_2d
+	rm -f elemental_add_1d elemental_add_2d elemental_add_3d
 	rm -f *.o *.mod *.dwarf
