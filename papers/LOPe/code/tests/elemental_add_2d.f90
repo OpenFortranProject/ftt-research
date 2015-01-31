@@ -18,7 +18,7 @@ program elemental_add_2d
    integer(c_size_t), parameter :: NHY = 1
 
    integer(c_size_t), parameter ::  SIZE_FLOAT = 4
-   integer(c_size_t), parameter :: N_HALO_ELEM = NX*(2*NHX) + NY*(2*NHY)
+   integer(c_size_t), parameter :: N_HALO_ELEM = (2*NHX)*NY + NX*(2*NHY)
    integer(c_size_t), parameter ::   HALO_SIZE = N_HALO_ELEM*SIZE_FLOAT
 
    ! work group size
