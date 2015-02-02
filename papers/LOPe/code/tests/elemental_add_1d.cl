@@ -25,6 +25,8 @@ __kernel void elemental_add_1d (__global float * A,  __global float * B,    __gl
      if (K1_ >= hsft_) {
         C[IDX1(C,HALO1(C,R))] = C_H_[hoff_ + (K1_ - hsft_)]; 
      }
+
+     barrier (CLK_GLOBAL_MEM_FENCE);
 #endif
 
 
@@ -32,7 +34,7 @@ __kernel void elemental_add_1d (__global float * A,  __global float * B,    __gl
      // ----------------------------------------------------------------------------------------------
 
      C[IDX1(C,0)] = A[IDX1(A,0)] + B[IDX1(B,0)];
-           
+
 
      // copy outgoing halo regions
      // ----------------------------------------------------------------------------------------------
