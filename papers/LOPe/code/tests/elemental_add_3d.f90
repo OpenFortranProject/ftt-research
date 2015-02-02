@@ -8,9 +8,9 @@ program elemental_add_3d
    implicit none
 
    ! layer size
-   integer(c_size_t), parameter :: NX  = 16
-   integer(c_size_t), parameter :: NY  = 4
-   integer(c_size_t), parameter :: NZ  = 4
+   integer(c_size_t), parameter :: NX  = 64
+   integer(c_size_t), parameter :: NY  = 64
+   integer(c_size_t), parameter :: NZ  = 64
 
 !...TODO-GENERATE
    integer :: cl_status_
@@ -24,9 +24,9 @@ program elemental_add_3d
    integer(c_size_t), parameter ::   HALO_SIZE = N_HALO_ELEM*SIZE_FLOAT
 
    ! work group size
-   integer(c_size_t), parameter :: NXL = 32
-   integer(c_size_t), parameter :: NYL = 8
-   integer(c_size_t), parameter :: NZL = 8
+   integer(c_size_t), parameter :: NXL = 16
+   integer(c_size_t), parameter :: NYL = 4
+   integer(c_size_t), parameter :: NZL = 4
    integer(c_size_t) :: nxGlobal, nyGlobal, nzGlobal, nxLocal, nyLocal, nzLocal
 
    Type(Context) :: aContext
@@ -94,6 +94,9 @@ program elemental_add_3d
 
    cl_C_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_C_H_))
 
+   print *, mem_size, N_HALO_ELEM, HALO_SIZE
+
+
    ! create the kernel
    !
    kernel = createKernel(cl_device_, "elemental_add_3d")
@@ -113,7 +116,7 @@ program elemental_add_3d
    call start(timer)
    do i = 1, nLoops
       cl_status_ = writeBuffer(cl_C_H_, c_loc(out_C_H_), HALO_SIZE)
-!      cl_status_ = run(kernel, nxGlobal, nyGlobal, nxLocal, nyLocal)
+      cl_status_ = run(kernel, nxGlobal, nyGlobal, nzGlobal, nxLocal, nyLocal, nzLocal)
       cl_status_ = readBuffer(cl_C_H_, c_loc(in_C_H_), HALO_SIZE)
       call Halo_Exchange3D (in_C_H_, out_C_H_, NX,NHX, NY,NHY, NZ,NHZ)
    end do
