@@ -32,6 +32,3 @@
 
 // 1D index for the array NAME and offset OFF
 #define IDX1(NAME,OFF)     ( (OFF) + (K1_) + (NAME ## _H1L_) )
-
-// When 2D implemented will need stride for second dimension
-#define IDX2(NAME,OFF)     ( ((OFF) + (K1_) + (NAME ## _H1L_)) * (NAME ## _S1_) )
