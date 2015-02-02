@@ -8,9 +8,9 @@ program elemental_add_3d
    implicit none
 
    ! layer size
-   integer(c_size_t), parameter :: NX  = 64
-   integer(c_size_t), parameter :: NY  = 64
-   integer(c_size_t), parameter :: NZ  = 64
+   integer(c_size_t), parameter :: NX  = 8
+   integer(c_size_t), parameter :: NY  = 4
+   integer(c_size_t), parameter :: NZ  = 4
 
 !...TODO-GENERATE
    integer :: cl_status_
@@ -24,7 +24,7 @@ program elemental_add_3d
    integer(c_size_t), parameter ::   HALO_SIZE = N_HALO_ELEM*SIZE_FLOAT
 
    ! work group size
-   integer(c_size_t), parameter :: NXL = 16
+   integer(c_size_t), parameter :: NXL = 8
    integer(c_size_t), parameter :: NYL = 4
    integer(c_size_t), parameter :: NZL = 4
    integer(c_size_t) :: nxGlobal, nyGlobal, nzGlobal, nxLocal, nyLocal, nzLocal
@@ -38,7 +38,7 @@ program elemental_add_3d
    type(CPUTimer) :: timer
    real(c_double) :: h_time
 
-   integer :: device, i, j, k, nLoops = 1, nWarm = 1
+   integer :: device, i, j, k, hoff, nLoops = 2, nWarm = 0
 
 !...TODO-GENERATE
    real(c_float), allocatable :: in_C_H_(:), out_C_H_(:)
@@ -77,6 +77,7 @@ program elemental_add_3d
 
    A = 0
    B = 1
+   C = 0
    do k = 1, NZ
       do j = 1, NY
          do i = 1, NX
@@ -84,6 +85,9 @@ program elemental_add_3d
          end do
       end do
    end do
+
+    in_C_H_ = 0
+   out_C_H_ = 0
 
    ! create memory buffers
    !
@@ -131,21 +135,43 @@ program elemental_add_3d
    cl_status_ = readBuffer(cl_C_, c_loc(C), mem_size)
    cl_status_ = readBuffer(cl_C_H_, c_loc(in_C_H_), HALO_SIZE)
 
-!   print *
-!   print *, A(:,4)
-!   print *
-!   print *, B(:,4)
-!   print *
-!   print *, C(:,4)
-!   print *
-!   print *, in_C_H_(1:NX)
-!   print *
-!   print *, in_C_H_(NX+1:2*NX)
-!   print *
-!   print *, in_C_H_(2*NX+1:2*NX+NY)
-!   print *
-!   print *, in_C_H_(2*NX+1+NY:2*NX+2*NY)
-!   print *
+   print *
+   print *, "------------------"
+   hoff = 0
+   print *, in_C_H_(hoff+1:NHX*NY*NZ)                             ! left
+   print *
+   hoff = hoff + NHX*NY*NZ
+   print *, in_C_H_(hoff+1:2*NHX*NY*NZ)                           ! right
+   print *, "------------------"
+   hoff = hoff + NHX*NY*NZ
+   print *, in_C_H_(hoff+1:2*NHX*NY*NZ+NHY*NX*NZ)                 ! bottom
+   print *
+   hoff = hoff + NHY*NX*NZ
+   print *, in_C_H_(hoff+1:2*NHX*NY*NZ+2*NHY*NX*NZ)               ! top
+   print *, "------------------"
+   hoff = hoff + NHY*NX*NZ
+   print *, in_C_H_(hoff+1:2*NHX*NY*NZ+2*NHY*NX*NZ+NHZ*NX*NY)     ! front
+   print *, "------------------"
+   hoff = hoff + NHZ*NX*NY
+   print *, in_C_H_(hoff+1:2*NHX*NY*NZ+2*NHY*NX*NZ+2*NHZ*NX*NY)   ! back
+   print *, "------------------"
+
+
+   k = 4
+   print *
+   print *, C(:,0,k)
+   print *, "------------------"
+   print *, C(:,1,k)
+   print *, "------------------"
+   print *, C(:,2,k)
+   print *, "------------------"
+   print *, C(:,3,k)
+   print *, "------------------"
+   print *, C(:,4,k)
+   print *, "------------------"
+   print *, C(:,5,k)
+   print *, "------------------"
+   print *
 
    do k = 1, nz
       do j = 1, ny
