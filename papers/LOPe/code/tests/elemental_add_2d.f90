@@ -8,22 +8,26 @@ program elemental_add_2d
    implicit none
 
    ! layer size
-   integer(c_size_t), parameter :: NX  = 64*1024
-   integer(c_size_t), parameter :: NY  = 1024
+!   integer(c_size_t), parameter :: NX  = 64*1024
+!   integer(c_size_t), parameter :: NY  = 1024
+   integer(c_size_t), parameter :: NX  = 16
+   integer(c_size_t), parameter :: NY  =  4
 
 !...TODO-GENERATE
    integer :: cl_status_
 
-   integer(c_size_t), parameter :: NHX = 1
-   integer(c_size_t), parameter :: NHY = 1
+   integer(c_size_t), parameter :: NHX = 2
+   integer(c_size_t), parameter :: NHY = 2
 
    integer(c_size_t), parameter ::  SIZE_FLOAT = 4
    integer(c_size_t), parameter :: N_HALO_ELEM = (2*NHX)*NY + NX*(2*NHY)
    integer(c_size_t), parameter ::   HALO_SIZE = N_HALO_ELEM*SIZE_FLOAT
 
    ! work group size
-   integer(c_size_t), parameter :: NXL = 32
-   integer(c_size_t), parameter :: NYL = 8
+!   integer(c_size_t), parameter :: NXL = 32
+!   integer(c_size_t), parameter :: NYL = 8
+   integer(c_size_t), parameter :: NXL = 16
+   integer(c_size_t), parameter :: NYL = 4
    integer(c_size_t) :: nxGlobal, nyGlobal, nxLocal, nyLocal
 
    Type(Context) :: aContext
@@ -35,7 +39,7 @@ program elemental_add_2d
    type(CPUTimer) :: timer
    real(c_double) :: h_time
 
-   integer :: device, i, j, nLoops = 1000, nWarm = 100
+   integer :: device, i, j, nLoops = 2, nWarm = 0
 
 !...TODO-GENERATE
    real(c_float), allocatable :: in_C_H_(:), out_C_H_(:)
@@ -123,21 +127,40 @@ program elemental_add_2d
    cl_status_ = readBuffer(cl_C_, c_loc(C), mem_size)
    cl_status_ = readBuffer(cl_C_H_, c_loc(in_C_H_), HALO_SIZE)
 
-!   print *
-!   print *, A(:,4)
-!   print *
-!   print *, B(:,4)
-!   print *
-!   print *, C(:,4)
-!   print *
-!   print *, in_C_H_(1:NX)
-!   print *
-!   print *, in_C_H_(NX+1:2*NX)
-!   print *
-!   print *, in_C_H_(2*NX+1:2*NX+NY)
-!   print *
-!   print *, in_C_H_(2*NX+1+NY:2*NX+2*NY)
-!   print *
+   print *
+   print *, A(:,4)
+   print *
+   print *, B(:,4)
+   print *
+   print *, C(:,4)
+   print *
+   print *, "------------------"
+   print *, in_C_H_(1:NHX*NY)                               ! left
+   print *
+   print *, in_C_H_(NHX*NY+1:2*NHX*NY)                      ! right
+   print *
+   print *, in_C_H_(2*NHX*NY+1:2*NHX*NY+NHY*NX)             ! bottom
+   print *
+   print *, in_C_H_(2*NHX*NY+NHY*NX+1:2*NHX*NY+2*NHY*NX)    ! bottom
+   print *, "------------------"
+
+   print *, C(:,-1)
+   print *, "------------------"
+   print *, C(:,0)
+   print *, "------------------"
+   print *, C(:,1)
+   print *, "------------------"
+   print *, C(:,2)
+   print *, "------------------"
+   print *, C(:,3)
+   print *, "------------------"
+   print *, C(:,4)
+   print *, "------------------"
+   print *, C(:,5)
+   print *, "------------------"
+   print *, C(:,6)
+   print *, "------------------"
+   print *
 
    do j = 1, ny
       do i = 1, nx
