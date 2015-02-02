@@ -39,6 +39,8 @@ __kernel void elemental_add_2d (
      if (K2_ >= hsft_) {
         C[IDX2(C,0,HALO2(C,R))] = C_H_[hoff_ + K1_ + (K2_ - hsft_)*N1_];
      }
+
+     barrier (CLK_GLOBAL_MEM_FENCE);
 #endif
 
 
