@@ -49,6 +49,8 @@ __kernel void elemental_add_3d (
      if (K3_ >= hsft_) {
         C[IDX3(C,0,0,HALO3(C,R))] = C_H_[hoff_ + K1_ + K2_*N1_ + (K3_ - hsft_)*N1_*N2_];
      }
+
+     barrier (CLK_GLOBAL_MEM_FENCE);
 #endif
 
 
