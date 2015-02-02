@@ -10,23 +10,34 @@ __kernel void elemental_add_2d (
     __global float * B,
     __global float * C, __global float * C_H_ )
 {
+   size_t hoff_, hsft_;
+
    if (K1_ < N1_ && K2_ < N2_) {
 
 #ifdef COPY_HALOS
       // copy incoming halo regions (to halo region of array)
       // ----------------------------------------------------------------------------------------------
-     if (K2_ < HALO2(C,L)) {
-        C[IDX2(C,0,0)] = C_H_[K1_];
-     }
-     if (K2_ >= N2_ - HALO2(C,R)) {
-        C[IDX2(C,0,0)] = C_H_[K1_+N1_];
+
+     hoff_ = 0;
+     if (K1_ < HALO1(C,L)) {
+        C[IDX2(C,-HALO1(C,L),0)] = C_H_[hoff_ + K1_ + K2_*HALO1(C,L)];
      }
 
-     if (K1_ < HALO1(C,L)) {
-        C[IDX2(C,0,0)] = C_H_[2*N1_+K2_];
+     hoff_ += HALO1(C,L) * N2_;
+     hsft_  = N1_ - HALO1(C,R);
+     if (K1_ >= hsft_) {
+        C[IDX2(C,HALO1(C,R),0)] = C_H_[hoff_ + (K1_ - hsft_) + K2_*HALO1(C,R)];
      }
-     if (K1_ >= N1_ - HALO1(C,R)) {
-        C[IDX2(C,0,0)] = C_H_[2*N1_+N2_+K2_];
+
+     hoff_ += HALO1(C,R) * N2_;
+     if (K2_ < HALO2(C,L)) {
+        C[IDX2(C,0,-HALO2(C,L))] = C_H_[hoff_ + K1_ + K2_*N1_];
+     }
+
+     hoff_ += HALO2(C,L) * N1_;
+     hsft_  = N2_ - HALO2(C,R);
+     if (K2_ >= hsft_) {
+        C[IDX2(C,0,HALO2(C,R))] = C_H_[hoff_ + K1_ + (K2_ - hsft_)*N1_];
      }
 #endif
 
@@ -40,18 +51,26 @@ __kernel void elemental_add_2d (
 #ifdef COPY_HALOS
       // copy outgoing halo regions
       // ----------------------------------------------------------------------------------------------
-     if (K2_ < HALO2(C,L)) {
-        C_H_[K1_] = C[IDX2(C,0,0)];
-     }
-     if (K2_ >= N2_ - HALO2(C,R)) {
-        C_H_[K1_+N1_] = C[IDX2(C,0,0)];
+     hoff_ = 0;
+     if (K1_ < HALO1(C,L)) {
+        C_H_[hoff_ + K1_ + K2_*HALO1(C,L)] = C[IDX2(C,0,0)];
      }
 
-     if (K1_ < HALO1(C,L)) {
-        C_H_[2*N1_+K2_] = C[IDX2(C,0,0)];
+     hoff_ += HALO1(C,L) * N2_;
+     hsft_  = N1_ - HALO1(C,R);
+     if (K1_ >= hsft_) {
+        C_H_[hoff_ + (K1_ - hsft_) + K2_*HALO1(C,R)] = C[IDX2(C,0,0)];
      }
-     if (K1_ >= N1_ - HALO1(C,R)) {
-        C_H_[2*N1_+N2_+K2_] = C[IDX2(C,0,0)];
+
+     hoff_ += HALO1(C,R) * N2_;
+     if (K2_ < HALO2(C,L)) {
+        C_H_[hoff_ + K1_ + K2_*N1_] = C[IDX2(C,0,0)];
+     }
+
+     hoff_ += HALO2(C,L) * N1_;
+     hsft_  = N2_ - HALO2(C,R);
+     if (K2_ >= hsft_) {
+        C_H_[hoff_ + K1_ + (K2_ - hsft_)*N1_] = C[IDX2(C,0,0)];
      }
 #endif
 
