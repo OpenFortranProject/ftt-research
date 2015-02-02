@@ -2,9 +2,9 @@
 #define K2_ (get_global_id(1))
 #define K3_ (get_global_id(2))
 
-#define N1_ (64)
-#define N2_ (64)
-#define N3_ (64)
+#define N1_ (8)
+#define N2_ (4)
+#define N3_ (4)
 
 #define A_H1L_ 1
 #define A_H1R_ 1
