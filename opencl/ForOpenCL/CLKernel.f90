@@ -9,7 +9,7 @@ module CLKernel_mod
    end interface
 
    interface run
-      module procedure run_1D, run_2D, run
+      module procedure run_1D, run_2D, run_3D, run
    end interface
 
 !   interface init
@@ -197,6 +197,57 @@ contains
       end if
 
    end function run
+
+   function run_3D(this, gWorkSizeX, gWorkSizeY, gWorkSizeZ, lWorkSizeX, lWorkSizeY, lWorkSizeZ) &
+      result(status)
+      implicit none
+      !class(CLKernel) :: this
+      type(CLKernel), intent(inout) :: this
+      integer(c_size_t), intent(in) :: gWorkSizeX, gWorkSizeY, gWorkSizeZ
+      integer(c_size_t), intent(in) :: lWorkSizeX, lWorkSizeY, lWorkSizeZ
+      integer(cl_int) :: status
+
+      integer(c_size_t), dimension(3) :: global_work_offset, local_work_size, global_work_size
+      integer(cl_ulong), target :: prof_start, prof_end
+      integer(c_size_t) :: param_size
+
+      global_work_offset = 0
+      global_work_size = [gWorkSizeX, gWorkSizeY, gWorkSizeZ]
+      local_work_size  = [lWorkSizeX, lWorkSizeY, lWorkSizeZ]
+
+      ! execute the kernel
+      !
+      call start(this%timer)
+      status = clEnqueueNDRangeKernel(this%commands, this%kernel, 3, global_work_offset, &
+                                      global_work_size, local_work_size, 0, C_NULL_PTR, C_NULL_PTR)
+      call stop(this%timer)
+
+      if (status /= CL_SUCCESS) then
+         print *, "CLKernel::run(): Failed to execute kernel!"
+         print '("CLKernel::run(): local_work_size==", 3I5)', local_work_size
+         print '("CLKernel::run(): global_work_size==",3I5)', global_work_size
+         call stop_on_error(status)
+      end if
+
+      ! wait for the command commands to get serviced before reading back results
+      !
+!      call start(this%timer)
+!      status = clFinish(this%commands)
+!      call stop(this%timer)
+
+      if (this%profiling) then
+         status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_START, &
+                                          c_sizeof_cl_ulong(), c_loc(prof_start), param_size)
+         status = clGetEventProfilingInfo(this%event, CL_PROFILING_COMMAND_END,   &
+                                          c_sizeof_cl_ulong(), c_loc(prof_end), param_size)
+         if (status == 0) then
+            this%elapsed = (prof_end - prof_start) / 1000   ! microseconds
+            ! print *, "kernel::run: elapsed=", this%elapsed
+         endif
+
+      end if
+
+   end function run_3D
 
    function run_2D(this, gWorkSizeX, gWorkSizeY, lWorkSizeX, lWorkSizeY) result(status)
       implicit none
