@@ -8,12 +8,12 @@ program elemental_add_1d
    implicit none
 
 !   integer(c_size_t), parameter :: NX  = 16*1024*1024
-   integer(c_size_t), parameter :: NX  = 32
+   integer(c_size_t), parameter :: NX  = 16
 
 !...TODO-GENERATE
    integer :: cl_status_
 
-   integer(c_size_t), parameter :: NH  = 1
+   integer(c_size_t), parameter :: NH  = 2
 
    integer(c_size_t), parameter :: SIZE_FLOAT = 4
    integer(c_size_t), parameter :: N_HALO_ELEM = 2*NH
@@ -32,7 +32,7 @@ program elemental_add_1d
    type(CPUTimer) :: timer
    real(c_double) :: h_time
 
-   integer :: device, i, nLoops = 1000, nWarm = 100
+   integer :: device, i, nLoops = 1, nWarm = 0
 
 !...TODO-GENERATE
    real(c_float), allocatable :: in_A_H_(:), out_A_H_(:)
@@ -77,8 +77,10 @@ program elemental_add_1d
       B(i) = i + 100
    end do
 
-   out_A_H_ = [-1.0*NX, -1.]
-   out_B_H_ = [-100-1.0*NX, -101.]
+!   out_A_H_ = [-1.0*NX, -1.]
+!   out_B_H_ = [-100-1.0*NX, -101.]
+   out_C_H_ = [-2.0, -1.0, 9.0, 10.0]
+
 !   A_H = [-NX+1.0, -1.0*NX, -1., -2.]
 !   B_H = [-100-NX+1.0, -100-1.0*NX, -101., -102.]
 
@@ -117,6 +119,7 @@ program elemental_add_1d
    print *, "Measuring time to compute elemental add..."
    call init(timer)
    call start(timer)
+
    do i = 1, nLoops
       cl_status_ = writeBuffer(cl_C_H_, c_loc(out_C_H_), HALO_SIZE)
       cl_status_ = run(kernel, nxGlobal, nxLocal)
