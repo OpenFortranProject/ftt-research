@@ -31,6 +31,8 @@ program elemental_add
    integer :: device_id, i, j, nLoops = 100
 
    device_id = 1
+   status = init_device(device, device_id)
+   status = query(device)
 
    nxg = NX
    nyg = NY
@@ -39,8 +41,6 @@ program elemental_add
    else
       nxLocal = 1; nyLocal = 1
    end if
-
-   status = init_device(device, device_id)
 
    A = 1
    B = 2
