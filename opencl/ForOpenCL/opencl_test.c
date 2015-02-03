@@ -234,6 +234,10 @@ clEnqueueMapBuffer_test(cl_command_queue  command_queue,
                         cl_int *          errcode_ret)
 {
    void * host_ptr_ret;
+   if (event == NULL) {
+      printf("ERROR: clEnqueueMapBuffer_test: event is NULL.\n");
+      exit(1);
+   }
    assert(event==NULL);
    /* WARNING, event not specified correctly for non-blocking map */
    host_ptr_ret = clEnqueueMapBuffer(command_queue, buffer, blocking_map, map_flags, offset, cb,
