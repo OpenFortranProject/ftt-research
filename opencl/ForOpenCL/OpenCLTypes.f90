@@ -69,7 +69,7 @@ module OpenCLTypes
 ! These should be moved to CLTypes?
 !
 
-   integer, parameter :: MAX_DEVICES = 2
+   integer, parameter :: MAX_DEVICES = 3
 
    type :: CLDevice
       integer(c_int) :: device_id             ! device id (normally 0 for GPU, 1 for CPU)
