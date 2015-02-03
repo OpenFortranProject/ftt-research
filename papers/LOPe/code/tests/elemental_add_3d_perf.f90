@@ -1,4 +1,4 @@
-program elemental_add_3d
+program elemental_add_3d_perf
 !...TODO-GENERATE
    use MPI_F08
    use ForOpenCL
@@ -63,6 +63,7 @@ program elemental_add_3d
 
    device = 1 + aContext%rank
    cl_status_ = init_device(cl_device_, device)
+   !cl_status_ = query(cl_device_)
 
    nxGlobal = NX; nyGlobal = NY; nzGlobal = NZ
    if (device /= 0) then
@@ -100,10 +101,9 @@ program elemental_add_3d
 
    !print *, mem_size, N_HALO_ELEM, HALO_SIZE
 
-
    ! create the kernel
    !
-   kernel = createKernel(cl_device_, "elemental_add_3d")
+   kernel = createKernel(cl_device_, "elemental_add_3d_perf")
 
    ! add arguments
    !
@@ -116,6 +116,11 @@ program elemental_add_3d
    !
    if (aContext%rank==0) print *
    if (aContext%rank==0) print "('Measuring time to compute elemental add (NX,NY,NZ):',3I6)", NX, NY, NZ
+
+   do i = 1, nWarm
+      cl_status_ = run(kernel, nxGlobal, nyGlobal, nzGlobal, nxLocal, nyLocal, nzLocal)
+   end do
+
    call init(timer)
    call start(timer)
    do i = 1, nLoops
@@ -190,6 +195,7 @@ program elemental_add_3d
    !print *
 
    deallocate(A, B, C)
+   deallocate(in_C_H_, out_C_H_)
 
 !...TODO-GENERATE
 99 Call Parallel_End(aContext)
