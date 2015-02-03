@@ -127,6 +127,9 @@ void stop_on_error(int code)
       case CL_INVALID_CONTEXT:
          sprintf(msg, "%s (%d)", "CL_INVALID_CONTEXT", code);
          break;
+      case CL_INVALID_DEVICE:
+         sprintf(msg, "%s (%d)", "CL_INVALID_DEVICE", code);
+         break;
       case CL_INVALID_EVENT_WAIT_LIST:
          sprintf(msg, "%s (%d)", "CL_INVALID_EVENT_WAIT_LIST", code);
          break;
