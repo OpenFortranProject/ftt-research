@@ -58,7 +58,8 @@ program elemental_add_1d
    Call Parallel_Topology(aContext, ndims, dims)
 !...TODO-END-GENERATE
 
-   device = 1
+   device = 1 + aContext%rank
+   cl_status_ = init_device(cl_device_, device)
 
    nxGlobal = NX
    if (device /= 0) then
@@ -67,14 +68,12 @@ program elemental_add_1d
       nxLocal = 1
    end if
 
-   cl_status_ = init_device(cl_device_, device)
-
    A = 0
    B = 0
    C = 0
    do i = 1, NX
       A(i) = i
-      B(i) = i + 100
+      B(i) = i + 100*(1 + aContext%rank)
    end do
 
 !   out_A_H_ = [-1.0*NX, -1.]
@@ -156,28 +155,28 @@ program elemental_add_1d
    print *
    print *, C(:)
    print *
-   print *, in_A_H_(:)
-   print *
-   print *, in_B_H_(:)
-   print *
+!   print *, in_A_H_(:)
+!   print *
+!   print *, in_B_H_(:)
+!   print *
    print *,  in_C_H_(:)
    print *, out_C_H_(:)
    print *
 
    do i = 1, NX
       if (C(i) /= A(i) + B(i)) then
-         print *, "Results incorrect at ", i
-         stop 1
+         print *, aContext%rank, ": Results incorrect at ", i
+         goto 99
       end if
    end do
 
    if (cl_status_ == CL_SUCCESS) then
-      print *, "Correctness verified..."
+      print *, aContext%rank, ": Correctness verified..."
    end if
    print *
 
 !...TODO-GENERATE
-   Call Parallel_End(aContext)
+99 Call Parallel_End(aContext)
 !...TODO-END-GENERATE
 
 end program
