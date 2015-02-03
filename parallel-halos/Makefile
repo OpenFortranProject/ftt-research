@@ -2,7 +2,11 @@ FC = mpifort
 CC = mpicc
 
 FC_FLAGS = -g
-LK_FLAGS = -Wl,-no_pie
+
+#
+# This has problems with Intel compiler on linux
+#
+# LK_FLAGS = -Wl,-no_pie
 
 OBJS = parallel_mpif08.o parallel_halo_types.o parallel_halo.o
 
@@ -39,4 +43,5 @@ parallel_halo.o : parallel_mpif08.o parallel_halo_types.o
 test_halos.o    : parallel_halo.o
 
 clean :
-	rm -rf *.o *.mod test_halos test_halos_c
+	rm -f *.o *.mod test_halos test_halos_c
+	rm -f libhalos.a
