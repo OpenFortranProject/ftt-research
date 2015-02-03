@@ -1,11 +1,11 @@
-#include "halos_3d.h"
+#include "halos_3d_perf.h"
 
 #define COPY_HALOS
 
 /**
  * simple kernel that computes the sum of array elements
  */
-__kernel void elemental_add_3d (
+__kernel void elemental_add_3d_perf (
     __global float * A,
     __global float * B,
     __global float * C, __global float * C_H_ )
