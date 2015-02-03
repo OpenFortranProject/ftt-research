@@ -1,6 +1,5 @@
 #
 # This makefile should work on either Linux or Mac OSX (Darwin).
-# 
 #
 
 #
@@ -17,10 +16,10 @@ dbg := 0
 # fortran compiler flag
 intel_fortran := 1
 
-# detect OS                                                                               
+# detect OS
 OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
-# 'linux' is output for Linux system, 'darwin' for OS X                                   
+# 'linux' is output for Linux system, 'darwin' for OS X
 DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
 
 # detect architecture
@@ -95,7 +94,7 @@ endif
 ifneq ($(DARWIN),)
    LIBS  := -framework OpenCL
 else
-   LIBS := -L${OCLLIBDIR} -L$(LIBDIR) -L$(SHAREDDIR)/lib/$(OSLOWER) 
+   LIBS := -L${OCLLIBDIR} -L$(LIBDIR) -L$(SHAREDDIR)/lib/$(OSLOWER)
    LIBS += -lOpenCL
 endif
 
