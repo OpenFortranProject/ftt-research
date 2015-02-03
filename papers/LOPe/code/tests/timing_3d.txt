@@ -1,0 +1,46 @@
+Mac Pro in UO Office: 3.5 GHz 6-Core Intel Xeon E5, 32 GB 1866 MHz DDR3 ECC, AMD FirePro D700 6144 MB
+
+
+Mac Pro Home:
+-----------------------------------------------------------------------------------------------------
+
+NX      NY      NZ         NH      time (ms)       NOTES
+--------------------------------------------------------
+
+NOTES: no halo transfer on device (#undef COPY_HALOS)
+     : nxLocal=16, nyLocal=16 : no halo transfer from device, no MPI
+
+NOTES: all halo transfer including MPI (np==2)
+     : nxLocal=16, nyLocal=4, nzLocal=4
+--------------------------------------------------------------------
+16      16      16         1        .33
+32      32      16         1        .35
+64      32      32         1        .37
+64      64      64         1        .45
+128    128     128         1        .90
+256    256     256         1       4.74
+512    256     256         1      10.0
+512    512     256         1      18.6
+512    512     512         1      35.8
+
+
+512    256     256         1      10.0    : nxLocal=16,  nyLocal=4, nzLocal=4
+512    256     256         1       8.7    : nxLocal=32,  nyLocal=4, nzLocal=2
+512    256     256         1       8.2    : nxLocal=64,  nyLocal=2, nzLocal=2
+512    256     256         1       8.8    : nxLocal=128, nyLocal=2, nzLocal=1
+512    256     256         1       8.2    : nxLocal=256, nyLocal=1, nzLocal=1
+
+512    256     256         1        .34   : nxLocal=64,  nyLocal=2, nzLocal=2, only MPI       transfers
+512    256     256         1       1.0    : nxLocal=64,  nyLocal=2, nzLocal=2, no kernel run, no MPI
+512    256     256         1       1.7    : nxLocal=64,  nyLocal=2, nzLocal=2, no kernel run
+512    256     256         1       5.9    : nxLocal=64,  nyLocal=2, nzLocal=2, no host/device transfers
+512    256     256         1       6.3    : nxLocal=64,  nyLocal=2, nzLocal=2, no host        transfers
+512    256     256         1       7.8    : nxLocal=64,  nyLocal=2, nzLocal=2, no      device transfers
+512    256     256         1       8.3    : nxLocal=64,  nyLocal=2, nzLocal=2,    host/device transfers
+
+
+
+512    256     256         1       8.2    : nxLocal=64,  nyLocal=2, nzLocal=2, A[IDX3(A,1,0,0)] + B
+512    256     256         1       8.3    : nxLocal=64,  nyLocal=2, nzLocal=2, A[IDX3(A,0,1,0)] + B
+512    256     256         1       8.2    : nxLocal=64,  nyLocal=2, nzLocal=2, A[IDX3(A,0,0,1)] + B
+512    256     256         1       8.3    : nxLocal=64,  nyLocal=2, nzLocal=2, A[IDX3(A,0,0,-1)] + B
