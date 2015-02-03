@@ -40,6 +40,13 @@ contains
          call stop_on_error(status)
       end if
 
+      if (this%num_devices > MAX_DEVICES) then
+         print *, "WARNING: CLDevice%initialize: number of devices > MAX_DEVICES, is", this%num_devices
+      end if
+      if (device_id >= this%num_devices) then
+         print *, "ERROR: CLDevice%initialize: device_id >= number of devices=", this%num_devices
+      end if
+
       ! create a compute context
       !
       this%context = clCreateContext(C_NULL_PTR, 1, this%device_ids(1+this%device_id), &
