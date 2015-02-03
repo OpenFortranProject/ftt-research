@@ -4,8 +4,12 @@
 #
 
 #
-# Provide the locaction of the NVIDIA SDK
-SDKROOTDIR   := /usr/local/NVIDIA_GPU_Computing_SDK
+# Provide the location of the NVIDIA SDK
+#
+#             /usr/local/NVIDIA_GPU_Computing_SDK
+#
+SDKROOTDIR := /usr/local/packages/cuda/sdk-4.2
+
 
 # debugging flag
 dbg := 0
@@ -140,3 +144,4 @@ clean:
 	rm -f $(OBJS)
 	rm -f *.mod *.o
 	rm -f $(APPS)
+	rm -f libforopencl.a
