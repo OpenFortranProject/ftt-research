@@ -134,9 +134,12 @@ elemental_add_2d : elemental_add_2d.f90
 elemental_add_3d : elemental_add_3d.f90
 	$(LINK) elemental_add_3d.f90 -o elemental_add_3d $(FCFLAGS) $(LDFLAGS) $(LIBS)
 
-check : elemental_add_2d
-	@elemental_add_2d
+elemental_add_3d_perf : elemental_add_3d_perf.f90
+	$(LINK) elemental_add_3d_perf.f90 -o elemental_add_3d_perf $(FCFLAGS) $(LDFLAGS) $(LIBS)
+
+check : elemental_add_3d_perf
+	@mpirun -np 2 elemental_add_3d_perf
 
 clean :
-	rm -f elemental_add_1d elemental_add_2d elemental_add_3d
+	rm -f elemental_add_1d elemental_add_2d elemental_add_3d elemental_add_3d_perf
 	rm -f *.o *.mod *.dwarf
