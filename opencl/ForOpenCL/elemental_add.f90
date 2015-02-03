@@ -30,7 +30,7 @@ program elemental_add
 
    integer :: device_id, i, j, nLoops = 100
 
-   device_id = 0
+   device_id = 1
 
    nxg = NX
    nyg = NY
