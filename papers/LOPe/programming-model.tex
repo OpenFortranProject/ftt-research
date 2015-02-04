@@ -13,7 +13,7 @@ element-level array calculations.
 %%This reduction in complexity reduces programming errors.  While developing the convolution example described later in the paper we made an indexing error in applying the 2D stencil loops in the standard serial Fortran test implementation.  This error required over 3 hours of programming time to repair.  First the error had to be isolated to the function implementing the convolution (it was first thought to be in the complicated tiff image output routine as the convolution code was ``thought'' to be too simple to wrong.  Then the index error has to be understood.  As will be seen, LOPe makes it more difficult to make these errors as Fortran array intrics can be used.  In some instance, the restricted semantics of LOPe allows the compiler to catch errors (e.g., some errors involving race conditions).
 
 LOPe is a domain specific language (DSL) implemented as a small extension
-to standard Fortran 2008\todo{What version of Fortran does it extend?}.
+to standard Fortran 2008\todo{What version of Fortran does it extend? Not sure what you mean as F2008 is explicitly mentioned?}.
 Fortran was chosen as the base language for LOPe, although in
 principle, the same techniques could be applied to language such as C
 or C++ (in conjuction with some form of array extensions such as those
