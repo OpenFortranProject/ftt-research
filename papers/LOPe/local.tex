@@ -28,6 +28,9 @@
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
 \noindent\keywordname\enspace\ignorespaces#1}
 
+\usepackage{cite}
+
+
 \begin{document}
 
 \mainmatter  % start of an individual contribution
@@ -85,14 +88,22 @@ an embedded, domain-specific language using source-to-source program transformat
 \keywords{domain specific language, stencil compiler, distributed memory parallelism}
 \end{abstract}
 
-\input{motivation}
+%\input{motivation}
+\input{intro}
 \input{programming-model}
 \input{coarray-extensions}
-\input{appendix-a}
 
-\section*{Acknowledgments}
+\bibliographystyle{plain}
+\bibliography{local}{}
+
+%\begin{thebibliography}{4}
+%\end{thebibliography}
+
+\subsubsection*{Acknowledgments.}
 This work was supported in part by the Department of Energy Office of Science, Advanced Scientific
 Computing Research.  The authors would also like to thank Robert Robey and Wayne Weseloh at Los
 Alamos National Laborabory for several stimulating conversations with respect to programming models.
+
+\input{appendix-a}
 
 \end{document}
