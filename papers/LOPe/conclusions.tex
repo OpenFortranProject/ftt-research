@@ -1,1 +1,44 @@
 \section{Conclusions}
+
+Fortran is a general-purpose programming language and as such it provides limited facilities for
+expressing concepts useful for stencil operations. For example, halo regions must be expressed in
+terms of the existing syntax of the language as there is no way to specify that the ``interior'' of
+an array is in any way special from an ``outside'' region.  By not providing support for stencils in
+the language, the programmer must make specific choices regarding the order of access to the data
+and in the order of operations on the data.  These choices often hide the opportunity for
+optimizations by the compiler \cite{dubey:2014:wosc}.  If the compiler had knowledge of the symantic
+intent of halo regions, it could reorder operations so that border regions were computed
+\emph{before} interior regions, allowing the the transfer of data in halo regions to overlap with
+computations on the interior.
+
+Just as Coarray Fortran originally extended Fortran to include domain specific knowledge (parallel
+computation) replacing MPI library routines\cite{numeric:reid}, LOPe seeks to extend Fortran by
+providing domain specific knowledge of stencil operations.  
+
+CAFe extensions ...
+* subimages
+
+Specifically, LOPe and CAFe together provide:
+* A local view of stencil operations on data.  This allows a complete separation of the implementation of a stencil algorithm with data access patterns.
+* Memory placement via allocation routines allow the specification of the allocation location.
+* Task execution placement with [[ ]] specifying which subimage is to execute a particular operation.
+* Memory exchange via the \texttt{HALO\_TRANSFER} intrinsic procedure.
+* Ability to run correctly even if subimages are not available.  Similar to OpenMP.
+* Ability to associate arrays on subimages with coarrays on host thus allowing compiler to effect the halo transfers between the multiple memory levels.
+* Halo abstraction that allows for more flexibility for the compiler to retarget for different architectures.
+* A simple way to express variables as ``thread private'' as all local variables declared in a \texttt{CONCURRENT} procedure are private to the calling procedure.  This is distinguished from OpenMP.
+
+\subsubsection{Benefits.}
+* extends the programmer
+* restricts the programmer
+* no race conditions
+* Abstractions provide ample opportunities for compiler optimizations.
+
+\subsubsection{Limitations.}
+* no composition useful for nonlinear dynamics\cite{coella}
+* difficult (but not impossible) to implement algoriths that perform operations between arrays of
+differing sizes (multigrid implementations for example).
+
+By implementing LOPe
+we have demonstrated that LOPe can be ... It remains to history to see if LOPe is general purpose
+enough to be included in Fortran or if it should remain as a special purpose preprocessing tool.
