@@ -6,7 +6,7 @@
  * simple kernel that computes the sum of array elements
  */
 __kernel void elemental_add_1d (__global float * A,  __global float * B,    __global float * C,
-                                __global float *A_H_,__global float * B_H_, __global float * C_H_ )
+                                __global float * C_H_ )
 {
    size_t hoff_, hsft_;
 

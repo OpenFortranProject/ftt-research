@@ -90,8 +90,8 @@ program elemental_add_1d
    cl_C_ = createBuffer(cl_device_, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size, c_loc(C))
 !   cl_C_ = createBuffer(cl_device_, CL_MEM_WRITE_ONLY, mem_size, C_NULL_PTR)
 
-   cl_A_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_A_H_))
-   cl_B_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_B_H_))
+!   cl_A_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_A_H_))
+!   cl_B_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_B_H_))
    cl_C_H_ = createBuffer(cl_device_, CL_MEM_READ_WRITE+CL_MEM_COPY_HOST_PTR, HALO_SIZE, c_loc(out_C_H_))
 
    ! create the kernel
@@ -103,9 +103,9 @@ program elemental_add_1d
    cl_status_ = setKernelArgMem(kernel, 0, clMemObject(cl_A_))
    cl_status_ = setKernelArgMem(kernel, 1, clMemObject(cl_B_))
    cl_status_ = setKernelArgMem(kernel, 2, clMemObject(cl_C_))
-   cl_status_ = setKernelArgMem(kernel, 3, clMemObject(cl_A_H_))
-   cl_status_ = setKernelArgMem(kernel, 4, clMemObject(cl_B_H_))
-   cl_status_ = setKernelArgMem(kernel, 5, clMemObject(cl_C_H_))
+   cl_status_ = setKernelArgMem(kernel, 3, clMemObject(cl_C_H_))
+!   cl_status_ = setKernelArgMem(kernel, 3, clMemObject(cl_A_H_))
+!   cl_status_ = setKernelArgMem(kernel, 4, clMemObject(cl_B_H_))
 
    !... warmup
    do i = 1, nWarm
@@ -136,8 +136,8 @@ program elemental_add_1d
    cl_status_ = readBuffer(cl_A_, c_loc(A), mem_size)
    cl_status_ = readBuffer(cl_B_, c_loc(B), mem_size)
    cl_status_ = readBuffer(cl_C_, c_loc(C), mem_size)
-   cl_status_ = readBuffer(cl_A_H_, c_loc(in_A_H_), HALO_SIZE)
-   cl_status_ = readBuffer(cl_B_H_, c_loc(in_B_H_), HALO_SIZE)
+!   cl_status_ = readBuffer(cl_A_H_, c_loc(in_A_H_), HALO_SIZE)
+!   cl_status_ = readBuffer(cl_B_H_, c_loc(in_B_H_), HALO_SIZE)
    cl_status_ = readBuffer(cl_C_H_, c_loc(in_C_H_), HALO_SIZE)
 
    !... halo transfer
