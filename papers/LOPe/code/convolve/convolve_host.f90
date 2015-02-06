@@ -159,7 +159,7 @@ end module convolve_mod
 
 program convolve_host
    use convolve_mod
-   use OpenCL
+   use ForOpenCL
    use Timer_mod
    implicit none
 
@@ -209,7 +209,7 @@ program convolve_host
    end if
 
    device_id = 0  ! 0=GPU, 1=CPU
-   status = init(device, device_id)
+   status = init_device(device, device_id)
    call limitLocalSize(device, nxLocal, nyLocal)
 
    status = query(device)
