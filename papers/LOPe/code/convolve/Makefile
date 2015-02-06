@@ -142,6 +142,9 @@ omp.o: omp.f90
 variable_filter: variable_filter.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
+variable_filter_const: variable_filter_const.o $(OBJS)
+	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
+
 filter_params.o: filter_params.F90 npad.h
 	@echo 'Building for OS $(OSUPPER) file: $<'
 	$(FC) -c $(FCFLAGS) -o $@ $<
@@ -154,6 +157,7 @@ file_io_c.o: file_io_c.c
 
 convolve_host.o: npad.h convolve_host.f90 filter_params.o file_io.o file_io_c.o filter_type.f90
 variable_filter.o: npad.h variable_filter.f90 filter_params.o filter_type.f90
+variable_filter_const.o: npad.h variable_filter_const.F90 filter_params.o filter_type.f90
 filter_type.o: filter_params.o filter_type.f90
 file_io.o: file_io.f90
 file_io_c.o: file_io_c.c
