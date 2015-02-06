@@ -25,7 +25,7 @@ OSARCH= $(shell uname -m)
 
 INCDIR  ?= .
 
-FOCL_DIR = ../../../../opencl/f90
+FOCL_DIR = ../../../../opencl/ForOpenCL
 
 ifeq ($(DARWIN),)
    SDKROOTDIR   := /home/rasmussn/local/NVIDIA_GPU_Computing_SDK
@@ -118,6 +118,10 @@ OBJS = filter_params.o filter_type.o file_io_c.o file_io.o
 LIBS += $(OBJS) -L$(FOCL_DIR) -lforopencl -L/usr/local/lib -lgdal
 
 APPS = omp convolve_host variable_filter
+
+%.o: %.F90
+	@echo 'Building for OS $(OSUPPER) file: $<'
+	$(FC) -c $(FCFLAGS) -o $@ $<
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
