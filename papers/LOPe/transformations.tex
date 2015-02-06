@@ -1,11 +1,83 @@
-\section{LOPe Implementation}
+\section{LOPe and CAFe Implementation}
 
 This section describes how LOPe extensions to Fortran have been implemented.  It also describes how
 source-to-source transformations have been implemented via rewrite rules and strategies in
 StrategoXT.
 
+\subsection{Source-to-Source Transformation Infrastructure}
+
+1. Parsing to produce an AST nodes representated as ATerms.
+2. Transformations on the AST nodes represented as rewrite rules and strategies in Stratego/XT
+3. Pretty printing of transformed nodes using the pretty printing facilites of BoxLib.
+
+\subsection{Transformations for Concurrent Procedures}
+
+A key component of the LOPe transformations is the targeting of a LOPe \texttt{CONCURRENT}
+procedure for a particular hardware (and software) architecture.  The execution target can be one
+of several choices, including serial execution by the current process (and hardware) via inlining
+of the function, parallel execution by inlining with OpenMP compiler directives, or parallel
+execution by a heterogeneous processing elements with a language like OpenCL, for example.
+
+For this work we have developed rewrite strategies and rules in Stratego/XT to rewrite Fortran AST
+nodes to C AST nodes (extended with necessary OpenCL keywords).  The C AST ATerms have mostly a
+one-to-one correspondence with Fortran terms.  A \texttt{CONCURRENT} procedure is transformed to a
+OpenCL kernel (with the \texttt{\_\_kernel} attribute), Fortran formal parameters are transformed
+to C parameters (with a direct mapping of types), and local Fortran variable declarations are rewritten
+as C declarations.  Similarly, Fortran executable statements are rewritten as C executable AST nodes.
+Mostly the only complication is mapping the LOPe local array index view to the global C index space.
+This translation is facilitated by the Fortran symbol table that stores array shape and halo
+size information.
+
+Once all rewriting passes have been made to transform from LOPe Fortran ATerms to C ATerms, the
+C ATerms are output as an OpenCL file using a C pretty printer.
+
+\subsection{Transformations at the Call Site}
+
+Transformations at a LOPe procedure call site are more difficult, though technically straight forward.
+The Fortran function call must be transformed to a call to run the OpenCL kernel (produced as described
+above).  This is facilitated by the use of the ForOpenCL library that provides Fortran bindings to the
+OpenCL runtime\cite{foropencl}.  But the usage requires the declaration of extra variables,
+allocation of memory on the OpenCL device (subimage), transfer of memory, marshalling of kernel
+arguments, and synchronization.
+
+These transformations are accomplished using several rewrite stages using Stratego/XT strategies:
+1. A symbol table is produced in the first pass to store information related to arrays including,
+array shape, halo size, and allocation status;
+2. Additional variables are declared that are used to maintain the OpenCL runtime state, including
+the OpenCL device (as obtained from a \texttt{GET\_SUBIMAGE} call), the OpenCL kernel (produced as
+described above), and OpenCL variables used to marshall kernel arguments; and
+3. All CAFe code related to subimage usage is lowered to standard Fortran with calls to the
+ForOpenCL library as needed.  The latter step includes the allocation of OpenCL device memory,
+transfer of memory to and from the OpenCL device and the executing Fortran process (image) as
+indicated in the program source by the single bracket \texttt{[subimage]} notation, marshalling
+of kernel argument, running of the OpenCL kernel, and synchronization.
+
+Though not yet available, similar rewrite strategies are planned for targeting programming models
+other than OpenCL including parallel execution with OpenMP directives.  In addition, simple serial
+execution with function inlining (if desired) will be performed by the regular Fortran compiler once
+all CAFe and LOPe code has been lowered to standard Fortran.
+
 \subsection{Halo Transfer Performance}
 
-Amortization of halo transfer and kernel
+A thorough examination of potential performance gains using LOPe for parallelization of code is beyond
+the scope of this paper.  The emphasis of this work is to explain the syntax and execution symantics
+of a LOPe application.  However, preliminary work using the StrategoXT rewrite system as described indicates
+that similar performance can be expected to that of previous work\cite{foropencl} (see also\cite{StencilCompilers}).
 
+The current implementation does \emph{not} take advantage of optimization strategies such as
+prefetching of array tiles (including halos) into OpenCL local memory or of loop unrolling on the
+OpenCL device.  Neither does it take advantage of the potential of LOPe \texttt{CONCURRENT} function
+fusion along with execution and synchronization strategies to overlap communication with
+computation.
 
+Since many scientific codes are dominated by memory performance, including and especially stencil algorithms
+as they typically only involve a computation on a small locally central array element and a small overlapping
+halo region.  Stencil operations frequently do not contain enough floating point operations per memory load
+to allow for floating point performation to operate at peak (though this is entirely application and domain
+specific).  Thus we illustrate the \emph{potential} for performance by noting the latency and throughput
+performance of an attached GPU inconjuction with MPI distributed memory performance associated with halo
+transfer in Table 1.
+
+The results in Table 1 indicate that the primary bottleneck in using accelerators attached to the
+TODO bus using OpenCL is likely to be the latency in transferring memory to and from the device for
+distributed memory clusters of only a few nodes exchanging halo data using MPI.
