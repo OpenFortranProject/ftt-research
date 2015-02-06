@@ -74,7 +74,7 @@ end module variable_filter_mod
 
 program test_variable_filter
    use variable_filter_mod
-   use OpenCL
+   use ForOpenCL
    use Timer_mod
    implicit none
 
@@ -113,7 +113,7 @@ program test_variable_filter
 !   print *, "size(F)==", c_sizeof(F(1,1)%p), size(F)
 
    device_id = 0  ! 0=GPU, 1=CPU
-   status = init(device, device_id)
+   status = init_device(device, device_id)
    call limitLocalSize(device, nxLocal, nyLocal)
    print *, "device_id   ==", device_id
    print *, "local size  ==", nxLocal, nyLocal
