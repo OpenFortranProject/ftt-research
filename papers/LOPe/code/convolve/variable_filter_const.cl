@@ -237,7 +237,9 @@ __kernel void filter_bandwidth (
    float val = 0.0;
    int f_idx = 0;
 
+#ifdef USE_FILTER_EVERY_PIXEL
    f_idx += nxp*nyp * (KXL + KYL*NX);
+#endif
 
    for (int j = 0; j < nyp; j++) {
       F[f_idx++] = 1;
