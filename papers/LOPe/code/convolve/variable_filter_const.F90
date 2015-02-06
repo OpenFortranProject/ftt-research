@@ -153,7 +153,7 @@ program test_variable_filter
 
    ! create the kernel
    !
-   kernel = createKernelWithFile(device, "convolve", "variable_filter.cl")
+   kernel = createKernelWithFile(device, "convolve", "variable_filter_const.cl")
 
    ! add arguments
    !
