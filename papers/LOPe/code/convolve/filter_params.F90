@@ -6,8 +6,10 @@ module FilterParams
    ! WARNING, must also change in convolve.cl
    integer(c_int), parameter :: NPAD = PADDING
 
-   integer, parameter :: G_WIDTH  = 480
-   integer, parameter :: G_HEIGHT = 528
+!  integer, parameter :: G_WIDTH  = 480
+!  integer, parameter :: G_HEIGHT = 528
+   integer, parameter :: G_WIDTH  = 512
+   integer, parameter :: G_HEIGHT = 512
 
    integer(c_int), parameter :: NXP = 1 + 2*NPAD
    integer(c_int), parameter :: NYP = NXP
