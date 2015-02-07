@@ -1,7 +1,7 @@
 \section{Programming Model}
 
-The LOPe programming model (for Locally-Oriented Programming
-extensions) restricts the programmer to a local view of the index
+The LOPe programming model
+restricts the programmer to a local view of the index
 space of an array.  Within a LOPe function, only a single array
 element (called the local element) is mutable.  In addition, a small
 halo region surrounding the local element is visible to the
@@ -13,11 +13,10 @@ element-level array calculations.
 %%This reduction in complexity reduces programming errors.  While developing the convolution example described later in the paper we made an indexing error in applying the 2D stencil loops in the standard serial Fortran test implementation.  This error required over 3 hours of programming time to repair.  First the error had to be isolated to the function implementing the convolution (it was first thought to be in the complicated tiff image output routine as the convolution code was ``thought'' to be too simple to wrong.  Then the index error has to be understood.  As will be seen, LOPe makes it more difficult to make these errors as Fortran array intrics can be used.  In some instance, the restricted semantics of LOPe allows the compiler to catch errors (e.g., some errors involving race conditions).
 
 LOPe is a domain specific language (DSL) implemented as a small extension
-to standard Fortran 2008\todo{What version of Fortran does it extend? Not sure what you mean as F2008 is explicitly mentioned?}.
+to the Fortran 2008 standard.
 Fortran was chosen as the base language for LOPe, although in
 principle, the same techniques could be applied to language such as C
-or C++ (in conjuction with some form of array extensions such as those
-proposed by Intel).  Fortran was chosen because it already provides a
+or C++.  Fortran was chosen because it provides a
 rich array-based syntax.  Readers who are unfamiliar with Fortran
 syntax may wish to consult Appendix A, for a brief description of
 Fortran notation.
@@ -42,7 +41,6 @@ LOPe code in Section~\ref{sec:where-is-jacobi-example}:
 \begin{verbatim}
 ZPL jacobi example here.
 \end{verbatim}
-
 This approach as demonstrated by ZPL is quite powerful for compilation
 purposes since it provides a clean decoupling of the operators applied
 over an array from the decomposition of that array over a potentially
@@ -56,8 +54,7 @@ concurrent procedures.  In all of the code examples that follow,
 syntax additions are highlighted by the usage of capitalization for
 keywords that are either new or that acquire new usage.
 
-\textbf{Halo regions.}
-
+\subsubsection{Halo regions.}
 The principle semantic element of LOPe is the concept of a halo
 region.  A halo is an ``artificial'' or ``virtual'' region surrounding
 an array that contains boundary-value information.  Halo (also called
@@ -72,7 +69,6 @@ a halo region can be declared with a statement of the form,
 \begin{verbatim}
   real, allocatable, dimension(:), HALO(1:*:1) :: A
 \end{verbatim}
-
 This statement indicates that \texttt{A} is a rank one array, will be
 allocated later (when it will be provided with a specific size), and
 has a halo region of one element surrounding the array on either side.
@@ -86,7 +82,6 @@ substituted in place of an explicit size) as is the following,
 \begin{verbatim}
   real, HALO(:,:) :: U
 \end{verbatim}
-
 which in this instance indicates that \texttt{U} is a two-dimensional
 array, with a halo region whose size is obtained by the compiler from
 the explicit halo size of the actual array argument provided at the
@@ -94,7 +89,7 @@ calling site of the function.  In LOPe, there is no need (in this
 instance) for a repetitive \texttt{dimension(:,:)} specification, as
 it is inferred from the \texttt{HALO} specification.\todo{This paragraph is a bit weird to read.}
 
-\textbf{Concurrent functions.}
+\subsubsection{Concurrent functions.}
 The second keyword employed by LOPe is \texttt{concurrent}.  This keyword already exists in the form
 of a \texttt{do} \texttt{concurrent} loop construct.  By using this construct, the programmer
 asserts that specific iterations of the loop body may be executed by the compiler in \emph{any
@@ -109,7 +104,6 @@ For example, the following,
                           +   U(0,-1)
   end subroutine Laplace
 \end{verbatim}
-
 defines a function that can be used as part of an iterative solution
 of Laplace's equation in two dimensions.  LOPe allows a function with
 the \texttt{pure} and \texttt{concurrent} attributes to be called from
@@ -123,7 +117,7 @@ use \emph{new or old} values of \texttt{U} on the right-hand side.
 LOPe requires the compiler to guarantee that race conditions won't
 occur by using, e.g., double-buffering techniques as needed.
 
-\textbf{LOPe index notation.}
+\subsubsection{LOPe index notation.}
 
 In the \texttt{Laplace} example shown above, the \texttt{U(0,0)} array
 element is the \emph{local} array element and only the local element
