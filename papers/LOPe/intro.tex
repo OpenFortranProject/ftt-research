@@ -19,7 +19,8 @@ parallel complexity burden.  Multithreaded code written using OpenMP
 can be significantly simpler than the corresponding code in which the
 programmer explicitly manages a pool of threads themselves.  This is
 somewhat true for distributed memory parallelism using Unified
-Parallel C (UPC) and Coarray Fortran.  With these PGAS extensions, C and
+Parallel C (UPC) and Coarray Fortran.  With these PGAS
+(Partitioned Global Address Space) extensions, C and
 Fortran compilers are now aware of parallelism and now generate
 message passing code that previously had been handled by the MPI
 library.  In some instances the compiler is able to perform
@@ -52,7 +53,7 @@ parallelism \emph{plus} OpenMP for on-chip parallelism.  This hybrid approach is
 successful, large-scale AMR multiphysics code frameworks, FLASH and Chombo; currently however,
 neither of these codes currently support hardware accelerators\cite{DBLP:journals/corr/DubeyS13}.
 %%This is the solution proposed by Cray and PGI \cite{BOF_SC10} (currently Chapel does not target GPUs\cite{Brad?}).
-Other choices for expressing on-chip parallelism are OpenCL\cite{OPENCL} and NVIDIA's CUDA.
+Other choices for expressing on-chip parallelism are OpenCL~\cite{opencl11} and NVIDIA's CUDA.
 Unfortunately, achieving high performance using either of these two languages can be a daunting
 challenge and there are no guarantees that either language is suitable for future hardware
 generations.

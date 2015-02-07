@@ -15,7 +15,7 @@ element-level array calculations.
 LOPe is a domain specific language (DSL) implemented as a small extension
 to the Fortran 2008 standard.
 Fortran was chosen as the base language for LOPe, although in
-principle, the same techniques could be applied to language such as C
+principle, the same techniques could be applied to languages such as C
 or C++.  Fortran was chosen because it provides a
 rich array-based syntax.  Readers who are unfamiliar with Fortran
 syntax may wish to consult Appendix A, for a brief description of
@@ -24,42 +24,46 @@ Fortran notation.
 \subsection{Related work}
 
 LOPe builds upon prior work studying how to map Fortran to accelerator
-programming models like OpenCL.  In the ForOpenCL project~\cite{foropencl}
-we exploited Fortran pure and elemental functions to express the core
-data parallel kernels of an OpenCL-based program.  In practice, array
+programming models like OpenCL.  In the ForOpenCL project~\cite{Sottile:2013:FTE:2441516.2441520}
+we exploited Fortran's pure and elemental functions to express
+data-parallel kernels of an OpenCL-based program.  In practice, array
 calculations for a given index $i,j$ will require read-only access to
-a local neighborhood of size $[M,N]$ around $i,j$.  The LOPe work introduces
+a local neighborhood of size $[M,N]$ around $i,j$.  LOPe extends this work by introducing
 a mechanism for representing these neighborhoods as array declaration
 type annotations.
 
-This work is based on concepts explored in the ZPL programming
-language~\cite{zpl1,zpl2} in which the programmer can define regions and 
-operators that are applied over the index sets corresponding to the regions.
-For example, the following ZPL code implements the same stencil as the
-LOPe code in Section~\ref{sec:where-is-jacobi-example}:
+ForOpenCL was based on concepts explored in the ZPL programming language~\cite{chamberlain04zpl} in
+which the programmer can define regions and operators that are applied over the index sets
+corresponding to the sub-array regions.  This approach is quite powerful for
+compilation purposes since it provides a clean decoupling of the operators applied over an array
+from the decomposition of that array over a potentially complex distributed memory hierarchy.
+However, unlike the ZPL operations on entire sub-arrays, LOPe expresses operations based on
+a \emph{single} local array-element.
 
-\begin{verbatim}
-ZPL jacobi example here.
-\end{verbatim}
-This approach as demonstrated by ZPL is quite powerful for compilation
-purposes since it provides a clean decoupling of the operators applied
-over an array from the decomposition of that array over a potentially
-complex distributed memory hierarchy.  
+%
+% For space reasons a ZPL example is not shown and text reworded accordingly
+%
+%%For example, the following ZPL code implements the same stencil as the LOPe code in Fig. 1:
+
+%%\begin{verbatim}
+%%ZPL jacobi example here.
+%%\end{verbatim}
+%%This approach as demonstrated by ZPL is quite powerful for compilation purposes since it provides a clean decoupling of the operators applied over an array from the decomposition of that array over a potentially complex distributed memory hierarchy.  
 
 \subsection{LOPe Syntax Extensions}
 
 There are only a few syntax additions required for a LOPe program.
 These additions include syntax for describing halo regions and
-concurrent procedures.  In all of the code examples that follow,
-syntax additions are highlighted by the usage of capitalization for
+concurrent procedures.  In code examples that follow,
+language additions are highlighted by the usage of capitalization for
 keywords that are either new or that acquire new usage.
 
 \subsubsection{Halo regions.}
-The principle semantic element of LOPe is the concept of a halo
-region.  A halo is an ``artificial'' or ``virtual'' region surrounding
+The principle semantic element of LOPe is the concept of a halo.
+A halo is an ``artificial'' or ``virtual'' region surrounding
 an array that contains boundary-value information.  Halo (also called
 ghost-cell) regions are commonly employed to unify array indexing
-schemes in the vicinity of an array boundary, so that an array may be
+schemes in the vicinity of an array boundary so that an array may be
 referenced using indices that fall ``outside'' of the logical domain
 of the array.  In LOPe, the halo region is given explicit syntax so
 that the compiler can exploit this information for purposes of memory
@@ -70,69 +74,58 @@ a halo region can be declared with a statement of the form,
   real, allocatable, dimension(:), HALO(1:*:1) :: A
 \end{verbatim}
 This statement indicates that \texttt{A} is a rank one array, will be
-allocated later (when it will be provided with a specific size), and
+allocated later, and
 has a halo region of one element surrounding the array on either side.
-Notation such as \texttt{M:*:N} is to be read as describing a halo
-region of \texttt{M} elements to the left, \texttt{N} elements to the
-right, and with an arbitrary number of elements in the middle (denoted
-by the $*$ symbol).  When used to describe a formal parameter of a
-function, the halo size may be ``assumed'' (denoted by a ``:'' symbol
-substituted in place of an explicit size) as is the following,
+The halo notation \texttt{M:*:N} specifies a halo
+of \texttt{M} elements to the left, \texttt{N} elements to the
+right, and an arbitrary number of ``interior'' array elements.
+When used to describe a formal parameter of a
+function, such as the type-declaration statement, \texttt{real, HALO(:,:) :: U},
+the halo size is inferred by the compiler
+from the actual array argument provided at the
+calling site of the function.
 
-\begin{verbatim}
-  real, HALO(:,:) :: U
-\end{verbatim}
-which in this instance indicates that \texttt{U} is a two-dimensional
-array, with a halo region whose size is obtained by the compiler from
-the explicit halo size of the actual array argument provided at the
-calling site of the function.  In LOPe, there is no need (in this
-instance) for a repetitive \texttt{dimension(:,:)} specification, as
-it is inferred from the \texttt{HALO} specification.\todo{This paragraph is a bit weird to read.}
+%%In LOPe, there is no need (in this instance) for a repetitive \texttt{dimension(:,:)} specification, as it is inferred from the \texttt{HALO} specification.
 
 \subsubsection{Concurrent functions.}
-The second keyword employed by LOPe is \texttt{concurrent}.  This keyword already exists in the form
-of a \texttt{do} \texttt{concurrent} loop construct.  By using this construct, the programmer
-asserts that specific iterations of the loop body may be executed by the compiler in \emph{any
-  order;} even \emph{concurrently.}
-%%LOPe allows the \texttt{concurrent} attribute to be attached to a function declaration so that the function can be called from within a concurrent loop without fear of race conditions.
-For example, the following,
+
+The second keyword employed by LOPe is \texttt{concurrent} which already exists in the form of a
+\texttt{do} \texttt{concurrent} loop, whereby the programmer asserts that specific
+iterations of the loop body may be executed by the compiler in \emph{any order,} even
+\emph{concurrently.}  LOPe allows a function with the attributes \texttt{pure} (assertion of no
+side effects) and \texttt{concurrent} (assertion of no dependencies between iterations) to be
+called from within a \texttt{do} \texttt{concurrent} loop.  An example of a LOPe function is
+shown in Fig. 1 and an example calling this function will be provided later in the text.  One
+should imagine that a LOPe function is called \emph{for each} \texttt{i,j} index of the interior of
+the array \texttt{U}.  Note that this usage introduces a race condition as new values of
+elements of \texttt{U} are created on the left-hand side of the assignment statement that may use
+\emph{new or old} values of \texttt{U} on the right-hand side.  LOPe requires the compiler to
+guarantee that race conditions won't occur by using, e.g., double-buffering techniques as needed.
+
+\vspace{-.1in}
+
+\begin{figure}
 \begin{verbatim}
-  pure CONCURRENT subroutine Laplace(U)
-     real, HALO(:,:) :: U
-     U(0,0) =                 U(0,+1)               &
-              +  U(-1,0)  - 3*U(0, 0)  +  U(+1,0)   &
-                          +   U(0,-1)
-  end subroutine Laplace
+           pure CONCURRENT subroutine Laplacian(U)}
+               real, HALO(:,:) :: U
+               U(0,0) =                 U(0,+1)              &
+                        +  U(-1,0)  - 3*U(0, 0)  +  U(+1,0)  &
+                                    +   U(0,-1)
+           end subroutine Laplacian
 \end{verbatim}
-defines a function that can be used as part of an iterative solution
-of Laplace's equation in two dimensions.  LOPe allows a function with
-the \texttt{pure} and \texttt{concurrent} attributes to be called from
-within a \texttt{do} \texttt{concurrent} loop body.\todo{Worth pointing out that pure implies no side effects, concurrent implies no dependencies between iterations?}  One should
-imagine that this function is called \emph{for each} \texttt{(i,j)}
-index of the interior of the array \texttt{U}.  (An example of this
-usage will be given later in the text.)  Note that this usage
-introduces a race condition as new values of elements of \texttt{U}
-are created on the left-hand side of the assignment statement that may
-use \emph{new or old} values of \texttt{U} on the right-hand side.
-LOPe requires the compiler to guarantee that race conditions won't
-occur by using, e.g., double-buffering techniques as needed.
+\vspace{-.1in}
+\caption{A LOPe function implementing a Laplacian kernel in two dimensions.}
+\end{figure}
+
+\vspace{-.3in}
 
 \subsubsection{LOPe index notation.}
 
-In the \texttt{Laplace} example shown above, the \texttt{U(0,0)} array
-element is the \emph{local} array element and only the local element
-may be modified.  This zero-based indexing for the local-array element
-is different than conventional Fortran, where by default, array
-indices start at 1.  The use of zero-based indexing gives a clean
-symmetry for indices on either side of the central element at zero.
-For LOPe, this default convention is modified; indices for arrays
-declared with the \texttt{HALO} attribute (within the context of a
-\texttt{CONCURRENT} procedure) range (in one dimension) from
-\texttt{-M} to \texttt{+N} where the halo attribute has been declared
-as \texttt{M:*:N} by the originating type declaration.  The other
-array elements (in the halo region of the example) are
-\texttt{U(-1,0)} and \texttt{U(+1,0)} (left and right of local,
-respectively) and \texttt{U(0,-1)} and \texttt{U(0,+1)} (below and
-above of local, respectively).  The geometric positioning of the array
-elements can be seen by examining the arrangement of the expressions
-on the right-hand side of the \texttt{Laplace} example.
+In the \texttt{Laplacian} example the \texttt{U(0,0)} array element is the \emph{local} array
+element and only the local element may be modified.  This zero-based indexing for the local-array
+element differs from conventional Fortran, where by default, array indices start at 1.  The use of
+zero-based indexing gives a clean symmetry for indices on either side of the central element at
+zero. The other array elements are in the halo region and are \texttt{U(-1,0)} and
+\texttt{U(+1,0)} (left and right of local, respectively) and \texttt{U(0,-1)} and \texttt{U(0,+1)}
+(below and above of local).  The geometric positioning of the array elements can be
+seen by examining the arrangement of the expressions on the right-hand side of Fig. 1.
