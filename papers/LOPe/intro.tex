@@ -4,9 +4,9 @@ Historically it has been hard to create parallel programs.  The
 responsibility (and difficulty) of creating \emph{correct} parallel
 programs can be viewed as being spread between the programmer and the
 compiler.  Ideally we would like to have parallel languages that make
-it easy for the programmer to express correct parallel programs (and
+it easy for the programmer to express correct parallel programs --- and
 conversely it should be difficult to express incorrect parallel
-programs).  Unfortunately, many current languages and standards place
+programs.  Unfortunately, many current languages and standards place
 all of the responsibility on the user.  The best example of this are
 programs written using MPI (Message Passing Interface), where the
 programmer expresses all parallelism in terms of calls to library
@@ -19,7 +19,7 @@ parallel complexity burden.  Multithreaded code written using OpenMP
 can be significantly simpler than the corresponding code in which the
 programmer explicitly manages a pool of threads themselves.  This is
 somewhat true for distributed memory parallelism using Unified
-Parallel C (UPC) and Coarray Fortran.  With the PGAS extensions, C and
+Parallel C (UPC) and Coarray Fortran.  With these PGAS extensions, C and
 Fortran compilers are now aware of parallelism and now generate
 message passing code that previously had been handled by the MPI
 library.  In some instances the compiler is able to perform
@@ -59,7 +59,7 @@ generations.
 
 In this paper we examine a language-based paradigm that allows the
 compiler to take on a larger portion of the code complexity burden.
-Anyone programming in OpenCL or CUDA is aware that explicit loop
+Anyone programming in OpenCL is aware that explicit loop
 structures over array elements in a serial program are removed and
 replaced by a kernel program that is run over all of the elements of
 the input arrays.  We propose \emph{Locally Orientated Programming
