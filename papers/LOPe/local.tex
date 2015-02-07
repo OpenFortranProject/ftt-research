@@ -1,4 +1,3 @@
-
 %%%%%%%%%%%%%%%%%%%%%%% file typeinst.tex %%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % This is the LaTeX source for the instructions to authors using
@@ -23,7 +22,8 @@
 \usepackage{graphicx}
 \usepackage{todonotes}
 \usepackage{url}
-\urldef{\mailsa}\path|rasmus@uoregon.edu, mjsottile@gmail.com,|
+%%\urldef{\mailsa}\path|rasmus@uoregon.edu, mjsottile@gmail.com,|
+\urldef{\mailsa}\path|rasmus@uoregon.edu|
 \urldef{\mailsb}\path|dangle@ucar.edu, soren.rasmussen@aggiemail.usu.edu|
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
 \noindent\keywordname\enspace\ignorespaces#1}
@@ -50,11 +50,15 @@
 
 % the affiliations are given next; don't give your e-mail address
 % unless you accept that it will be published
-\institute{441 McKenzie Hall,\\
-5246 University of Oregon, Eugene, Oregon, USA\\
-\mailsa\\
-\mailsb\\
-\url{https://openfortran.uoregon.edu}}
+%%\institute{441 McKenzie Hall,\\
+%%5246 University of Oregon, Eugene, Oregon, USA\\
+%%\mailsa\\
+%%\mailsb\\
+%%\url{https://openfortran.uoregon.edu}}
+
+\institute{University of Oregon, Eugene, Oregon, USA\\
+\mailsa
+}
 
 %
 % NB: a more complex sample for affiliations and the mapping to the
@@ -71,18 +75,18 @@
 \begin{abstract}
 
 Emerging hybrid accelerator architectures for high performance computing are often suited for the
-use of a data-parallel programming model.  Unfortunately, programmers for these emerging
-architectures face a steep learning curve that frequently requires learning a new language, e.g.,
-OpenCL or CUDA, or employing OpenMP compiler directives.  Furthermore, the distributed (and
-frequently multi-level) nature of the memory organization of clusters of these architectures
-provides an additional level of complexity for the programmer.  This paper presents preliminary work
-examining how programming with a local orientation can be employed to provide simple access to
+use of a data-parallel programming model.  Unfortunately, programmers of these
+architectures face a steep learning curve that frequently requires learning a new language (e.g.,
+OpenCL). Furthermore, the distributed (and
+frequently multi-level) nature of the memory organization of clusters of these machines
+provides an additional level of complexity.  This paper presents preliminary work
+examining how programming with a local orientation can be employed to provide simpler access to
 accelerator architectures.  A locally-oriented programming model is especially useful for the
-solution of algorithms requiring the application of a convolution kernel.  In this programming
+solution of algorithms requiring the application of a stencil or convolution kernel.  In this programming
 model, a programmer codes the algorithm by modifying \emph{only a single array element} (called the
-local element), but has read-only access to a small sub-array surrounding the local element so that
-a stencil can be applied.  We demonstrate how a locally-oriented programming model can be adopted as
-an embedded, domain-specific language using source-to-source program transformations.
+local element), but has read-only access to a small sub-array surrounding the local element.
+We demonstrate how a locally-oriented programming model can be adopted as
+a language extension using source-to-source program transformations.
 
 
 \keywords{domain specific language, stencil compiler, distributed memory parallelism}
