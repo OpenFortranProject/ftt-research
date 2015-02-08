@@ -11,6 +11,13 @@ intent of halo regions, it could reorder operations so that border regions were 
 \emph{before} interior regions, allowing the the transfer of data in halo regions to overlap with
 computations on the interior.
 
+%
+% This could be part of conclusions
+%
+
+%%Note that the use of halo cells is the normal way that large and complex MPI and CAF programs are implemented.  LOPe proposes to formalize this common pattern into the Fortran language allowing the compiler access to this information in order to spread computation over more hardware resources, improve performance, and to reduce complexity for the programmer.
+
+
 Just as Coarray Fortran originally extended Fortran to include domain specific knowledge (parallel
 computation) replacing MPI library routines\cite{numeric:reid}, LOPe seeks to extend Fortran by
 providing domain specific knowledge of stencil operations.  
