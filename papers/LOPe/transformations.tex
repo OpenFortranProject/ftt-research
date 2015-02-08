@@ -1,13 +1,11 @@
 \section{LOPe and CAFe Implementation}
 
-This section describes how LOPe extensions to Fortran have been implemented.  It also describes how
-source-to-source transformations have been implemented via rewrite rules and strategies in
-StrategoXT.
+This section briefly describes how LOPe extensions to Fortran have been implemented as
+source-to-source transformations via rewrite rules and strategies in StrategoXT.
 
-\subsection{Source-to-Source Transformation Infrastructure}
-
-1. Parsing to produce an AST nodes representated as ATerms.
-2. Transformations on the AST nodes represented as rewrite rules and strategies in Stratego/XT
+Transformations are accomplished in three phases:
+1. Parsing to produce an AST nodes representated as ATerms;
+2. Transformations on the AST nodes represented as rewrite rules and strategies in Stratego/XT; and
 3. Pretty printing of transformed nodes using the pretty printing facilites of BoxLib.
 
 \subsection{Transformations for Concurrent Procedures}
@@ -20,13 +18,13 @@ execution by a heterogeneous processing elements with a language like OpenCL, fo
 
 For this work we have developed rewrite strategies and rules in Stratego/XT to rewrite Fortran AST
 nodes to C AST nodes (extended with necessary OpenCL keywords).  The C AST ATerms have mostly a
-one-to-one correspondence with Fortran terms.  A \texttt{CONCURRENT} procedure is transformed to a
-OpenCL kernel (with the \texttt{\_\_kernel} attribute), Fortran formal parameters are transformed
-to C parameters (with a direct mapping of types), and local Fortran variable declarations are rewritten
-as C declarations.  Similarly, Fortran executable statements are rewritten as C executable AST nodes.
-Mostly the only complication is mapping the LOPe local array index view to the global C index space.
-This translation is facilitated by the Fortran symbol table that stores array shape and halo
-size information.
+one-to-one correspondence with Fortran terms.  A \texttt{CONCURRENT} procedure is transformed to an
+OpenCL kernel, Fortran formal parameters are transformed to C parameters (with a direct mapping of
+types), and local Fortran variable declarations are rewritten as C declarations.  Similarly,
+Fortran executable statements are rewritten as C executable AST nodes.  Mostly the only
+complication is mapping the LOPe local array index view to the global C index space.  This
+translation is facilitated by a Fortran symbol table that stores array shape and halo size
+information.
 
 Once all rewriting passes have been made to transform from LOPe Fortran ATerms to C ATerms, the
 C ATerms are output as an OpenCL file using a C pretty printer.
