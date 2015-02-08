@@ -16,10 +16,12 @@ execution model remove the possibility of race conditions developing during exec
 concurrent procedure.
 
 We emphasize some of these advantages by comparing the \texttt{Laplace} implementation with the
-implementation of the same algorithm from the original Numrich and Reid paper first describing
-coarrays in Fortran.  We should point out that this comparison is somewhat unfair, because Numrich
-and Reid were introducing coarray notation for transferring memory on distributed memory
-architectures, not demonstrating how ideally one should use coarrays within a large application.
+implementation of the same algorithm from the original Numrich and Reid
+paper\cite{Numrich:1998:CFP:289918.289920} first describing coarrays in Fortran.  We should point
+out that this comparison is somewhat unfair, because Numrich and Reid were introducing coarray
+notation for transferring memory on distributed memory architectures, not demonstrating how ideally
+one should use coarrays within a large application.
+
 %%Please note that this example is somewhat unfair because in practice CAF is usually refactored in a locally oriented way by so that communication and synchronization separated into separate procedures.  Locally-oriented programming should be viewed as programming methodology with LOPe as a particular instance.
 However this example serves
 to highlight some of the advantages of LOPe and CAFe as introduced above.  Note that in the coarray
@@ -30,18 +32,17 @@ example shown below, type declarations have been removed to save space:
     if (me == 1) left = ncol
     right = me + 1
     if (me == ncol) right = 1
-    call sync_all( [left,right] )   ! Wait for left and right
+    call sync all    ! Wait for left and right
     new_u(1:nrow) = new_u(1:nrow) + u(1:nrow)[left] + u(1:nrow)[right]
-    call sync_all( [left,right] )
+    call sync all
     u(1:nrow) = new_u(1:nrow) - 4.0*u(1:nrow)
   end subroutine
 \end{verbatim}}
 
-The advantages of LOPe and CAFe over this example are now described.  Please note that the following
-is not a criticism of coarray Fortran as CAF is a general purpose parallel programming language and
-LOPe only pertains to the halo pattern most useful in the implementation of stencil-based algorithms.
+%%The advantages of LOPe and CAFe over this example are now described.  Please note that the following is not a criticism of coarray Fortran as CAF is a general purpose parallel programming language and LOPe only pertains to the halo pattern most useful in the implementation of stencil-based algorithms.
 
-\subsubsection{LOPe advantages.}
+\subsection{LOPe Advantages}
+
 \begin{itemize}
 
 \item
@@ -58,7 +59,7 @@ run on multiple nodes without accelerator cores.
 
 \item
 Algorithm implementation is separate from user-specified synchronization, e.g., \texttt{call
-  sync\_all}.  In LOPe, synchronization is subsummed in the semantics of the \texttt{CONCURRENT}
+  sync\_all}.  In LOPe, synchronization is subsumed in the semantics of the \texttt{CONCURRENT}
 attribute and the \texttt{TRANSFER\_HALO} function call.
 
 \item
@@ -70,7 +71,7 @@ topology.
 \item
 The algorithm implementation is separate from any specification as to where the algorithm
 is to be executed.  The CAF example explicity denotes where a statement is to executed
-with control flow construct like \texttt{if (me == 1)}.
+with a control flow construct like \texttt{if (me == 1)}.
 
 \item
 The LOPe implementation is easier to understand and frequently follows the mathematical algorithm
@@ -86,35 +87,36 @@ buffers than users on the target hardware platform.
 
 \end{itemize}
 
-\subsubsection{Errors that are constrained by the language.}
+\subsection{LOPe Constraints}
+
+Contraints provided by the LOPe language extensions allow the compiler to catch several classes of
+errors that otherwise would be the programmer's responsibility:
+
 \begin{itemize}
 
 \item
-A programmer is not able to store data to the halo region during
-execution of a LOPe concurrent function.  If this were allowed, one
-thread could overwrite another threads data at undefined times.  The
-compiler is able to catch this class of data race error.
+A programmer is not able to store data to the halo region during execution of a LOPe concurrent
+function.  Neither are stores to the local element, followed by a read from the halo region of the
+same variable allowed.  If these were allowed, one thread could overwrite another threads data at
+undefined times.
 
 \item
 A programmer can't make indexing errors in a concurrent routine by going out of bounds of the array
-plus halo memory.  The compiler is able to catch this class of error at compile time as long as
-compile-time constants are used to specify halo sizes.
+plus halo memory.
 
 \item
 A programmer is not able to cause race conditions by forgetting to create and use temporary arrays
-properly.  In LOPe it is the compilers responsibility to store data in temporary memory.
+properly.
 
 \item
-A programmer can't make synchronization errors as synchronization is
-implicit in the \texttt{CONCURRENT} attribute\todo{clarify what sync
-  errors are prevented.  restricted concurrency model === less room
-  for errors.}.  A thread running a concurrent procedure is provided
-with a copy of it's local array element plus halo that is consistent
-with the state of memory \emph{at the time of invocation of the
-  procedure}.  Stores to an individual thread's local array element
-(by that thread) is never visible to other threads.  LOPE encourages
-the creation of small functions and lets the compiler fuse the
-functions together to improve performance and to provide necessary
+A programmer can't make synchronization errors in calls to LOPe functions as synchronization is
+implicit in the \texttt{CONCURRENT} attribute.  A thread running a concurrent procedure is provided
+with a copy of it's local array element plus halo that is consistent with the state of memory
+\emph{at the time of invocation of the procedure}.  Stores to an individual thread's local array
+element (by that thread) are never visible to other threads.  Normal coarray programs (like MPI)
+require explicit synchronization to ensure that processes arrive at the same program location
+before a memory read occurs (for example).  LOPE encourages the creation of small functions and
+lets the compiler fuse the functions together to improve performance and to provide necessary
 synchronization.
 
 \end{itemize}

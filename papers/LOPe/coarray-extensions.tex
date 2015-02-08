@@ -2,80 +2,70 @@
 
 %%We highlight the Fortran elemental source-code abstraction because it provides a local orientation similar to that of OpenCL or CUDA kernel functions that were designed to exploit streaming, highly-threaded architectures like GPUs.  Elemental functions are pure in that they are guaranteed to be free of side effects such as I/O.  Consider a convolution where a 3x3 filter is applied to individual pixel elements in a photograph to average of blur the original photograph.  A convolution is similar to stencil operations in computational fluid dynamics that are used to obtain spatial derivatives of state variables.  Simple code is shown with extentions to Fortran shown in capital letters.  The extensions could be provided to C or Fortran functions via compiler directives rather than explicit language syntax.
 
-Consider the \texttt{Laplace} concurrent function discussed above.  In
-this section we demonstrate how this function can be called in the
-normal context of a program, one that allows full access to all of the
-interior elements of the array, as well as array elements within the
-logically exterior, halo-boundary region.  Topics highlighted in this
-section are: 1. Distributed memory array allocation; 2. Explicit
-memory placement; 3. Remote memory transfer; and 4. Remote execution.
-This description is within the context of an extension of the Fortran
-2008 language.  As shorthand, these specific extensions are referred
-to as CAFe, for Coarray Fortran extensions.
-
-\subsection{CAFe Example}
-
-We start with the declaration of an array (to be allocated later),
-\begin{verbatim}
-  real, allocatable, HALO(1:*:1,1:*:1),          &
-        dimension(:,:), codimension[:,:] :: U
-\end{verbatim}
-with an explicit halo size and with two local dimensions (rank) and
-two distributed memory codimensions (corank).  The corank of the array
-is chosen to be identical to the rank of the array so that the logical
-process topology aligns in a way that allows a natural halo exchange
-between logically neighboring processes.\todo{What if corank and rank are not the same?}  For example, if the process
-location is \texttt{[pcol,prow]}, then the right-hand halo for the
-local array \texttt{U} can be obtained by the assignment
-\texttt{U(M+1,:) = U(1,:)[pcol+1,prow]} where the size and cosize of
-\texttt{U} are given by the allocation statement,
-\texttt{allocate(U(0:M+1,0:N+1)[MP,*])}.
-This allocation statement specifies (given the one element halo size
-provided earlier for \texttt{U}) that the left halo column is
-\texttt{U(0,:)}, the right column is \texttt{U(M+1,:)}, the bottom row
-is \texttt{U(:,0)} and the top row is \texttt{U(:,N+1)}, leaving the
-interior region \texttt{U(1:M,1:N)}.  In this allocation statement,
-the total number of process rows \texttt{NP} can be obtained at
-runtime, but \emph{may not} be explicitly provided (according to CAF
-rules) because the actual number of participating processes (in
-Fortran called images) is variable, depending on how many processes
-are requested at program startup.  In this discussion, it is
-\emph{assumed} that there are no holes in the logical processor
-topology, thus $MP*NP = P$, where $P$ is the total number of
-participating processes (images).
+Consider the \texttt{Laplacian} concurrent function in Fig. 1.  In this section we demonstrate how
+this function can be called in the normal context of a program, one that allows full access to all
+of the interior elements of the array, as well as array elements within the logically exterior,
+halo-boundary region.  Topics highlighted in this section are: 1. distributed memory array
+allocation; 2. explicit memory placement; 3. remote memory transfer; and 4. remote execution.  This
+description is within the context of extensions to Fortran; as shorthand, these extensions are
+referred to as CAFe, for Coarray Fortran extensions.  CAFe is complementary to previous work
+extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
 
 \subsection{Subimages}
 
-So far --- except for the \texttt{HALO} attribute --- this is totally
-standard Fortran (2008).  For CAFe, we extend the concept of Fortran
-images to be hierachical.  By this we mean that each image \emph{may}
-have a subimage (or subimages), but this subimage is not visible to
-other regular Fortran images.  Subimages also execute differently than
-normal images.  Subimages are task based while images all execute a
-Single Program but with different (Multiple) Data (SPMD).  A task can
-be given to a subimage, but execution on the subimage terminates once
-the task is finished.  Memory on a subimage is permanent, however, and
-must be specifically allocated and deallocated.
+We introduce the important new concept of a CAFe subimage.  Fortran images are a collection of
+distributed memory processes that all run the same program (image).  LOPe extends the concept of a
+Fortran image by allowing images to be hierachical.  By this we mean that each image \emph{may}
+have a subimage (or subimages), but this subimage is not visible to other regular Fortran images.
+Subimages also execute differently than normal images and may execute on different non-homogeneous
+hardware, .e.g, an attached accelerator device.  Subimages are task based while images all execute
+a Single Program but with different (Multiple) Data (SPMD).  A task can be given to a subimage, but
+execution on the subimage terminates once the task is finished.  Memory on a subimage is permanent,
+however, and must be specifically allocated and deallocated.
 
-One obtains a subimage by executing a function call,
-\texttt{device = GET\_SUBIMAGE(1)}
-where the integer argument representing one of attached hardware
-devices\todo{mention the relation of subimages and hardware earlier in
-  defn. of subimage}.  If the function fails (e.g., the requested
-device is unavailable) it returns the image number
-\texttt{this\_image()} of the process that is executing the current
-program.  Returning the current image allows program execution to
-proceed correctly even if there are no attached devices.
+One obtains a subimage by executing the new LOPe function call, \texttt{device = GET\_SUBIMAGE(1)},
+where the integer argument represents an attached hardware device (or a separate process).
+If the function fails (e.g., the requested device is unavailable) it returns the image number
+\texttt{this\_image()} of the process that is executing the current program.  Returning the current
+image allows program execution to proceed correctly even if there are no attached devices.
 
-Once a subimage is obtained, memory on the device may be allocated,
+\subsection{CAFe Example}
+
+We start with the declaration of an array with an explicit halo size and with two local
+dimensions (rank) and two distributed memory codimensions (corank),
 \begin{verbatim}
-  if (device /= this_image()) then
-    allocate(U[device], HALO_SRC=U)   [[device]]
-  end if
+   real, allocatable, dimension(:,:), codimension[:,:]      &
+         HALO(1:*:1,1:*:1) :: U
+\end{verbatim}
+The corank of the array is chosen to be identical to the rank of the array so that the logical
+process topology aligns in a way that allows a natural halo exchange between logically neighboring
+processes (this could not occur if corank and rank are not the same).  For example, if the process
+location is \texttt{[pcol,prow]}, then the right-hand halo for the local array \texttt{U} can be
+obtained by the assignment
+\texttt{U(M+1,:) = U(1,:)[pcol+1,prow]} where the size and cosize of
+\texttt{U} are given by the allocation statement,
+\texttt{allocate(U(0:M+1,0:N+1)[MP,*])}.
+This allocation statement specifies (given the one element halo size provided earlier for
+\texttt{U}) that the left halo column is \texttt{U(0,:)}, the right column is \texttt{U(M+1,:)},
+the bottom row is \texttt{U(:,0)} and the top row is \texttt{U(:,N+1)}, leaving the interior region
+\texttt{U(1:M,1:N)}.
+
+In this allocation statement, the total number of process columns $NP$ can be obtained at runtime,
+but \emph{may not} be explicitly provided (according to CAF rules) because the actual number of
+participating processes (in Fortran called images) is variable, depending on how many processes are
+requested at program startup.  In this discussion, it is \emph{assumed} that there are no holes in
+the logical processor topology, thus $MP*NP = P$, where $MP$ is the number of process rows and $P$
+is the total number of participating processes (images).
+
+Once a subimage is obtained, memory on the device can be allocated,
+\begin{verbatim}
+   if (device /= this_image()) then
+      allocate(U[device], HALO_SRC=U)   [[device]]
+   end if
 \end{verbatim}
 There are four points to note regarding this memory allocation: 1. Memory is only allocated if a
 subimage has been obtained; 2. The location where memory is allocated is denoted by regular coarray
-notation \texttt{U[device]}; 3. The allocated size and halo attribute of the new array are assumed
+notation \texttt{U[device]}; 3. The allocated size and halo attribute of the new array are obtained
 from the previously allocated local array \texttt{U} via the notation \texttt{HALO\_SRC=U} (using
 \texttt{HALO\_SRC} will also initially copy \texttt{U} to the subimage); and finally 4. The
 allocation itself is \emph{executed} on the subimage device with the notation \texttt{[[device]]}.
@@ -86,12 +76,12 @@ programmer that the memory reference may be remote and therefore potentially suf
 performance penalty.  CAFe extends this by employing double-bracket notation to indicate
 possibly \emph{remote subimage execution}.
 
-Execution of the \texttt{Laplace} task is done using the \texttt{do}
+Execution of the \texttt{Laplacian} task is done using the \texttt{do}
 \texttt{concurrent} construct:
 \begin{verbatim}
    do while (.not. converged)
       do concurrent (i=1:M, j=1:N)   [[device]]
-         call Laplace( U(i,j)[device] )
+         call Laplacian( U(i,j)[device] )
       end do
       call HALO_TRANSFER(U, BC=CYCLIC)
    end do
@@ -101,7 +91,7 @@ of the array domain, \texttt{(i=1:M, j=1:N)}; 2. Execution of the loop body occu
 specific subimage indicated by \texttt{[[device]]}; 3. Execution of the iterates may occur
 in any order, even \emph{concurrently}; 4. The local element of the array (as
 defined above in reference to the definition of the concurrent procedure
-\texttt{Laplace}) is given by the indices \texttt{(i,j)}; 5. Location of memory for the
+\texttt{Laplacian}) is given by the indices \texttt{(i,j)}; 5. Location of memory for the
 task is to be taken from the subimage as noted by \texttt{[device]}; 5. All threads must finish
 execution of the loop body before further execution of the program proceeds; and 6. Transfer of
 all requisite halo regions is effected by the call to the new LOPe intrinsic function
@@ -111,9 +101,6 @@ complete the halo transfer before program execution continues.
 Note that a transfer of halo memory is necessary after each completion of the do concurrent loop.
 This must be done in order for the halo region of a coarray on a given process to be consistent
 with the corresponding interior of the coarray on a logically neighboring process.
-
-%% However, recall that with the LOPe programming model only the local element is mutable; thus, the halo region of an array needs update.
-
 Finally, memory for the entire array \texttt{U} can be copied from the
 subimage device with the statement,
 \texttt{U = U[device]}, 
@@ -164,7 +151,8 @@ and memory deallocation (not shown) is similar to memory allocation.
 
 \input{coarray-comparison}
 
-Note that the use of halo cells is the normal way that large and complex MPI and CAF
-programs are implemented.  LOPe proposes to formalize this common pattern into the Fortran
-language allowing the compiler access to this information in order to spread computation over more
-hardware resources, improve performance, and to reduce complexity for the programmer.
+%
+% This could be part of conclusions
+%
+
+%%Note that the use of halo cells is the normal way that large and complex MPI and CAF programs are implemented.  LOPe proposes to formalize this common pattern into the Fortran language allowing the compiler access to this information in order to spread computation over more hardware resources, improve performance, and to reduce complexity for the programmer.
