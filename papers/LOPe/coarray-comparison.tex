@@ -9,7 +9,7 @@ containing hybrid processing elements (e.g. GPUs), the halo elements may be as f
 away: one to get to the host processor and another two to get to memory on the hybrid processor
 executing on another distributed memory node.  LOPe provides a complete separation between algorithm
 development and memory management (synchronization between memory copies of the same logical
-array region covered by halos).  By explicitly describing the existance and size of an array's halo
+array region covered by halos).  By explicitly describing the existence and size of an array's halo
 region, the compiler is provided with enough information to manage most of the hard and detailed
 work involved in memory transfer and synchronization.  Additionally, the semantics of the LOPe
 execution model remove the possibility of race conditions developing during execution of a
@@ -43,6 +43,8 @@ example shown below, type declarations have been removed to save space:
 
 \subsection{LOPe Advantages}
 
+There are several advantages to LOPe, including:
+
 \begin{itemize}
 
 \item
@@ -64,13 +66,13 @@ attribute and the \texttt{TRANSFER\_HALO} function call.
 
 \item
 The algorithm implementation is separate from any specification as to where the array
-memory is located.  The CAF example explicity denotes where memory is located with the
-\texttt{[left]} and \texttt{[right]} syntax where left and right specifiy a processor
+memory is located.  The CAF example explicitly denotes where memory is located with the
+\texttt{[left]} and \texttt{[right]} syntax where left and right specify a processor
 topology.
 
 \item
 The algorithm implementation is separate from any specification as to where the algorithm
-is to be executed.  The CAF example explicity denotes where a statement is to executed
+is to be executed.  The CAF example explicitly denotes where a statement is to executed
 with a control flow construct like \texttt{if (me == 1)}.
 
 \item
@@ -89,7 +91,7 @@ buffers than users on the target hardware platform.
 
 \subsection{LOPe Constraints}
 
-Contraints provided by the LOPe language extensions allow the compiler to catch several classes of
+Constraints provided by the LOPe language extensions allow the compiler to catch several classes of
 errors that otherwise would be the programmer's responsibility:
 
 \begin{itemize}
