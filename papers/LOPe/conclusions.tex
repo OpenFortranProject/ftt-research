@@ -2,50 +2,54 @@
 
 Fortran is a general-purpose programming language and as such it provides limited facilities for
 expressing concepts useful for stencil operations. For example, halo regions must be expressed in
-terms of the existing syntax of the language as there is no way to specify that the ``interior'' of
-an array is in any way special from an ``outside'' region.  By not providing support for stencils in
-the language, the programmer must make specific choices regarding the order of access to the data
-and in the order of operations on the data.  These choices often hide the opportunity for
-optimizations by the compiler \cite{dubey:2014:wosc}.  If the compiler had knowledge of the symantic
-intent of halo regions, it could reorder operations so that border regions were computed
-\emph{before} interior regions, allowing the the transfer of data in halo regions to overlap with
-computations on the interior.
+terms of the existing syntax of the language and there is no way to specify that the ``interior''
+of an array is in any way special from an ``outside'' region.  By not providing support for
+stencils in the language, the programmer must make specific choices regarding data-access patterns
+and the order of operations on the data.  These choices often hide the opportunity for
+optimizations by the compiler \cite{Dubey:2014:SSC:2686745.2686756}.  For example, if the compiler
+had knowledge of the semantic intent of halo regions, it could reorder operations so that border
+regions were computed \emph{before} interior regions, allowing the transfer of data in halo regions
+to overlap with computations on the interior.
+
+Just as Coarray Fortran originally extended Fortran to include domain specific knowledge (parallel
+computation) replacing MPI library routines\cite{Numrich:1998:CFP:289918.289920}, LOPe seeks to extend Fortran by
+providing domain specific knowledge of stencil operations.
+Specifically, LOPe and CAFe together provide:
+(1) a local view of stencil operations on data that allows a complete separation of the implementation of a stencil
+algorithm with data-access patterns;
+(2) memory placement via allocation routines that allow the specification of allocation location;
+(3) task execution placement with double-bracket syntax specifying which subimage is to execute a particular operation; and
+(4) memory exchange via the \texttt{TRANSFER\_HALO} intrinsic procedure.
 
 %
 % This could be part of conclusions
 %
 
-%%Note that the use of halo cells is the normal way that large and complex MPI and CAF programs are implemented.  LOPe proposes to formalize this common pattern into the Fortran language allowing the compiler access to this information in order to spread computation over more hardware resources, improve performance, and to reduce complexity for the programmer.
-
-
-Just as Coarray Fortran originally extended Fortran to include domain specific knowledge (parallel
-computation) replacing MPI library routines\cite{numeric:reid}, LOPe seeks to extend Fortran by
-providing domain specific knowledge of stencil operations.  
-
-CAFe extensions ...
-* subimages
-
-Specifically, LOPe and CAFe together provide:
-* A local view of stencil operations on data.  This allows a complete separation of the implementation of a stencil algorithm with data access patterns.
-* Memory placement via allocation routines allow the specification of the allocation location.
-* Task execution placement with [[ ]] specifying which subimage is to execute a particular operation.
-* Memory exchange via the \texttt{HALO\_TRANSFER} intrinsic procedure.
-* Ability to run correctly even if subimages are not available.  Similar to OpenMP.
-* Ability to associate arrays on subimages with coarrays on host thus allowing compiler to effect the halo transfers between the multiple memory levels.
-* Halo abstraction that allows for more flexibility for the compiler to retarget for different architectures.
-* A simple way to express variables as ``thread private'' as all local variables declared in a \texttt{CONCURRENT} procedure are private to the calling procedure.  This is distinguished from OpenMP.
+%%Note that the use of halo cells is the normal way that large and complex MPI and CAF programs are implemented.
 
 \subsubsection{Benefits.}
-* extends the programmer
-* restricts the programmer
-* no race conditions
-* Abstractions provide ample opportunities for compiler optimizations.
+LOPe proposes to formalize the common, halo software pattern in language syntax, thus providing the
+compiler with access to halo information in order to spread computation over more hardware
+resources, improve performance, and to reduce complexity for the programmer.  Furthermore, LOPe
+semantics provide important \emph{language restrictions} that remove the possibility of race conditions
+that occur when multiple threads have write access to overlapping data regions.
 
 \subsubsection{Limitations.}
-* no composition useful for nonlinear dynamics\cite{coella}
-* difficult (but not impossible) to implement algoriths that perform operations between arrays of
-differing sizes (multigrid implementations for example).
+LOPe only supports regular structured grids through Fortran multi-dimensional arrays and a
+corresponding multi-dimensional processor layout.  It does not allow the composability of stencils
+required by non-linear physics operators, nor does it provide automatic support for the storage of
+intermediate results resulting from multiple intermediate update steps.  Adaptive Mesh Refinement
+(AMR) Shift Calculus provides a generalized abstraction that addresses many of these concerns
+(see\cite{Dubey:2014:SSC:2686745.2686756} and references therein).  However, it may be possible to
+support AMR in LOPe through locally-structured grid methods based on the work of Berger and
+Oliger\cite{colella2007performance}.  In this instance, LOPe could be used to update the regular
+array regions in each rectangular patch.
 
-By implementing LOPe
-we have demonstrated that LOPe can be ... It remains to history to see if LOPe is general purpose
-enough to be included in Fortran or if it should remain as a special purpose preprocessing tool.
+\vspace{.1in}
+
+By implementing LOPe we have demonstrated that LOPe can be used to easily and succinctly code
+the stencil algorithms that are common to many areas of science, and furthermore, that LOPe is
+suitable for transformation to languages like OpenCL that support heterogeneous computing.  It
+remains to history to ascertain if LOPe is sufficiently general purpose to be included in a
+general-purpose programming language or if it is better suited to remain as a DSL and to be used as a
+special-purpose preprocessing tool.
