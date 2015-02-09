@@ -49,14 +49,14 @@ These transformations are accomplished using several rewrite stages using Strate
 array shape, halo size, and allocation status;
 (2) additional variables are declared that are used to maintain the OpenCL runtime state, including
 the OpenCL device, the OpenCL kernel, and OpenCL variables used to marshall kernel arguments; and
-(3) all CAFe code related to subimage usage is desugared to standard Fortran with calls to the
+(3) all CAFe code related to subimage usage is desugared (lowered) to standard Fortran with calls to the
 ForOpenCL library as needed.
 %%The latter step includes the allocation of OpenCL device memory, transfer of memory to and from the OpenCL device, marshalling of kernel arguments, running of the OpenCL kernel, and synchronization.
 
 Though not yet available, similar rewrite strategies are planned for targeting programming models
 other than OpenCL including parallel execution with OpenMP directives.  In addition, simple serial
 execution with function inlining (if desired) will be performed by the regular Fortran compiler once
-all CAFe and LOPe code has been desugared (lowered) to standard Fortran.
+all CAFe and LOPe code has been desugared to standard Fortran.
 
 %%\subsection{Halo Transfer Performance}
 
