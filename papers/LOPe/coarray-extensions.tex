@@ -1,6 +1,6 @@
 \section{Coarray Fortran Extensions}
 
-%%We highlight the Fortran elemental source-code abstraction because it provides a local orientation similar to that of OpenCL or CUDA kernel functions that were designed to exploit streaming, highly-threaded architectures like GPUs.  Elemental functions are pure in that they are guaranteed to be free of side effects such as I/O.  Consider a convolution where a 3x3 filter is applied to individual pixel elements in a photograph to average of blur the original photograph.  A convolution is similar to stencil operations in computational fluid dynamics that are used to obtain spatial derivatives of state variables.  Simple code is shown with extentions to Fortran shown in capital letters.  The extensions could be provided to C or Fortran functions via compiler directives rather than explicit language syntax.
+%%We highlight the Fortran elemental source-code abstraction because it provides a local orientation similar to that of OpenCL or CUDA kernel functions that were designed to exploit streaming, highly-threaded architectures like GPUs.  Elemental functions are pure in that they are guaranteed to be free of side effects such as I/O.  Consider a convolution where a 3x3 filter is applied to individual pixel elements in a photograph to average of blur the original photograph.  A convolution is similar to stencil operations in computational fluid dynamics that are used to obtain spatial derivatives of state variables.  Simple code is shown with extensions to Fortran shown in capital letters.  The extensions could be provided to C or Fortran functions via compiler directives rather than explicit language syntax.
 
 Consider the \texttt{Laplacian} concurrent function in Fig. 1.  In this section we demonstrate how
 this function can be called in the normal context of a program, one that allows full access to all
@@ -15,7 +15,7 @@ extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
 
 We introduce the important new concept of a CAFe subimage.  Fortran images are a collection of
 distributed memory processes that all run the same program (image).  LOPe extends the concept of a
-Fortran image by allowing images to be hierachical.  By this we mean that each image \emph{may}
+Fortran image by allowing images to be hierarchical.  By this we mean that each image \emph{may}
 have a subimage (or subimages), but this subimage is not visible to other regular Fortran images.
 Subimages also execute differently than normal images and may execute on different non-homogeneous
 hardware, .e.g, an attached accelerator device.  Subimages are task based while images all execute
@@ -114,7 +114,7 @@ and memory deallocation (not shown) is similar to memory allocation.
 %%\end{verbatim}
 
 
-%%\subsection{Execution Symantics and Memory Management}
+%%\subsection{Execution Semantics and Memory Management}
 
 %%This section describes the hierarchical memory layout and how memory consistency between the 3-levels of memory is maintained.  It describes what is the compiler's responsibility and what is the programmer's responsibility.
 
@@ -128,7 +128,7 @@ and memory deallocation (not shown) is similar to memory allocation.
 
 %The Fortran language has much tighter restrictions on aliasing than does C.
 %So unless a variable has the pointer or target attribute, it cannot be aliased.
-%Thus the compiler is able to agressively optimized for memory movement between
+%Thus the compiler is able to aggressively optimized for memory movement between
 %the CPU and accelerator.  However, because the design philosophy of coarrays
 %is that memory transfer between images can be expensive, the programmer must
 %explicitly transfer memory between images with explicit syntax with square
@@ -139,7 +139,7 @@ and memory deallocation (not shown) is similar to memory allocation.
 
 %Fortran currently supports:
 
-%1. Array syntax: e.g., C = A + B, where A, B, C are arrays.  Note that this is implicitly a loop structure, but that no loop indices need be provided.  Also the programmer need not specify where in memory these arrays reside.  Thus this high level syntax allows the compiler more freedom in both memory placement (even across distributed memory nodes) and in runtime code execution (individual array element may be computed by different hardward threads).  This is a simple example and it is a research question as to what compiler directives would be useful for memory placement and other directions to the compiler for efficient code generation.
+%1. Array syntax: e.g., C = A + B, where A, B, C are arrays.  Note that this is implicitly a loop structure, but that no loop indices need be provided.  Also the programmer need not specify where in memory these arrays reside.  Thus this high level syntax allows the compiler more freedom in both memory placement (even across distributed memory nodes) and in runtime code execution (individual array element may be computed by different hardware threads).  This is a simple example and it is a research question as to what compiler directives would be useful for memory placement and other directions to the compiler for efficient code generation.
 
 %2. Pure procedures:  Fortran has syntax for specifying procedures that have no side effects during execution.  Specifying code that is side-effect free code is important information to provide to the compiler so that it can generate efficient multi-threaded code.
 
@@ -147,7 +147,7 @@ and memory deallocation (not shown) is similar to memory allocation.
 
 %We have determined that additional syntax is needed, in addition to the three language features described above, to allow programmers the ability to express code in Fortran to be targeted for multi-threaded hardware architectures like GPUs.  This additional syntax is provided by functions that return a copy of a small region of memory surrounding an array element (as seen within an elemental procedure) and with functions for thread synchronization.  This additional syntax will allow pure procedures to perform stencil and other convolution-like operations on a copy of memory, synchronize, then store the computed results back to the array element associated with the given thread.
 
-%In addition Fortran has syntax like the target attribute the specifies when variables can be aliased.  This allows for much easier program analysis as the compiler knows that ordinary variables cannot be aliased.  Fortran also has excellent facilities for interoperability with C so that programming in a mixed language invironment is easily accomplished, including interoperability with native Fortran arrays.
+%In addition Fortran has syntax like the target attribute the specifies when variables can be aliased.  This allows for much easier program analysis as the compiler knows that ordinary variables cannot be aliased.  Fortran also has excellent facilities for interoperability with C so that programming in a mixed language environment is easily accomplished, including interoperability with native Fortran arrays.
 
 \input{coarray-comparison}
 
