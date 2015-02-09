@@ -1,59 +1,62 @@
 \section{LOPe and CAFe Implementation}
 
 This section briefly describes how LOPe extensions to Fortran have been implemented as
-source-to-source transformations via rewrite rules and strategies in StrategoXT.
+source-to-source transformations via rewrite rules (for expressing basic transformations) and
+rewriting strategies (for controlling the application of the rewrite rules).  A LOPe file is
+transformed to Fortran and OpenCL files through generative programming techniques using
+Stratego/XT tools\cite{Bravenboer200852} and is accomplished in three phases: (1) parsing to
+produce a LOPe Abstract Syntax Tree (AST) represented in the Annotated Term
+Format (ATerm\cite{DBLP:journals/spe/BrandJKO00}); (2) transformations of LOPe AST nodes to Fortran
+and C AST nodes; and (3) pretty-printing to the base Fortran and OpenCL languages.
 
-Transformations are accomplished in three phases:
-1. Parsing to produce an AST nodes representated as ATerms;
-2. Transformations on the AST nodes represented as rewrite rules and strategies in Stratego/XT; and
-3. Pretty printing of transformed nodes using the pretty printing facilites of BoxLib.
+The foundation of LOPe is the syntax definition of the base language expressed in
+SDF (Syntax Definition Formalism) as part of the Open Fortran Project (OFP)\cite{OFP:git:url}.
+LOPe is defined in a separate SDF module that extends the Fortran 2008 language standard with 15
+context-free syntax rules.  Parsing is implemented in Stratego/XT by a scannerless generalized-LR
+parser and the conversion of transformed AST nodes to text is accomplished with simple
+pretty-printing rules.
+
 
 \subsection{Transformations for Concurrent Procedures}
 
-A key component of the LOPe transformations is the targeting of a LOPe \texttt{CONCURRENT}
-procedure for a particular hardware (and software) architecture.  The execution target can be one
-of several choices, including serial execution by the current process (and hardware) via inlining
+A key component of code generation for LOPe is the targeting of a LOPe \texttt{CONCURRENT}
+procedure for a particular hardware architecture.  The execution target can be one
+of several choices, including serial execution by the current process via inlining
 of the function, parallel execution by inlining with OpenMP compiler directives, or parallel
-execution by a heterogeneous processing elements with a language like OpenCL, for example.
+execution by heterogeneous processing elements with a language like OpenCL.
 
-For this work we have developed rewrite strategies and rules in Stratego/XT to rewrite Fortran AST
+For this work we have developed rewrite rules and strategies in Stratego/XT to rewrite Fortran AST
 nodes to C AST nodes (extended with necessary OpenCL keywords).  The C AST ATerms have mostly a
-one-to-one correspondence with Fortran terms.  A \texttt{CONCURRENT} procedure is transformed to an
-OpenCL kernel, Fortran formal parameters are transformed to C parameters (with a direct mapping of
-types), and local Fortran variable declarations are rewritten as C declarations.  Similarly,
-Fortran executable statements are rewritten as C executable AST nodes.  Mostly the only
-complication is mapping the LOPe local array index view to the global C index space.  This
+one-to-one correspondence with Fortran terms: a \texttt{CONCURRENT} procedure is transformed to an
+OpenCL kernel; Fortran formal parameters are transformed to C parameters (with a direct mapping of
+types); and local Fortran variable declarations are rewritten as C declarations.  Similarly,
+Fortran executable statements are rewritten as C statements.  The only
+minor complication is mapping the LOPe local, array index view to the global C index space.  This
 translation is facilitated by a Fortran symbol table that stores array shape and halo size
 information.
 
-Once all rewriting passes have been made to transform from LOPe Fortran ATerms to C ATerms, the
-C ATerms are output as an OpenCL file using a C pretty printer.
+\subsection{Transformations of the Calling Site}
 
-\subsection{Transformations at the Call Site}
-
-Transformations at a LOPe procedure call site are more difficult, though technically straight forward.
-The Fortran function call must be transformed to a call to run the OpenCL kernel (produced as described
-above).  This is facilitated by the use of the ForOpenCL library that provides Fortran bindings to the
-OpenCL runtime\cite{foropencl}.  But the usage requires the declaration of extra variables,
-allocation of memory on the OpenCL device (subimage), transfer of memory, marshalling of kernel
-arguments, and synchronization.
+Transformations of a LOPe procedure call site are more difficult, though technically straight
+forward.  The Fortran function call must be transformed to a call to run the OpenCL kernel
+(generated as described above).  This is facilitated by use of the ForOpenCL library which
+provides Fortran bindings to the OpenCL runtime\cite{Sottile:2013:FTE:2441516.2441520}.  However,
+this usage requires the declaration of extra variables, allocation of memory on the OpenCL device
+(subimage), transfer of memory, marshalling of kernel arguments, and synchronization.
 
 These transformations are accomplished using several rewrite stages using Stratego/XT strategies:
-1. A symbol table is produced in the first pass to store information related to arrays including,
+(1) a symbol table is produced in the first pass to store information related to arrays including,
 array shape, halo size, and allocation status;
-2. Additional variables are declared that are used to maintain the OpenCL runtime state, including
-the OpenCL device (as obtained from a \texttt{GET\_SUBIMAGE} call), the OpenCL kernel (produced as
-described above), and OpenCL variables used to marshall kernel arguments; and
-3. All CAFe code related to subimage usage is lowered to standard Fortran with calls to the
-ForOpenCL library as needed.  The latter step includes the allocation of OpenCL device memory,
-transfer of memory to and from the OpenCL device and the executing Fortran process (image) as
-indicated in the program source by the single bracket \texttt{[subimage]} notation, marshalling
-of kernel argument, running of the OpenCL kernel, and synchronization.
+(2) additional variables are declared that are used to maintain the OpenCL runtime state, including
+the OpenCL device, the OpenCL kernel, and OpenCL variables used to marshall kernel arguments; and
+(3) all CAFe code related to subimage usage is desugared to standard Fortran with calls to the
+ForOpenCL library as needed.
+%%The latter step includes the allocation of OpenCL device memory, transfer of memory to and from the OpenCL device, marshalling of kernel arguments, running of the OpenCL kernel, and synchronization.
 
 Though not yet available, similar rewrite strategies are planned for targeting programming models
 other than OpenCL including parallel execution with OpenMP directives.  In addition, simple serial
 execution with function inlining (if desired) will be performed by the regular Fortran compiler once
-all CAFe and LOPe code has been lowered to standard Fortran.
+all CAFe and LOPe code has been desugared (lowered) to standard Fortran.
 
 %%\subsection{Halo Transfer Performance}
 
