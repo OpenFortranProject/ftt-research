@@ -35,7 +35,7 @@ minor complication is mapping the LOPe local, array index view to the global C i
 translation is facilitated by a Fortran symbol table that stores array shape and halo size
 information.
 
-\subsection{Transformations of the Calling Site}
+\subsection{Transformations at the Calling Site}
 
 Transformations of a LOPe procedure call site are more difficult, though technically straight
 forward.  The Fortran function call must be transformed to a call to run the OpenCL kernel
@@ -60,10 +60,10 @@ all CAFe and LOPe code has been desugared (lowered) to standard Fortran.
 
 %%\subsection{Halo Transfer Performance}
 
-%%A thorough examination of potential performance gains using LOPe for parallelization of code is beyond the scope of this paper.  The emphasis of this work is to explain the syntax and execution symantics of a LOPe application.  However, preliminary work using the StrategoXT rewrite system as described indicates that similar performance can be expected to that of previous work\cite{foropencl} (see also\cite{StencilCompilers}).
+%%A thorough examination of potential performance gains using LOPe for parallelization of code is beyond the scope of this paper.  The emphasis of this work is to explain the syntax and execution semantics of a LOPe application.  However, preliminary work using the Stratego/XT rewrite system as described indicates that similar performance can be expected to that of previous work\cite{foropencl} (see also\cite{StencilCompilers}).
 
 %%The current implementation does \emph{not} take advantage of optimization strategies such as prefetching of array tiles (including halos) into OpenCL local memory or of loop unrolling on the OpenCL device.  Neither does it take advantage of the potential of LOPe \texttt{CONCURRENT} function fusion along with execution and synchronization strategies to overlap communication with computation.
 
-%%Since many scientific codes are dominated by memory performance, including and especially stencil algorithms as they typically only involve a computation on a small locally central array element and a small overlapping halo region.  Stencil operations frequently do not contain enough floating point operations per memory load to allow for floating point performation to operate at peak (though this is entirely application and domain specific).  Thus we illustrate the \emph{potential} for performance by noting the latency and throughput performance of an attached GPU inconjuction with MPI distributed memory performance associated with halo transfer in Table 1.
+%%Since many scientific codes are dominated by memory performance, including and especially stencil algorithms as they typically only involve a computation on a small locally central array element and a small overlapping halo region.  Stencil operations frequently do not contain enough floating point operations per memory load to allow for floating point performance to operate at peak (though this is entirely application and domain specific).  Thus we illustrate the \emph{potential} for performance by noting the latency and throughput performance of an attached GPU in conjunction with MPI distributed memory performance associated with halo transfer in Table 1.
 
 %%The results in Table 1 indicate that the primary bottleneck in using accelerators attached to the TODO bus using OpenCL is likely to be the latency in transferring memory to and from the device for distributed memory clusters of only a few nodes exchanging halo data using MPI.
