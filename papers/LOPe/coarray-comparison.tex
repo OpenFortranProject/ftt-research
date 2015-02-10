@@ -15,7 +15,7 @@ work involved in memory transfer and synchronization.  Additionally, the semanti
 execution model remove the possibility of race conditions developing during execution of a
 concurrent procedure.
 
-We emphasize some of these advantages by comparing the \texttt{Laplace} implementation with the
+We emphasize some of these advantages by comparing the \texttt{Laplacian} implementation in Fig. 1 with the
 implementation of the same algorithm from the original Numrich and Reid
 paper\cite{Numrich:1998:CFP:289918.289920} first describing coarrays in Fortran.  We should point
 out that this comparison is somewhat unfair, because Numrich and Reid were introducing coarray
@@ -43,21 +43,23 @@ example shown below, type declarations have been removed to save space:
 
 \subsection{LOPe Advantages}
 
-There are several advantages to LOPe, including:
+%%There are several advantages to LOPe over the CAF example, including:
+A comparison of Fig. 1 to the CAF example suggests the following advantages:
 
 \begin{itemize}
 
 \item
 LOPe requires the implementation of the algorithm to be separate from the call to effect the halo
-transfer.  Removing boundary condition specification (e.g., the cyclic boundary conditions
-implemented in the CAF example) from the algorithm allows the boundary conditions to be changed
+transfer.  Removing boundary condition specification
+%%(e.g., the cyclic boundary conditions implemented in the CAF example)
+from the algorithm allows the boundary conditions to be changed
 without changing algorithm code.
 
 \item
 LOPe applies the transfer of halo memory across possibly multiple levels of memory with the LOPe
 intrinsic \texttt{TRANSFER\_HALO} function.  Thus the LOPe algorithm can be run on a machine with
-many interconnected nodes, each containing hybrid processor cores.  The coarray example can only be
-run on multiple nodes without accelerator cores.
+many interconnected nodes, each containing hybrid processor cores.
+%%The coarray example can only be run on multiple nodes without accelerator cores.
 
 \item
 Algorithm implementation is separate from user-specified synchronization, e.g., \texttt{call
@@ -72,8 +74,8 @@ topology.
 
 \item
 The algorithm implementation is separate from any specification as to where the algorithm
-is to be executed.  The CAF example explicitly denotes where a statement is to executed
-with a control flow construct like \texttt{if (me == 1)}.
+is to be executed.  The CAF example explicitly denotes where a statement is to be executed
+with the control flow construct \texttt{if (me == 1)}.
 
 \item
 The LOPe implementation is easier to understand and frequently follows the mathematical algorithm
@@ -83,7 +85,9 @@ is able to implement the same algorithm with one statement and no intervening sy
 
 \item
 The semantics of LOPe makes explicit management of array temporaries (e.g., \texttt{u} and
-\texttt{new\_u} by the programmer unnecessary (though still possible).  Because in LOPe the
+\texttt{new\_u}) by the programmer unnecessary.
+%%(though still possible).
+Because in LOPe the
 halo region is a language construct, the compiler is better able to manage temporary
 buffers than users on the target hardware platform.
 
@@ -113,7 +117,7 @@ properly.
 \item
 A programmer can't make synchronization errors in calls to LOPe functions as synchronization is
 implicit in the \texttt{CONCURRENT} attribute.  A thread running a concurrent procedure is provided
-with a copy of it's local array element plus halo that is consistent with the state of memory
+with a copy of its local array element plus halo that is consistent with the state of memory
 \emph{at the time of invocation of the procedure}.  Stores to an individual thread's local array
 element (by that thread) are never visible to other threads.  Normal coarray programs (like MPI)
 require explicit synchronization to ensure that processes arrive at the same program location
