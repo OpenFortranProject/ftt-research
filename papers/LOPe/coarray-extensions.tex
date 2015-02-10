@@ -13,15 +13,15 @@ extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
 
 \subsection{Subimages}
 
-We introduce the important new concept of a CAFe subimage.  Fortran images are a collection of
+We must first introduce the important new concept of a \emph{CAFe subimage}.  Fortran images are a collection of
 distributed memory processes that all run the same program (image).  LOPe extends the concept of a
 Fortran image by allowing images to be hierarchical.  By this we mean that each image \emph{may}
 have a subimage (or subimages), but this subimage is not visible to other regular Fortran images.
 Subimages also execute differently than normal images and may execute on different non-homogeneous
-hardware, .e.g, an attached accelerator device.  Subimages are task based while images all execute
+hardware, e.g., an attached accelerator device.  Subimages are task based while images all execute
 a Single Program but with different (Multiple) Data (SPMD).  A task can be given to a subimage, but
 execution on the subimage terminates once the task is finished.  Memory on a subimage is permanent,
-however, and must be specifically allocated and deallocated.
+however, and must be explicitly allocated and deallocated.
 
 One obtains a subimage by executing the new LOPe function call, \texttt{device = GET\_SUBIMAGE(1)},
 where the integer argument represents an attached hardware device (or a separate process).
@@ -92,8 +92,8 @@ specific subimage indicated by \texttt{[[device]]}; 3. Execution of the iterates
 in any order, even \emph{concurrently}; 4. The local element of the array (as
 defined above in reference to the definition of the concurrent procedure
 \texttt{Laplacian}) is given by the indices \texttt{(i,j)}; 5. Location of memory for the
-task is to be taken from the subimage as noted by \texttt{[device]}; 5. All threads must finish
-execution of the loop body before further execution of the program proceeds; and 6. Transfer of
+task is to be taken from the subimage as noted by \texttt{[device]}; 6. All threads must finish
+execution of the loop body before further execution of the program proceeds; and 7. Transfer of
 all requisite halo regions is effected by the call to the new LOPe intrinsic function
 \texttt{HALO\_TRANSFER()}.  This function is a synchronization event in that all images must
 complete the halo transfer before program execution continues.
