@@ -51,7 +51,7 @@ the bottom row is \texttt{U(:,0)} and the top row is \texttt{U(:,N+1)}, leaving 
 \texttt{U(1:M,1:N)}.
 
 In this allocation statement, the total number of process columns $NP$ can be obtained at runtime,
-but \emph{may not} be explicitly provided (according to CAF rules) because the actual number of
+but \emph{may not} be explicitly provided (according to Coarray Fortran (CAF) rules) because the actual number of
 participating processes (in Fortran called images) is variable, depending on how many processes are
 requested at program startup.  In this discussion, it is \emph{assumed} that there are no holes in
 the logical processor topology, thus $MP*NP = P$, where $MP$ is the number of process rows and $P$
