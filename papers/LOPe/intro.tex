@@ -29,7 +29,7 @@ like MPI \cite{preissl:2011:SC}.
 
 %%% Would like to say something here about HPC as a language based solution to reducing code complexity
 
-However, in large part these languages are largely syntactic sugar for
+However, in large part these languages are mostly syntactic sugar for
 message passing and do not provide a substantial decrease in code
 complexity when application performance is a
 goal\cite{hasert:2011:EuroMPI}.  While skilled programmers in the HPC
@@ -48,10 +48,10 @@ large multiphysics code frameworks, it could take several person years
 to retarget an application for \emph{each} new heterogeneous
 platform\cite{DBLP:journals/corr/DubeyS13}.
 
-A reasonable solution given todays language limitations is to use MPI for distributed memory
+A reasonable solution given today's language limitations is to use MPI for distributed memory
 parallelism \emph{plus} OpenMP for on-chip parallelism.  This hybrid approach is taken by two
 successful, large-scale AMR multiphysics code frameworks, FLASH and Chombo; currently however,
-neither of these codes currently support hardware accelerators\cite{DBLP:journals/corr/DubeyS13}.
+neither of these codes support hardware accelerators\cite{DBLP:journals/corr/DubeyS13}.
 %%This is the solution proposed by Cray and PGI \cite{BOF_SC10} (currently Chapel does not target GPUs\cite{Brad?}).
 Other choices for expressing on-chip parallelism are OpenCL~\cite{opencl11} and NVIDIA's CUDA.
 Unfortunately, achieving high performance using either of these two languages can be a daunting
