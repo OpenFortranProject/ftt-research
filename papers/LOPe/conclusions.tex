@@ -27,12 +27,16 @@ algorithm with data-access patterns;
 
 %%Note that the use of halo cells is the normal way that large and complex MPI and CAF programs are implemented.
 
+\vspace{-.1in}
+
 \subsubsection{Benefits.}
 LOPe proposes to formalize the common, halo software pattern in language syntax, thus providing the
 compiler with access to halo information in order to spread computation over more hardware
 resources, improve performance, and to reduce complexity for the programmer.  Furthermore, LOPe
 semantics provide important \emph{language restrictions} that remove the possibility of race conditions
 that occur when multiple threads have write access to overlapping data regions.
+
+\vspace{-.1in}
 
 \subsubsection{Limitations.}
 LOPe only supports regular structured grids through Fortran multi-dimensional arrays and a
