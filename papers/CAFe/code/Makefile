@@ -27,7 +27,7 @@ poisson-multigrid : $(OBJS) poisson-multigrid.o
 
 check : poisson-multigrid
 	rm -f *.vti *.dat
-	poisson-multigrid
+	./poisson-multigrid
 
 clean :
 	rm -rf $(OBJS) *.vti *.dat *.mod *.o poisson-multigrid
