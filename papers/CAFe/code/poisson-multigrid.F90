@@ -28,9 +28,9 @@ Integer, parameter :: fd     =  12
 Integer :: i
 Integer :: nsteps  =  10
 
-Real, allocatable :: V1h(:), Vp1h(:), V2h(:), V4h(:), V8h(:)
+Real, allocatable :: V1h(:), Tmp(:), V2h(:), V4h(:), V8h(:)
 
-Allocate(V1h(N+1), Vp1h(N+1))
+Allocate(V1h(N+1), Tmp(N+1))
 Allocate(V2h(N/2+1))
 Allocate(V4h(N/4+1))
 Allocate(V8h(N/8+1))
@@ -47,54 +47,54 @@ V1h = (1./3.)*V1h
 
 !... Relax solution on 1h mesh
 !    -------------------------
-Vp1h = 0.0
+Tmp = 0.0
 Call Textual_Output(N,   V1h, "1h_0")
 do i = 2, nsteps, 2
-  Call Relax(N, V1h,  Vp1h)
-  Call Relax(N, Vp1h, V1h )
+  Call Relax(N, V1h, Tmp)
+  Call Relax(N, Tmp, V1h)
   write(fd, *) i, maxval(V1h)
 end do
 Call Textual_Output(N, V1h, "1h_mid")
 
 !... Relax solution on 2h mesh
 !    -------------------------
-Vp1h = 0.0
+Tmp = 0.0
 Call Restrict(N, V1h, V2h)
 Call Textual_Output(N/2, V2h, "2h_0")
 do i = 2, nsteps, 2
-  Call Relax(N/2, V2h,  Vp1h)
-  Call Relax(N/2, Vp1h, V2h )
+  Call Relax(N/2, V2h, Tmp)
+  Call Relax(N/2, Tmp, V2h)
   write(fd, *) i, maxval(V2h)
 end do
 Call Textual_Output(N/2, V2h, "2h_mid")
 
 !... Relax solution on 4h mesh
 !    -------------------------
-Vp1h = 0.0
+Tmp = 0.0
 Call Restrict(N/2, V2h, V4h)
 Call Textual_Output(N/4, V4h, "4h_0")
 do i = 2, nsteps, 2
-  Call Relax(N/4, V4h,  Vp1h)
-  Call Relax(N/4, Vp1h, V4h )
+  Call Relax(N/4, V4h, Tmp)
+  Call Relax(N/4, Tmp, V4h)
   write(fd, *) i, maxval(V4h)
 end do
 Call Textual_Output(N/4, V4h, "4h_mid")
 
 !... Relax solution on 8h mesh
 !    -------------------------
-Vp1h = 0.0
+Tmp = 0.0
 Call Restrict(N/4, V4h, V8h)
 Call Textual_Output(N/8, V8h, "8h_0")
 do i = 2, nsteps, 2
-  Call Relax(N/8, V8h,  Vp1h)
-  Call Relax(N/8, Vp1h, V8h )
+  Call Relax(N/8, V8h, Tmp)
+  Call Relax(N/8, Tmp, V8h)
   write(fd, *) i, maxval(V8h)
 end do
 Call Textual_Output(N/8, V8h, "8h_mid")
 
 do i = 2, 5*nsteps, 2
-  Call Relax(N/8, V8h,  Vp1h)
-  Call Relax(N/8, Vp1h, V8h )
+  Call Relax(N/8, V8h, Tmp)
+  Call Relax(N/8, Tmp, V8h)
   write(fd, *) i, maxval(V8h)
 end do
 Call Textual_Output(N/8, V8h, "8h_end")
