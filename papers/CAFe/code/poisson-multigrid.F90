@@ -1,9 +1,7 @@
 Program PoissonMultigrid
 !=============================================================================
 ! Name        : poisson-multigrid.F90
-! Author      : Craig Rasmussen
 ! Version     :
-! Copyright   : University of Oregon, 2013
 ! Description : Solves the Poisson equation in one dimension.
 !
 ! Method :
