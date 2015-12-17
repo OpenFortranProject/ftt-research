@@ -1,0 +1,146 @@
+Program PoissonMultigrid
+!=============================================================================
+! Name        : poisson-multigrid.cafe
+! Version     :
+! Description : Solves the Poisson equation in one dimension.
+!
+! Method :
+!
+!   Multigrid.
+!
+!=============================================================================
+Use MultiGrid, only : AddFourierMode
+Use IO,        only : Textual_Output
+Use MultiGrid, only : Restrict, Prolongate
+
+Implicit None
+
+Integer, parameter :: NDIMS  =   1
+Integer, parameter :: N      =  64
+Integer, parameter :: fd     =  12
+
+Integer(cl_int) :: device, i
+Integer         :: nsteps  =  10
+
+Real, allocatable, dimension(:) codimension[*] :: V1h(:), Tmp(:), V2h(:), V4h(:), V8h(:)
+
+device = get_subimage(0)
+
+!! Allocate arrays on local and remote images
+!  ------------------------------------------
+Allocate(V1h(N+1)[*], Tmp(N+1))[*]
+Allocate(V2h(N/2+1))[*]
+Allocate(V4h(N/4+1))[*]
+Allocate(V8h(N/8+1))[*]
+
+!! Allocate arrays on subimage if available
+!  ----------------------------------------
+if (device /= THIS_IMAGE()) then
+   Allocate(V1h(N+1)[*], Tmp(N+1)[*])
+   Allocate(V2h(N/2+1)[*])
+end if
+
+!! Initialize arrays
+!  -----------------
+V1h  = 0.0
+Tmp = 0.0
+Call AddFourierMode(N, V1h,  1)
+Call AddFourierMode(N, V1h,  6)
+Call AddFourierMode(N, V1h, 16)
+V1h = (1./3.)*V1h
+
+!! Transfer memory to the device
+!  -----------------------------
+Tmp[device] = Tmp
+V1h[device] = V1h
+V2h[device] = V2h
+
+open(unit=fd, file="error_time.dat")
+
+!... Relax solution on 1h mesh on device
+!    -----------------------------------
+Do i = 2, nsteps, 2
+   Do Concurrent (i=1:N)  [[device]]
+      Call Relax(N, V1h(i) [device], Tmp(i) [device])
+      Call Relax(N, Tmp(i) [device], V1h(i) [device])
+   End Do
+End Do
+
+!... Relax solution on 2h mesh on device
+!    -----------------------------------
+Tmp[device] = 0.0
+Do Concurrent (i=1:N)     [[device]]
+   Call Restrict(N, V1h(i) [device], V2h(i) [device])
+End Do
+
+Do i = 2, nsteps, 2
+   Do Concurrent (i=1:N/2)   [[device]]
+      Call Relax(N/2, V2h(i) [device], Tmp(i) [device])
+      Call Relax(N/2, Tmp(i) [device], V2h(i) [device])
+   End Do
+End Do
+
+!... Relax solution on 4h mesh on CPU
+!    --------------------------------
+Tmp = 0.0
+V2h = V2h[device]
+Call Restrict(N/2, V2h, V4h)
+do i = 2, nsteps, 2
+   Call Relax(N/4, V4h, Tmp)
+   Call Relax(N/4, Tmp, V4h)
+   write(fd, *) i, maxval(V4h)
+end do
+
+!... Relax solution on 8h mesh on CPU
+!    --------------------------------
+Tmp = 0.0
+Call Restrict(N/4, V4h, V8h)
+Call Textual_Output(N/8, V8h, "8h_0")
+do i = 2, nsteps, 2
+   Call Relax(N/8, V8h, Tmp)
+   Call Relax(N/8, Tmp, V8h)
+   write(fd, *) i, maxval(V8h)
+end do
+Call Textual_Output(N/8, V8h, "8h_mid")
+
+do i = 2, 5*nsteps, 2
+   Call Relax(N/8, V8h, Tmp)
+   Call Relax(N/8, Tmp, V8h)
+   write(fd, *) i, maxval(V8h)
+end do
+Call Textual_Output(N/8, V8h, "8h_end")
+
+Call Prolongate    (N/4, V4h, V8h)
+Call Textual_Output(N/4, V4h, "4h_end")
+
+Call Prolongate    (N/2, V2h, V4h)
+Call Textual_Output(N/2, V2h, "2h_end")
+
+V2h[device] = V2h
+Do Concurrent(i=1:N)
+   Call Prolongate (N,   V1h, V2h)
+End Do
+
+V1h = V1h[device]
+Call Textual_Output(N,   V1h, "1h_end")
+
+close(fd)
+
+CONTAINS
+
+Pure Concurrent Subroutine Relax(N, A, Adv)
+   Implicit None
+   Integer, intent( in) :: N
+   Real,    intent( in) :: A  (0:N)
+   Real,    intent(out) :: Adv(0:N)
+   Integer              :: i
+
+   Real, parameter :: w = (2.0/3.0)
+
+   do i = 1, N-1
+      Adv(i) = (1.0 - w)*A(i) +  0.5*w*(A(i-1) + A(i+1))
+   end do
+
+End Subroutine Relax
+
+End Program PoissonMultigrid
