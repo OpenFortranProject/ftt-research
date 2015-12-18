@@ -126,7 +126,6 @@ Pure Subroutine Relax(N, A, Tmp)
 
    !! set physical boundary conditions (they have been recomputed)
    !    - probably should have rank information so that physical boundaries aren't changed
-   !    - also probably could make a small error here and reset physical boundaries elsewhere
    !
    Tmp(0) = 0.0
    Tmp(N) = 0.0
@@ -140,6 +139,11 @@ Pure Subroutine Relax(N, A, Tmp)
    do i = 1, N-1
       A(i) = (1.0 - w)*Tmp(i) + 0.5*w*(Tmp(i-1) + Tmp(i+1))
    end do
+
+   !! IMPORTANT: not sure why this is needed, perhaps an error in prolongation/restrict
+   !
+   A(0) = 0.0
+   A(N) = 0.0
 
 End Subroutine Relax
 
