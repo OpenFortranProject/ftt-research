@@ -140,7 +140,7 @@ Subroutine Exchange_Halo(N, A)
 !
    Implicit None
    Integer, intent( in) :: N
-   Real,    intent( in) :: A  (-1:N+1)
+   Real,    intent( in) :: A(-1:N+1)
 End Subroutine Exchange_Halo
 
 End Program PoissonMultigrid
