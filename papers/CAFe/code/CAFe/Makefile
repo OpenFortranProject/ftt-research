@@ -1,5 +1,5 @@
 CC = cc
-FC = mpif90
+FC = gfortran
 
 OPT_FLAG = -g
 

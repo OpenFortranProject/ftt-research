@@ -9,6 +9,7 @@ Program PoissonMultigrid
 !   Multigrid.
 !
 !=============================================================================
+Use mpi_f08
 Use MultiGrid, only : AddFourierMode
 Use IO,        only : Textual_Output
 Use MultiGrid, only : Restrict, Prolongate
@@ -23,6 +24,8 @@ Integer, parameter :: fd     =  12
 Integer :: i
 Integer :: nsteps = 5
 
+Integer :: rank, size
+
 Real, allocatable :: V1h(:), Tmp(:), V2h(:), V4h(:), V8h(:)
 
 Allocate(V1h(-1:N+1), Tmp(-1:N+1))
@@ -33,6 +36,9 @@ Allocate(V8h(-1:N/8+1))
 open(unit=fd, file="error_time.dat")
 
 !! Initialize
+!
+Call MPI_Init()
+
 !
 V1h = 0.0
 Call AddFourierMode(N, V1h,  1)
@@ -104,6 +110,8 @@ Call Prolongate    (N,   V1h, V2h)
 Call Textual_Output(N,   V1h, "1h_end")
 
 close(fd)
+
+Call MPI_Finalize()
 
 CONTAINS
 
