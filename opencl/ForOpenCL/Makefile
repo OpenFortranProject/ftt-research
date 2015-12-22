@@ -109,7 +109,7 @@ OBJS += OpenCLInterfaces.o $(LIB_OBJS) ForOpenCL.o
 
 LIBS += $(OBJS)
 
-APPS = elemental_add
+APPS = elementals
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
@@ -121,7 +121,7 @@ libforopencl.a: $(OBJS)
 	ar -r libforopencl.a $(LIB_OBJS)
 	ranlib libforopencl.a
 
-elemental_add: elemental_add.o $(OBJS)
+elementals: elementals.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
 opencl_utils.o: opencl_utils.c
