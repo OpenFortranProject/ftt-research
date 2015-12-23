@@ -30,17 +30,17 @@ Module MultiGrid
 
 Contains
 
-Subroutine AddFourierMode(N, V, k)
+Subroutine AddFourierMode(N, np, V, k)
 !
 ! Add Fourier mode k to V
 !
   implicit none
-  integer, intent(in   )  ::  N, k
+  integer, intent(in   )  ::  N, k, np
   real,    intent(inout)  ::  V(-1:N+1)  ! includes boundaries at -1,0:N,N+1
   integer :: i
 
-  do i = -1, N+1
-    V(i) = V(i) + sin(i*k*PI/N)
+  do i = -1, N+1  ! Still need to fix indexing. IMPORTANT!! (What to do about -)
+    V(i) = V(i) + sin(i*k*PI/N/np)
   end do
 
 End Subroutine AddFourierMode
