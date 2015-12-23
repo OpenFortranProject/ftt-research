@@ -109,7 +109,7 @@ OBJS += OpenCLInterfaces.o $(LIB_OBJS) ForOpenCL.o
 
 LIBS += $(OBJS)
 
-APPS = elementals
+APPS = multigrid elementals 
 
 %.o: %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
@@ -124,11 +124,18 @@ libforopencl.a: $(OBJS)
 elementals: elementals.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
+multigrid: multigrid.o $(OBJS)
+	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
+
 opencl_utils.o: opencl_utils.c
 	$(CC) -c $(CFLAGS) $<
 
 opencl_test.o: opencl_test.c
 	$(CC) -c $(CFLAGS) $<
+
+opencl_test: opencl_test.o # $(OBJS)
+	$(CC) -o $@ $<
+
 
 # dependencies
 #
@@ -138,6 +145,8 @@ OpenCLInterfaces.o: Timer.o OpenCLTypes.o
 CLBuffer.o: OpenCLTypes.o OpenCLInterfaces.o
 
 elemental_add.o: elemental_add.f90 $(OBJS)
+
+multigrid.o: multigrid.f90 $(OBJS)
 
 clean:
 	rm -f $(OBJS)
