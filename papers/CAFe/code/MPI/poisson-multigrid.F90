@@ -24,7 +24,7 @@ Integer, parameter :: fd     =  12
 Integer :: i
 Integer :: nsteps = 5
 
-Integer :: rank, size
+Integer :: rank, np
 
 Real, allocatable :: V1h(:), Tmp(:), V2h(:), V4h(:), V8h(:)
 
@@ -38,12 +38,14 @@ open(unit=fd, file="error_time.dat")
 !! Initialize
 !
 Call MPI_Init()
+Call MPI_Comm_size( MPI_COMM_WORLD, np)
+print ("('size:', i3)"), np
 
 !
 V1h = 0.0
-Call AddFourierMode(N, V1h,  1)
-Call AddFourierMode(N, V1h,  6)
-Call AddFourierMode(N, V1h, 16)
+Call AddFourierMode(N, np, V1h,  1)
+Call AddFourierMode(N, np, V1h,  6)
+Call AddFourierMode(N, np, V1h, 16)
 V1h = (1./3.)*V1h
 
 !... Relax solution on 1h mesh
