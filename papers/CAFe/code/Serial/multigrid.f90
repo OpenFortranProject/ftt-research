@@ -45,7 +45,7 @@ Subroutine AddFourierMode(N, V, k)
 
 End Subroutine AddFourierMode
 
-Subroutine Prolongate(N, V1h, V2h)
+Subroutine Prolongate_1D(N, V1h, V2h)
 !
 !  Interpolation (prolongation) operator R^(N/2+1) => R^(N+1)
 !
@@ -65,9 +65,107 @@ Subroutine Prolongate(N, V1h, V2h)
   end do
   V1h(N) = V2h(m+1)      ! right halo cell
 
-End Subroutine Prolongate
+End Subroutine Prolongate_1D
 
-Subroutine Restrict(N, V1h, V2h)
+Subroutine Prolongate_2D(N, V1h, V2h)
+!
+!  Interpolation (prolongation) operator R^(N/2+1) => R^(N+1)
+!
+!  N-1 is the number of interior fine grid cells
+!
+  implicit none
+  integer, intent(in) :: N
+  real :: V1h(-1:N+1,-1:N+1), V2h(-1:N/2+1,-1:N/2+1)
+  integer :: i, j, ii, jj, m
+
+  m = N/2 - 1     ! # interior coarse cells
+
+  do j = 0, m
+    jj = 2*j
+    do i = 0, m
+      ii = 2*i
+
+      V1h(ii,jj) = V2h(i,j)
+
+      V1h(ii+1,jj  ) =  .5*(V2h(i,j) + V2h(i+1,j  ))
+      V1h(ii  ,jj+1) =  .5*(V2h(i,j) + V2h(i  ,j+1))
+
+      V1h(ii+1,jj+1) = .25*(V2h(i,j) + V2h(i,j+1) + V2h(i+1,j) + V2h(i+1,j+1))
+    end do
+  end do
+
+  do j = 0, m
+     V1h(N,j) = V2h(m+1,j)      ! right halo cells
+  end do
+  do i = 0, m
+     V1h(i,N) = V2h(i,m+1)      ! top   halo cells
+  end do
+
+End Subroutine Prolongate_2D
+
+Subroutine Prolongate_3D(N, V1h, V2h)
+!
+!  Interpolation (prolongation) operator R^(N/2+1) => R^(N+1)
+!
+!  N-1 is the number of interior fine grid cells
+!
+  implicit none
+  integer, intent(in) :: N
+  real :: V1h(-1:N+1,-1:N+1,-1:N+1), V2h(-1:N/2+1,-1:N/2+1,-1:N/2+1)
+  integer :: i, j, k, ii, jj, kk, m
+
+  m = N/2 - 1     ! # interior coarse cells
+
+  do k = 0, m
+    kk = 2*k
+    do j = 0, m
+      jj = 2*j
+      do i = 0, m
+        ii = 2*i
+
+        V1h(ii,jj,kk) = V2h(i,j,k)
+
+        V1h(ii+1,jj  ,kk  ) =   .5*(V2h(i,j,k) + V2h(i+1,j  ,k  ))
+        V1h(ii  ,jj+1,kk  ) =   .5*(V2h(i,j,k) + V2h(i  ,j+1,k  ))
+        V1h(ii  ,jj  ,kk+1) =   .5*(V2h(i,j,k) + V2h(i  ,j  ,k+1))
+
+        V1h(ii+1,jj+1,kk  ) =  .25*(V2h(i,j,k) + V2h(i+1,j  ,k  )                      &
+                                               + V2h(i  ,j+1,k  ) + V2h(i+1,j+1,k  ))
+        V1h(ii+1,jj  ,kk+1) =  .25*(V2h(i,j,k) + V2h(i+1,j  ,k  )                      &
+                                               + V2h(i  ,j  ,k+1) + V2h(i+1,j  ,k+1))
+        V1h(ii  ,jj+1,kk+1) =  .25*(V2h(i,j,k) + V2h(i  ,j+1,k  )                      &
+                                               + V2h(i  ,j  ,k+1) + V2h(i  ,j+1,k+1))
+
+        V1h(ii+1,jj+1,kk+1) = .125*(V2h(i,j,k) + V2h(i+1,j  ,k  ) + V2h(i  ,j+1,k  )   &
+                                                                  + V2h(i  ,j  ,k+1)   &
+                                               + V2h(i+1,j+1,k  ) + V2h(i+1,j  ,k+1)   &
+                                                                  + V2h(i  ,j+1,k+1)   &
+                                                                  + V2h(i+1,j+1,k+1))
+      end do
+    end do
+  end do
+
+  do k = 0, m
+    do j = 0, m
+      V1h(N,j,k) = V2h(m+1,j,k)      ! right halo plane
+    end do
+  end do
+
+  do k = 0, m
+    do i = 0, m
+      V1h(i,N,k) = V2h(i,m+1,k)      ! top   halo plane
+    end do
+  end do
+
+  do j = 0, m
+    do i = 0, m
+      V1h(i,j,N) = V2h(i,j,m+1)      ! back  halo plane
+    end do
+  end do
+
+End Subroutine Prolongate_3D
+
+Subroutine Restrict_1D(N, V1h, V2h)
 !
 !  Restriction operator R^(N+1) => R^(N/2+1)
 !
@@ -85,6 +183,68 @@ Subroutine Restrict(N, V1h, V2h)
      V2h(i) = 0.25*(V1h(ii-1) + 2.0*V1h(ii) + V1h(ii+1))
   end do
 
+End Subroutine Restrict_1D
+
+Subroutine Restrict2D(N, V1h, V2h)
+!
+!  Restriction operator R^(N+1) => R^(N/2+1)
+!
+!  N-1 is the number of interior fine grid cells
+!
+  implicit none
+  integer, intent(in) :: N
+  real :: V1h(-1:N+1,-1:N+1), V2h(-1:N/2+1,-1:N/2+1)
+  integer :: i, j, ii, jj, m
+
+  m = N/2 - 1     ! # interior coarse cells
+
+  do j = 0, m+1
+    jj = 2*j
+    do i = 0, m+1
+      ii = 2*i
+      V2h(i,j) = .25*(.25*V1h(ii-1,jj+1) + .5*V1h(ii,jj+1) + .25*V1h(ii+1,jj+1)   &
+                    +  .5*V1h(ii-1,jj  ) +    V1h(ii,jj  ) +  .5*V1h(ii+1,jj  )   &
+                    + .25*V1h(ii-1,jj-1) + .5*V1h(ii,jj-1) + .25*V1h(ii+1,jj-1))
+    end do
+  end do
+
 End Subroutine Restrict
+
+Subroutine Restrict_3D(N, V1h, V2h)
+!
+!  Restriction operator R^(N+1) => R^(N/2+1)
+!
+!  N-1 is the number of interior fine grid cells
+!
+  implicit none
+  integer, intent(in) :: N
+  real :: V1h(-1:N+1,-1:N+1,-1:N+1), V2h(-1:N/2+1,-1:N/2+1,-1:N/2+1)
+  integer :: i, j, k, ii, jj, kk, m
+
+  m = N/2 - 1     ! # interior coarse cells
+
+  do k = 0, m+1
+    kk = 2*k
+    do j = 0, m+1
+      jj = 2*j
+      do i = 0, m+1
+        ii = 2*i
+        V2h(i,j) = .??*(
+           + .125*V1h(ii-1,jj+1,kk+1) + .25*V1h(ii,jj+1,kk+1) + .125*V1h(ii+1,jj+1,kk+1) &
+           +  .25*V1h(ii-1,jj  ,kk+1) +  .5*V1h(ii,jj  ,kk+1) +  .25*V1h(ii+1,jj  ,kk+1) &
+           + .125*V1h(ii-1,jj-1,kk+1) + .25*V1h(ii,jj-1,kk+1) + .125*V1h(ii+1,jj-1,kk+1) &
+                                                                                         &
+           +  .25*V1h(ii-1,jj+1,kk  ) +  .5*V1h(ii,jj+1,kk  ) +  .25*V1h(ii+1,jj+1,kk  ) &
+           +   .5*V1h(ii-1,jj  ,kk  ) +     V1h(ii,jj  ,kk  ) +   .5*V1h(ii+1,jj  ,kk  ) &
+           +  .25*V1h(ii-1,jj-1,kk  ) +  .5*V1h(ii,jj-1,kk  ) +  .25*V1h(ii+1,jj-1,kk  ) &
+                                                                                         &
+           + .125*V1h(ii-1,jj+1,kk-1) + .25*V1h(ii,jj+1,kk-1) + .125*V1h(ii+1,jj+1,kk-1) &
+           +  .25*V1h(ii-1,jj  ,kk-1) +  .5*V1h(ii,jj  ,kk-1) +  .25*V1h(ii+1,jj  ,kk-1) &
+           + .125*V1h(ii-1,jj-1,kk-1) + .25*V1h(ii,jj-1,kk-1) + .125*V1h(ii+1,jj-1,kk-1))
+    end do
+  end do
+
+End Subroutine Restrict_3D
+
 
 End Module MultiGrid
