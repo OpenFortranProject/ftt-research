@@ -111,6 +111,8 @@ Call Textual_Output(N/2, V2h, "2h_end")
 Call Prolongate    (N,   V1h, V2h)
 Call Textual_Output(N,   V1h, "1h_end")
 
+Call Solve         (N,   V1h, 
+
 close(fd)
 
 CONTAINS
@@ -153,6 +155,38 @@ Pure Subroutine Relax_1D(N, A, Tmp)
    A(0) = 0.0
    A(N) = 0.0
 
+End Subroutine Relax
+
+Pure Subroutien Relax_3D(N, A, Tmp)
+
+     Implicit None
+     Interger, intent(in   ) :: N
+     Real,     intent(inout) :: A  (-1:N+1,-1:N+1,-1:N+1)
+     Real,     intent(inout) :: Tmp(-1:N+1,-1:N+1,-1:N+1)
+     Integer                 :: i, j, k
+     
+     ! compute over extended region including boundary cells
+          
+
+     !! set physical boundary conditions (they have been recomputed)
+     
+     !! Need to synchroniz here as we may be running concurrently
+     ! sync all
+
+     ! compute over just the interior
+
+     do k = 1, N-1
+       do j = 1, N-1
+         do i = 1, N-1
+	   A(i,j,k) = (1.0 - w)*Tmp(i,j,k)                         &
+                      + 0.???*w*(Tmp(i-1,j,k) + Tmp(i+1,j,k)       &
++ permutations
+
+         end do
+       end do
+    end do
+     
+     
 End Subroutine Relax
 
 Subroutine Exchange_Halo(N, A)
