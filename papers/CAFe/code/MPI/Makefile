@@ -29,5 +29,9 @@ check : poisson-multigrid
 	rm -f *.vti *.dat
 	./poisson-multigrid
 
+check-par : poisson-multigrid
+	rm -f *.vti *.dat
+	mpirun -np 2 poisson-multigrid
+
 clean :
 	rm -rf $(OBJS) *.vti *.dat *.mod *.o poisson-multigrid
