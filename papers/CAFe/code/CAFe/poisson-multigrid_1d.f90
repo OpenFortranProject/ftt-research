@@ -60,7 +60,7 @@ do t = 1, nsteps
   do concurrent(i=0:N)  [[device]]
     call Relax_1D(N, V1h, Buf)
   end do
-  call Exchange_Halo(device, N, V1h)
+  call Exchange_Halo_1D(device, N, V1h)
   write(fd, *) t, maxval(V1h)
 end do
 V1h = V1h[device]
@@ -74,7 +74,7 @@ do t = 1, nsteps
   do concurrent(i=0:N)  [[device]]
     call Relax(N/2, V2h, Buf)
   end do
-  Call Exchange_Halo(device, N/2, V2h)
+  Call Exchange_Halo_1D(device, N/2, V2h)
   write(fd, *) t, maxval(V2h)
 end do
 V2h = V2h[device]
@@ -88,7 +88,7 @@ do t = 1, nsteps
   do concurrent(i=0:N)  [[device]]
     call Relax(N/4, V4h, Buf)
   end do
-  Call Exchange_Halo(device, N/4, V4h)
+  Call Exchange_Halo_1D(device, N/4, V4h)
   write(fd, *) t, maxval(V4h)
 end do
 V4h = V4h[device]
@@ -102,7 +102,7 @@ do t = 1, nsteps
   do concurrent(i=0:N)  [[device]]
     call Relax(N/8, V8h, Buf)
   end do
-  Call Exchange_Halo(device, N/8, V8h)
+  Call Exchange_Halo_1D(device, N/8, V8h)
   write(fd, *) t, maxval(V8h)
 end do
 V8h = V8h[device]
@@ -120,7 +120,7 @@ do t = 1, nsteps
   do concurrent(i=0:N)  [[device]]
     call Relax(N/8, V8h, Buf)
   end do
-  Call Exchange_Halo(device, N/8, V8h)
+  Call Exchange_Halo_1D(device, N/8, V8h)
   write(fd, *) t, maxval(V8h)
 end do
 V8h = V8h[device]
@@ -131,7 +131,7 @@ do t = 1, nsteps
   do concurrent(i=0:N)  [[device]]
     call Relax(N/4, V4h, Buf)
   end do
-  Call Exchange_Halo(device, N/4, V4h)
+  Call Exchange_Halo_1D(device, N/4, V4h)
   write(fd, *) t, maxval(V4h)
 end do
 V4h = V4h[device]
@@ -142,7 +142,7 @@ do t = 1, nsteps
   do concurrent(i=0:N)  [[device]]
     call Relax(N/2, V2h, Buf)
   end do
-  Call Exchange_Halo(device, N/2, V2h)
+  Call Exchange_Halo_1D(device, N/2, V2h)
   write(fd, *) t, maxval(V2h)
 end do
 V2h = V2h[device]
@@ -153,7 +153,7 @@ do t = 1, nsteps
   do concurrent(i=0:N)  [[device]]
     call Relax_1D(N, V1h, Buf)
   end do
-  call Exchange_Halo(device, N, V1h)
+  call Exchange_Halo_1D(device, N, V1h)
   write(fd, *) t, maxval(V1h)
 end do
 V1h = V1h[device]
@@ -203,12 +203,12 @@ Pure Subroutine Relax_1D(N, A, Tmp)
 
 End Subroutine Relax
 
-Subroutine Exchange_Halo(device, N, A)
+Subroutine Exchange_Halo_1D(N, A)
 !
 ! Exchange halo information between neighboring processes
 !
    Implicit None
-   Integer, intent(in   ) :: device, N
+   Integer, intent(in   ) :: N
    Real,    intent(inout) :: A(-1:N+1)[*]
 
    integer :: left, right
@@ -218,11 +218,6 @@ Subroutine Exchange_Halo(device, N, A)
 
    if (left  < 1)             left  = NUM_IMAGES()
    if (right > NUM_IMAGES())  right = 1
-
-   !! First need to halo regions from the device
-   !
-   A(-1:0  ) = A(-1:0  ) [device]
-   A( N:N+1) = A( N:N+1) [device]
 
    !! Exchange with neighbors (copy)
    !
@@ -239,11 +234,30 @@ Subroutine Exchange_Halo(device, N, A)
    if (THIS_IMAGE() == 1           ) A(0) = 0.0
    if (THIS_IMAGE() == NUM_IMAGES()) A(N) = 0.0
 
+End Subroutine Exchange_Halo_1D
+
+Subroutine Get_Halo(device, N, A)
+   TYPE(CLDevice), intent(in) :: device
+   Integer, intent(in)        :: N
+   Real, intent(inout)        :: A(-1:N+1)[*]
+
+   !! Copy halo regions from the device
+   !
+   A(-1:0  ) = A(-1:0  ) [device]
+   A( N:N+1) = A( N:N+1) [device]
+
+End Subroutine Get_Halo
+
+Subroutine Put_Halo(device, N, A)
+   TYPE(CLDevice), intent(in) :: device
+   Integer, intent(in)        :: N
+   Real, intent(inout)        :: A(-1:N+1)[*]
+
    !! Copy halo regions back to the device
    !
    A(-1:0  ) [device] = A(-1:0  )
    A( N:N+1) [device] = A( N:N+1)
 
-End Subroutine Exchange_Halo
+End Subroutine Put_Halo
 
 End Program PoissonMultigrid
