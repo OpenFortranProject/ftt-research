@@ -38,7 +38,7 @@ program multigrid
    d_V1h = createBuffer(device, CL_MEM_READ_ONLY + CL_MEM_COPY_HOST_PTR, mem_size_V1h, c_loc(V1h))
    d_Tmp = createBuffer(device, CL_MEM_READ_WRITE + CL_MEM_COPY_HOST_PTR, mem_size_V1h, c_loc(Tmp))
    ! create the kernels
-   relax_kernel = createKernel(device, "relax", "multigrid.cl")
+   relax_kernel = createKernel(device, "relax_1d_kernel", "multigrid.cl")
    ! add arguments
    status = setKernelArgReal(relax_kernel, 0, w) + status
    status = setKernelArgMem(relax_kernel, 1, clMemObject(d_V1h)) + status
@@ -54,7 +54,7 @@ program multigrid
 
    ! Restrict to V2h
    d_V2h = createBuffer(device, CL_MEM_WRITE_ONLY + CL_MEM_COPY_HOST_PTR, mem_size_V2h, c_loc(V2h))
-   restrict_kernel = createKernel(device, "restrict_kernel", "multigrid.cl")
+   restrict_kernel = createKernel(device, "restrict_1d_kernel", "multigrid.cl")
    status = setKernelArgInt(restrict_kernel, 0, N) + status
    status = setKernelArgMem(restrict_kernel, 1, clMemObject(d_V1h)) + status
    status = setKernelArgMem(restrict_kernel, 2, clMemObject(d_V2h)) + status
@@ -120,7 +120,7 @@ program multigrid
    status = readBuffer(d_Tmp, c_loc(V8h), mem_size_V8h) + status
 
    ! Prolongate to V4h
-   prolongate_kernel = createKernel(device, "prolongate_kernel", "multigrid.cl")
+   prolongate_kernel = createKernel(device, "prolongate_1d_kernel", "multigrid.cl")
    status = setKernelArgInt(prolongate_kernel, 0, N) + status
    status = setKernelArgMem(prolongate_kernel, 1, clMemObject(d_V4h)) + status
    status = setKernelArgMem(prolongate_kernel, 2, clMemObject(d_V8h)) + status
