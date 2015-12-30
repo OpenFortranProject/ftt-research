@@ -45,7 +45,47 @@ Subroutine AddFourierMode(N, V, k)
 
 End Subroutine AddFourierMode
 
-Subroutine Prolongate(N, V1h, V2h)
+Pure Subroutine Relax_1D(N, A, Tmp)
+!
+! Relax on the interior and the two halo cells shared with the left and right neighbors
+!   - shared halo cells are computed twice and are not exchanged
+!   - the outside halo cells are from neighbors and cannot be not computed
+!
+   Implicit None
+   Integer, intent(in   ) :: N
+   Real,    intent(inout) :: A  (-1:N+1)
+   Real,    intent(inout) :: Tmp(-1:N+1)
+   Integer                :: i
+
+   ! compute over extended region including boundary cells
+   do i = 0, N
+      Tmp(i) = (1.0 - w)*A(i) + 0.5*w*(A(i-1) + A(i+1))
+   end do
+
+   !! set physical boundary conditions (they have been recomputed)
+   !    - probably should have rank information so that physical boundaries aren't changed
+   !
+   Tmp(0) = 0.0
+   Tmp(N) = 0.0
+
+   !! Need to synchronize here as we may be running concurrently
+   !   - on subimage will only synchronize with its hardware threads, not distributed memory
+   !
+   ! Sync All
+
+   ! compute over just the interior
+   do i = 1, N-1
+      A(i) = (1.0 - w)*Tmp(i) + 0.5*w*(Tmp(i-1) + Tmp(i+1))
+   end do
+
+   !! IMPORTANT: not sure why this is needed, perhaps an error in prolongation/restrict
+   !
+   A(0) = 0.0
+   A(N) = 0.0
+
+End Subroutine Relax_1D
+
+Pure Subroutine Prolongate_1D(N, V1h, V2h)
 !
 !  Interpolation (prolongation) operator R^(N/2+1) => R^(N+1)
 !
@@ -65,9 +105,9 @@ Subroutine Prolongate(N, V1h, V2h)
   end do
   V1h(N) = V2h(m+1)      ! right halo cell
 
-End Subroutine Prolongate
+End Subroutine Prolongate_1D
 
-Subroutine Restrict(N, V1h, V2h)
+Pure Subroutine Restrict_1D(N, V1h, V2h)
 !
 !  Restriction operator R^(N+1) => R^(N/2+1)
 !
@@ -85,6 +125,6 @@ Subroutine Restrict(N, V1h, V2h)
      V2h(i) = 0.25*(V1h(ii-1) + 2.0*V1h(ii) + V1h(ii+1))
   end do
 
-End Subroutine Restrict
+End Subroutine Restrict_1D
 
 End Module MultiGrid
