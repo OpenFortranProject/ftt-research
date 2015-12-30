@@ -28,24 +28,28 @@ Integer :: rank, np
 
 Real, allocatable :: V1h(:), Tmp(:), V2h(:), V4h(:), V8h(:)
 
+Call MPI_Init()
+Call MPI_Comm_size( MPI_COMM_WORLD, np)
+Call MPI_Comm_rank( MPI_COMM_WORLD, rank)
+
 Allocate(V1h(-1:N+1), Tmp(-1:N+1))
 Allocate(V2h(-1:N/2+1))
 Allocate(V4h(-1:N/4+1))
 Allocate(V8h(-1:N/8+1))
 
-open(unit=fd, file="error_time.dat")
+!if (rank == 0) then
+  open(unit=fd, file="error_time.dat")
+!end if
 
 !! Initialize
 !
-Call MPI_Init()
-Call MPI_Comm_size( MPI_COMM_WORLD, np)
-print ("('size:', i3)"), np
+print ("('[', i2, ']:', 1x, 'size:', i3)"), rank, np
 
 !
 V1h = 0.0
-Call AddFourierMode(N, np, V1h,  1)
-Call AddFourierMode(N, np, V1h,  6)
-Call AddFourierMode(N, np, V1h, 16)
+Call AddFourierMode(N, np, rank, V1h,  1)
+Call AddFourierMode(N, np, rank, V1h,  6)
+Call AddFourierMode(N, np, rank, V1h, 16)
 V1h = (1./3.)*V1h
 
 !... Relax solution on 1h mesh
