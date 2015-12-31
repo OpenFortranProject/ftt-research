@@ -11,7 +11,7 @@ Program PoissonMultigrid
 !=============================================================================
 Use MultiGrid, only : AddFourierMode
 Use IO,        only : Textual_Output
-Use MultiGrid, only : Restrict, Prolongate
+Use MultiGrid, only : Restrict_1D, Prolongate_1D
 
 Implicit None
 
@@ -57,56 +57,48 @@ V1h[device] = V1h
 !    -------------------------
 call Textual_Output(N, V1h, "1h_0")
 do t = 1, nsteps
-  do concurrent(i=0:N)  [[device]]
-    call Relax_1D(N, V1h, Buf)
-  end do
-  call Exchange_Halo_1D(device, N, V1h)
-  write(fd, *) t, maxval(V1h)
+   call Relax_1D(N, V1h[device], Buf[device])  [[device]]
+   call Exchange_Halo_1D(device, N, V1h)
 end do
 V1h = V1h[device]
+write(fd, *) t, maxval(V1h)
 call Textual_Output(N, V1h, "1h_mid")
 
 !... Relax solution on 2h mesh
 !    -------------------------
-Call Restrict(N, V1h, V2h)
-Call Textual_Output(N/2, V2h, "2h_0")
+call Restrict_1D(N, V1h[device], V2h[device])    [[device]]
+call Textual_Output(N/2, V2h, "2h_0")
 do t = 1, nsteps
-  do concurrent(i=0:N)  [[device]]
-    call Relax(N/2, V2h, Buf)
-  end do
-  Call Exchange_Halo_1D(device, N/2, V2h)
-  write(fd, *) t, maxval(V2h)
+   call Relax_1D(N/2, V2h[device], Buf[device])  [[device]]
+   call Exchange_Halo_1D(device, N/2, V2h)
 end do
 V2h = V2h[device]
-Call Textual_Output(N/2, V2h, "2h_mid")
+write(fd, *) t, maxval(V2h)
+call Textual_Output(N/2, V2h, "2h_mid")
 
 !... Relax solution on 4h mesh
 !    -------------------------
-Call Restrict(N/2, V2h, V4h)
-Call Textual_Output(N/4, V4h, "4h_0")
+call Restrict_1D(N/2, V2h[device], V4h[device])  [[device]]
+call Textual_Output(N/4, V4h, "4h_0")
 do t = 1, nsteps
-  do concurrent(i=0:N)  [[device]]
-    call Relax(N/4, V4h, Buf)
-  end do
-  Call Exchange_Halo_1D(device, N/4, V4h)
-  write(fd, *) t, maxval(V4h)
+   call Relax_1D(N/4, V4h[device], Buf[device])  [[device]]
+   call Exchange_Halo_1D(device, N/4, V4h)
 end do
 V4h = V4h[device]
-Call Textual_Output(N/4, V4h, "4h_mid")
+write(fd, *) t, maxval(V4h)
+call Textual_Output(N/4, V4h, "4h_mid")
 
 !... Relax solution on 8h mesh
 !    -------------------------
-Call Restrict(N/4, V4h, V8h)
-Call Textual_Output(N/8, V8h, "8h_0")
+call Restrict_1D(N/4, V4h[device], V8h[device])  [[device]]
+call Textual_Output(N/8, V8h, "8h_0")
 do t = 1, nsteps
-  do concurrent(i=0:N)  [[device]]
-    call Relax(N/8, V8h, Buf)
-  end do
-  Call Exchange_Halo_1D(device, N/8, V8h)
-  write(fd, *) t, maxval(V8h)
+   call Relax_1D(N/8, V8h[device], Buf[device])  [[device]]
+   call Exchange_Halo_1D(device, N/8, V8h)
 end do
 V8h = V8h[device]
-Call Textual_Output(N/8, V8h, "8h_mid")
+write(fd, *) t, maxval(V8h)
+call Textual_Output(N/8, V8h, "8h_mid")
 
 !! IMPORTANT: this last step should be an exact solution on a smaller grid probably
 !
@@ -115,93 +107,45 @@ Call Textual_Output(N/8, V8h, "8h_mid")
 Buf = 0
 
 Buf[device] = Buf
-Call Prolongate(N/8, V8h, Buf)
+call Prolongate_1D(N/8, V8h[device], Buf[device])  [[device]]
 do t = 1, nsteps
-  do concurrent(i=0:N)  [[device]]
-    call Relax(N/8, V8h, Buf)
-  end do
-  Call Exchange_Halo_1D(device, N/8, V8h)
-  write(fd, *) t, maxval(V8h)
+   call Relax_1D(N/8, V8h[device], Buf[device])    [[device]]
+   call Exchange_Halo_1D(device, N/8, V8h)
 end do
 V8h = V8h[device]
-Call Textual_Output(N/8, V8h, "8h_end")
+write(fd, *) t, maxval(V8h)
+call Textual_Output(N/8, V8h, "8h_end")
 
-Call Prolongate(N/4, V4h, V8h)
+call Prolongate_1D(N/4, V4h[device], V8h[device])  [[device]]
 do t = 1, nsteps
-  do concurrent(i=0:N)  [[device]]
-    call Relax(N/4, V4h, Buf)
-  end do
-  Call Exchange_Halo_1D(device, N/4, V4h)
-  write(fd, *) t, maxval(V4h)
+   call Relax_1D(N/4, V4h[device], Buf[device])    [[device]]
+   call Exchange_Halo_1D(device, N/4, V4h)
 end do
 V4h = V4h[device]
-Call Textual_Output(N/4, V4h, "4h_end")
+write(fd, *) t, maxval(V4h)
+call Textual_Output(N/4, V4h, "4h_end")
 
-Call Prolongate(N/2, V2h, V4h)
+call Prolongate_1D(N/2, V2h[device], V4h[device])  [[device]]
 do t = 1, nsteps
-  do concurrent(i=0:N)  [[device]]
-    call Relax(N/2, V2h, Buf)
-  end do
-  Call Exchange_Halo_1D(device, N/2, V2h)
-  write(fd, *) t, maxval(V2h)
+   call Relax_1D(N/2, V2h[device], Buf[device])    [[device]]
+   call Exchange_Halo_1D(device, N/2, V2h)
 end do
 V2h = V2h[device]
-Call Textual_Output(N/2, V2h, "2h_end")
+write(fd, *) t, maxval(V2h)
+call Textual_Output(N/2, V2h, "2h_end")
 
-Call Prolongate(N, V1h, V2h)
+call Prolongate_1D(N, V1h[device], V2h[device])  [[device]]
 do t = 1, nsteps
-  do concurrent(i=0:N)  [[device]]
-    call Relax_1D(N, V1h, Buf)
-  end do
-  call Exchange_Halo_1D(device, N, V1h)
-  write(fd, *) t, maxval(V1h)
+   call Relax_1D(N, V1h[device], Buf[device])    [[device]]
+   call Exchange_Halo_1D(device, N, V1h)
 end do
 V1h = V1h[device]
-Call Textual_Output(N, V1h, "1h_end")
+write(fd, *) t, maxval(V1h)
+call Textual_Output(N, V1h, "1h_end")
 
 close(fd)
 
 CONTAINS
-
-Pure Subroutine Relax_1D(N, A, Tmp)
-!
-! Relax on the interior and the two halo cells shared with the left and right neighbors
-!   - shared halo cells are computed twice and are not exchanged
-!   - the outside halo cells are from neighbors and cannot be not computed
-!
-   Implicit None
-   Integer, intent(in   ) :: N
-   Real,    intent(inout) :: A  (-1:N+1)
-   Real,    intent(inout) :: Tmp(-1:N+1)
-   Integer                :: i
-
-   ! compute over extended region including boundary cells
-   do i = 0, N
-      Tmp(i) = (1.0 - w)*A(i) + 0.5*w*(A(i-1) + A(i+1))
-   end do
-
-   !! set physical boundary conditions (they have been recomputed)
-   !    - probably should have rank information so that physical boundaries aren't changed
-   !
-   Tmp(0) = 0.0
-   Tmp(N) = 0.0
-
-   !! Need to synchronize here as we may be running concurrently
-   !   - on subimage will only synchronize with its hardware threads, not distributed memory
-   !
-   ! Sync All
-
-   ! compute over just the interior
-   do i = 1, N-1
-      A(i) = (1.0 - w)*Tmp(i) + 0.5*w*(Tmp(i-1) + Tmp(i+1))
-   end do
-
-   !! IMPORTANT: not sure why this is needed, perhaps an error in prolongation/restrict
-   !
-   A(0) = 0.0
-   A(N) = 0.0
-
-End Subroutine Relax
 
 Subroutine Exchange_Halo_1D(N, A)
 !
