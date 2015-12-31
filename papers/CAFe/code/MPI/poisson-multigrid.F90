@@ -22,7 +22,7 @@ Integer, parameter :: N      =  64
 Integer, parameter :: fd     =  12
 
 Integer :: i
-Integer :: nsteps = 5
+Integer :: nsteps = 10
 
 Integer :: rank, np
 
@@ -54,66 +54,66 @@ V1h = (1./3.)*V1h
 
 !... Relax solution on 1h mesh
 !    -------------------------
-Call Textual_Output(N, V1h, "1h_0")
+Call Textual_Output(rank, N, V1h, "1h_0")
 do i = 1, nsteps
   Call Relax(N, V1h, Tmp)
-  Call Exchange_Halo(N, V1h)
+  Call Exchange_Halo(rank, N, V1h)
   write(fd, *) i, maxval(V1h)
 end do
-Call Textual_Output(N, V1h, "1h_mid")
+Call Textual_Output(rank, N, V1h, "1h_mid")
 
 !... Relax solution on 2h mesh
 !    -------------------------
 Call Restrict(N, V1h, V2h)
-Call Textual_Output(N/2, V2h, "2h_0")
+Call Textual_Output(rank, N/2, V2h, "2h_0")
 do i = 1, nsteps
   Call Relax(N/2, V2h, Tmp)
-  Call Exchange_Halo(N/2, V2h)
+  Call Exchange_Halo(rank, N/2, V2h)
   write(fd, *) i, maxval(V2h)
 end do
-Call Textual_Output(N/2, V2h, "2h_mid")
+Call Textual_Output(rank, N/2, V2h, "2h_mid")
 
 !... Relax solution on 4h mesh
 !    -------------------------
 Call Restrict(N/2, V2h, V4h)
-Call Textual_Output(N/4, V4h, "4h_0")
+Call Textual_Output(rank, N/4, V4h, "4h_0")
 do i = 1, nsteps
   Call Relax(N/4, V4h, Tmp)
-  Call Exchange_Halo(N/4, V4h)
+  Call Exchange_Halo(rank, N/4, V4h)
   write(fd, *) i, maxval(V4h)
 end do
-Call Textual_Output(N/4, V4h, "4h_mid")
+Call Textual_Output(rank, N/4, V4h, "4h_mid")
 
 !... Relax solution on 8h mesh
 !    -------------------------
 Call Restrict(N/4, V4h, V8h)
-Call Textual_Output(N/8, V8h, "8h_0")
+Call Textual_Output(rank, N/8, V8h, "8h_0")
 do i = 1, nsteps
   Call Relax(N/8, V8h, Tmp)
-  Call Exchange_Halo(N/8, V8h)
+  Call Exchange_Halo(rank, N/8, V8h)
   write(fd, *) i, maxval(V8h)
 end do
-Call Textual_Output(N/8, V8h, "8h_mid")
+Call Textual_Output(rank, N/8, V8h, "8h_mid")
 
 !! IMPORTANT: this last step should be an exact solution on a smaller grid probably
 !
 do i = 1, 5*nsteps
   Call Relax(N/8, V8h, Tmp)
-  Call Exchange_Halo(N/8, V8h)
+  Call Exchange_Halo(rank, N/8, V8h)
   write(fd, *) i, maxval(V8h)
 end do
-Call Textual_Output(N/8, V8h, "8h_end")
+Call Textual_Output(rank, N/8, V8h, "8h_end")
 
 !! IMPORTANT: probably should relax on the way back down the grids as well
 !
 Call Prolongate    (N/4, V4h, V8h)
-Call Textual_Output(N/4, V4h, "4h_end")
+Call Textual_Output(rank, N/4, V4h, "4h_end")
 
 Call Prolongate    (N/2, V2h, V4h)
-Call Textual_Output(N/2, V2h, "2h_end")
+Call Textual_Output(rank, N/2, V2h, "2h_end")
 
 Call Prolongate    (N,   V1h, V2h)
-Call Textual_Output(N,   V1h, "1h_end")
+Call Textual_Output(rank, N,   V1h, "1h_end")
 
 close(fd)
 
@@ -161,18 +161,34 @@ Pure Subroutine Relax(N, A, Tmp)
 
 End Subroutine Relax
 
-Subroutine Exchange_Halo(N, A)
+Subroutine Exchange_Halo(rank, N, A)
 !
 ! Exchange halo information between neighboring processes
 !
    Implicit None
-   Integer, intent(in   ) :: N
+   Integer, intent(in   ) :: N, rank
    Real,    intent(inout) :: A(-1:N+1)
 
-   !! normal halo exchange for serial version
+   Integer :: left, right, tag
+   Real    :: lbc, rbc   
+   type(MPI_Status) :: status
+   tag   = 1
+   left  = rank - 1
+   right = rank + 1
+
+   if (left < 0)                        left  = np-1
+   if (right > np-1)                    right = 0   
+
+   !! MPI halo exchange for parallel version
    !
-   A( -1) = A(N-1)
-   A(N+1) = A(  1)
+   Call MPI_Send(A(1), 1, MPI_REAL, left, tag, MPI_COMM_WORLD)
+   Call MPI_Send(A(N-1)  , 1, MPI_REAL, right , tag, MPI_COMM_WORLD)
+
+   Call MPI_Recv(rbc, 1, MPI_REAL, right, tag, MPI_COMM_WORLD, status)
+   Call MPI_Recv(lbc, 1, MPI_REAL, left , tag, MPI_COMM_WORLD, status)
+   
+   A( -1) = lbc
+   A(N+1) = rbc
 
 End Subroutine Exchange_Halo
 
