@@ -30,7 +30,7 @@ Module MultiGrid
 
 Contains
 
-Subroutine AddFourierMode(N, V, k)
+Subroutine AddFourierMode_1D(N, V, k)
 !
 ! Add Fourier mode k to V
 !
@@ -43,7 +43,28 @@ Subroutine AddFourierMode(N, V, k)
     V(i) = V(i) + sin(i*k*PI/N)
   end do
 
-End Subroutine AddFourierMode
+End Subroutine AddFourierMode_1D
+
+Subroutine AddFourierMode_3D(N,M,L, V, mode)
+!
+! Add Fourier mode k to V
+!
+  implicit none
+  integer, intent(in   )  ::  N,M,L, mode
+  real,    intent(inout)  ::  V(-1:N+1,-1:M+1,-1:L+1)  ! includes boundaries at -1,0:N,N+1 ...
+  integer :: i, j, k
+
+  !! 1D case
+  !
+  do k = -1, L+1
+    do j = -1, M+1
+      do i = -1, N+1
+        V(i,j,k) = V(i,j,k) + sin(i*mode*PI/N)
+      end do
+    end do
+  end do
+
+End Subroutine AddFourierMode_3D
 
 Subroutine Prolongate_1D(N, V1h, V2h)
 !
@@ -185,7 +206,7 @@ Subroutine Restrict_1D(N, V1h, V2h)
 
 End Subroutine Restrict_1D
 
-Subroutine Restrict2D(N, V1h, V2h)
+Subroutine Restrict_2D(N, V1h, V2h)
 !
 !  Restriction operator R^(N+1) => R^(N/2+1)
 !
@@ -208,7 +229,7 @@ Subroutine Restrict2D(N, V1h, V2h)
     end do
   end do
 
-End Subroutine Restrict
+End Subroutine Restrict_2D
 
 Subroutine Restrict_3D(N, V1h, V2h)
 !
@@ -229,18 +250,18 @@ Subroutine Restrict_3D(N, V1h, V2h)
       jj = 2*j
       do i = 0, m+1
         ii = 2*i
-        V2h(i,j) = .??*(
-           + .125*V1h(ii-1,jj+1,kk+1) + .25*V1h(ii,jj+1,kk+1) + .125*V1h(ii+1,jj+1,kk+1) &
+!!!!!   V2h(i,j,k) = .??*(
+        V2h(i,j,k) = .001*(                                                              &
+             .125*V1h(ii-1,jj+1,kk+1) + .25*V1h(ii,jj+1,kk+1) + .125*V1h(ii+1,jj+1,kk+1) &
            +  .25*V1h(ii-1,jj  ,kk+1) +  .5*V1h(ii,jj  ,kk+1) +  .25*V1h(ii+1,jj  ,kk+1) &
            + .125*V1h(ii-1,jj-1,kk+1) + .25*V1h(ii,jj-1,kk+1) + .125*V1h(ii+1,jj-1,kk+1) &
-                                                                                         &
            +  .25*V1h(ii-1,jj+1,kk  ) +  .5*V1h(ii,jj+1,kk  ) +  .25*V1h(ii+1,jj+1,kk  ) &
            +   .5*V1h(ii-1,jj  ,kk  ) +     V1h(ii,jj  ,kk  ) +   .5*V1h(ii+1,jj  ,kk  ) &
            +  .25*V1h(ii-1,jj-1,kk  ) +  .5*V1h(ii,jj-1,kk  ) +  .25*V1h(ii+1,jj-1,kk  ) &
-                                                                                         &
            + .125*V1h(ii-1,jj+1,kk-1) + .25*V1h(ii,jj+1,kk-1) + .125*V1h(ii+1,jj+1,kk-1) &
            +  .25*V1h(ii-1,jj  ,kk-1) +  .5*V1h(ii,jj  ,kk-1) +  .25*V1h(ii+1,jj  ,kk-1) &
            + .125*V1h(ii-1,jj-1,kk-1) + .25*V1h(ii,jj-1,kk-1) + .125*V1h(ii+1,jj-1,kk-1))
+      end do
     end do
   end do
 
