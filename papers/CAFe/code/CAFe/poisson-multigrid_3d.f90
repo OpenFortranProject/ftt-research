@@ -60,38 +60,38 @@ V1h[device] = V1h
 
 !... Relax solution on 1h mesh
 !    -------------------------
-call Textual_Output(N,M,L, V1h, "1h_0")
+call Textual_Output_3D(N,M,L, V1h, "1h_0")
 do t = 1, nsteps
    call Relax_3D(N,M,L, V1h[device], Buf[device])  [[device]]
    call Exchange_Halo_3D(device, N,M,L, V1h)
 end do
 V1h = V1h[device]
 write(fd, *) t, maxval(V1h)
-call Textual_Output(N,M,L, V1h, "1h_mid")
+call Textual_Output_3D(N,M,L, V1h, "1h_mid")
 
 !... Relax solution on 2h mesh
 !    -------------------------
 call Restrict_3D(N,M,L, V1h[device], V2h[device])    [[device]]
-call Textual_Output(N/2,M/2,L/2, V2h, "2h_0")
+call Textual_Output_3D(N/2,M/2,L/2, V2h, "2h_0")
 do t = 1, nsteps
    call Relax_3D(N/2,M/2,L/2, V2h[device], Buf[device])  [[device]]
    call Exchange_Halo_3D(device, N/2,M/2,L/2, V2h)
 end do
 V2h = V2h[device]
 write(fd, *) t, maxval(V2h)
-call Textual_Output(N/2,M/2,L/2, V2h, "2h_mid")
+call Textual_Output_3D(N/2,M/2,L/2, V2h, "2h_mid")
 
 !... Relax solution on 4h mesh
 !    -------------------------
 call Restrict_3D(N/2,M/2,L/2, V2h[device], V4h[device])  [[device]]
-call Textual_Output(N/4,M/4,L/4, V4h, "4h_0")
+call Textual_Output_3D(N/4,M/4,L/4, V4h, "4h_0")
 do t = 1, nsteps
    call Relax_3D(N/4,M/4,L/4, V4h[device], Buf[device])  [[device]]
    call Exchange_Halo_3D(device, N/4,M/4,L/4, V4h)
 end do
 V4h = V4h[device]
 write(fd, *) t, maxval(V4h)
-call Textual_Output(N/4,M/4,L/4, V4h, "4h_mid")
+call Textual_Output_3D(N/4,M/4,L/4, V4h, "4h_mid")
 
 !! IMPORTANT: this last step should be an exact solution on a smaller grid probably
 !
@@ -106,7 +106,7 @@ do t = 1, nsteps
 end do
 V4h = V4h[device]
 write(fd, *) t, maxval(V4h)
-call Textual_Output(N/4,M/4,L/4, V4h, "4h_end")
+call Textual_Output_3D(N/4,M/4,L/4, V4h, "4h_end")
 
 call Prolongate_3D(N/2,M/2,L/2, V2h[device], V4h[device])  [[device]]
 do t = 1, nsteps
@@ -115,7 +115,7 @@ do t = 1, nsteps
 end do
 V2h = V2h[device]
 write(fd, *) t, maxval(V2h)
-call Textual_Output(N/2,M/2,L/2, V2h, "2h_end")
+call Textual_Output_3D(N/2,M/2,L/2, V2h, "2h_end")
 
 call Prolongate_3D(N,M,L, V1h[device], V2h[device])  [[device]]
 do t = 1, nsteps
@@ -124,7 +124,7 @@ do t = 1, nsteps
 end do
 V1h = V1h[device]
 write(fd, *) t, maxval(V1h)
-call Textual_Output(N,M,L, V1h, "1h_end")
+call Textual_Output_3D(N,M,L, V1h, "1h_end")
 
 close(fd)
 
