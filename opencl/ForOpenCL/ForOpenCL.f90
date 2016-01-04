@@ -54,7 +54,8 @@ end function get_subimage
 
 function focl_global_size(rank, lws, prev_gws, new_gws) result(rtn_gws)
   integer,           intent(in) :: rank
-  integer(c_size_t), intent(in) :: lws(*), prev_gws(*), new_gws(*)
+  integer(c_size_t), intent(in) :: lws(*), prev_gws(*)
+  integer,           intent(in) :: new_gws(*)
   integer(c_size_t)             :: rtn_gws(3)
   integer                       :: i, dim
 
