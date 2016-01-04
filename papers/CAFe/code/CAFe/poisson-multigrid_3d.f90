@@ -28,7 +28,7 @@ Integer, parameter :: fd   =  12
 Integer :: t, i, device
 Integer :: nsteps = 5
 
-Real, allocatable, dimension(:,:,:), codimension[:,:,*] :: V1h, V2h, V4h, V8h, Buf
+Real, allocatable, dimension(:,:,:), codimension[:,:,:] :: V1h, V2h, V4h, V8h, Buf
 
 device = get_subimage(0)
 
