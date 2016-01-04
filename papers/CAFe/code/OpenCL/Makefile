@@ -20,12 +20,12 @@ FC = ifort
 
 OPT_FLAG = -g
 
-CFLAGS = $(OPT_FLAG) $(ST_CFLAGS)
-FFLAGS  = $(OPT_FLAG) -I $(FOR_OCL_DIR)
-LDFLAGS = $(ST_LDFLAGS) -la stratego-lib
+CFLAGS = $(OPT_FLAG) -DUNIX -DMAC
+FFLAGS  = $(OPT_FLAG) -I ../Serial -I $(FOR_OCL_DIR)
+LDFLAGS = -DUNIX -DMAC -framework OpenCL
 
-OBJS = io.o error.o multigrid.o # jacobi.o vtk.o vtk_output.o
-LIBS = 
+OBJS = ../Serial/io.o ../Serial/error.o ../Serial/multigrid.o # jacobi.o vtk.o vtk_output.o
+LIBS = -L $(FOR_OCL_DIR) -lforopencl
 
 %.o : %.c
 	$(CC) -c $< $(CFLAGS)
@@ -37,10 +37,13 @@ LIBS =
 	$(FC) -c $< $(FFLAGS)
 
 
-all : $(OBJS) poisson-multigrid_1d_cl
+all : $(OBJS) poisson-multigrid_3d_cl poisson-multigrid_1d_cl
 
 poisson-multigrid_1d_cl : $(OBJS) poisson-multigrid_1d_cl.o
 	$(FC) -o $@ $(LDFLAGS) poisson-multigrid_1d_cl.o $(OBJS) $(LIBS)
+
+poisson-multigrid_3d_cl : $(OBJS) poisson-multigrid_3d_cl.o
+	$(FC) -o $@ $(LDFLAGS) poisson-multigrid_3d_cl.o $(OBJS) $(LIBS)
 
 opencl-multigrid : opencl-multigrid.c
 	$(CC) opencl-multigrid.c -o opencl-multigrid
@@ -54,4 +57,4 @@ check-run : poisson-multigrid
 	./poisson-multigrid
 
 clean :
-	rm -rf $(OBJS) *.vti *.dat *.mod *.o poisson-multigrid
+	rm -rf *.vti *.dat *.mod *.o poisson-multigrid
