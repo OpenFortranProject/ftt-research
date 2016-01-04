@@ -9,8 +9,8 @@ Program PoissonMultigrid
 !   Multigrid.
 !
 !=============================================================================
-Use MultiGrid, only : AddFourierMode
-Use IO,        only : Textual_Output
+Use MultiGrid, only : AddFourierMode_3D
+Use IO,        only : Textual_Output_3D
 Use MultiGrid, only : Restrict_3D, Prolongate_3D
 
 Implicit None
@@ -51,9 +51,9 @@ open(unit=fd, file="error_time.dat")
 !! Initialize
 !
 V1h = 0.0
-Call AddFourierMode(N,M,L, V1h,  1)
-Call AddFourierMode(N,M,L, V1h,  6)
-Call AddFourierMode(N,M,L, V1h, 16)
+Call AddFourierMode_3D(N,M,L, V1h,  1)
+Call AddFourierMode_3D(N,M,L, V1h,  6)
+Call AddFourierMode_3D(N,M,L, V1h, 16)
 V1h = (1./3.)*V1h
 
 V1h[device] = V1h
