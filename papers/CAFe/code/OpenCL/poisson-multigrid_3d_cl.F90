@@ -1,8 +1,8 @@
 PROGRAM PoissonMultigrid
 USE ForOpenCL
-USE MultiGrid, ONLY: AddFourierMode
-USE IO, ONLY: Textual_Output
-USE MultiGrid, ONLY: Restrict_3DProlongate_3D
+USE MultiGrid, ONLY: AddFourierMode_3D
+USE IO, ONLY: Textual_Output_3D
+USE MultiGrid, ONLY: Restrict_3D, Prolongate_3D
 IMPLICIT NONE
 REAL, PARAMETER :: w = (2.0/3.0)
 INTEGER, PARAMETER :: N = 32
@@ -53,13 +53,13 @@ IF (device /= THIS_IMAGE()) THEN
 END IF
 OPEN(UNIT=fd, FILE="error_time.dat")
 V1h = 0.0
-CALL AddFourierMode(N,M,L,V1h,1)
-CALL AddFourierMode(N,M,L,V1h,6)
-CALL AddFourierMode(N,M,L,V1h,16)
+CALL AddFourierMode_3D(N,M,L,V1h,1)
+CALL AddFourierMode_3D(N,M,L,V1h,6)
+CALL AddFourierMode_3D(N,M,L,V1h,16)
 V1h = (1./3.)*V1h
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
-CALL Textual_Output(N,M,L,V1h,"1h_0")
+CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
 DO t = 1, nsteps
   cl_status__ = setKernelArg(cl_Relax_3D_,0,N)
   cl_status__ = setKernelArg(cl_Relax_3D_,1,M)
@@ -80,7 +80,7 @@ END DO
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
-CALL Textual_Output(N,M,L,V1h,"1h_mid")
+CALL Textual_Output_3D(N,M,L,V1h,"1h_mid")
 cl_status__ = setKernelArg(cl_Restrict_3D_,0,N)
 cl_status__ = setKernelArg(cl_Restrict_3D_,1,M)
 cl_status__ = setKernelArg(cl_Restrict_3D_,2,L)
@@ -95,7 +95,7 @@ cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),(
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
 cl_status__ = run(cl_Restrict_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = clFinish(cl_Restrict_3D_%commands)
-CALL Textual_Output(N/2,M/2,L/2,V2h,"2h_0")
+CALL Textual_Output_3D(N/2,M/2,L/2,V2h,"2h_0")
 DO t = 1, nsteps
   focl_intvar__ = N/2
   cl_status__ = setKernelArg(cl_Relax_3D_,0,focl_intvar__)
@@ -119,7 +119,7 @@ END DO
 cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
 WRITE(UNIT=fd,FMT=*) t, maxval(V2h)
-CALL Textual_Output(N/2,M/2,L/2,V2h,"2h_mid")
+CALL Textual_Output_3D(N/2,M/2,L/2,V2h,"2h_mid")
 focl_intvar__ = N/2
 cl_status__ = setKernelArg(cl_Restrict_3D_,0,focl_intvar__)
 focl_intvar__ = M/2
@@ -137,7 +137,7 @@ cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/4+1-(-1))+1),((M/4+1-(-1))+1),((L/4+1-(-1))+1)])
 cl_status__ = run(cl_Restrict_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = clFinish(cl_Restrict_3D_%commands)
-CALL Textual_Output(N/4,M/4,L/4,V4h,"4h_0")
+CALL Textual_Output_3D(N/4,M/4,L/4,V4h,"4h_0")
 DO t = 1, nsteps
   focl_intvar__ = N/4
   cl_status__ = setKernelArg(cl_Relax_3D_,0,focl_intvar__)
@@ -161,7 +161,7 @@ END DO
 cl_size__ = 4*((N/4+1-(-1))+1)*((M/4+1-(-1))+1)*((L/4+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V4h_,C_LOC(V4h),cl_size__)
 WRITE(UNIT=fd,FMT=*) t, maxval(V4h)
-CALL Textual_Output(N/4,M/4,L/4,V4h,"4h_mid")
+CALL Textual_Output_3D(N/4,M/4,L/4,V4h,"4h_mid")
 V8h = 0
 cl_size__ = 4*((N/8+1-(-1))+1)*((M/8+1-(-1))+1)*((L/8+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V8h_,C_LOC(V8h),cl_size__)
@@ -205,7 +205,7 @@ END DO
 cl_size__ = 4*((N/4+1-(-1))+1)*((M/4+1-(-1))+1)*((L/4+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V4h_,C_LOC(V4h),cl_size__)
 WRITE(UNIT=fd,FMT=*) t, maxval(V4h)
-CALL Textual_Output(N/4,M/4,L/4,V4h,"4h_end")
+CALL Textual_Output_3D(N/4,M/4,L/4,V4h,"4h_end")
 focl_intvar__ = N/2
 cl_status__ = setKernelArg(cl_Prolongate_3D_,0,focl_intvar__)
 focl_intvar__ = M/2
@@ -246,7 +246,7 @@ END DO
 cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
 WRITE(UNIT=fd,FMT=*) t, maxval(V2h)
-CALL Textual_Output(N/2,M/2,L/2,V2h,"2h_end")
+CALL Textual_Output_3D(N/2,M/2,L/2,V2h,"2h_end")
 cl_status__ = setKernelArg(cl_Prolongate_3D_,0,N)
 cl_status__ = setKernelArg(cl_Prolongate_3D_,1,M)
 cl_status__ = setKernelArg(cl_Prolongate_3D_,2,L)
@@ -281,6 +281,6 @@ END DO
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
-CALL Textual_Output(N,M,L,V1h,"1h_end")
+CALL Textual_Output_3D(N,M,L,V1h,"1h_end")
 CLOSE(UNIT=fd)
 END PROGRAM PoissonMultigrid
