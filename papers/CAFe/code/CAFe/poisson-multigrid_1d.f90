@@ -23,7 +23,7 @@ Integer, parameter :: fd     =  12
 Integer :: t, i, device
 Integer :: nsteps = 5
 
-Real, allocatable, dimension(:), codimension[*] :: V1h, V2h, V4h, V8h, Buf
+Real, allocatable, dimension(:), codimension[*] :: V1h, V2h, V4h, V8h, V16h, Buf
 
 device = get_subimage(0)
 
@@ -32,6 +32,7 @@ Allocate(Buf(-1:N+1)[*])
 Allocate(V2h(-1:N/2+1)[*])
 Allocate(V4h(-1:N/4+1)[*])
 Allocate(V8h(-1:N/8+1)[*])
+Allocate(V16h(-1:N/16+1)[*])
 
 if (device /= THIS_IMAGE()) then
   Allocate(V1h(-1:N+1)[*])    [[device]]
@@ -39,6 +40,7 @@ if (device /= THIS_IMAGE()) then
   Allocate(V2h(-1:N/2+1)[*])  [[device]]
   Allocate(V4h(-1:N/4+1)[*])  [[device]]
   Allocate(V8h(-1:N/8+1)[*])  [[device]]
+  Allocate(V16h(-1:N/16+1)[*])[[device]]
 end if
 
 open(unit=fd, file="error_time.dat")
@@ -103,11 +105,10 @@ call Textual_Output(N/8, V8h, "8h_mid")
 !! IMPORTANT: this last step should be an exact solution on a smaller grid probably
 !
 ! exact solution is 0, so just set to 0.
+V16h = 0
 
-Buf = 0
-
-Buf[device] = Buf
-call Prolongate_1D(N/8, V8h[device], Buf[device])  [[device]]
+V16h[device] = V16h
+call Prolongate_1D(N/8, V8h[device], V16h[device])  [[device]]
 do t = 1, nsteps
    call Relax_1D(N/8, V8h[device], Buf[device])    [[device]]
    call Exchange_Halo_1D(device, N/8, V8h)
