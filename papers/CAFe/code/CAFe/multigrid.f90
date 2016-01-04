@@ -62,12 +62,6 @@ Pure Subroutine Relax_1D(N, A, Tmp)
       Tmp(i) = (1.0 - w)*A(i) + 0.5*w*(A(i-1) + A(i+1))
    end do
 
-   !! set physical boundary conditions (they have been recomputed)
-   !    - probably should have rank information so that physical boundaries aren't changed
-   !
-   Tmp(0) = 0.0
-   Tmp(N) = 0.0
-
    !! Need to synchronize here as we may be running concurrently
    !   - on subimage will only synchronize with its hardware threads, not distributed memory
    !
@@ -77,11 +71,6 @@ Pure Subroutine Relax_1D(N, A, Tmp)
    do i = 1, N-1
       A(i) = (1.0 - w)*Tmp(i) + 0.5*w*(Tmp(i-1) + Tmp(i+1))
    end do
-
-   !! IMPORTANT: not sure why this is needed, perhaps an error in prolongation/restrict
-   !
-   A(0) = 0.0
-   A(N) = 0.0
 
 End Subroutine Relax_1D
 
