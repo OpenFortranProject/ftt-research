@@ -27,23 +27,43 @@ Module MultiGrid
 !
   
   real, parameter :: PI = 4.0d0*atan(1.0d0)
+  real, parameter :: w = (2.0/3.0)
 
 Contains
 
-Subroutine AddFourierMode(N, V, k)
+Subroutine AddFourierMode_1D(N, np, rank, V, mode)
 !
-! Add Fourier mode k to V
+! Add Fourier mode to V
 !
   implicit none
-  integer, intent(in   )  ::  N, k
+  integer, intent(in   )  ::  N, mode, np, rank
   real,    intent(inout)  ::  V(-1:N+1)  ! includes boundaries at -1,0:N,N+1
   integer :: i
 
   do i = -1, N+1
-    V(i) = V(i) + sin(i*k*PI/N)
+    V(i) = V(i) + sin((rank*N+i)*mode*PI/N/np)
   end do
 
-End Subroutine AddFourierMode
+End Subroutine AddFourierMode_1D
+
+Subroutine AddFourierMode_3D(N, M, L, np, rank, V, mode)
+!
+! Add Fourier mode to V (varies in x only, other dimensions fixed)
+!
+  implicit none
+  integer, intent(in   )  ::  N, M, L, mode, np, rank
+  real,    intent(inout)  ::  V(-1:N+1,-1:M+1,-1:L+1)
+  integer :: i, j, k
+
+  do k = -1, L+1
+    do j = -1, M+1
+      do i = -1, N+1
+        V(i,j,k) = V(i,j,k) + sin((rank*N+i)*mode*PI/N/np)
+      end do
+    end do
+  end do
+
+End Subroutine AddFourierMode_3D
 
 Pure Subroutine Relax_1D(N, A, Tmp)
 !
@@ -81,8 +101,9 @@ Pure Subroutine Prolongate_1D(N, V1h, V2h)
 !  N-1 is the number of interior fine grid cells
 !
   implicit none
-  integer, intent(in) :: N
-  real :: V1h(-1:N+1), V2h(-1:N/2+1)
+  integer, intent( in) :: N
+  real,    intent(out) :: V1h(-1:N+1)
+  real,    intent( in) :: V2h(-1:N/2+1)
   integer :: i, ii, m
 
   m = N/2 - 1     ! # interior coarse cells
@@ -103,8 +124,9 @@ Pure Subroutine Restrict_1D(N, V1h, V2h)
 !  N-1 is the number of interior fine grid cells
 !
   implicit none
-  integer, intent(in) :: N
-  real :: V1h(-1:N+1), V2h(-1:N/2+1)
+  integer, intent( in) :: N
+  real,    intent( in) :: V1h(-1:N+1)
+  real,    intent(out) :: V2h(-1:N/2+1)
   integer :: i, ii, m
 
   m = N/2 - 1     ! # interior coarse cells
