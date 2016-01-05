@@ -72,6 +72,7 @@ call Textual_Output_3D(N,M,L, V1h, "1h_mid")
 !... Relax solution on 2h mesh
 !    -------------------------
 call Restrict_3D(N,M,L, V1h[device], V2h[device])    [[device]]
+V2h = V2h[device]
 call Textual_Output_3D(N/2,M/2,L/2, V2h, "2h_0")
 do t = 1, nsteps
    call Relax_3D(N/2,M/2,L/2, V2h[device], Buf[device])  [[device]]
@@ -84,6 +85,7 @@ call Textual_Output_3D(N/2,M/2,L/2, V2h, "2h_mid")
 !... Relax solution on 4h mesh
 !    -------------------------
 call Restrict_3D(N/2,M/2,L/2, V2h[device], V4h[device])  [[device]]
+V4h = V4h[device]
 call Textual_Output_3D(N/4,M/4,L/4, V4h, "4h_0")
 do t = 1, nsteps
    call Relax_3D(N/4,M/4,L/4, V4h[device], Buf[device])  [[device]]
