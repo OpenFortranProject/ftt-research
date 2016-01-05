@@ -243,7 +243,7 @@ V8h = 0
 cl_size__ = 4*((N/8+1-(-1))+1)*((M/8+1-(-1))+1)*((L/8+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V8h_,C_LOC(V8h),cl_size__)
 
-#undef DO_PROLONGATE
+#ifdef DO_PROLONGATE
 focl_intvar__ = N/4
 cl_status__ = setKernelArg(cl_Prolongate_3D_,0,focl_intvar__)
 focl_intvar__ = M/4
@@ -297,7 +297,7 @@ WRITE(UNIT=fd,FMT=*) t, maxval(V4h)
 CALL Textual_Output_3D(N/4,M/4,L/4,V4h,"4h_end")
 #endif
 
-#undef DO_PROLONGATE
+#ifdef DO_PROLONGATE
 focl_intvar__ = N/2
 cl_status__ = setKernelArg(cl_Prolongate_3D_,0,focl_intvar__)
 focl_intvar__ = M/2
@@ -351,7 +351,7 @@ WRITE(UNIT=fd,FMT=*) t, maxval(V2h)
 CALL Textual_Output_3D(N/2,M/2,L/2,V2h,"2h_end")
 #endif
 
-#undef DO_PROLONGATE
+#ifdef DO_PROLONGATE
 cl_status__ = setKernelArg(cl_Prolongate_3D_,0,N)
 cl_status__ = setKernelArg(cl_Prolongate_3D_,1,M)
 cl_status__ = setKernelArg(cl_Prolongate_3D_,2,L)
