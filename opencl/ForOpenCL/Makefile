@@ -103,9 +103,9 @@ CFLAGS   += $(INCLUDES) $(COMMONFLAGS)
 FCFLAGS  += $(COMMONFLAGS)
 
 LIB_OBJS = Timer.o OpenCLTypes.o CLBuffer.o CLKernel.o CLDevice.o \
-           opencl_utils.o opencl_test.o
+           opencl_utils.o opencl_test.o ForOpenCL.o
 
-OBJS += OpenCLInterfaces.o $(LIB_OBJS) ForOpenCL.o
+OBJS += OpenCLInterfaces.o $(LIB_OBJS)
 
 LIBS += $(OBJS)
 

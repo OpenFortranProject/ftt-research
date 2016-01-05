@@ -52,4 +52,28 @@ function get_subimage(device_id, cl_device_)
 
 end function get_subimage
 
+function focl_global_size(rank, lws, prev_gws, new_gws) result(rtn_gws)
+  integer,           intent(in) :: rank
+  integer(c_size_t), intent(in) :: lws(*), prev_gws(*)
+  integer,           intent(in) :: new_gws(*)
+  integer(c_size_t)             :: rtn_gws(3)
+  integer                       :: i, dim
+
+  rtn_gws = [1,1,1]
+
+  dim = rank
+  if (dim > 3) dim = 3
+
+  !! Need to consider local work group size and nice even numbers
+  !
+  do i = 1, dim
+     if (prev_gws(i) > 1 .AND. new_gws(i) > 1) then
+        rtn_gws(i) = min(prev_gws(i), new_gws(i))
+     else
+        rtn_gws(i) = max(prev_gws(i), new_gws(i))
+     end if
+  end do
+
+end function focl_global_size
+
 end module ForOpenCL

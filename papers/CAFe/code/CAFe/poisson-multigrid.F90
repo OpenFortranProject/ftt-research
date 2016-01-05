@@ -22,7 +22,7 @@ Integer, parameter :: fd     =  12
 Integer, parameter :: nsteps =   5
 Integer :: i, l, submiage
 
-Real, allocatable :: V1h(:)[*], V2h(:)[*], V4h(:)[*], V8h(:)[*], Tmp(:)[*]
+Real, allocatable, dimension(:), codimension[:] :: V1h, V2h, V4h, V8h, Tmp
 
 open(unit=fd, file="error_time.dat")
 
@@ -176,22 +176,26 @@ Subroutine Exchange_Halo(N, A)
    Real,    intent(inout) :: A(-1:N+1)[*]
    Integer                :: left, right
    
-   if (this_image() /= 1)            left  = this_image() - 1
-   else                              left  = num_images()
+   if (this_image() /= 1) then
+      left  = this_image() - 1
+   else
+      left  = num_images()
+   end if
 
-   if (this_image() /= num_images()) right = this_image() + 1
-   else                              right = 1
+   if (this_image() /= num_images()) then
+      right = this_image() + 1
+   else
+      right = 1
+   end if
 
    !! halo exchange between images
    !
-
    sync all   ! ensure that this image can read from neighbors
 
    A( -1) = A(N-1) [left ]
    A(N+1) = A(  1) [right]
 
    sync all   ! ensure that neighbors have read and thus this image can modify
-
 
 End Subroutine Exchange_Halo
 
