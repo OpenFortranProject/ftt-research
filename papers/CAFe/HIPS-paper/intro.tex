@@ -1,0 +1,73 @@
+\section{Introduction}
+
+Historically it has been hard to create parallel programs.  The
+responsibility (and difficulty) of creating \emph{correct} parallel
+programs can be viewed as being spread between the programmer and the
+compiler.  Ideally we would like to have parallel languages that make
+it easy for the programmer to express correct parallel programs --- and
+conversely it should be difficult to express incorrect parallel
+programs.  Unfortunately, many current languages and standards place
+all of the responsibility on the user.  The best example of this are
+programs written using MPI (Message Passing Interface), where the
+programmer expresses all parallelism in terms of calls to library
+routines and the serial C or Fortran compiler knows nothing about the
+parallel semantics of the combined language plus MPI library.
+
+Of course one would hope that over time code complexity goes down as
+better languages allow compilers to take on a greater share of the
+parallel complexity burden.  Multithreaded code written using OpenMP
+can be significantly simpler than the corresponding code in which the
+programmer explicitly manages a pool of threads themselves.  This is
+somewhat true for distributed memory parallelism using Unified
+Parallel C (UPC) and Coarray Fortran.  With these PGAS
+(Partitioned Global Address Space) extensions, C and
+Fortran compilers are now aware of parallelism and now generate
+message passing code that previously had been handled by the MPI
+library.  In some instances the compiler is able to perform
+optimizations that it is not able to do with a library-based scheme
+like MPI \cite{preissl:2011:SC}.
+
+%%% Would like to say something here about HPC as a language based solution to reducing code complexity
+
+However, in large part these languages are mostly syntactic sugar for
+message passing and do not provide a substantial decrease in code
+complexity when application performance is a
+goal\cite{hasert:2011:EuroMPI}.  While skilled programmers in the HPC
+community have become accustomed to the level of complexity of an MPI
+program, the problem for programmers is that hardware is changing in
+ways that increase the level of on-chip parallelism.  Indeed, the
+current generation of machines could be the last to provide
+homogeneous multi-core parallelism\cite{JORSjors.aw}.  For ultimate
+performance, programmers must envision coding for heterogeneous
+architectures with huge new levels of on-node parallelism, at the same
+time they account for off-node parallelism.
+Since languages have not evolved that allow the compiler to take up
+this increase, the complexity for a programmer has necessarily
+dramatically increased.  Unfortunately, considering the complexity of
+large multiphysics code frameworks, it could take several person years
+to retarget an application for \emph{each} new heterogeneous
+platform\cite{DBLP:journals/corr/DubeyS13}.
+
+A reasonable solution given today's language limitations is to use MPI for distributed memory
+parallelism \emph{plus} OpenMP for on-chip parallelism.  This hybrid approach is taken by two
+successful, large-scale AMR multiphysics code frameworks, FLASH and Chombo; currently however,
+neither of these codes support hardware accelerators\cite{DBLP:journals/corr/DubeyS13}.
+%%This is the solution proposed by Cray and PGI \cite{BOF_SC10} (currently Chapel does not target GPUs\cite{Brad?}).
+Other choices for expressing on-chip parallelism are OpenCL~\cite{opencl11} and NVIDIA's CUDA.
+Unfortunately, achieving high performance using either of these two languages can be a daunting
+challenge and there are no guarantees that either language is suitable for future hardware
+generations.
+
+In this paper we examine a language-based paradigm that allows the
+compiler to take on a larger portion of the code complexity burden.
+Anyone programming in OpenCL is aware that explicit loop
+structures over array elements in a serial program are removed and
+replaced by a kernel program that is run over all of the elements of
+the input arrays.  We propose \emph{Locally Orientated Programming
+extensions} (LOPe) to the Fortran and potentially C languages that
+formally adopt this programming model.  The LOPe programming model
+explicitly separates numerical complexity from parallel complexity ---
+leaving much of the staging and assembling of data to the compiler ---
+and is applicable to the solution of stencil-based algorithms that
+provide data access patterns that are regular and spatially local.
+
