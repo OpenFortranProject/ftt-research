@@ -55,60 +55,16 @@ concurrent procedures.  In code examples that follow,
 language additions are highlighted by the usage of capitalization for
 keywords that are either new or that acquire new usage.
 
-\subsubsection{Halo regions.}
-The principle semantic element of LOPe is the concept of a halo.
-A halo is an ``artificial'' or ``virtual'' region surrounding
-an array that contains boundary-value information.  Halo (also called
-ghost-cell) regions are commonly employed to unify array indexing
-schemes in the vicinity of an array boundary so that an array may be
-referenced using indices that fall ``outside'' of the logical domain
-of the array.  In LOPe, the halo region is given explicit syntax so
-that the compiler can exploit this information for purposes of memory
-allocation, data replication and thread synchronization.  For example,
-a halo region can be declared with a statement of the form,
-
-\begin{verbatim}
-  real, allocatable, dimension(:), HALO(1:*:1) :: A
-\end{verbatim}
-This statement indicates that \texttt{A} is a rank one array, will be
-allocated later, and
-has a halo region of one element surrounding the array on either side.
-The halo notation \texttt{M:*:N} specifies a halo
-of \texttt{M} elements to the left, \texttt{N} elements to the
-right, and an arbitrary number of ``interior'' array elements.
-When used to describe a formal parameter of a
-function, such as the type-declaration statement, \texttt{real, HALO(:,:) :: U},
-the halo size is inferred by the compiler
-from the actual array argument provided at the
-calling site of the function.
-
-%%In LOPe, there is no need (in this instance) for a repetitive \texttt{dimension(:,:)} specification, as it is inferred from the \texttt{HALO} specification.
-
-\subsubsection{Concurrent functions.}
-
-The second keyword employed by LOPe is \texttt{concurrent} which already exists in the form of a
-\texttt{do} \texttt{concurrent} loop, whereby the programmer asserts that specific
-iterations of the loop body may be executed by the compiler in \emph{any order,} even
-\emph{concurrently.}  LOPe allows a function with the attributes \texttt{pure} (assertion of no
-side effects) and \texttt{concurrent} (assertion of no dependencies between iterations) to be
-called from within a \texttt{do} \texttt{concurrent} loop.  An example of a LOPe function is
-shown in Fig. 1 and an example calling this function will be provided later in the text.  One
-should imagine that a LOPe function is called \emph{for each} \texttt{i,j} index of the interior of
-the array \texttt{U}.  Note that this usage introduces a race condition as new values of
-elements of \texttt{U} are created on the left-hand side of the assignment statement that may use
-\emph{new or old} values of \texttt{U} on the right-hand side.  LOPe requires the compiler to
-guarantee that race conditions won't occur by using, e.g., double-buffering techniques as needed.
-
 \vspace{-.1in}
 
 \begin{figure}
 \begin{verbatim}
-           pure CONCURRENT subroutine Laplacian(U)}
-               real, HALO(:,:) :: U
-               U(0,0) =                 U(0,+1)              &
-                        +  U(-1,0)  - 3*U(0, 0)  +  U(+1,0)  &
-                                    +   U(0,-1)
-           end subroutine Laplacian
+   pure CONCURRENT subroutine Laplacian(U)}
+       real, HALO(:,:) :: U
+       U(0,0) =                 U(0,+1)              &
+                +  U(-1,0)  - 3*U(0, 0)  +  U(+1,0)  &
+                            +   U(0,-1)
+   end subroutine Laplacian
 \end{verbatim}
 \vspace{-.1in}
 \caption{A LOPe function implementing a Laplacian kernel in two dimensions.}
@@ -116,13 +72,3 @@ guarantee that race conditions won't occur by using, e.g., double-buffering tech
 
 \vspace{-.3in}
 
-\subsubsection{LOPe index notation.}
-
-In the \texttt{Laplacian} example the \texttt{U(0,0)} array element is the \emph{local} array
-element and only the local element may be modified.  This zero-based indexing for the local-array
-element differs from conventional Fortran, where by default, array indices start at 1.  The use of
-zero-based indexing gives a clean symmetry for indices on either side of the central element at
-zero. The other array elements are in the halo region and are \texttt{U(-1,0)} and
-\texttt{U(+1,0)} (left and right of local, respectively) and \texttt{U(0,-1)} and \texttt{U(0,+1)}
-(below and above of local).  The geometric positioning of the array elements can be
-seen by examining the arrangement of the expressions on the right-hand side of Fig. 1.
