@@ -24,7 +24,7 @@ CFLAGS = $(OPT_FLAG) -DUNIX -DMAC
 FFLAGS  = $(OPT_FLAG) -I ../Serial -I $(FOR_OCL_DIR)
 LDFLAGS = -DUNIX -DMAC -framework OpenCL
 
-OBJS = ../Serial/io.o ../Serial/error.o ../Serial/multigrid.o # jacobi.o vtk.o vtk_output.o
+OBJS = io.o error.o multigrid.o # jacobi.o vtk.o vtk_output.o
 LIBS = -L $(FOR_OCL_DIR) -lforopencl
 
 %.o : %.c
