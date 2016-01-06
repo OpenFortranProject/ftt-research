@@ -37,7 +37,7 @@ LIBS = -L $(FOR_OCL_DIR) -lforopencl
 	$(FC) -c $< $(FFLAGS)
 
 
-all : $(OBJS) poisson-multigrid_3d_cl poisson-multigrid_1d_cl
+all : $(OBJS) poisson-multigrid_3d_cl
 
 poisson-multigrid_1d_cl : $(OBJS) poisson-multigrid_1d_cl.o
 	$(FC) -o $@ $(LDFLAGS) poisson-multigrid_1d_cl.o $(OBJS) $(LIBS)
@@ -49,12 +49,12 @@ opencl-multigrid : opencl-multigrid.c
 	$(CC) opencl-multigrid.c -o opencl-multigrid
 	./opencl-multigrid
 
-check : $(OFP_DIR)/LOPe/trans/lope-to-foropencl
+check-gen : $(OFP_DIR)/LOPe/trans/lope-to-foropencl
 	@sglri -p $(TBL) -i poisson-multigrid_1d.f90 | $(TO_FAST) | $(OFP_DIR)/LOPe/trans/lope-to-foropencl | $(TO_PP) | ast2text -p $(PP) > poisson_multigrid_1d_cl.f90
 
-check-run : poisson-multigrid
+check : poisson-multigrid_3d_cl
 	rm -f *.vti *.dat
-	./poisson-multigrid
+	./poisson-multigrid_3d_cl
 
 clean :
-	rm -rf *.vti *.dat *.mod *.o poisson-multigrid
+	rm -rf *.vti *.dat *.mod *.o poisson-multigrid_3d_cl poisson-multigrid_1d_cl
