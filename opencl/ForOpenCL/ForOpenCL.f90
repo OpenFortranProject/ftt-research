@@ -48,7 +48,10 @@ function get_subimage(device_id, cl_device_)
    integer(cl_int) :: status
 
    status = init_device(cl_device_, int(device_id,c_int))
-   get_subimage = device_id
+
+   !! Return the negative of the device id so that it can't conflict with THIS_IMAGE()
+   !
+   get_subimage = -device_id
 
 end function get_subimage
 

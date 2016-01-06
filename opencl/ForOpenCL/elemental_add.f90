@@ -23,7 +23,7 @@ program elemental_add
    real(c_double) :: h_time
 
    type(CLDevice) :: device
-   type(CLKernel) :: kernel
+   type(CLKernel) :: kernel1, kernel2
    type(CLBuffer) :: d_A, d_B, d_C
 
    integer(c_size_t) :: mem_size = NX*NY * SIZE_FLOAT
@@ -53,13 +53,18 @@ program elemental_add
 
    ! create the kernel
    !
-   kernel = createKernel(device, "elemental_add", "elemental_add.cl")
+   kernel1 = createKernel(device, "elemental_add", "elementals.cl")
+   kernel2 = createKernel(device, "elemental_sub", "elementals.cl")
 
    ! add arguments
    !
-   status = setKernelArgMem(kernel, 0, clMemObject(d_A)) + status
-   status = setKernelArgMem(kernel, 1, clMemObject(d_B)) + status
-   status = setKernelArgMem(kernel, 2, clMemObject(d_C)) + status
+   status = setKernelArgMem(kernel1, 0, clMemObject(d_A)) + status
+   status = setKernelArgMem(kernel1, 1, clMemObject(d_B)) + status
+   status = setKernelArgMem(kernel1, 2, clMemObject(d_C)) + status
+
+   status = setKernelArgMem(kernel2, 0, clMemObject(d_A)) + status
+   status = setKernelArgMem(kernel2, 1, clMemObject(d_B)) + status
+   status = setKernelArgMem(kernel2, 2, clMemObject(d_C)) + status
 
    ! run the kernel on the device
    !
@@ -68,9 +73,9 @@ program elemental_add
    call init(timer)
 !   call start(timer)
    do i = 1, nLoops
-      status = run(kernel, NX, NY, nxLocal, nyLocal) + status
+      status = run(kernel1, NX, NY, nxLocal, nyLocal) + status
    end do
-   status = clFinish(kernel%commands)
+   status = clFinish(kernel1%commands)
    call stop(timer)
 
    h_time = elapsed_time(timer)
@@ -90,7 +95,24 @@ program elemental_add
    end do
 
    if (status == CL_SUCCESS) then
-      print *, "Correctness verified..."
+      print *, "Correctness verified for elemental_add..."
+   end if
+
+   status = run(kernel2, NX, NY, nxLocal, nyLocal)
+   status = clFinish(kernel2%commands)
+   status = readBuffer(d_C, c_loc(C), mem_size) + status
+
+   do j = 1, ny
+      do i = 1, nx
+         if (C(i,j) /= A(i,j) - B(i,j)) then
+            print *, "Results incorrect at ", i, j
+            stop 1
+         end if
+      end do
+   end do
+
+   if (status == CL_SUCCESS) then
+      print *, "Correctness verified for elemental_sub..."
    end if
    print *
 
