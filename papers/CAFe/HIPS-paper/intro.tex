@@ -1,5 +1,77 @@
 \section{Introduction}
 
+A goal of high-level programming languages should be to \emph{allow} a programmer to
+develop software for a specific hardware architecture, without actually \emph{exposing} hardware
+features.  In fact, allowing low-level hardware details to be controlled by the language is actually
+a barrier to software performance portability.  The path forward for high-level
+programming languages should be to allow a programmer to provide more symantic information
+about the intent of the programmer, thus allowing the compiler more freedom to retarget
+applications to new architectures.
+
+This becomes critical as the scientific community tries to achieve exascale performance.
+Energy is a major concern, thus, heterogenous archtectures with many simple, low-energy cores.
+
+There is a plethera of options available to an HPC programmer beyond just using a serial
+language with MPI.  New parallel languages are under development, for example, Chapel and
+the PGAS languages including Coarray Fortran (CAF).  Options for heterogeneous computing
+include usage of OpenMP, OpenACC, CUDA, CUDA Fortran, and OpenCL for programming attached
+accelerator devices.
+
+A reasonable solution given today's language limitations is to use MPI for distributed memory
+parallelism \emph{plus} OpenMP for on-chip parallelism.  This hybrid approach is taken by two
+successful, large-scale AMR multiphysics code frameworks, FLASH and Chombo; currently however,
+neither of these codes support hardware accelerators\cite{DBLP:journals/corr/DubeyS13}.
+%%This is the solution proposed by Cray and PGI \cite{BOF_SC10} (currently Chapel does not target GPUs\cite{Brad?}).
+Other choices for expressing on-chip parallelism are OpenCL~\cite{opencl11} and NVIDIA's CUDA.
+Unfortunately, achieving high performance using either of these two languages can be a daunting
+challenge and there are no guarantees that either language is suitable for future hardware
+generations.
+
+
+OpenACC directives and features:
+\begin{verbatim}
+● acc_copy(in|out)( ptr, bytes )
+● acc_create( ptr, bytes )
+● acc_delete( ptr, bytes )
+● acc_is_present( ptr, bytes )
+● acc_update_(device|local)( ptr, bytes )
+● acc_deviceptr( ptr )
+● acc_hostptr( devptr )
+● acc_[un]map_data( devptr, hostptr, bytes )
+● acc_memcpy_(to|from)_device
+\end{verbatim}
+
+With the addition of coarrays in the 2008 standard, Fortran is now a \emph{parallel}
+language.  Originally called Coarray Fortran (CAF) by its
+authors\cite{Numrich:1998:CFP:289918.289920}, parallism in Fortran is similar to MPI in
+that all cooperating CAF processes (called images) execute a Single Program but with
+different (Multiple) Data (SPMD).  Key concepts in CAF are parallel execution, distributed
+memory allocation, and remote memory transfer.  Parallel execution and memory allocation
+are straightforward as each program is replicated $NP$ times with each program image
+allocating its own memory locally.  Special syntax is provided to indicate which arrays
+are visible between distributed memory processes and remote memory transfer is indicated
+with new array syntax using square brackets, for example,
+\begin{verbatim}
+   U(1) = U(1)[3]
+\end{verbatim}
+copies memory from the first element of \texttt{U} residing on image number 3 into
+the corresponding element of the \emph{local} array \texttt{U}.  
+
+Since each CAF process executes the same program, there are no good avenues for exploiting
+task-based parallelism.  Neither is there a mechanism for dynamic coarray memory
+allocation, nor a mechanism for the remote execution of functions.  In CAF, like MPI, the
+programmer often combines distributed memory processes running the same program image with a
+shared memory threaded programming model using OpenMP (or OpenACC).
+
+In this paper we examine...
+
+Topics highlighted in this section are: 1. Distributed memory array allocation;
+2. Explicit memory placement; 3. Remote memory transfer; and 4. Remote execution.  This
+description is within the context of extensions to Fortran; as shorthand, these extensions
+are referred to as CAFe, for Coarray Fortran extensions.  CAFe is complementary to
+previous work extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
+
+
 Historically it has been hard to create parallel programs.  The
 responsibility (and difficulty) of creating \emph{correct} parallel
 programs can be viewed as being spread between the programmer and the
@@ -48,15 +120,6 @@ large multiphysics code frameworks, it could take several person years
 to retarget an application for \emph{each} new heterogeneous
 platform\cite{DBLP:journals/corr/DubeyS13}.
 
-A reasonable solution given today's language limitations is to use MPI for distributed memory
-parallelism \emph{plus} OpenMP for on-chip parallelism.  This hybrid approach is taken by two
-successful, large-scale AMR multiphysics code frameworks, FLASH and Chombo; currently however,
-neither of these codes support hardware accelerators\cite{DBLP:journals/corr/DubeyS13}.
-%%This is the solution proposed by Cray and PGI \cite{BOF_SC10} (currently Chapel does not target GPUs\cite{Brad?}).
-Other choices for expressing on-chip parallelism are OpenCL~\cite{opencl11} and NVIDIA's CUDA.
-Unfortunately, achieving high performance using either of these two languages can be a daunting
-challenge and there are no guarantees that either language is suitable for future hardware
-generations.
 
 In this paper we examine a language-based paradigm that allows the
 compiler to take on a larger portion of the code complexity burden.

@@ -1,41 +1,122 @@
 \section{Coarray Fortran Extensions}
 
-%%We highlight the Fortran elemental source-code abstraction because it provides a local orientation similar to that of OpenCL or CUDA kernel functions that were designed to exploit streaming, highly-threaded architectures like GPUs.  Elemental functions are pure in that they are guaranteed to be free of side effects such as I/O.  Consider a convolution where a 3x3 filter is applied to individual pixel elements in a photograph to average of blur the original photograph.  A convolution is similar to stencil operations in computational fluid dynamics that are used to obtain spatial derivatives of state variables.  Simple code is shown with extensions to Fortran shown in capital letters.  The extensions could be provided to C or Fortran functions via compiler directives rather than explicit language syntax.
+Topics highlighted in this section are: 1. Distributed memory array allocation;
+2. Explicit memory placement; 3. Remote memory transfer; and 4. Remote execution.  This
+description is within the context of extensions to Fortran; as shorthand, these extensions
+are referred to as CAFe, for Coarray Fortran extensions.  CAFe is complementary to
+previous work extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
 
-Consider the \texttt{Laplacian} concurrent function in Fig. 1.  In this section we demonstrate how
-this function can be called in the normal context of a program, one that allows full access to all
-of the interior elements of the array, as well as array elements within the logically exterior,
-halo-boundary region.  Topics highlighted in this section are: 1. distributed memory array
-allocation; 2. explicit memory placement; 3. remote memory transfer; and 4. remote execution.  This
-description is within the context of extensions to Fortran; as shorthand, these extensions are
-referred to as CAFe, for Coarray Fortran extensions.  CAFe is complementary to previous work
-extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
 
 \subsection{Subimages}
 
-We must first introduce the important new concept of a \emph{CAFe subimage}.  Fortran images are a collection of
-distributed memory processes that all run the same program (image).  LOPe extends the concept of a
-Fortran image by allowing images to be hierarchical.  By this we mean that each image \emph{may}
-have a subimage (or subimages), but this subimage is not visible to other regular Fortran images.
-Subimages also execute differently than normal images and may execute on different non-homogeneous
-hardware, e.g., an attached accelerator device.  Subimages are task based while images all execute
-a Single Program but with different (Multiple) Data (SPMD).  A task can be given to a subimage, but
-execution on the subimage terminates once the task is finished.  Memory on a subimage is permanent,
-however, and must be explicitly allocated and deallocated.
+We must first introduce the important new concept of a \emph{CAFe subimage}.  Fortran
+images are a collection of distributed memory processes that all run the same program
+(image).  CAFe extends the concept of a Fortran image by allowing images to be
+hierarchical.  By this we mean that each image \emph{may} have a subimage (or subimages),
+but this subimage is not visible to other regular Fortran images.  Subimages also execute
+differently than normal images and may execute on different non-homogeneous hardware,
+e.g., an attached accelerator device.  Subimages are task based while images all execute a
+Single Program but with different (Multiple) Data (SPMD).  A task can be given to a
+subimage, but execution on the subimage terminates once the task is finished.  Memory on a
+subimage is permanent, however, and must be explicitly allocated and deallocated.
 
-One obtains a subimage by executing the new LOPe function call, \texttt{device = GET\_SUBIMAGE(1)},
-where the integer argument represents an attached hardware device (or a separate process).
-If the function fails (e.g., the requested device is unavailable) it returns the image number
-\texttt{this\_image()} of the process that is executing the current program.  Returning the current
-image allows program execution to proceed correctly even if there are no attached devices.
+One obtains a subimage by executing a new CAFe function,
+\begin{verbatim}
+   device = GET_SUBIMAGE(device_id)
+\end{verbatim}
+where the integer argument represents an attached hardware device (or a separate process
+or a team of threads).  If the function fails (e.g., the requested device is unavailable)
+it returns the local image number of the process that is executing the
+current program, obtained by a call to the Fortran 2008 function \texttt{this\_image()}.
+Returning the current image (similar to MPI rank) allows program execution to proceed
+correctly even if there are no attached devices.
+
+Having obtained an subimage, we now consider how a subimage can be used within a program
+to allocate memory, transfer memory, and execute tasks.
+
+
+\subsection{Distributed Memory Array Declaration}
+
+In Fortran, arrays that are visible to other program images must be declared with the
+codimension attribute, for example,
+\begin{verbatim}
+ real, allocatable :: U(:,:)[:], V(:,:)[:]
+\end{verbatim}
+declares that coarrays \texttt{U} and \texttt{V} are allocatable with a rank of two
+and a corank of 1.  In Fortran, square brackets \texttt{[ ]} are used to denote operations
+(possibly expensive) on distributed memory where parentheses \texttt{( )} are used to
+denote array elements; square brackets denote array location.
+
+When declared thusly, coarrays must be allocated on all program images.  CAFe extends this
+declaration to include memory that \emph{may} be allocated on a subimage, but does not
+need to be allocated unless it is specifically used by a task executing on a subimage.
+
+
+\subsection{Explicit Memory Placement}
+
+As discussed, CAFe allows coarray memory to be conditionally allocated on a subimage.
+It should be allocated conditionally because the requested subimage in a texttt{GET\_SUBIMAGE}
+call may not be available.  In addition, not all coarrays need be allocated on each
+subimage.  For example, the following code segment allocates memory for coarrays
+\texttt{U} and \texttt{V} on all images, but only coarrays \texttt{U} is allocated on
+the subimage specified by \texttt{device}:
+\begin{verbatim}
+   allocate(U(M,N)[*], V(M,N)[*])
+   if (device \= this_image()) then
+     allocate(U(M,N)[*])  [[device]]
+   end if
+\end{verbatim}
+where \texttt{M} and \texttt{N} are constant parameters.  The first allocate statement is
+mandatory and allocates the declared coarrays on all program images.  The use of the
+\texttt{*} symbol is used for the last corank dimension in CAF (in this case there is only
+one) to allow for the number of program images to be a runtime parameter, which can be
+ascertained with a \texttt{num\_images()} function call.  If \texttt{device} is
+available, its numeric value will be different from \texttt{this\_image()} and thus
+coarray \texttt{U} will also be allocated on the device.  Note that placement of the
+memory is specified by the use of double square bracket notation \texttt{[[ ]]}.  Like
+single square brackets, double square brackets indicate something special (and possibly
+expensive) is to occur, in this case possibly remote memory allocation.
+
+
+\subsection{Remote Memory Transfer}
+
+Once memory is allocated on the device, it can be initialized by copying memory from the
+hosting image to the device.  This is explicitly done with normal CAF syntax.  For example,
+\begin{verbatim}
+  U[device] = 3.14
+\end{verbatim}
+assigns 3.14 to all of the array elements on \texttt{device}.  Specific array elements
+can also be transferred, 
+\begin{verbatim}
+  U(1,:) = U(1,:)[device]
+  U(M,:) = U(M,:)[device]
+\end{verbatim}
+where the first and last columns of \texttt{U} are copied from the device to the hosting image.
+
+CAFe restricts memory transfer between a subimage and its hosting image only. Transferring
+memory to another images subimage is not allowed.  In addition, memory transfer can only be
+initiated by the hosting image; code executing on a subimage cannot use coarray notation to
+transfer memory.
+
+\subsection{Remote Execution}
+
+The final CAFe concept introduced is that of remote execution.  As discussed, in Fortran 2008
+all images (similar to MPI ranks) execute the same program.  The only way for an image
+to execute something different is to conditionally execute a block of code based on explicitly
+checking that an executing image's rank (\texttt{this\_image()}) meets some established criteria.
+There exists no mechanism for one image to execute a block of code or a procedure on another
+image.
+
+CAFe allows images to execute tasks on hosted subimages using standard procedure calls.
+For example,
+
 
 \subsection{CAFe Example}
 
-We start with the declaration of an array with an explicit halo size and with two local
-dimensions (rank) and two distributed memory codimensions (corank),
+We start with the declaration of an array \texttt{U} with two local dimensions (rank) and
+two distributed memory codimensions (corank).
 \begin{verbatim}
-   real, allocatable, dimension(:,:), codimension[:,:]      &
-         HALO(1:*:1,1:*:1) :: U
+   real, allocatable, :: U(:,:)[:,:]
 \end{verbatim}
 The corank of the array is chosen to be identical to the rank of the array so that the logical
 process topology aligns in a way that allows a natural halo exchange between logically neighboring
@@ -94,7 +175,7 @@ defined above in reference to the definition of the concurrent procedure
 \texttt{Laplacian}) is given by the indices \texttt{(i,j)}; 5. Location of memory for the
 task is to be taken from the subimage as noted by \texttt{[device]}; 6. All threads must finish
 execution of the loop body before further execution of the program proceeds; and 7. Transfer of
-all requisite halo regions is effected by the call to the new LOPe intrinsic function
+all requisite halo regions is effected by the call to the new CAFe intrinsic function
 \texttt{HALO\_TRANSFER()}.  This function is a synchronization event in that all images must
 complete the halo transfer before program execution continues.
 
