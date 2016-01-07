@@ -55,12 +55,25 @@ function get_subimage(device_id, cl_device_)
 
 end function get_subimage
 
+function factor(gws, lws) result(rtn_gws)
+  integer, intent(in) :: gws, lws
+  integer(c_size_t)   :: rtn_gws
+  rtn_gws = gws / lws;
+  if (lws * rtn_gws .eq. gws) then
+     rtn_gws = gws
+  else if (lws * rtn_gws .GT. gws) then
+     rtn_gws = lws * rtn_gws
+  else
+     rtn_gws = lws * (rtn_gws + 1)
+  end if
+end function factor
+
 function focl_global_size(rank, lws, prev_gws, new_gws) result(rtn_gws)
   integer,           intent(in) :: rank
   integer(c_size_t), intent(in) :: lws(*), prev_gws(*)
   integer,           intent(in) :: new_gws(*)
   integer(c_size_t)             :: rtn_gws(3)
-  integer                       :: i, dim
+  integer                       :: i, dim, gws
 
   rtn_gws = [1,1,1]
 
@@ -71,10 +84,14 @@ function focl_global_size(rank, lws, prev_gws, new_gws) result(rtn_gws)
   !
   do i = 1, dim
      if (prev_gws(i) > 1 .AND. new_gws(i) > 1) then
-        rtn_gws(i) = min(prev_gws(i), new_gws(i))
+        gws = min(prev_gws(i), new_gws(i))
      else
-        rtn_gws(i) = max(prev_gws(i), new_gws(i))
+        gws = max(prev_gws(i), new_gws(i))
      end if
+     if (gws .NE. 1) then
+        gws = factor(gws, lws(i))
+     end if
+     rtn_gws(i) = gws
   end do
 
 end function focl_global_size
