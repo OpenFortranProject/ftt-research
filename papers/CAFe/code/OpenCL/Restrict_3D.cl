@@ -10,7 +10,7 @@ __kernel void Restrict_3D (
    const unsigned int x = get_global_id(0);
    const unsigned int y = get_global_id(1);
    const unsigned int z = get_global_id(2);
-   unsigned int n = N / 2;
+   unsigned int n = N / 2; // SHOULD THIS BE N / 2 - 1 ???
 
    const unsigned int x0y0z0 = x + y * n + z * n * M;
    const unsigned int x_1y0z0 = x0y0z0 - 1; 
@@ -43,7 +43,7 @@ __kernel void Restrict_3D (
    
    if (x == 0 || y == 0 || z == 0)
       return;
-   if (x == N-1 || y == M-1 || z == L-1)
+   if (x >= N-1 || y >= M-1 || z >= L-1)
       return;
 
    V2h[x0y0z0] = .001 * (
