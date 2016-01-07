@@ -100,15 +100,54 @@ transfer memory.
 
 \subsection{Remote Execution}
 
-The final CAFe concept introduced is that of remote execution.  As discussed, in Fortran 2008
-all images (similar to MPI ranks) execute the same program.  The only way for an image
-to execute something different is to conditionally execute a block of code based on explicitly
-checking that an executing image's rank (\texttt{this\_image()}) meets some established criteria.
-There exists no mechanism for one image to execute a block of code or a procedure on another
-image.
+The final CAFe concept introduced is that of remote execution.  As discussed above, in
+Fortran all CAF images (similar to MPI ranks) execute the same program.  The only way for
+an image to execute something different is to conditionally execute a block of code based
+on explicitly checking that an executing image's rank (\texttt{this\_image()}) meets some
+established criterion.  There currently exists no mechanism for one image to execute a
+block of code or a procedure on another image.
 
 CAFe allows images to execute tasks on hosted subimages using standard procedure calls.
 For example,
+\begin{verbatim}
+  call relax(U[device])  [[device]]
+\end{verbatim}
+executes the subroutine relax, on the subimage device, using array \texttt{U} \emph{located}
+on the same subimage.  This follows the same pattern as introduced for remote coarray allocation,
+whereby the double square brackets notation indicates \emph{where} the function will execute.
+Funtions to be executed on a subimage must be pure procedures (i.e., declared with the Fortran
+keyword \texttt{pure}) and scalar formal parameters must be passed by value (i.e., declared with the
+\texttt{value} attribute).
+
+CAFe expands on CAF execution semantics by providing a task-based mechanism, where tasks
+are defined in terms of pure Fortran procedures.  Since the procedures must be declared
+as pure, they cannot perform any I/O or call any impure procedures; nor can they initiate
+any communication between the subimage and the hosting image.
+
+CAFe subimage tasks can also be defined by the body of a Fortran do concurrent construct
+and executed on a subimage.  For example, the code segment,
+\begin{verbatim}
+do concurrent(i=1:N-1)  [[device]]
+ begin block
+   real :: w = 0.67
+   S(i) = (1-w)*T(i) + w*(T(i-1)+T(i+1)/2)
+ end block
+end do
+\end{verbatim}
+will execute all of the code within the \texttt{do concurrent} construct on device.  In
+Fortran, the execution semantics of a \texttt{do concurrent} loop is that the loop
+iterates can be executed concurrently in any order.
+
+Note the similarities between this example and the OpenMP pragma \texttt{!\$omp parallel do,
+private(w)}.  The use of the Fortran block construct to declare private
+variables allows a natural and clear way to distinguish between variables that are private
+to a ``thread'' (although in the example above, the ``private'' distinction for the
+variable \texttt{w} is unnecessary because it is a constant for all loop iterations).
+(NOTE FOR CRAIG: need to read the standard to see if a block construct can be used in this
+way. ALSO, there is a lot more work here to think about how do concurrent merges with
+OpenMP and OpenACC with regards to synchronization, barriers, teams, atomics,
+, critical sections, ...)
+
 
 
 \subsection{CAFe Example}
