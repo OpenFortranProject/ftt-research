@@ -22,7 +22,7 @@ Integer, parameter :: N      =  64
 Integer, parameter :: fd     =  12
 
 Integer :: i
-Integer :: nsteps = 5
+Integer :: nsteps = 200
 
 Integer :: rank, np
 
@@ -37,9 +37,7 @@ Allocate(V2h(-1:N/2+1))
 Allocate(V4h(-1:N/4+1))
 Allocate(V8h(-1:N/8+1))
 
-!if (rank == 0) then
   open(unit=fd, file="error_time.dat")
-!end if
 
 !! Initialize
 !
@@ -97,7 +95,9 @@ Call Textual_Output_1D(rank, np, N/8, V8h, "8h_mid")
 
 !! IMPORTANT: this last step should be an exact solution on a smaller grid probably
 !
-do i = 1, 5*nsteps
+!Set exact solution on coarsest grid.
+V8h = 0.0
+do i = 1, nsteps
   Call Relax_1D(N/8, V8h, Tmp)
   Call Exchange_Halo_1D(rank, N/8, V8h)
   write(fd, *) i, maxval(V8h)
@@ -153,26 +153,15 @@ Pure Subroutine Relax_1D(N, A, Tmp)
       Tmp(i) = (1.0 - w)*A(i) + 0.5*w*(A(i-1) + A(i+1))
    end do
 
-   !! set physical boundary conditions (they have been recomputed)
+   ! Do this in exchange halo...
    !    - probably should have rank information so that physical boundaries aren't changed
    !
-   Tmp(0) = 0.0
-   Tmp(N) = 0.0
-
-   !! Need to synchronize here as we may be running concurrently
-   !   - on subimage will only synchronize with its hardware threads, not distributed memory
-   !
-   ! Sync All
 
    ! compute over just the interior
    do i = 1, N-1
       A(i) = (1.0 - w)*Tmp(i) + 0.5*w*(Tmp(i-1) + Tmp(i+1))
    end do
 
-   !! IMPORTANT: not sure why this is needed, perhaps an error in prolongation/restrict
-   !
-   A(0) = 0.0
-   A(N) = 0.0
 
 End Subroutine Relax_1D
 
@@ -191,9 +180,12 @@ Subroutine Exchange_Halo_1D(rank, N, A)
    left  = rank - 1
    right = rank + 1
 
-   if (left < 0)                        left  = np-1
-   if (right > np-1)                    right = 0   
-
+   if (left < 0) then
+   left  = np-1
+   else if (right > np-1) then
+   right = 0  
+   end if
+   
    !! MPI halo exchange for parallel version
    !
    Call MPI_Send(A(1)  ,  1, MPI_REAL, left , tag, MPI_COMM_WORLD)
@@ -205,6 +197,18 @@ Subroutine Exchange_Halo_1D(rank, N, A)
    A( -1) = lbc
    A(N+1) = rbc
 
+   !! Relax on the last two points now that we have exchanged halo points.
+   A(0) = (1.0 - w)*A(0) + 0.5*w*(A(-1) + A(1))
+   A(N) = (1.0 - w)*A(N) + 0.5*w*(A(N-1) + A(N))
+
+
+   !! set physical boundary conditions (they have been recomputed)
+   if (left  == np-1) then
+   A(0)  = 0.0
+   end if
+   if (right == 0   ) then
+   A(N)  = 0.0 
+   end if
 End Subroutine Exchange_Halo_1D
 
 End Program PoissonMultigrid
