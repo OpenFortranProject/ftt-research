@@ -1,8 +1,8 @@
 #define DUMP_OUTPUT
 #undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
-#undef DO_RESTRICT
-#define DO_RELAX
+#define DO_RESTRICT
+#undef DO_RELAX
 
 PROGRAM PoissonMultigrid
 USE ForOpenCL
@@ -13,7 +13,7 @@ IMPLICIT NONE
 REAL, PARAMETER :: w = (2.0/3.0)
 INTEGER, PARAMETER :: N = 32
 INTEGER, PARAMETER :: M = 32
-INTEGER, PARAMETER :: L = 16
+INTEGER, PARAMETER :: L = 32
 INTEGER, PARAMETER :: NP = 2
 INTEGER, PARAMETER :: MP = 2
 INTEGER, PARAMETER :: LP = 2
@@ -38,7 +38,7 @@ INTEGER(KIND=cl_int) :: cl_status__
 INTEGER(KIND=c_size_t) :: cl_size__
 INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
-INTEGER(KIND=c_size_t) :: cl_lws__(3) = [16,8,1]
+INTEGER(KIND=c_size_t) :: cl_lws__(3) = [16,8,8]
 
 !! Device id
 !
@@ -108,7 +108,7 @@ cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 #ifdef DUMP_OUTPUT
 CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
 #endif
-#define DO_RELAX
+
 !! level 1h
 !
 DO t = 1, nsteps
@@ -125,6 +125,8 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
+cl_gws__ = [32,24,24]
+print *, "------------------------------"
 print *, cl_gwo__
 print *, cl_gws__
 print *, cl_lws__
@@ -143,8 +145,6 @@ WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_mid")
 #endif
 
-#undef DUMP_OUTPUT
-
 #ifdef DO_RESTRICT
 cl_status__ = setKernelArg(cl_Restrict_3D_,0,N)
 cl_status__ = setKernelArg(cl_Restrict_3D_,1,M)
@@ -158,16 +158,27 @@ cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
 cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
+
+cl_gws__ = [32,24,24]
+cl_lws__ = [8,8,4] ! MAX APPEAR TO BE 2^8, 256 
+print *, "------------------------------"
+print *, cl_gwo__
+print *, cl_gws__
+print *, cl_lws__
+
+!cl_status__ = run(cl_Restrict_3D_,2,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = run(cl_Restrict_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = clFinish(cl_Restrict_3D_%commands)
 #endif
-
 #ifdef DUMP_OUTPUT
 cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
 CALL Textual_Output_3D(N/2,M/2,L/2,V2h,"2h_0")
 #endif
 
+print *, "===FIN"
+#undef DO_RESTRICT
+#undef DUMP_OUTPUT
 !! level 2h
 !
 DO t = 1, nsteps
@@ -221,7 +232,6 @@ cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/4+1-(-1))+1),((M/4+1-(-1))+
 cl_status__ = run(cl_Restrict_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = clFinish(cl_Restrict_3D_%commands)
 #endif
-
 #ifdef DUMP_OUTPUT
 cl_size__ = 4*((N/4+1-(-1))+1)*((M/4+1-(-1))+1)*((L/4+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V4h_,C_LOC(V4h),cl_size__)
