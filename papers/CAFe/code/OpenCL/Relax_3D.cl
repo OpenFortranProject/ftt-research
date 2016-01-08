@@ -27,6 +27,18 @@ __kernel void Relax_3D (
    //const unsigned int x0y0z1 = x0y0z0 + n*M;
    const unsigned int x0y1z1 = x0y0z0 + n + n*M;
 
+   // A[x0y0z0] = (1.0 - w) * Tmp[x0y0z0];
+   Tmp[x0y0z0] = (1.0 - w) * A[x0y0z0]
+               + (1.0/6.0)*w*(
+                 A[x_1y0z0] + A[x1y0z0] 
+               + A[x0y_1z0] + A[x0y1z0]
+               + A[x0y0z_1] //+ A[x0y0z1] // SHOULD THIS BE ADDED?
+               + A[x0y1z1]
+                 );
+   barrier(CLK_GLOBAL_MEM_FENCE);
+   A[x0y0z0] = Tmp[x0y0z0];
+
+   /*
    A[x0y0z0] = (1.0 - w) * Tmp[x0y0z0]
                + (1.0/6.0)*w*(
                  Tmp[x_1y0z0] + Tmp[x1y0z0] 
@@ -34,6 +46,7 @@ __kernel void Relax_3D (
                + Tmp[x0y0z_1] //+ Tmp[x0y0z1] // SHOULD THIS BE ADDED?
                + Tmp[x0y1z1]
                  );
+  */
 
    return;
 }
