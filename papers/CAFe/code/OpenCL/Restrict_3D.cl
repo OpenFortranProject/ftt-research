@@ -46,7 +46,7 @@ __kernel void Restrict_3D (
    if (x >= N-1 || y >= M-1 || z >= L-1)
       return;
 
-   V2h[x0y0z0] = .001 * (
+   V2h[x0y0z0] = .1 * (
                  .125*V1h[x_1y1z1]   + .25*V1h[x0y1z1]   + .125*V1h[x1y1z1]
                +  .25*V1h[x_1y0z1]   +  .5*V1h[x0y0z1]   +  .25*V1h[x1y0z1]
                + .125*V1h[x_1y_1z1]  + .25*V1h[x0y_1z1]  + .125*V1h[x1y_1z1]
