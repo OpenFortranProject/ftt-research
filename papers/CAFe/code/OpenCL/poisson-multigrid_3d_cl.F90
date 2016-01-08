@@ -2,7 +2,7 @@
 #undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
 #define DO_RESTRICT
-#undef DO_RELAX
+#define DO_RELAX
 
 PROGRAM PoissonMultigrid
 USE ForOpenCL
@@ -38,7 +38,7 @@ INTEGER(KIND=cl_int) :: cl_status__
 INTEGER(KIND=c_size_t) :: cl_size__
 INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
-INTEGER(KIND=c_size_t) :: cl_lws__(3) = [16,8,8]
+INTEGER(KIND=c_size_t) :: cl_lws__(3) = [32,8,1]
 
 !! Device id
 !
@@ -57,8 +57,6 @@ if (device == this_image()) then
    STOP "ERROR, device == this_image()"
 end if
 
-#define DO_RELAX
-
 #ifdef DO_RELAX
 cl_Relax_3D_ = createKernel(cl_device_,"Relax_3D")
 #endif
@@ -69,7 +67,6 @@ cl_Restrict_3D_ = createKernel(cl_device_,"Restrict_3D")
 cl_Prolongate_3D_ = createKernel(cl_device_,"Prolongate_3D")
 #endif
 
-#undef DO_RELAX
 
 ALLOCATE(V1h(-1:N+1,-1:M+1,-1:L+1))
 ALLOCATE(Buf(-1:N+1,-1:M+1,-1:L+1))
@@ -125,11 +122,7 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
-cl_gws__ = [32,24,24]
-print *, "------------------------------"
-print *, cl_gwo__
-print *, cl_gws__
-print *, cl_lws__
+  ! cl_gws__ = [32,24,24]
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
@@ -159,12 +152,8 @@ cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
 
-cl_gws__ = [32,24,24]
-cl_lws__ = [8,8,4] ! MAX APPEAR TO BE 2^8, 256 
-print *, "------------------------------"
-print *, cl_gwo__
-print *, cl_gws__
-print *, cl_lws__
+! cl_gws__ = [32,24,24]
+! cl_lws__ = [8,4,8] ! MAX APPEAR TO BE 2^8, 256 
 
 !cl_status__ = run(cl_Restrict_3D_,2,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = run(cl_Restrict_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
@@ -178,7 +167,10 @@ CALL Textual_Output_3D(N/2,M/2,L/2,V2h,"2h_0")
 
 print *, "===FIN"
 #undef DO_RESTRICT
+#undef DO_PROLONGATE
+#undef DO_RELAX
 #undef DUMP_OUTPUT
+
 !! level 2h
 !
 DO t = 1, nsteps
