@@ -13,7 +13,7 @@ __kernel void Relax_3D (
 
    if (x < 2 || y < 2 || z < 2)
       return;
-   if (x >= N+1 || y >= M+1 || z >= L+1)
+   if (x > N || y > M || z > L)
       return;
 
    const unsigned int n = N ; // SHOULD THIS BE N / 2 - 1 ???
