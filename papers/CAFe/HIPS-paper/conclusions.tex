@@ -27,16 +27,12 @@ algorithm with data-access patterns;
 
 %%Note that the use of halo cells is the normal way that large and complex MPI and CAF programs are implemented.
 
-\vspace{-.1in}
-
 \subsubsection{Benefits.}
 LOPe proposes to formalize the common, halo software pattern in language syntax, thus providing the
 compiler with access to halo information in order to spread computation over more hardware
 resources, improve performance, and to reduce complexity for the programmer.  Furthermore, LOPe
 semantics provide important \emph{language restrictions} that remove the possibility of race conditions
 that occur when multiple threads have write access to overlapping data regions.
-
-\vspace{-.1in}
 
 \subsubsection{Limitations.}
 LOPe only supports regular structured grids through Fortran multi-dimensional arrays and a
@@ -48,8 +44,6 @@ intermediate results resulting from multiple intermediate update steps.  Adaptiv
 support AMR in LOPe through locally-structured grid methods based on the work of Berger and
 Oliger\cite{colella2007performance}.  In this instance, LOPe could be used to update the regular
 array regions in each rectangular patch.
-
-\vspace{.1in}
 
 By implementing LOPe we have demonstrated that LOPe can be used to easily and succinctly code
 the stencil algorithms that are common to many areas of science, and furthermore, that LOPe is
