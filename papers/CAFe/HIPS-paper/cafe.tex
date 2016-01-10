@@ -391,36 +391,32 @@ University of Oregon,
 Eugene, Oregon}
 \IEEEauthorblockA{\IEEEauthorrefmark{2}Galois, Portland, Oregon\\}}
 
-
-
 % use for special paper notices
 %\IEEEspecialpapernotice{(Invited Paper)}
-
-
-
 
 % make the title area
 \maketitle
 
 
 \begin{abstract}
-Emerging hybrid accelerator architectures for high performance computing are often suited for the
-use of a data-parallel programming model.  Unfortunately, programmers of these
-architectures face a steep learning curve that frequently requires learning a new language (e.g.,
-OpenCL). Furthermore, the distributed (and
-frequently multi-level) nature of the memory organization of clusters of these machines
-provides an additional level of complexity.  This paper presents preliminary work
-examining how programming with a local orientation can be employed to provide simpler access to
-accelerator architectures.  A locally-oriented programming model is especially useful for the
-solution of algorithms requiring the application of a stencil or convolution kernel.  In this programming
-model, a programmer codes the algorithm by modifying \emph{only a single array element} (called the
-local element), but has read-only access to a small sub-array surrounding the local element.
-We demonstrate how a locally-oriented programming model can be adopted as
-a language extension using source-to-source program transformations.
+  Emerging hybrid accelerator architectures are often proposed for inclusion as components
+  in an exascale machine, not only for performance reasons but also to reduce total power
+  consumption.  Unfortunately, programmers of these architectures face a daunting and
+  steep learning curve that frequently requires learning a new language (e.g., OpenCL) or
+  adopting a new programming model.  Furthermore, the distributed (and frequently
+  multi-level) nature of the memory organization of clusters of these machines provides an
+  additional level of complexity.  This paper presents preliminary work examining how
+  Fortran coarray syntax can be extended to provide simpler access to accelerator
+  architectures.  This programming model integrates the Partioned Global Address Space
+  (PGAS) features of Fortran with some of the more task-oriented constructs in OpenMP 4.0
+  or OpenACC.  It also includes the potential for compiler-based transformations targeting
+  the Open Community Runtime (OCR) environment.  We demonstrate these Coarray Fortran
+  extensions (CAFe) by implementing a multigrid Laplacian solver and transforming this
+  high-level code to a mixture of standard coarray Fortran and OpenCL kernels.
 \end{abstract}
 
 \begin{IEEEkeywords}
-domain specific language; stencil compiler; distributed memory parallelism
+distributed memory parallelism
 \end{IEEEkeywords}
 
 
@@ -434,13 +430,11 @@ domain specific language; stencil compiler; distributed memory parallelism
 % creates the second title. It will be ignored for other modes.
 \IEEEpeerreviewmaketitle
 
-
 % Introduction
 % no \IEEEPARstart
+
 \input{intro}
-
 %%\input{programming-model}
-
 \input{coarray-extensions}
 \input{transformations}
 \input{multigrid}
