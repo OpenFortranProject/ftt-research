@@ -1,69 +1,66 @@
 \section{CAFe Implementation}
 
-This section briefly describes how LOPe extensions to Fortran have been implemented as
-source-to-source transformations via rewrite rules (for expressing basic transformations) and
-rewriting strategies (for controlling the application of the rewrite rules).  A LOPe file is
-transformed to Fortran and OpenCL files through generative programming techniques using
-Stratego/XT tools\cite{Bravenboer200852} and is accomplished in three phases: (1) parsing to
-produce a LOPe Abstract Syntax Tree (AST) represented in the Annotated Term
-Format (ATerm\cite{DBLP:journals/spe/BrandJKO00}); (2) transformations of LOPe AST nodes to Fortran
-and C AST nodes; and (3) pretty-printing to the base Fortran and OpenCL languages.
+This section briefly describes how CAFe extensions to Fortran have been implemented as
+source-to-source transformations via rewrite rules (for expressing basic transformations)
+and rewriting strategies (for controlling the application of the rewrite rules).  A CAFe
+file is transformed to Fortran and OpenCL files through generative programming techniques
+using Stratego/XT tools\cite{Bravenboer200852} and is accomplished in three phases: (1)
+parsing to produce a CAFe Abstract Syntax Tree (AST) represented in the Annotated Term
+Format (ATerm\cite{DBLP:journals/spe/BrandJKO00}); (2) transformations of CAFe AST nodes
+to Fortran and C AST nodes; and finally (3) pretty-printing to the base Fortran and OpenCL
+languages.
 
-The foundation of LOPe is the syntax definition of the base language expressed in
-SDF (Syntax Definition Formalism) as part of the Open Fortran Project (OFP)\cite{OFP:git:url}.
-LOPe is defined in a separate SDF module that extends the Fortran 2008 language standard with 15
-context-free syntax rules.  Parsing is implemented in Stratego/XT by a scannerless generalized-LR
-parser and the conversion of transformed AST nodes to text is accomplished with simple
-pretty-printing rules.
+The foundation of CAFe is the syntax definition of the base language expressed in SDF
+(Syntax Definition Formalism) as part of the Open Fortran Project (OFP)\cite{OFP:git:url}.
+CAFe is defined in a separate SDF module that extends the Fortran 2008 language standard
+with only 11 context-free syntax rules.  Parsing is implemented in Stratego/XT by a
+scannerless generalized-LR parser and the conversion of transformed AST nodes to text is
+accomplished with simple pretty-printing rules.
 
 
 \subsection{Transformations for Concurrent Procedures}
 
-A key component of code generation for LOPe is the targeting of a LOPe \texttt{CONCURRENT}
-procedure for a particular hardware architecture.  The execution target can be one
-of several choices, including serial execution by the current process via inlining
-of the function, parallel execution by inlining with OpenMP compiler directives, or parallel
-execution by heterogeneous processing elements with a language like OpenCL.
+A key component of code generation for CAFe is the targeting of a Fortran pure procedure
+or a \texttt{do concurrent} construct for execution on a particular hardware architecture.
+The execution target can be one of several choices, including serial execution by the
+current program image, parallel execution by inlining with OpenMP compiler directives, or
+parallel execution by heterogeneous processing elements with a language like OpenCL.
 
-For this work we have developed rewrite rules and strategies in Stratego/XT to rewrite Fortran AST
+We have developed rewrite rules and strategies in Stratego/XT to rewrite Fortran AST
 nodes to C AST nodes (extended with necessary OpenCL keywords).  The C AST ATerms have mostly a
-one-to-one correspondence with Fortran terms: a \texttt{CONCURRENT} procedure is transformed to an
+one-to-one correspondence with Fortran terms: a pure Fortran procedure is transformed to an
 OpenCL kernel; Fortran formal parameters are transformed to C parameters (with a direct mapping of
 types); and local Fortran variable declarations are rewritten as C declarations.  Similarly,
 Fortran executable statements are rewritten as C statements.  The only
-minor complication is mapping the LOPe local, array index view to the global C index space.  This
+minor complication is mapping the CAFe local, array index view to the global C index space.  This
 translation is facilitated by a Fortran symbol table that stores array shape and halo size
-information.
+information.  However, these transformation are not entirely completed and some of the
+OpenCL kernels used in the example section have been coded by hand.
 
 \subsection{Transformations at the Calling Site}
 
-Transformations of a LOPe procedure call site are more difficult, though technically straight
-forward.  The Fortran function call must be transformed to a call to run the OpenCL kernel
-(generated as described above).  This is facilitated by use of the ForOpenCL library which
-provides Fortran bindings to the OpenCL runtime\cite{Sottile:2013:FTE:2441516.2441520}.  However,
-this usage requires the declaration of extra variables, allocation of memory on the OpenCL device
-(subimage), transfer of memory, marshalling of kernel arguments, and synchronization.
+Transformations of a CAFe procedure call site are more difficult, though technically
+straight forward.  The Fortran function call must be transformed to a call to run the
+OpenCL kernel (generated as described above).  This is facilitated by use of the ForOpenCL
+library which provides Fortran bindings to the OpenCL
+runtime\cite{Sottile:2013:FTE:2441516.2441520}.  However, this usage requires the
+declaration of extra variables, allocation of memory on the OpenCL device (subimage),
+transfer of memory, marshalling of kernel arguments, and synchronization.
 
-These transformations are accomplished using several rewrite stages using Stratego/XT strategies:
-(1) a symbol table is produced in the first pass to store information related to arrays including,
-array shape, halo size, and allocation status;
-(2) additional variables are declared that are used to maintain the OpenCL runtime state, including
-the OpenCL device, the OpenCL kernel, and OpenCL variables used to marshall kernel arguments; and
-(3) all CAFe code related to subimage usage is desugared (lowered) to standard Fortran with calls to the
-ForOpenCL library as needed.
-%%The latter step includes the allocation of OpenCL device memory, transfer of memory to and from the OpenCL device, marshalling of kernel arguments, running of the OpenCL kernel, and synchronization.
+These transformations are accomplished using several rewrite stages using Stratego/XT
+strategies:
+(1) a symbol table is produced in the first pass to store information related to arrays
+including, array shape and allocation status;
+(2) additional variables are declared that are used to maintain the OpenCL runtime state,
+including the OpenCL device, the OpenCL kernel, and OpenCL variables used to marshall
+kernel arguments; and
+(3) all CAFe code related to subimage usage is desugared (lowered) to standard Fortran
+with calls to the ForOpenCL library as needed.
+The latter step includes the allocation of OpenCL device memory, transfer of memory to and
+from the OpenCL device, marshalling of kernel arguments, running of the OpenCL kernel, and
+synchronization.
 
-Though not yet available, similar rewrite strategies are planned for targeting programming models
-other than OpenCL including parallel execution with OpenMP directives.  In addition, simple serial
-execution with function inlining (if desired) will be performed by the regular Fortran compiler once
-all CAFe and LOPe code has been desugared to standard Fortran.
-
-%%\subsection{Halo Transfer Performance}
-
-%%A thorough examination of potential performance gains using LOPe for parallelization of code is beyond the scope of this paper.  The emphasis of this work is to explain the syntax and execution semantics of a LOPe application.  However, preliminary work using the Stratego/XT rewrite system as described indicates that similar performance can be expected to that of previous work\cite{foropencl} (see also\cite{StencilCompilers}).
-
-%%The current implementation does \emph{not} take advantage of optimization strategies such as prefetching of array tiles (including halos) into OpenCL local memory or of loop unrolling on the OpenCL device.  Neither does it take advantage of the potential of LOPe \texttt{CONCURRENT} function fusion along with execution and synchronization strategies to overlap communication with computation.
-
-%%Since many scientific codes are dominated by memory performance, including and especially stencil algorithms as they typically only involve a computation on a small locally central array element and a small overlapping halo region.  Stencil operations frequently do not contain enough floating point operations per memory load to allow for floating point performance to operate at peak (though this is entirely application and domain specific).  Thus we illustrate the \emph{potential} for performance by noting the latency and throughput performance of an attached GPU in conjunction with MPI distributed memory performance associated with halo transfer in Table 1.
-
-%%The results in Table 1 indicate that the primary bottleneck in using accelerators attached to the TODO bus using OpenCL is likely to be the latency in transferring memory to and from the device for distributed memory clusters of only a few nodes exchanging halo data using MPI.
+Though not yet available, similar rewrite strategies are planned for targeting programming
+models other than OpenCL including parallel execution with OpenMP and OpenACC directives.
+However, as CAFe is designed, simple serial execution --- with respect to subimage tasks
+--- is automatically provided by the regular CAF compiler.
