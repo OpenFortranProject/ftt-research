@@ -1,5 +1,46 @@
 \section{Performance Measurements}
 
-This section shows and compares performance measurements for: 1. Memory bandwidth usage on GPU; 2. Computaional time on GPU; 3. Halo Communication time (total plus breakdown to and from device and MPI); 4. Total time scaling on ACISS; 5. Comparison with OpenACC (hopefully).
+It is important to note that the emphasis of this work is to explore and explain the new
+syntax and execution semantics of a CAFe application.  A thorough examination of potential
+performance gains (if any) using CAFe for parallelization of code is beyond the scope of
+this paper.  The primary purpose of CAFe is to combine the parallel features of Fortran coarrays
+--- executing a \emph{single} program --- with concurrent execution of separate tasks executing on
+potentially heterogeneous hardware.  However, the relative performance of computation on
+a cluster of GPUs compared with the necessary communication of halo information is
+of interest; especially considering complete exchance of halo data between multiple
+coarray images \emph{and} between each individual host image and its subimage (an attached
+OpenCL device).
 
+%%However, preliminary work using the Stratego/XT rewrite system as described indicates that similar performance can be expected to that of previous work\cite{foropencl} (see also\cite{StencilCompilers}).
+
+This section shows and compares performance measurements for: 1. Memory bandwidth usage on
+GPU; 2. Computaional time on GPU; 3. Halo Communication time (total plus breakdown to and
+from device and MPI); 4. Total time scaling on ACISS; 5. Comparison with OpenACC
+(hopefully).
+
+\subsection{Halo Transfer Performance}
+
+The current implementation does \emph{not} take advantage of optimization strategies such
+as prefetching of array tiles (including halos) into OpenCL local memory or of loop
+unrolling on the OpenCL device.
+
+%%either does it take advantage of the potential of CAFe to overlap communication with computation (for example, computing on 
+
+\begin{comment}
+Since many scientific codes are dominated by memory performance, including and especially
+stencil algorithms as they typically only involve a computation on a small locally central
+array element and a small overlapping halo region.  Stencil operations frequently do not
+contain enough floating point operations per memory load to allow for floating point
+performance to operate at peak (though this is entirely application and domain specific).
+Thus we illustrate the \emph{potential} for performance by noting the latency and
+throughput performance of an attached GPU in conjunction with MPI distributed memory
+performance associated with halo transfer in Table 1.
+\end{comment}
+
+\begin{comment}
+The results in Table 1 indicate that the primary bottleneck in using accelerators attached
+to the TODO bus using OpenCL is likely to be the latency in transferring memory to and
+from the device for distributed memory clusters of only a few nodes exchanging halo data
+using MPI.
+\end{comment}
 
