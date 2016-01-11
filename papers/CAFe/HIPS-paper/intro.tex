@@ -59,9 +59,11 @@ are straightforward as each program is replicated $NP$ times with each program i
 allocating its own memory locally.  Special syntax is provided to indicate which arrays
 are visible between distributed memory processes and remote memory transfer is indicated
 with new array syntax using square brackets, for example,
+\small
 \begin{verbatim}
    U(1) = U(1)[3]
 \end{verbatim}
+\normalsize
 copies memory from the first element of \texttt{U} residing on image number 3 into
 the corresponding element of the \emph{local} array \texttt{U}.  The fundamental programming
 model is similar to that provided by message passing systems.
