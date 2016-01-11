@@ -22,9 +22,11 @@ finished.  Memory on a subimage is permanent, however, and must be explicitly al
 and deallocated.
 
 A programmer requests a subimage by executing the new CAFe function,
+\small
 \begin{verbatim}
    device = GET_SUBIMAGE(device_id)
 \end{verbatim}
+\normalsize
 where the integer argument represents an attached hardware device (or perhaps a separate
 process or a team of threads; it is the compilers responsibility to determine precisely
 what a subimage means in terms of the software and hardware environment under its
@@ -45,9 +47,11 @@ to allocate memory, transfer memory, and execute tasks.  This functionality is d
 
 In Fortran, arrays that are visible to other program images must be declared with the
 codimension attribute, for example,
+\small
 \begin{verbatim}
  real, allocatable :: U(:,:)[:], V(:,:)[:]
 \end{verbatim}
+\normalsize
 declares that coarrays \texttt{U} and \texttt{V} are allocatable with a rank of two and a
 corank of 1.  In Fortran, square brackets \texttt{[ ]} are used to indicate operations
 (possibly expensive) on distributed memory where parentheses \texttt{( )} are used to
@@ -68,12 +72,14 @@ call may not be available.  In addition, not all coarrays need be allocated on e
 subimage.  For example, the following code segment allocates memory for coarrays
 \texttt{U} and \texttt{V} on all images, but only coarray \texttt{U} is allocated on
 the subimage specified by \texttt{device}:
+\small
 \begin{verbatim}
    allocate(U(M,N)[*], V(M,N)[*])
    if (device \= this_image()) then
      allocate(U(M,N)[*])  [[device]]
    end if
 \end{verbatim}
+\normalsize
 where \texttt{M} and \texttt{N} are constant parameters.  The first allocate statement
 allocates coarrays \texttt{U} and \texttt{V} on all program images.  The \texttt{*} symbol
 in the allocation is required for the last corank dimension in CAF (in this case there is
@@ -86,26 +92,32 @@ single square brackets, double square brackets indicate something special (and p
 expensive) is to occur, in this case possibly remote memory allocation.
 
 Deallocation of subimage memory is similar to allocation,
+\small
 \begin{verbatim}
    if (device \= this_image()) then
      deallocate(U)  [[device]]
    end if
 \end{verbatim}
+\normalsize
 
 
 \subsection{Remote Memory Transfer}
 
 Once memory is allocated on the device, it can be initialized by copying memory from the
 hosting image to the device.  This is explicitly done with normal CAF syntax.  For example,
+\small
 \begin{verbatim}
   U[device] = 3.14
 \end{verbatim}
+\normalsize
 assigns 3.14 to all of the array elements of \texttt{U} located on \texttt{device}.
 Specific array elements can also be transferred, 
+\small
 \begin{verbatim}
   U(1,:) = U(1,:)[device]
   U(M,:) = U(M,:)[device]
 \end{verbatim}
+\normalsize
 where the first and last columns of \texttt{U} are copied from the device to the hosting image.
 
 CAFe restricts memory transfer between a subimage and its hosting image only; transferring
@@ -124,9 +136,11 @@ block of code or a procedure on another image.
 
 However, CAFe allows images to execute tasks on hosted subimages using standard procedure
 calls.  For example,
+\small
 \begin{verbatim}
   call relax(U[device])  [[device]]
 \end{verbatim}
+\normalsize
 executes the subroutine relax, on the subimage device, using array \texttt{U} \emph{located}
 on the same subimage.  This follows the same pattern as introduced for remote coarray allocation,
 whereby the double square bracket notation indicates \emph{where} the function will execute.
@@ -141,6 +155,7 @@ any communication between the subimage and the hosting image.
 
 In addition, CAFe subimage tasks may also be defined by the body of a Fortran do
 concurrent construct and executed on a subimage.  For example, the code segment,
+\small
 \begin{verbatim}
 do concurrent(i=1:N-1)  [[device]]
  begin block
@@ -149,6 +164,7 @@ do concurrent(i=1:N-1)  [[device]]
  end block
 end do
 \end{verbatim}
+\normalsize
 will execute all of the code within the \texttt{do concurrent} construct on \texttt{device}.
 Execution of a \texttt{do concurrent} loop on a subimage acts \emph{as if} the loop were
 extracted as a outlined function and the subsequent task executed on a subimage.  Thus
@@ -216,9 +232,11 @@ member, the current subimage.  If this function is called outside the context of
 executing on a subimage it will return only a team consisting of the current image,
 \texttt{this\_image()}.  Synchronization across possible subimage threads is then possible
 using the statement
+\small
 \begin{verbatim}
   sync team (GET_SUBIMAGE_TEAM())
 \end{verbatim}
+\normalsize
 This allows implementation of the technique of double buffering within a subimage task
 so that all of the \emph{potential} subimage threads will have completed operating on the
 temporary buffer before it is copied back to the primary array variable.
@@ -229,12 +247,14 @@ constraint that events must be coarrays so that events can be used locally withi
 a single image to control concurrent execution of multiple subimage tasks.  For example,
 the following code segment shows how two tasks can be run concurrently on two separate
 subimages:
+\small
 \begin{verbatim}
  type(event_type) :: evt
  call update_ocn [[dev1, WITH_EVENT=evt]]
  call update_atm [[dev2, WITH_EVENT=evt]]
  event wait (evt, until_count=2)
 \end{verbatim}
+\normalsize
 
 In this example, the syntax \texttt{[[dev1, WITH\_EVENT=evt]]} indicates that the called
 subroutine is to be run on \texttt{dev1} and that the event \texttt{evt} will receive
