@@ -3,38 +3,48 @@
 In this section a one-dimensional solution to Laplace's equation is described using CAFe.
 The solution uses multigrid techniques to speedup convergence.
 
+Array allocation, initialization, using Fortran and CAFe contructs as shown above.
 
-We start with the declaration of an array \texttt{U} with two local dimensions (rank) and
-two distributed memory codimensions (corank).
+\small
 \begin{verbatim}
-   real, allocatable, :: U(:,:)[:,:]
+ type(event_type) :: evt
 \end{verbatim}
-The corank of the array is chosen to be identical to the rank of the array so that the logical
-process topology aligns in a way that allows a natural halo exchange between logically neighboring
-processes (this could not occur if corank and rank are not the same).  For example, if the process
-location is \texttt{[pcol,prow]}, then the right-hand halo for the local array \texttt{U} can be
-obtained by the assignment
-\texttt{U(M+1,:) = U(1,:)[pcol+1,prow]} where the size and cosize of
-\texttt{U} are given by the allocation statement,
-\texttt{allocate(U(0:M+1,0:N+1)[MP,*])}.
-This allocation statement specifies (given the one element halo size provided earlier for
-\texttt{U}) that the left halo column is \texttt{U(0,:)}, the right column is \texttt{U(M+1,:)},
-the bottom row is \texttt{U(:,0)} and the top row is \texttt{U(:,N+1)}, leaving the interior region
-\texttt{U(1:M,1:N)}.
+\normalsize
 
-In this allocation statement, the total number of process columns $NP$ can be obtained at runtime,
-but \emph{may not} be explicitly provided (according to Coarray Fortran (CAF) rules) because the actual number of
-participating processes (in Fortran called images) is variable, depending on how many processes are
-requested at program startup.  In this discussion, it is \emph{assumed} that there are no holes in
-the logical processor topology, thus $MP*NP = P$, where $MP$ is the number of process rows and $P$
-is the total number of participating processes (images).
+\small
+\begin{verbatim}
+ do i = 1, nsteps                            1
+   call relax (N, V1h[dev], Buf[dev])        &
+                    [[dev, EVENT=evt]]       2
+   call relax_boundary (N, V1h)              3
+
+   wait event (evt, until_count=i)           4
+
+   V1h(0)[dev] = V1h(0)                      5
+   V1h(N)[dev] = V1h(N)                      6
+
+   V1h(  1) = V1h(  1) [dev]                 7
+   V1h(N-1) = V1h(N-1) [dev]                 8
+
+   sync all                                  9
+
+   V1h( -1) = V1h(N-1) [left]               10
+   V1h(N+1) = V1h(  1) [right]              11
+ end do                                     12
+
+ call restrict(N,V1h[dev],V2h[dev]) [[dev]] 13
+\end{verbatim}
+\normalsize
+
 
 Once a subimage is obtained, memory on the device can be allocated,
+\small
 \begin{verbatim}
    if (device /= this_image()) then
       allocate(U[device], HALO_SRC=U)   [[device]]
    end if
 \end{verbatim}
+\normalsize
 There are four points to note regarding this memory allocation: 1. Memory is only allocated if a
 subimage has been obtained; 2. The location where memory is allocated is denoted by regular coarray
 notation \texttt{U[device]}; 3. The allocated size and halo attribute of the new array are obtained
@@ -48,28 +58,6 @@ programmer that the memory reference may be remote and therefore potentially suf
 performance penalty.  CAFe extends this by employing double-bracket notation to indicate
 possibly \emph{remote subimage execution}.
 
-Execution of the \texttt{Laplacian} task is done using the \texttt{do}
-\texttt{concurrent} construct:
-\begin{verbatim}
-   do while (.not. converged)
-      do concurrent (i=1:M, j=1:N)   [[device]]
-         call Laplacian( U(i,j)[device] )
-      end do
-      call HALO_TRANSFER(U, BC=CYCLIC)
-   end do
-\end{verbatim}
-There are several points that require highlighting: 1. Iteration occurs over the interior
-of the array domain, \texttt{(i=1:M, j=1:N)}; 2. Execution of the loop body occurs on the
-specific subimage indicated by \texttt{[[device]]}; 3. Execution of the iterates may occur
-in any order, even \emph{concurrently}; 4. The local element of the array (as
-defined above in reference to the definition of the concurrent procedure
-\texttt{Laplacian}) is given by the indices \texttt{(i,j)}; 5. Location of memory for the
-task is to be taken from the subimage as noted by \texttt{[device]}; 6. All threads must finish
-execution of the loop body before further execution of the program proceeds; and 7. Transfer of
-all requisite halo regions is effected by the call to the new CAFe intrinsic function
-\texttt{HALO\_TRANSFER()}.  This function is a synchronization event in that all images must
-complete the halo transfer before program execution continues.
-
 Note that a transfer of halo memory is necessary after each completion of the do concurrent loop.
 This must be done in order for the halo region of a coarray on a given process to be consistent
 with the corresponding interior of the coarray on a logically neighboring process.
@@ -77,11 +65,4 @@ Finally, memory for the entire array \texttt{U} can be copied from the
 subimage device with the statement,
 \texttt{U = U[device]}, 
 and memory deallocation (not shown) is similar to memory allocation.
-
-%%\begin{verbatim}
-%%   deallocate(U)
-%%   if (device /= this_image()) then
-%%      deallocate(U[device])   [[device]]
-%%   end if
-%%\end{verbatim}
 
