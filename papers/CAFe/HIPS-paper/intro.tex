@@ -36,18 +36,27 @@ Unfortunately, achieving high performance using either of these two languages ca
 challenge and there are no guarantees that either language is suitable for future hardware
 generations.  
 
-% OpenACC directives and features:
-%\begin{verbatim}
-%● acc_copy(in|out)( ptr, bytes )
-%● acc_create( ptr, bytes )
-%● acc_delete( ptr, bytes )
-%● acc_is_present( ptr, bytes )
-%● acc_update_(device|local)( ptr, bytes )
-%● acc_deviceptr( ptr )
-%● acc_hostptr( devptr )
-%● acc_[un]map_data( devptr, hostptr, bytes )
-%● acc_memcpy_(to|from)_device
-%\end{verbatim}
+Another option is to abandon the stricture of message passing within a procedural
+programming language altogether.  The Open Community Runtime (OCR) project provides an
+asynchronous task-based runtime designed for machines with high-core count, such as can be
+expected in any exascale hardware design\cite{OCR:SC:2012}.  The project's goal is to
+create a framework and reference implementation to help developers explore programming
+methods to improve the power efficiency, programmability, and reliability of HPC
+applications while maintaining application performance.
+
+OCR helps the application developer with the complex process of writing multi-core
+applications.  It does this by providing facilities for creating and executing a set of
+tasks.  The OCR runtime schedules the execution of these tasks based on events which
+embody dataflow and code flow dependencies; when all of the dependencies for a task are
+satisfied, the task can be run.
+
+However, it cannot be emphasized too strongly that like using the OpenCL programming
+environment, actually creating real scientific applications based on OCR is a high hurdle
+for the application developer.  A goal of this paper is to examine ways in
+which high-level syntax based on Fortran coarrays can be utilized by compiler-based tools
+to \emph{target} programming environments like OpenCL or OCR --- thus freeing the developer from
+the task of frequently porting the application to new complex environments.  The hope is
+that high-level syntax can hide the complexities of the underlying software and hardware.
 
 With the addition of coarrays in the 2008 standard, Fortran is now a \emph{parallel}
 language.  Originally called Coarray Fortran (CAF) by its
@@ -59,11 +68,11 @@ are straightforward as each program is replicated $NP$ times with each program i
 allocating its own memory locally.  Special syntax is provided to indicate which arrays
 are visible between distributed memory processes and remote memory transfer is indicated
 with new array syntax using square brackets, for example,
-\small
+%\small
 \begin{verbatim}
    U(1) = U(1)[3]
 \end{verbatim}
-\normalsize
+%\normalsize
 copies memory from the first element of \texttt{U} residing on image number 3 into
 the corresponding element of the \emph{local} array \texttt{U}.  The fundamental programming
 model is similar to that provided by message passing systems.
@@ -97,6 +106,7 @@ previous work extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:c
 
 %%% MJS: stopped editing here 1/7/2016
 
+\begin{comment}
 Historically it has been hard to create parallel programs.  The
 responsibility (and difficulty) of creating \emph{correct} parallel
 programs can be viewed as being spread between the programmer and the
@@ -158,4 +168,19 @@ explicitly separates numerical complexity from parallel complexity ---
 leaving much of the staging and assembling of data to the compiler ---
 and is applicable to the solution of stencil-based algorithms that
 provide data access patterns that are regular and spatially local.
+
+\end{comment}
+
+% OpenACC directives and features:
+%\begin{verbatim}
+%● acc_copy(in|out)( ptr, bytes )
+%● acc_create( ptr, bytes )
+%● acc_delete( ptr, bytes )
+%● acc_is_present( ptr, bytes )
+%● acc_update_(device|local)( ptr, bytes )
+%● acc_deviceptr( ptr )
+%● acc_hostptr( devptr )
+%● acc_[un]map_data( devptr, hostptr, bytes )
+%● acc_memcpy_(to|from)_device
+%\end{verbatim}
 
