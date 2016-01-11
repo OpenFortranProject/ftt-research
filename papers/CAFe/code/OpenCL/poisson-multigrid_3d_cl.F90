@@ -1,26 +1,27 @@
 #define DUMP_OUTPUT
 #undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
-#define DO_RESTRICT
+#undef DO_RESTRICT
 #define DO_RELAX
 
 PROGRAM PoissonMultigrid
 USE ForOpenCL
+USE Timer_mod
 USE MultiGrid, ONLY: AddFourierMode_3D
 USE IO, ONLY: Textual_Output_3D
 USE MultiGrid, ONLY: Restrict_3D, Prolongate_3D
 IMPLICIT NONE
 REAL, PARAMETER :: w = (2.0/3.0)
-INTEGER, PARAMETER :: N = 32
-INTEGER, PARAMETER :: M = 32
-INTEGER, PARAMETER :: L = 32
+INTEGER, PARAMETER :: N = 64
+INTEGER, PARAMETER :: M = 8
+INTEGER, PARAMETER :: L = 4
 INTEGER, PARAMETER :: NP = 2
 INTEGER, PARAMETER :: MP = 2
 INTEGER, PARAMETER :: LP = 2
 INTEGER, PARAMETER :: fd = 12
 
 INTEGER :: t, i, device
-INTEGER :: nsteps = 5
+INTEGER :: nsteps = 1
 
 REAL, ALLOCATABLE, DIMENSION(:,:,:) :: V1h, V2h, V4h, V8h, Buf
 
@@ -38,7 +39,10 @@ INTEGER(KIND=cl_int) :: cl_status__
 INTEGER(KIND=c_size_t) :: cl_size__
 INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
-INTEGER(KIND=c_size_t) :: cl_lws__(3) = [32,8,1]
+INTEGER(KIND=c_size_t) :: cl_lws__(3) = [32,4,1]
+
+TYPE(CPUTimer) :: timer
+REAL(KIND=c_double) :: cpu_time, gpu_time
 
 !! Device id
 !
@@ -106,6 +110,11 @@ cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
 #endif
 
+print *
+print *, "Measuring flops and effective bandwidth for GPU computation:"
+call init(timer)
+call start(timer)
+
 !! level 1h
 !
 DO t = 1, nsteps
@@ -117,12 +126,14 @@ DO t = 1, nsteps
   cl_status__ = setKernelArg(cl_Relax_3D_,4,clMemObject(cl_Buf_))
   cl_gwo__ = [0,0,0]
   cl_gws__ = [1,1,1]
-  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
-  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
-  ! cl_gws__ = [32,24,24]
+  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+  !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
+  !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
+  cl_gws__ = [N,M,L]
+print *, cl_gws__
+print *, cl_lws__
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
@@ -130,6 +141,14 @@ DO t = 1, nsteps
   CALL Exchange_Halo_3D(device,N,M,L,V1h)
 #endif
 END DO 
+
+call stop(timer)
+
+gpu_time = elapsed_time(cl_Relax_3D_%timer)
+print *, " submit time    ==   ", real(gpu_time)/nsteps
+gpu_time = elapsed_time(timer)
+print *, "   host time    ==   ", real(gpu_time)/nsteps, " msec (avg)"
+
 
 #ifdef DUMP_OUTPUT
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
