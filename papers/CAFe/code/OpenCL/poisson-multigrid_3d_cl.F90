@@ -1,3 +1,5 @@
+#undef USE_MPI
+
 #define DUMP_OUTPUT
 #undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
@@ -5,6 +7,11 @@
 #define DO_RELAX
 
 PROGRAM PoissonMultigrid
+
+#ifdef USE_MPI
+use mpi_f08
+#enddef
+
 USE ForOpenCL
 USE Timer_mod
 USE MultiGrid, ONLY: AddFourierMode_3D
@@ -43,6 +50,14 @@ INTEGER(KIND=c_size_t) :: cl_lws__(3) = [1,1,1] ![32,4,1]
 
 TYPE(CPUTimer) :: timer
 REAL(KIND=c_double) :: cpu_time, gpu_time
+
+integer :: rank, size
+
+#ifdef USE_MPI
+call MPI_Init()
+call MPI_Comm_size(MPI_COMM_WORLD, size)
+call MPI_Comm_rank(MPI_COMM_WORLD, rank)
+#enddef
 
 !! Device id
 !
@@ -97,6 +112,8 @@ OPEN(UNIT=fd, FILE="error_time.dat")
 
 V1h = 0.0
 
+//USE_MPI - need to use Williams changes to add domain decomposition for initialization
+//
 CALL AddFourierMode_3D(N,M,L,V1h,1)
 CALL AddFourierMode_3D(N,M,L,V1h,6)
 CALL AddFourierMode_3D(N,M,L,V1h,16)
@@ -110,6 +127,7 @@ cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 
 #ifdef DUMP_OUTPUT
+//USE_MPI - need to gather?  Or add rank to output file (probably the easiest)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
 #endif
 
@@ -139,6 +157,12 @@ print *, "RELAX gwx and lws"
 print *, cl_gws__
 print *, cl_lws__
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+
+  //USE_MPI - need to relax in shared boundaries
+  //USE_MPI - need to get boundaries from device (0,N)
+  //USE_MPI - need to put boundaries from neighbors (-1,N+1)
+  //USE_MPI - need to put boudnaries to device (-1,N+1)
+
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -455,5 +479,9 @@ WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_end")
 CLOSE(UNIT=fd)
 #endif
+
+#ifdef USE_MPI
+call MPI_Finalize()
+#enddef
 
 END PROGRAM PoissonMultigrid
