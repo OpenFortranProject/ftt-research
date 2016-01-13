@@ -1,7 +1,7 @@
 #define DUMP_OUTPUT
 #undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
-#undef DO_RESTRICT
+#define DO_RESTRICT
 #define DO_RELAX
 
 PROGRAM PoissonMultigrid
@@ -12,8 +12,8 @@ USE IO, ONLY: Textual_Output_3D
 USE MultiGrid, ONLY: Restrict_3D, Prolongate_3D
 IMPLICIT NONE
 REAL, PARAMETER :: w = (2.0/3.0)
-INTEGER, PARAMETER :: N = 64
-INTEGER, PARAMETER :: M = 8
+INTEGER, PARAMETER :: N = 4
+INTEGER, PARAMETER :: M = 4
 INTEGER, PARAMETER :: L = 4
 INTEGER, PARAMETER :: NP = 2
 INTEGER, PARAMETER :: MP = 2
@@ -39,7 +39,7 @@ INTEGER(KIND=cl_int) :: cl_status__
 INTEGER(KIND=c_size_t) :: cl_size__
 INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
-INTEGER(KIND=c_size_t) :: cl_lws__(3) = [32,4,1]
+INTEGER(KIND=c_size_t) :: cl_lws__(3) = [1,1,1] ![32,4,1]
 
 TYPE(CPUTimer) :: timer
 REAL(KIND=c_double) :: cpu_time, gpu_time
@@ -103,6 +103,9 @@ CALL AddFourierMode_3D(N,M,L,V1h,16)
 
 V1h = (1./3.)*V1h
 
+! ===
+V1h = 0.0
+
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 
@@ -132,6 +135,7 @@ DO t = 1, nsteps
   !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_gws__ = [N,M,L]
+print *, "RELAX gwx and lws"
 print *, cl_gws__
 print *, cl_lws__
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
@@ -157,6 +161,8 @@ WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_mid")
 #endif
 
+!print *, V1h(:,:,:)
+
 #ifdef DO_RESTRICT
 cl_status__ = setKernelArg(cl_Restrict_3D_,0,N)
 cl_status__ = setKernelArg(cl_Restrict_3D_,1,M)
@@ -170,13 +176,17 @@ cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
 cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
-
+  cl_gws__ = [N/2,M/2,L/2]
 ! cl_gws__ = [32,24,24]
 ! cl_lws__ = [8,4,8] ! MAX APPEAR TO BE 2^8, 256 
 
 !cl_status__ = run(cl_Restrict_3D_,2,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = run(cl_Restrict_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = clFinish(cl_Restrict_3D_%commands)
+print *, "RESTRICT gws and lws"
+print *, cl_gws__
+print *, cl_lws__
+
 #endif
 #ifdef DUMP_OUTPUT
 cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
@@ -184,6 +194,7 @@ cl_status__ = readBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
 CALL Textual_Output_3D(N/2,M/2,L/2,V2h,"2h_0")
 #endif
 
+print *, V2h(:,:,:)
 print *, "===FIN"
 #undef DO_RESTRICT
 #undef DO_PROLONGATE
