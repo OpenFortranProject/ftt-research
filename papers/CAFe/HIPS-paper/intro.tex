@@ -60,7 +60,7 @@ that high-level syntax can hide the complexities of the underlying software and 
 
 With the addition of coarrays in the 2008 standard, Fortran is now a \emph{parallel}
 language.  Originally called Coarray Fortran (CAF) by its
-authors\cite{Numrich:1998:CFP:289918.289920}, parallism in Fortran is similar to MPI in
+authors\cite{Numrich:1998:CFP:289918.289920}, parallelism in Fortran is similar to MPI in
 that all cooperating CAF processes (called \emph{images}) execute a Single Program but with
 different (Multiple) Data (SPMD).  Key concepts in CAF are parallel execution, distributed
 memory allocation, and remote memory transfer.  Parallel execution and memory allocation
@@ -89,7 +89,7 @@ example, an HPC system that makes use of traditional multicore CPUs as well as G
 breaks this model and, to effectively program it, currently requires a mixture of programming
 systems in a single application.
 
-In this paper we propose CAFe: Co-Array Fortran Extensions.  These extensions to CAF introduce
+In this paper we propose CAFe: \emph{Co-Array Fortran Extensions}.  These extensions to CAF introduce
 relatively minor additions to the existing coarray portion of the Fortran language.  They
 include the concept of subimages in order to nest coarray images, semantics for distributed
 array declarations, memory placement, remote memory transfer, and remote task execution.  CAFe
