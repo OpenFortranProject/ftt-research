@@ -5,6 +5,9 @@ Topics highlighted in this section are: 1. Distributed memory array allocation;
 description is within the context of extensions to Fortran; as shorthand, these extensions
 are referred to as CAFe, for Coarray Fortran extensions.  CAFe is complementary to
 previous work extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
+Please note that throughout this paper, text appearing in all caps (such as
+\texttt{GET\_SUBIMAGE}) indicates new syntax or functionality extended by CAFe.
+
 
 
 \subsection{Subimages}
@@ -22,22 +25,21 @@ finished.  Memory on a subimage is permanent, however, and must be explicitly al
 and deallocated.
 
 A programmer requests a subimage by executing the new CAFe function,
+
 \small
 \begin{verbatim}
    device = GET_SUBIMAGE(device_id)
 \end{verbatim}
 \normalsize
-where the integer argument represents an attached hardware device (or perhaps a separate
+
+\noindent where the integer argument represents an attached hardware device (or perhaps a separate
 process or a team of threads; it is the compilers responsibility to determine precisely
 what a subimage means in terms of the software and hardware environment under its
 control).  If the function fails (e.g., the requested device is unavailable) it returns
 the local image number of the process that is executing the current program, obtained by a
 call to the Fortran 2008 function \texttt{this\_image()}.  Returning the current image if
-the \texttt{GET\_SUBIMAGE} fails, allows program execution to proceed correctly even if
+the \texttt{GET\_SUBIMAGE} call fails, allows program execution to proceed correctly even if
 there are no attached devices.
-
-Please note that throughout this paper, text appearing in all caps (such as
-\texttt{GET\_SUBIMAGE}) indicates new syntax or functionality extended by CAFe.
 
 Once a variable representing a subimage has been obtained, it can be used within a program
 to allocate memory, transfer memory, and execute tasks.  This functionality is described below.
