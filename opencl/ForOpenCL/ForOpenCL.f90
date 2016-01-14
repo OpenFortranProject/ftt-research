@@ -56,8 +56,8 @@ function get_subimage(device_id, cl_device_)
 end function get_subimage
 
 function factor(gws, lws) result(rtn_gws)
-  integer, intent(in) :: gws, lws
-  integer(c_size_t)   :: rtn_gws
+  integer(c_size_t), intent(in) :: gws, lws
+  integer(c_size_t)             :: rtn_gws
   rtn_gws = gws / lws;
   if (lws * rtn_gws .eq. gws) then
      rtn_gws = gws
@@ -73,7 +73,8 @@ function focl_global_size(rank, lws, prev_gws, new_gws) result(rtn_gws)
   integer(c_size_t), intent(in) :: lws(*), prev_gws(*)
   integer,           intent(in) :: new_gws(*)
   integer(c_size_t)             :: rtn_gws(3)
-  integer                       :: i, dim, gws
+  integer(c_size_t)             :: gws
+  integer                       :: i, dim
 
   rtn_gws = [1,1,1]
 
