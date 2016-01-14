@@ -10,7 +10,7 @@ PROGRAM PoissonMultigrid
 
 #ifdef USE_MPI
 use mpi_f08
-#enddef
+#endif
 
 USE ForOpenCL
 USE Timer_mod
@@ -57,7 +57,7 @@ integer :: rank, size
 call MPI_Init()
 call MPI_Comm_size(MPI_COMM_WORLD, size)
 call MPI_Comm_rank(MPI_COMM_WORLD, rank)
-#enddef
+#endif
 
 !! Device id
 !
@@ -112,8 +112,8 @@ OPEN(UNIT=fd, FILE="error_time.dat")
 
 V1h = 0.0
 
-//USE_MPI - need to use Williams changes to add domain decomposition for initialization
-//
+!USE_MPI - need to use Williams changes to add domain decomposition for initialization
+!
 CALL AddFourierMode_3D(N,M,L,V1h,1)
 CALL AddFourierMode_3D(N,M,L,V1h,6)
 CALL AddFourierMode_3D(N,M,L,V1h,16)
@@ -127,7 +127,7 @@ cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 
 #ifdef DUMP_OUTPUT
-//USE_MPI - need to gather?  Or add rank to output file (probably the easiest)
+!USE_MPI - need to gather?  Or add rank to output file (probably the easiest)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
 #endif
 
@@ -158,10 +158,12 @@ print *, cl_gws__
 print *, cl_lws__
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
 
-  //USE_MPI - need to relax in shared boundaries
-  //USE_MPI - need to get boundaries from device (0,N)
-  //USE_MPI - need to put boundaries from neighbors (-1,N+1)
-  //USE_MPI - need to put boudnaries to device (-1,N+1)
+  call RelaxBoundary_3D(N,M,L,V1h)
+
+  !USE_MPI - need to relax in shared boundaries
+  !USE_MPI - need to get boundaries from device (0,N)
+  !USE_MPI - need to put boundaries from neighbors (-1,N+1)
+  !USE_MPI - need to put boudnaries to device (-1,N+1)
 
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
@@ -245,6 +247,9 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+
+  call RelaxBoundary_3D(N/2,M/2,L/2,V2h)
+
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -304,6 +309,9 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/4+1-(-1))+1),((M/4+1-(-1))+1),((L/4+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+
+  call RelaxBoundary_3D(N/4,M/4,L/4,V4h)
+
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -363,6 +371,9 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/4+1-(-1))+1),((M/4+1-(-1))+1),((L/4+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+
+  call RelaxBoundary_3D(N/4,M/4,L/4,V4h)
+
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -417,6 +428,9 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+
+  call RelaxBoundary_3D(N/2,M/2,L/2,V2h)
+
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -465,6 +479,9 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+
+  call RelaxBoundary_3D(N,M,L,V1h)
+
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -482,6 +499,6 @@ CLOSE(UNIT=fd)
 
 #ifdef USE_MPI
 call MPI_Finalize()
-#enddef
+#endif
 
 END PROGRAM PoissonMultigrid
