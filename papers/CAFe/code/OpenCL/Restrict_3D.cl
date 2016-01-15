@@ -37,7 +37,7 @@ __kernel void Restrict_3D (
            + .125*V1h[k0-sy-sz-sx] + .25*V1h[k0-sy-sz] + .125*V1h[k0-sy-sz+sx]
    	     	    );*/
 
-   V2h[k0] = .001 * (
+   V2h[k0] = .125 * (
              .125*V1h[K0+SY+SZ-SX] + .25*V1h[K0+SY+SZ] + .125*V1h[K0+SY+SZ+SX]   	       
            +  .25*V1h[K0   +SZ-SX] +  .5*V1h[K0   +SZ] +  .25*V1h[K0   +SZ+SX]
            + .125*V1h[K0-SY+SZ-SX] + .25*V1h[K0-SY+SZ] + .125*V1h[K0-SY+SZ+SX]
