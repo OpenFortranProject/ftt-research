@@ -11,7 +11,7 @@ __kernel void Prolongate_3D (
    const unsigned int Y = get_global_id(1)+2;
    const unsigned int Z = get_global_id(2)+2;
 
-   if (X <= 1 || Y <= 1 || Z <= 1)
+   if (X < 2 || Y < 2 || Z < 2)
       return;
    if (X > N || Y > M || Z > L)
       return;
@@ -20,57 +20,32 @@ __kernel void Prolongate_3D (
    const unsigned int SY = SX*(N+3);
    const unsigned int SZ = SY*(M+3);
    const unsigned int K0 = X + Y * SY + Z * SZ;
-   const unsigned int x = (X+1)/2;
-   const unsigned int y = (Y+1)/2;
-   const unsigned int z = (Z+1)/2;
-   const unsigned int n = N / 2;
-   const unsigned int m = M / 2;
-   const unsigned int l = L / 2;
    const unsigned int sx = 1;
-   const unsigned int sy = sx*(n+3);
-   const unsigned int sz = sy*(m+3);
-   const unsigned int k0 = x + y * sy + z * sz;
+   const unsigned int sy = sx*((N/2)+3);
+   const unsigned int sz = sy*((M/2)+3);
+   /* Indexing for k0:   x=(X+1)/2; y=(Y+1)/2;       z=(Z+1)/2; */
+   const unsigned int k0 = (X+1)/2 + ((Y+1)/2) * sy + ((Z+1)/2) * sz;
 
-   // Check what algorithm to use
-   if (X == Y && Y == Z && X%2!=0) {
+   // Based on index the proper algorithm is chosen
+   if (X == Y && Y == Z && X%2!=0)
       V1h[K0] = V2h[k0];
-      V1h[K0] = 1;
-      }
-   else if (X%2==0 && Y%2==0 && Z%2==0) {
+   else if (X%2==0 && Y%2==0 && Z%2==0)
       V1h[K0] = .125*(
                V2h[k0+sx+sy+sz]+V2h[k0-sx-sy-sz]
             +  V2h[k0+sx+sy-sz]+V2h[k0+sx-sy+sz]+V2h[k0-sx+sy+sz]
             +  V2h[k0-sx-sy+sz]+V2h[k0-sx+sy-sz]+V2h[k0+sx-sy-sz]);
-      V1h[K0] = .125;
-     }
-   else if (X%2==0 && Y==Z) {
-      V1h[K0] = .5*(V2h[k0+sx]+V2h[k0-sx]);
-      V1h[K0] = .5;
-     }
-   else if (Y%2==0 && X==Z) {
-      V1h[K0] = .5*(V2h[k0+sy]+V2h[k0-sy]);
-      V1h[K0] = .5;
-     }
-   else if (Z%2==0 && X==Y) {
-      V1h[K0] = .5*(V2h[k0+sz]+V2h[k0-sz]);
-      V1h[K0] = .5;
-     }
-   // SHOULD DOUBLE CHECK THAT THE .25 INDEXING IS OCCURRING CORRECTLY
-   else if (X%2==0 && Y%2==0) {
-      V1h[K0] = .25*(V2h[k0+sx+sy]+V2h[k0+sx-sy] + V2h[k0-sx+sy]+V2h[k0-sx-sy]);
-      V1h[K0] = .25;
-      }
-   else if (Y%2==0 && Z%2==0) {
-      V1h[K0] = .25*(V2h[k0+sy+sz]+V2h[k0+sy-sz] + V2h[k0-sy+sz]+V2h[k0-sy-sz]);
-      V1h[K0] = .25;
-      }
-   else if (X%2==0 && Z%2==0) {
-      V1h[K0] = .25*(V2h[k0+sx+sz]+V2h[k0+sx-sz] + V2h[k0-sx+sz]+V2h[k0-sx-sz]);
-      V1h[K0] = .25;
-      }
+   else if (X%2==0 && Y==Z)
+      V1h[K0] = .5*(V2h[k0+sx] + V2h[k0-sx]);
+   else if (Y%2==0 && X==Z)
+      V1h[K0] = .5*(V2h[k0+sy] + V2h[k0-sy]);
+   else if (Z%2==0 && X==Y)
+      V1h[K0] = .5*(V2h[k0+sz] + V2h[k0-sz]);
+   else if (X%2==0 && Y%2==0)
+      V1h[K0] = .25*(V2h[k0+sx+sy] + V2h[k0+sx-sy] + V2h[k0-sx+sy] + V2h[k0-sx-sy]);
+   else if (Y%2==0 && Z%2==0)
+      V1h[K0] = .25*(V2h[k0+sy+sz] + V2h[k0+sy-sz] + V2h[k0-sy+sz] + V2h[k0-sy-sz]);
+   else if (X%2==0 && Z%2==0)
+      V1h[K0] = .25*(V2h[k0+sx+sz] + V2h[k0+sx-sz] + V2h[k0-sx+sz] + V2h[k0-sx-sz]);
 
-   return;
-
-   V1h[K0] = Z+100*Y+10000*X;
    return;
 }
