@@ -26,26 +26,38 @@ __kernel void Prolongate_3D (
    /* Indexing for k0:   x=(X+1)/2; y=(Y+1)/2;       z=(Z+1)/2; */
    const unsigned int k0 = (X+1)/2 + ((Y+1)/2) * sy + ((Z+1)/2) * sz;
 
-   // Based on index the proper algorithm is chosen
+   // Based on index the proper algorithm is chosen. Commented out indexing I think work for N/2 kernels.
+   // For N kernels, indexing without removing stride works because of the dividing odd integers by 2 rounding
    if (X == Y && Y == Z && X%2!=0)
       V1h[K0] = V2h[k0];
    else if (X%2==0 && Y%2==0 && Z%2==0)
-      V1h[K0] = .125*(
+      /*V1h[K0] = .125*(
                V2h[k0+sx+sy+sz]+V2h[k0-sx-sy-sz]
             +  V2h[k0+sx+sy-sz]+V2h[k0+sx-sy+sz]+V2h[k0-sx+sy+sz]
-            +  V2h[k0-sx-sy+sz]+V2h[k0-sx+sy-sz]+V2h[k0+sx-sy-sz]);
+            +  V2h[k0-sx-sy+sz]+V2h[k0-sx+sy-sz]+V2h[k0+sx-sy-sz]);*/
+      V1h[K0] = .125*(
+               V2h[k0+sx+sy+sz]+V2h[k0]
+            +  V2h[k0+sx+sy]+V2h[k0+sx+sz]+V2h[k0+sy+sz]
+            +  V2h[k0+sz]+V2h[k0+sy]+V2h[k0+sx]);
    else if (X%2==0 && Y==Z)
-      V1h[K0] = .5*(V2h[k0+sx] + V2h[k0-sx]);
+      //V1h[K0] = .5*(V2h[k0+sx] + V2h[k0-sx]);
+      V1h[K0] = .5*(V2h[k0+sx] + V2h[k0]);
    else if (Y%2==0 && X==Z)
-      V1h[K0] = .5*(V2h[k0+sy] + V2h[k0-sy]);
+      //V1h[K0] = .5*(V2h[k0+sy] + V2h[k0-sy]);
+      V1h[K0] = .5*(V2h[k0+sy] + V2h[k0]);
    else if (Z%2==0 && X==Y)
-      V1h[K0] = .5*(V2h[k0+sz] + V2h[k0-sz]);
+      //V1h[K0] = .5*(V2h[k0+sz] + V2h[k0-sz]);
+      V1h[K0] = .5*(V2h[k0+sz] + V2h[k0]);
    else if (X%2==0 && Y%2==0)
-      V1h[K0] = .25*(V2h[k0+sx+sy] + V2h[k0+sx-sy] + V2h[k0-sx+sy] + V2h[k0-sx-sy]);
+      //V1h[K0] = .25*(V2h[k0+sx+sy] + V2h[k0+sx-sy] + V2h[k0-sx+sy] + V2h[k0-sx-sy]);
+      V1h[K0] = .25*(V2h[k0+sx+sy] + V2h[k0+sx] + V2h[k0+sy] + V2h[k0]);
    else if (Y%2==0 && Z%2==0)
-      V1h[K0] = .25*(V2h[k0+sy+sz] + V2h[k0+sy-sz] + V2h[k0-sy+sz] + V2h[k0-sy-sz]);
+      //V1h[K0] = .25*(V2h[k0+sy+sz] + V2h[k0+sy-sz] + V2h[k0-sy+sz] + V2h[k0-sy-sz]);
+      V1h[K0] = .25*(V2h[k0+sy+sz] + V2h[k0+sy] + V2h[k0+sz] + V2h[k0]);
    else if (X%2==0 && Z%2==0)
-      V1h[K0] = .25*(V2h[k0+sx+sz] + V2h[k0+sx-sz] + V2h[k0-sx+sz] + V2h[k0-sx-sz]);
+      //V1h[K0] = .25*(V2h[k0+sx+sz] + V2h[k0+sx-sz] + V2h[k0-sx+sz] + V2h[k0-sx-sz]);
+      V1h[K0] = .25*(V2h[k0+sx+sz] + V2h[k0+sx] + V2h[k0+sz] + V2h[k0]);
+
 
    return;
 }
