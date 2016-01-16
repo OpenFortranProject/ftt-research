@@ -339,15 +339,16 @@ Subroutine Restrict_3D(N, V1h, V2h)
 End Subroutine Restrict_3D
 #endif
 
-Subroutine Exchange_Halo_3D(nx, ny, nz, A, BufSend, BufRecv)
+Subroutine Exchange_Halo_3D(nx, ny, nz, A, SendBuf, RecvBuf)
 !
 ! Exchange halo information between neighboring processes
+!   - this occurs on outer-boundary planes at indices (0,N) ...
 !
    Use Parallel
    Implicit None
    Integer, intent(in ) :: nx, ny, nz
    Real,    intent(in ) :: A(-1:nx+1,-1:ny+1,-1:nz+1)
-   Real,    intent(out) :: BufSend(*), BufRecv(*)
+   Real,    intent(out) :: SendBuf(*), RecvBuf(*)
    !----- locals -----
    Integer :: os, or  ! offsets for send and recv
    Integer :: n, ierror
@@ -359,9 +360,10 @@ Subroutine Exchange_Halo_3D(nx, ny, nz, A, BufSend, BufRecv)
    !... X-direction
    !---------------
    n = nx * nz
+!   xsend(:) = RESHAPE(source=Array(ex,sy:ey,sz:ez),shape=(/n/))
 
-   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,  Right, 1, &
-                    & BufRecv(or+1:n), n, MPI_REAL,   Left, 1, &
+   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,  Right, 1, &
+                    & RecvBuf(or+1:n), n, MPI_REAL,   Left, 1, &
                     & MPI_COMM_CART, status, ierror)
    os = os + n
    or = or + n
@@ -370,8 +372,8 @@ Subroutine Exchange_Halo_3D(nx, ny, nz, A, BufSend, BufRecv)
    !---------------
    n  = ny * nz
 
-   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,   Left, 2, &
-                    & BufRecv(or+1:n), n, MPI_REAL,  Right, 2, &
+   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,   Left, 2, &
+                    & RecvBuf(or+1:n), n, MPI_REAL,  Right, 2, &
                     & MPI_COMM_CART, status, ierror)
    os = os + n
    or = or + n
@@ -380,8 +382,8 @@ Subroutine Exchange_Halo_3D(nx, ny, nz, A, BufSend, BufRecv)
    !---------------
    n = nx * nz
 
-   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,    Top, 3, &
-                    & BufRecv(or+1:n), n, MPI_REAL, Bottom, 3, &
+   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,    Top, 3, &
+                    & RecvBuf(or+1:n), n, MPI_REAL, Bottom, 3, &
                     & MPI_COMM_CART, status, ierror)
    os = os + n
    or = or + n
@@ -390,8 +392,8 @@ Subroutine Exchange_Halo_3D(nx, ny, nz, A, BufSend, BufRecv)
    !---------------
    n = nx * nz
 
-   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL, Bottom, 4, &
-                    & BufRecv(or+1:n), n, MPI_REAL,    Top, 4, &
+   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL, Bottom, 4, &
+                    & RecvBuf(or+1:n), n, MPI_REAL,    Top, 4, &
                     & MPI_COMM_CART, status, ierror)
    os = os + n
    or = or + n
@@ -400,8 +402,8 @@ Subroutine Exchange_Halo_3D(nx, ny, nz, A, BufSend, BufRecv)
    !---------------
    n = nx * ny
 
-   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,   Back, 5, &
-                    & BufRecv(or+1:n), n, MPI_REAL,  Front, 5, &
+   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,   Back, 5, &
+                    & RecvBuf(or+1:n), n, MPI_REAL,  Front, 5, &
                     & MPI_COMM_CART, status, ierror)
    os = os + n
    or = or + n
@@ -410,8 +412,8 @@ Subroutine Exchange_Halo_3D(nx, ny, nz, A, BufSend, BufRecv)
    !---------------
    n = nx * ny
 
-   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,  Front, 6, &
-                    & BufRecv(or+1:n), n, MPI_REAL,   Back, 6, &
+   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,  Front, 6, &
+                    & RecvBuf(or+1:n), n, MPI_REAL,   Back, 6, &
                     & MPI_COMM_CART, status, ierror)
 
 End Subroutine Exchange_Halo_3D
