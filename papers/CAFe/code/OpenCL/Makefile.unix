@@ -118,9 +118,9 @@ endif
 
 # Add common flags
 CFLAGS   += $(INCLUDES) $(COMMONFLAGS)
-FCFLAGS  += $(COMMONFLAGS) -I../Serial -I$(FOR_OCL_DIR)
+FCFLAGS  += $(COMMONFLAGS) -I$(FOR_OCL_DIR)
 
-OBJS  = io.o error.o multigrid.o # jacobi.o vtk.o vtk_output.o
+OBJS  = io.o error.o parallel.o multigrid.o # jacobi.o vtk.o vtk_output.o
 
 LIBS += $(OBJS)
 LIBS += -L $(FOR_OCL_DIR) -lforopencl
@@ -150,6 +150,10 @@ poisson-multigrid_3d_cl: poisson-multigrid_3d_cl.o $(OBJS)
 
 check:  poisson-multigrid_3d_cl
 	poisson-multigrid_3d_cl
+
+check-parallel : poisson-multigrid_3d_cl
+	rm -f *.vti *.dat
+	mpirun -np 2 ./poisson-multigrid_3d_cl
 
 clean:
 	rm -f $(OBJS)
