@@ -56,9 +56,9 @@ endif
 
 # Compilers
 ifeq ($(intel_fortran),1)
-   FC    := ifort
+   FC    := mpif90
 else
-   FC     := gfortran
+   FC     := mpif90
 endif
 CC     := gcc
 LINK   := $(FC) -fPIC
