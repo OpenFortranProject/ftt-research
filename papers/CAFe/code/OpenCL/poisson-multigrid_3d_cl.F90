@@ -1,22 +1,15 @@
-#undef USE_MPI
-
 #define DUMP_OUTPUT
 #undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
-#define DO_RESTRICT
-#define DO_RELAX
+#undef DO_RESTRICT
+#undef DO_RELAX
+#define DO_GETBOUNDARY
 
 PROGRAM PoissonMultigrid
-
-#ifdef USE_MPI
-use mpi_f08
-#endif
-
 USE ForOpenCL
 USE Timer_mod
 USE MultiGrid, ONLY: AddFourierMode_3D
 USE IO, ONLY: Textual_Output_3D
-USE MultiGrid, ONLY: Restrict_3D, Prolongate_3D
 IMPLICIT NONE
 REAL, PARAMETER :: w = (2.0/3.0)
 INTEGER, PARAMETER :: N = 4
@@ -27,20 +20,22 @@ INTEGER, PARAMETER :: MP = 2
 INTEGER, PARAMETER :: LP = 2
 INTEGER, PARAMETER :: fd = 12
 
-INTEGER :: t, i, device
+INTEGER :: t, i, device, j, k
 INTEGER :: nsteps = 1
 
-REAL, ALLOCATABLE, DIMENSION(:,:,:) :: V1h, V2h, V4h, V8h, Buf
+REAL, ALLOCATABLE, DIMENSION(:,:,:) :: V1h, V2h, V4h, V8h, Buf, BoundaryBuf
 
 TYPE(CLDevice) :: cl_device_
 TYPE(CLBuffer) :: cl_V1h_
 TYPE(CLBuffer) :: cl_Buf_
+TYPE(CLBuffer) :: cl_BoundaryBuf_
 TYPE(CLBuffer) :: cl_V2h_
 TYPE(CLBuffer) :: cl_V4h_
 TYPE(CLBuffer) :: cl_V8h_
 TYPE(CLKernel) :: cl_Relax_3D_
 TYPE(CLKernel) :: cl_Restrict_3D_
 TYPE(CLKernel) :: cl_Prolongate_3D_
+TYPE(CLKernel) :: cl_GetBoundary_3D_
 INTEGER :: focl_intvar__
 INTEGER(KIND=cl_int) :: cl_status__
 INTEGER(KIND=c_size_t) :: cl_size__
@@ -50,14 +45,6 @@ INTEGER(KIND=c_size_t) :: cl_lws__(3) = [1,1,1] ![32,4,1]
 
 TYPE(CPUTimer) :: timer
 REAL(KIND=c_double) :: cpu_time, gpu_time
-
-integer :: rank, size
-
-#ifdef USE_MPI
-call MPI_Init()
-call MPI_Comm_size(MPI_COMM_WORLD, size)
-call MPI_Comm_rank(MPI_COMM_WORLD, rank)
-#endif
 
 !! Device id
 !
@@ -85,10 +72,14 @@ cl_Restrict_3D_ = createKernel(cl_device_,"Restrict_3D")
 #ifdef DO_PROLONGATE
 cl_Prolongate_3D_ = createKernel(cl_device_,"Prolongate_3D")
 #endif
+#ifdef DO_GETBOUNDARY
+cl_GetBoundary_3D_ = createKernel(cl_device_,"GetBoundary_3D")
+#endif
 
 
 ALLOCATE(V1h(-1:N+1,-1:M+1,-1:L+1))
 ALLOCATE(Buf(-1:N+1,-1:M+1,-1:L+1))
+ALLOCATE(BoundaryBuf(-1:3,-1:3,-1:3))
 ALLOCATE(V2h(-1:N/2+1,-1:M/2+1,-1:L/2+1))
 ALLOCATE(V4h(-1:N/4+1,-1:M/4+1,-1:L/4+1))
 ALLOCATE(V8h(-1:N/8+1,-1:M/8+1,-1:L/8+1))
@@ -98,6 +89,8 @@ IF (device /= THIS_IMAGE()) THEN
   cl_V1h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
   cl_Buf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
+  cl_size__ = 4*(5*5*5)
+  cl_BoundaryBuf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
   cl_V2h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N/4+1-(-1))+1)*((M/4+1-(-1))+1)*((L/4+1-(-1))+1)*1
@@ -111,23 +104,49 @@ OPEN(UNIT=fd, FILE="error_time.dat")
 #endif
 
 V1h = 0.0
+V2h = 0.0
 
-!USE_MPI - need to use Williams changes to add domain decomposition for initialization
-!
 CALL AddFourierMode_3D(N,M,L,V1h,1)
 CALL AddFourierMode_3D(N,M,L,V1h,6)
 CALL AddFourierMode_3D(N,M,L,V1h,16)
 
+
 V1h = (1./3.)*V1h
 
-! ===
-V1h = 0.0
+V1h(-1:0,:,:) = -6
+V1h(:,-1:0,:) = -6
+V1h(:,:,-1:0) = -6
+V1h(N:N+1,:,:) = -6
+V1h(:,N:N+1,:) = -6
+V1h(:,:,N:N+1) = -6
+
+do i = -1,N+1 
+   do j = -1,M+1
+      do k = -1,L+1
+         V1h(i,j,k) = 900000 + (i+1)*10000 + (1+j)*100 + k+1
+      end do
+   end do
+end do
+
+! V2h(-1:0,:,:) = -6
+! V2h(:,-1:0,:) = -6
+! V2h(:,:,-1:0) = -6
+! V2h(N/2:N/2+1,:,:) = -6
+! V2h(:,N/2:N/2+1,:) = -6
+! V2h(:,:,N/2:N/2+1) = -6
+! print *, V2h(:,:,:)
 
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 
+cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
+cl_status__ = writeBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
+
+BoundaryBuf = 0
+cl_size__ = 4*(5*5*5)
+cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
+
 #ifdef DUMP_OUTPUT
-!USE_MPI - need to gather?  Or add rank to output file (probably the easiest)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
 #endif
 
@@ -135,6 +154,38 @@ print *
 print *, "Measuring flops and effective bandwidth for GPU computation:"
 call init(timer)
 call start(timer)
+
+
+print *, "Before BoundaryBuf"
+print *, BoundaryBuf
+
+#ifdef DO_GETBOUNDARY
+  cl_status__ = setKernelArg(cl_GetBoundary_3D_,0,N)
+  cl_status__ = setKernelArg(cl_GetBoundary_3D_,1,M)
+  cl_status__ = setKernelArg(cl_GetBoundary_3D_,2,L)
+  cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V1h_))
+  cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
+  cl_gwo__ = [0,0,0]
+  cl_gws__ = [1,1,1]
+  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+  !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
+  !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
+  cl_gws__ = [5,5,5]
+print *, "GET BOUNDARY gwx and lws"
+print *, cl_gws__
+print *, cl_lws__
+  cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+  cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
+
+cl_size__ = 4*(5*5*5)
+cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
+
+#endif
+
+
+
 
 !! level 1h
 !
@@ -157,14 +208,6 @@ print *, "RELAX gwx and lws"
 print *, cl_gws__
 print *, cl_lws__
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
-
-  call RelaxBoundary_3D(N,M,L,V1h)
-
-  !USE_MPI - need to relax in shared boundaries
-  !USE_MPI - need to get boundaries from device (0,N)
-  !USE_MPI - need to put boundaries from neighbors (-1,N+1)
-  !USE_MPI - need to put boudnaries to device (-1,N+1)
-
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -187,7 +230,8 @@ WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_mid")
 #endif
 
-!print *, V1h(:,:,:)
+! print *, "||| PRE V1h"	
+! print *, V1h(:,:,:)
 
 #ifdef DO_RESTRICT
 cl_status__ = setKernelArg(cl_Restrict_3D_,0,N)
@@ -203,8 +247,6 @@ cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
 cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
   cl_gws__ = [N/2,M/2,L/2]
-! cl_gws__ = [32,24,24]
-! cl_lws__ = [8,4,8] ! MAX APPEAR TO BE 2^8, 256 
 
 !cl_status__ = run(cl_Restrict_3D_,2,cl_gwo__,cl_gws__,cl_lws__)
 cl_status__ = run(cl_Restrict_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
@@ -220,12 +262,13 @@ cl_status__ = readBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
 CALL Textual_Output_3D(N/2,M/2,L/2,V2h,"2h_0")
 #endif
 
-print *, V2h(:,:,:)
-print *, "===FIN"
+! print *, "===V2h"
+! print *, V2h(:,:,:)
+! print *, "===FIN"
 #undef DO_RESTRICT
-#undef DO_PROLONGATE
+!#undef DO_PROLONGATE
 #undef DO_RELAX
-#undef DUMP_OUTPUT
+!#undef DUMP_OUTPUT
 
 !! level 2h
 !
@@ -247,9 +290,6 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
-
-  call RelaxBoundary_3D(N/2,M/2,L/2,V2h)
-
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -309,9 +349,6 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/4+1-(-1))+1),((M/4+1-(-1))+1),((L/4+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
-
-  call RelaxBoundary_3D(N/4,M/4,L/4,V4h)
-
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -330,6 +367,47 @@ V8h = 0
 
 cl_size__ = 4*((N/8+1-(-1))+1)*((M/8+1-(-1))+1)*((L/8+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V8h_,C_LOC(V8h),cl_size__)
+
+! #define DO_PROLONGATE
+! #define DUMP_OUTPUT
+
+cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
+cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
+
+
+#ifdef DO_PROLONGATE
+focl_intvar__ = N
+cl_status__ = setKernelArg(cl_Prolongate_3D_,0,focl_intvar__)
+focl_intvar__ = M
+cl_status__ = setKernelArg(cl_Prolongate_3D_,1,focl_intvar__)
+focl_intvar__ = L
+cl_status__ = setKernelArg(cl_Prolongate_3D_,2,focl_intvar__)
+cl_status__ = setKernelArg(cl_Prolongate_3D_,3,clMemObject(cl_V1h_))
+cl_status__ = setKernelArg(cl_Prolongate_3D_,4,clMemObject(cl_V2h_))
+cl_gwo__ = [0,0,0]
+cl_gws__ = [1,1,1]
+cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
+cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/4+1-(-1))+1),((M/4+1-(-1))+1),((L/4+1-(-1))+1)])
+cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/8+1-(-1))+1),((M/8+1-(-1))+1),((L/8+1-(-1))+1)])
+cl_gws__ = [N,M,L]
+cl_status__ = run(cl_Prolongate_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+cl_status__ = clFinish(cl_Prolongate_3D_%commands)
+#endif
+
+cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
+cl_status__ = readBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
+!WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
+print *, "After PROLONGATE"
+print *, V1h
+
+print *, "After BoundaryBuf"
+print *, BoundaryBuf
+
+
+#undef DO_PROLONGATE
+!#undef DUMP_OUTPUT
 
 #ifdef DO_PROLONGATE
 focl_intvar__ = N/4
@@ -371,9 +449,6 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/4+1-(-1))+1),((M/4+1-(-1))+1),((L/4+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
-
-  call RelaxBoundary_3D(N/4,M/4,L/4,V4h)
-
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -428,9 +503,6 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N/2+1-(-1))+1),((M/2+1-(-1))+1),((L/2+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
-
-  call RelaxBoundary_3D(N/2,M/2,L/2,V2h)
-
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -479,9 +551,6 @@ DO t = 1, nsteps
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
-
-  call RelaxBoundary_3D(N,M,L,V1h)
-
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
@@ -495,10 +564,6 @@ cl_status__ = readBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_end")
 CLOSE(UNIT=fd)
-#endif
-
-#ifdef USE_MPI
-call MPI_Finalize()
 #endif
 
 END PROGRAM PoissonMultigrid
