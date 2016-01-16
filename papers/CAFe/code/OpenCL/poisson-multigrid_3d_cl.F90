@@ -1,3 +1,5 @@
+#define USE_MPI
+
 #define DUMP_OUTPUT
 #undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
@@ -6,6 +8,11 @@
 #define DO_GETBOUNDARY
 
 PROGRAM PoissonMultigrid
+
+#ifdef USE_MPI
+Use Parallel
+#endif
+
 USE ForOpenCL
 USE Timer_mod
 USE MultiGrid, ONLY: AddFourierMode_3D
@@ -15,15 +22,19 @@ REAL, PARAMETER :: w = (2.0/3.0)
 INTEGER, PARAMETER :: N = 4
 INTEGER, PARAMETER :: M = 4
 INTEGER, PARAMETER :: L = 4
-INTEGER, PARAMETER :: NP = 2
-INTEGER, PARAMETER :: MP = 2
-INTEGER, PARAMETER :: LP = 2
 INTEGER, PARAMETER :: fd = 12
 
-INTEGER :: t, i, device, j, k
+INTEGER            :: NP      ! let this vary as needed
+INTEGER, PARAMETER :: MP = 1
+INTEGER, PARAMETER :: LP = 1
+
+INTEGER :: npx, npy, npz      ! number of actual processors in x,y,z dimensions
+
+INTEGER :: t, i, j, k, device
 INTEGER :: nsteps = 1
 
-REAL, ALLOCATABLE, DIMENSION(:,:,:) :: V1h, V2h, V4h, V8h, Buf, BoundaryBuf
+REAL, ALLOCATABLE, TARGET, DIMENSION(:,:,:) :: V1h, V2h, V4h, V8h, Buf
+REAL, ALLOCATABLE, TARGET, DIMENSION(:)     :: BoundaryBuf
 
 TYPE(CLDevice) :: cl_device_
 TYPE(CLBuffer) :: cl_V1h_
@@ -46,22 +57,50 @@ INTEGER(KIND=c_size_t) :: cl_lws__(3) = [1,1,1] ![32,4,1]
 TYPE(CPUTimer) :: timer
 REAL(KIND=c_double) :: cpu_time, gpu_time
 
+integer :: device_id = 1
+integer :: rank, size
+
+#ifdef USE_MPI
+  call Parallel_Start
+
+  if (numproc < MP*LP) then
+     STOP 'ERROR: MPI size must be greater than MP*LP'
+  end if
+
+  NP = numproc/(MP*LP)
+  npex = NP
+  npey = MP
+  npez = LP
+
+  call Topology
+
+  npx = npex
+  npy = npey
+  npz = npez
+
+  print *, my_id, 'r:', npx, npy, npz
+  print *, my_id, 'x:', left, right
+  print *, my_id, 'y:', bottom, top
+  print *, my_id, 'z:', front, back
+  print *
+#endif
+
 !! Device id
 !
 !  0 - CPU
 !  1 - GPU1
 !  2 - GPU2
 !
-integer :: device_id = 1
 device = get_subimage(device_id,cl_device_)
 
-print *, device, this_image(), num_images()
-
+!! May want information about the devices
 cl_status__ = query(cl_device_)
 
-if (device == this_image()) then
-   STOP "ERROR, device == this_image()"
-end if
+!! No coarrays
+!
+!if (device == this_image()) then
+!   STOP "ERROR, device == this_image()"
+!end if
 
 #ifdef DO_RELAX
 cl_Relax_3D_ = createKernel(cl_device_,"Relax_3D")
@@ -76,20 +115,21 @@ cl_Prolongate_3D_ = createKernel(cl_device_,"Prolongate_3D")
 cl_GetBoundary_3D_ = createKernel(cl_device_,"GetBoundary_3D")
 #endif
 
-
 ALLOCATE(V1h(-1:N+1,-1:M+1,-1:L+1))
 ALLOCATE(Buf(-1:N+1,-1:M+1,-1:L+1))
-ALLOCATE(BoundaryBuf(-1:3,-1:3,-1:3))
+ALLOCATE(BoundaryBuf(2*M*L + 2*N*L + 2*N*M))  ! memory to hold 6 boundary planes (+ little extra)
 ALLOCATE(V2h(-1:N/2+1,-1:M/2+1,-1:L/2+1))
 ALLOCATE(V4h(-1:N/4+1,-1:M/4+1,-1:L/4+1))
 ALLOCATE(V8h(-1:N/8+1,-1:M/8+1,-1:L/8+1))
 
-IF (device /= THIS_IMAGE()) THEN
+!! No coarrays
+!
+!IF (device /= THIS_IMAGE()) THEN
   cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
   cl_V1h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
   cl_Buf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
-  cl_size__ = 4*(5*5*5)
+  cl_size__ = 2*M*L + 2*N*L + 2*N*M
   cl_BoundaryBuf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
   cl_V2h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
@@ -97,7 +137,7 @@ IF (device /= THIS_IMAGE()) THEN
   cl_V4h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N/8+1-(-1))+1)*((M/8+1-(-1))+1)*((L/8+1-(-1))+1)*1
   cl_V8h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
-END IF
+!END IF
 
 #ifdef DUMP_OUTPUT
 OPEN(UNIT=fd, FILE="error_time.dat")
@@ -106,10 +146,13 @@ OPEN(UNIT=fd, FILE="error_time.dat")
 V1h = 0.0
 V2h = 0.0
 
+!USE_MPI - need to use Williams changes to add domain decomposition for initialization
+!        - but ignore for now and let each image compute exactly same information
+!        - this will mean less problems for boundary conditions, we just set them 0 on all ranks
+!
 CALL AddFourierMode_3D(N,M,L,V1h,1)
 CALL AddFourierMode_3D(N,M,L,V1h,6)
 CALL AddFourierMode_3D(N,M,L,V1h,16)
-
 
 V1h = (1./3.)*V1h
 
@@ -143,11 +186,14 @@ cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
 
 BoundaryBuf = 0
-cl_size__ = 4*(5*5*5)
+cl_size__ = 2*M*L + 2*N*L + 2*N*M
 cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
 #ifdef DUMP_OUTPUT
-CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
+if (my_id == 0) then
+   !USE_MPI - need to gather?  Or add rank to output file (probably the easiest)
+   CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
+end if
 #endif
 
 print *
@@ -179,12 +225,10 @@ print *, cl_lws__
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
-cl_size__ = 4*(5*5*5)
+cl_size__ = 2*M*L + 2*N*L + 2*N*M
 cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
 #endif
-
-
 
 
 !! level 1h
@@ -208,10 +252,24 @@ print *, "RELAX gwx and lws"
 print *, cl_gws__
 print *, cl_lws__
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+
+  ! relax shared boundaries
+  call RelaxBoundary_3D(N,M,L,V1h)
+
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
+
+#ifdef DO_GETBOUNDARY
+  ! put boundaries to device (0,N)
+  ! run copy memory kernel on device
+  ! cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
+  ! cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
+  ! get boundaries from device (1,N-1)
+#endif
+
 #ifdef DO_HALO_EXCHANGE
-  CALL Exchange_Halo_3D(device,N,M,L,V1h)
+  ! exchange boundaries with neighbors (-1,N+1)
+  CALL Exchange_Halo_3D(N,M,L,V1h,BoundaryBuf)
 #endif
 END DO 
 
@@ -564,6 +622,10 @@ cl_status__ = readBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
 CALL Textual_Output_3D(N,M,L,V1h,"1h_end")
 CLOSE(UNIT=fd)
+#endif
+
+#ifdef USE_MPI
+call Parallel_End
 #endif
 
 END PROGRAM PoissonMultigrid
