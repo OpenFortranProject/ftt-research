@@ -238,8 +238,6 @@ endif
 !... Creates a balanced distribution of processors for a Cartesian topology
 Call MPI_DIMS_CREATE (numproc, ndim, dims, ierror) 
  
-print *, my_id, ': dims=', dims
-
 !... Creates a Cartesian 3D topology (handle = MPI_COMM_CART)_
 Call MPI_CART_CREATE (MPI_COMM_WORLD, ndim, dims, periods, reorder, MPI_COMM_CART, ierror)
  
