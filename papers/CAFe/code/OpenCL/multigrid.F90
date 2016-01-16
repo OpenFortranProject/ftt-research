@@ -28,7 +28,10 @@ Module MultiGrid
 !    - could treat first border cell as interior for   
 !
   
+  use mpi
+
   real, parameter :: PI = 4.0d0*atan(1.0d0)
+
 
 Contains
 
@@ -335,5 +338,82 @@ Subroutine Restrict_3D(N, V1h, V2h)
 
 End Subroutine Restrict_3D
 #endif
+
+Subroutine Exchange_Halo_3D(nx, ny, nz, A, BufSend, BufRecv)
+!
+! Exchange halo information between neighboring processes
+!
+   Use Parallel
+   Implicit None
+   Integer, intent(in ) :: nx, ny, nz
+   Real,    intent(in ) :: A(-1:nx+1,-1:ny+1,-1:nz+1)
+   Real,    intent(out) :: BufSend(*), BufRecv(*)
+   !----- locals -----
+   Integer :: os, or  ! offsets for send and recv
+   Integer :: n, ierror
+   Integer, Dimension(MPI_STATUS_SIZE) :: status
+
+   os = 0
+   or = 0
+
+   !... X-direction
+   !---------------
+   n = nx * nz
+
+   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,  Right, 1, &
+                    & BufRecv(or+1:n), n, MPI_REAL,   Left, 1, &
+                    & MPI_COMM_CART, status, ierror)
+   os = os + n
+   or = or + n
+
+   !... X+direction
+   !---------------
+   n  = ny * nz
+
+   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,   Left, 2, &
+                    & BufRecv(or+1:n), n, MPI_REAL,  Right, 2, &
+                    & MPI_COMM_CART, status, ierror)
+   os = os + n
+   or = or + n
+
+   !... Y-direction
+   !---------------
+   n = nx * nz
+
+   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,    Top, 3, &
+                    & BufRecv(or+1:n), n, MPI_REAL, Bottom, 3, &
+                    & MPI_COMM_CART, status, ierror)
+   os = os + n
+   or = or + n
+
+   !... Y+direction
+   !---------------
+   n = nx * nz
+
+   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL, Bottom, 4, &
+                    & BufRecv(or+1:n), n, MPI_REAL,    Top, 4, &
+                    & MPI_COMM_CART, status, ierror)
+   os = os + n
+   or = or + n
+
+   !... Z-direction
+   !---------------
+   n = nx * ny
+
+   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,   Back, 5, &
+                    & BufRecv(or+1:n), n, MPI_REAL,  Front, 5, &
+                    & MPI_COMM_CART, status, ierror)
+   os = os + n
+   or = or + n
+
+   !... Z+direction
+   !---------------
+   n = nx * ny
+
+   Call MPI_SENDRECV (BufSend(os+1:n), n, MPI_REAL,  Front, 6, &
+                    & BufRecv(or+1:n), n, MPI_REAL,   Back, 6, &
+                    & MPI_COMM_CART, status, ierror)
+
+End Subroutine Exchange_Halo_3D
 
 End Module MultiGrid
