@@ -118,8 +118,8 @@ cl_GetBoundary_3D_ = createKernel(cl_device_,"GetBoundary_3D")
 
 ALLOCATE(V1h(-1:N+1,-1:M+1,-1:L+1))
 ALLOCATE(Buf(-1:N+1,-1:M+1,-1:L+1))
-ALLOCATE(BoundaryBuf(2*M*L + 2*N*L + 2*N*M))  ! memory to hold 6 boundary planes (+ little extra)
-ALLOCATE(    RecvBuf(2*M*L + 2*N*L + 2*N*M))  ! memory for boundary planes from neighbors
+ALLOCATE(BoundaryBuf(2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1))) ! 6 boundary planes for device
+ALLOCATE(    RecvBuf(2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1))) ! 6 boundary planes for neighbors
 ALLOCATE(V2h(-1:N/2+1,-1:M/2+1,-1:L/2+1))
 ALLOCATE(V4h(-1:N/4+1,-1:M/4+1,-1:L/4+1))
 ALLOCATE(V8h(-1:N/8+1,-1:M/8+1,-1:L/8+1))
@@ -131,7 +131,7 @@ ALLOCATE(V8h(-1:N/8+1,-1:M/8+1,-1:L/8+1))
   cl_V1h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
   cl_Buf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
-  cl_size__ = 2*M*L + 2*N*L + 2*N*M
+  cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1)
   cl_BoundaryBuf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
   cl_V2h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
@@ -188,7 +188,7 @@ cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
 
 BoundaryBuf = 0
-cl_size__ = 2*M*L + 2*N*L + 2*N*M
+cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1)
 cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
 #ifdef DUMP_OUTPUT
@@ -227,7 +227,7 @@ print *, cl_lws__
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
-cl_size__ = 2*M*L + 2*N*L + 2*N*M
+cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1))
 cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
 #endif
@@ -261,82 +261,74 @@ print *, cl_lws__
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 
-!----#ifdef DO_GETBOUNDARY
+#ifdef DO_GETBOUNDARY
 
-  V1h(0,1:M,1:L) = 1
-  V1h(N,1:M,1:L) = 2
-  V1h(1:N,0,1:L) = 3
-  V1h(1:N,M,1:L) = 4
-  V1h(1:N,1:M,0) = 5
-  V1h(1:N,1:M,L) = 6
+  V1h(0,1:M-1,1:L-1) = 1
+  V1h(N,1:M-1,1:L-1) = 2
+  V1h(1:N-1,0,1:L-1) = 3
+  V1h(1:N-1,M,1:L-1) = 4
+  V1h(1:N-1,1:M-1,0) = 5
+  V1h(1:N-1,1:M-1,L) = 6
 
-  print *,   V1h(N,1:M,1:L)
-  print *, "----------------------------"
-
-
-
-  ! put boundaries to device (0,N)
+  !! put boundaries to device, indices (0,N) ...
+  !
   o = 0
-
-  num = M*L
-  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(0,1:M,1:L),shape=[num])
+  num = (M-1)*(L-1)
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(0,1:(M-1),1:(L-1)),shape=[num])
   o = o + num
-  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(N,1:M,1:L),shape=[num])
-  print *, BoundaryBuf(o+1:o+num)
-  print *, "----------------------------"
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(N,1:(M-1),1:(L-1)),shape=[num])
   o = o + num
 
-  num = N*L
-  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:N,0,1:L),shape=[num])
+  num = (N-1)*(L-1)
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:(N-1),0,1:(L-1)),shape=[num])
   o = o + num
-  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:N,M,1:L),shape=[num])
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:(N-1),M,1:(L-1)),shape=[num])
   o = o + num
 
-  num = N*M
-  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:N,1:M,0),shape=[num])
+  num = (N-1)*(M-1)
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:(N-1),1:(M-1),0),shape=[num])
   o = o + num
-  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:N,1:M,L),shape=[num])
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:(N-1),1:(M-1),L),shape=[num])
 
-  print *, BoundaryBuf
-  print *, "----------------------------"
+  ! cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1))
+  ! cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
-  ! run copy memory kernel on device
+  !! run copy memory kernel on device
+  !
   ! cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   ! cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
-  ! get boundaries from device (1,N-1)
-
-  !Array(sx:ex,sy-1,sz:ez) = RESHAPE(source=yrecv(:),shape=(/mx,mz/))
-
-  V1h = 0
+  !! get boundaries from device (1,N-1)
+  !
+  ! cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1))
+  ! cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   o = 0
-
-  num = M*L
-  V1h(0,1:M,1:L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[M,N])
+  num = (M-1)*(L-1)
+  V1h(0,1:(M-1),1:(L-1)) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[(M-1),(N-1)])
   o = o + num
-  V1h(N,1:M,1:L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[M,N])
-  o = o + num
-
-  num = N*L
-  V1h(1:N,0,1:L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[N,L])
-  o = o + num
-  V1h(1:N,M,1:L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[N,L])
+  V1h(N,1:(M-1),1:(L-1)) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[(M-1),(N-1)])
   o = o + num
 
-  num = N*M
-  V1h(1:N,1:M,0) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[N,M])
+  num = (N-1)*(L-1)
+  V1h(1:(N-1),0,1:(L-1)) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[(N-1),(L-1)])
   o = o + num
-  V1h(1:N,1:M,L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[N,M])
+  V1h(1:(N-1),M,1:(L-1)) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[(N-1),(L-1)])
+  o = o + num
 
-  print *, V1h(0,1:M,1:L)
-  print *, V1h(N,1:M,1:L)
-  print *, V1h(1:N,0,1:L)
-  print *, V1h(1:N,M,1:L)
-  print *, V1h(1:N,1:M,0)
-  print *, V1h(1:N,1:M,0)
+  num = (N-1)*(M-1)
+  V1h(1:(N-1),1:(M-1),0) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[(N-1),(M-1)])
+  o = o + num
+  V1h(1:(N-1),1:(M-1),L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[(N-1),(M-1)])
 
-!----#endif
+  print *, V1h(0,1:(M-1),1:(L-1))
+  print *, V1h(N,1:(M-1),1:(L-1))
+  print *, V1h(1:(N-1),0,1:(L-1))
+  print *, V1h(1:(N-1),M,1:(L-1))
+  print *, V1h(1:(N-1),1:(M-1),0)
+  print *, V1h(1:(N-1),1:(M-1),L)
+
+#endif
 
 #ifdef DO_HALO_EXCHANGE
 print *, "EXCHANGING boundaries"
