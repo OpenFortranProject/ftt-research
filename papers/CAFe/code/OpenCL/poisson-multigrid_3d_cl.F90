@@ -6,6 +6,7 @@
 #undef DO_RESTRICT
 #undef DO_RELAX
 #undef DO_GETBOUNDARY
+#undef VERBOSE
 
 PROGRAM PoissonMultigrid
 
@@ -51,7 +52,7 @@ TYPE(CLKernel) :: cl_Prolongate_3D_
 TYPE(CLKernel) :: cl_GetBoundary_3D_
 INTEGER :: focl_intvar__
 INTEGER(KIND=cl_int) :: cl_status__
-INTEGER(KIND=c_size_t) :: cl_size__
+INTEGER(KIND=c_size_t) :: cl_size__, cl_buf_size__
 INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
 INTEGER(KIND=c_size_t) :: cl_lws__(3) = [1,1,1] ![32,4,1]
@@ -133,8 +134,8 @@ ALLOCATE(V8h(-1:N/8+1,-1:M/8+1,-1:L/8+1))
   cl_V1h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
   cl_Buf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
-  cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1)
-  cl_BoundaryBuf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
+  cl_buf_size__ = 4*(2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1))
+  cl_BoundaryBuf_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_buf_size__,C_NULL_PTR)
   cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
   cl_V2h_ = createBuffer(cl_device_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
   cl_size__ = 4*((N/4+1-(-1))+1)*((M/4+1-(-1))+1)*((L/4+1-(-1))+1)*1
@@ -160,20 +161,20 @@ CALL AddFourierMode_3D(N,M,L,V1h,16)
 
 V1h = (1./3.)*V1h
 
-V1h(-1:0,:,:) = -6
-V1h(:,-1:0,:) = -6
-V1h(:,:,-1:0) = -6
-V1h(N:N+1,:,:) = -6
-V1h(:,N:N+1,:) = -6
-V1h(:,:,N:N+1) = -6
+! V1h(-1:0,:,:) = -6
+! V1h(:,-1:0,:) = -6
+! V1h(:,:,-1:0) = -6
+! V1h(N:N+1,:,:) = -6
+! V1h(:,N:N+1,:) = -6
+! V1h(:,:,N:N+1) = -6
 
-do i = -1,N+1 
-   do j = -1,M+1
-      do k = -1,L+1
-         V1h(i,j,k) = 900000 + (i+1)*10000 + (1+j)*100 + k+1
-      end do
-   end do
-end do
+! do i = -1,N+1 
+!    do j = -1,M+1
+!       do k = -1,L+1
+!          V1h(i,j,k) = 900000 + (i+1)*10000 + (1+j)*100 + k+1
+!       end do
+!    end do
+! end do
 
 ! V2h(-1:0,:,:) = -6
 ! V2h(:,-1:0,:) = -6
@@ -181,7 +182,10 @@ end do
 ! V2h(N/2:N/2+1,:,:) = -6
 ! V2h(:,N/2:N/2+1,:) = -6
 ! V2h(:,:,N/2:N/2+1) = -6
-! print *, V2h(:,:,:)
+#ifdef VERBOSE
+print *, "Start"
+print *, V1h
+#endif
 
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
@@ -190,50 +194,21 @@ cl_size__ = 4*((N/2+1-(-1))+1)*((M/2+1-(-1))+1)*((L/2+1-(-1))+1)*1
 cl_status__ = writeBuffer(cl_V2h_,C_LOC(V2h),cl_size__)
 
 BoundaryBuf = 0
-cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1)
-cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
+cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_buf_size__)
 
 #ifdef DUMP_OUTPUT
+#ifdef USE_MPI
 if (my_id == 0) then
    !USE_MPI - need to gather?  Or add rank to output file (probably the easiest)
    CALL Textual_Output_3D(N,M,L,V1h,"1h_0")
 end if
+#endif
 #endif
 
 print *
 print *, "Measuring flops and effective bandwidth for GPU computation:"
 call init(timer)
 call start(timer)
-
-
-print *, "Before BoundaryBuf"
-!print *, BoundaryBuf
-
-#ifdef DO_GETBOUNDARY
-  cl_status__ = setKernelArg(cl_GetBoundary_3D_,0,N)
-  cl_status__ = setKernelArg(cl_GetBoundary_3D_,1,M)
-  cl_status__ = setKernelArg(cl_GetBoundary_3D_,2,L)
-  cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V1h_))
-  cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
-  cl_gwo__ = [0,0,0]
-  cl_gws__ = [1,1,1]
-  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
-  !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
-  cl_gws__ = [5,5,5]
-print *, "GET BOUNDARY gwx and lws"
-print *, cl_gws__
-print *, cl_lws__
-  cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
-  cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
-
-cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1)
-cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
-
-#endif
-
 
 !! level 1h
 !
@@ -263,6 +238,12 @@ print *, cl_lws__
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 
+#ifdef VERBOSE
+print *, "After RELAX V1h", V1h(:,1:2,:)
+#endif
+
+#undef DO_RELAX
+
 #ifdef DO_GETBOUNDARY
   ex = N-1
   ey = M-1
@@ -272,6 +253,7 @@ print *, cl_lws__
   !
   call Copyto_Halo_Buf_3D(N, M, L, V1h, BoundaryBuf)
 
+#ifdef VERBOSE
   print *, "-----BB------"
   print *, int(BoundaryBuf( 0+1: 0+ey*ez))
   print *, int(BoundaryBuf( 9+1: 9+ey*ez))
@@ -280,8 +262,9 @@ print *, cl_lws__
   print *, int(BoundaryBuf(36+1:36+ex*ey))
   print *, int(BoundaryBuf(45+1:45+ex*ey))
   print *, "-----------------"
-
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+#endif
+  
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   !! run copy memory kernel on device
@@ -291,20 +274,20 @@ print *, cl_lws__
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,2,L)
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V1h_))
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
-  ! To Soren: These probably need to change
   cl_gwo__ = [0,0,0]
   cl_gws__ = [1,1,1]
   cl_gws__ = [5,5,5]
+  cl_gws__ = [ey*ez + ex*ez + ex*ey,2,1]
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
   !! get boundaries from device (1,N-1)
   !
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   call Copyfrom_Halo_Buf_3D(N, M, L, V1h, BoundaryBuf)
-
+#ifdef VERBOSE
   print *, "-----------------"
   print *, int(V1h(   1,1:ey,1:ez))
   print *, int(V1h(  ex,1:ey,1:ez))
@@ -322,7 +305,7 @@ print *, cl_lws__
   print *, int(BoundaryBuf(36+1:36+ex*ey))
   print *, int(BoundaryBuf(45+1:45+ex*ey))
   print *, "-----------------"
-
+#endif
 #endif
 
 #ifdef DO_HALO_EXCHANGE
@@ -419,7 +402,7 @@ DO t = 1, nsteps
   !
   call Copyto_Halo_Buf_3D(N/2, M/2, L/2, V2h, BoundaryBuf)
 
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   !! run copy memory kernel on device
@@ -429,16 +412,16 @@ DO t = 1, nsteps
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,2,L/2)
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V2h_))
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
-  ! To Soren: These probably need to change
   cl_gwo__ = [0,0,0]
   cl_gws__ = [1,1,1]
   cl_gws__ = [5,5,5]
+  cl_gws__ = [ey*ez + ex*ez + ex*ey,2,1]
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
   !! get boundaries from device (1,N/2-1)
   !
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   call Copyfrom_Halo_Buf_3D(N/2, M/2, L/2, V2h, BoundaryBuf)
@@ -513,7 +496,7 @@ DO t = 1, nsteps
   !
   call Copyto_Halo_Buf_3D(N/4, M/4, L/4, V4h, BoundaryBuf)
 
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   !! run copy memory kernel on device
@@ -523,16 +506,16 @@ DO t = 1, nsteps
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,2,L/4)
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V4h_))
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
-  ! To Soren: These probably need to change
   cl_gwo__ = [0,0,0]
   cl_gws__ = [1,1,1]
   cl_gws__ = [5,5,5]
+  cl_gws__ = [ey*ez + ex*ez + ex*ey,2,1]
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
   !! get boundaries from device (1,N/4-1)
   !
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   call Copyfrom_Halo_Buf_3D(N/4, M/4, L/4, V4h, BoundaryBuf)
@@ -649,7 +632,7 @@ DO t = 1, nsteps
   !
   call Copyto_Halo_Buf_3D(N/4, M/4, L/4, V4h, BoundaryBuf)
 
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   !! run copy memory kernel on device
@@ -659,16 +642,16 @@ DO t = 1, nsteps
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,2,L/4)
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V4h_))
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
-  ! To Soren: These probably need to change
   cl_gwo__ = [0,0,0]
   cl_gws__ = [1,1,1]
   cl_gws__ = [5,5,5]
+  cl_gws__ = [ey*ez + ex*ez + ex*ey,2,1]
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
   !! get boundaries from device (1,N/4-1)
   !
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   call Copyfrom_Halo_Buf_3D(N/4, M/4, L/4, V4h, BoundaryBuf)
@@ -738,7 +721,7 @@ DO t = 1, nsteps
   !
   call Copyto_Halo_Buf_3D(N/2, M/2, L/2, V2h, BoundaryBuf)
 
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   !! run copy memory kernel on device
@@ -748,16 +731,16 @@ DO t = 1, nsteps
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,2,L/2)
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V2h_))
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
-  ! To Soren: These probably need to change
   cl_gwo__ = [0,0,0]
   cl_gws__ = [1,1,1]
   cl_gws__ = [5,5,5]
+  cl_gws__ = [ey*ez + ex*ez + ex*ey,2,1]
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
   !! get boundaries from device (1,N/2-1)
   !
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   call Copyfrom_Halo_Buf_3D(N/2, M/2, L/2, V2h, BoundaryBuf)
@@ -821,7 +804,7 @@ DO t = 1, nsteps
   !
   call Copyto_Halo_Buf_3D(N, M, L, V1h, BoundaryBuf)
 
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = writeBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   !! run copy memory kernel on device
@@ -831,16 +814,16 @@ DO t = 1, nsteps
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,2,L)
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V1h_))
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
-  ! To Soren: These probably need to change
   cl_gwo__ = [0,0,0]
   cl_gws__ = [1,1,1]
   cl_gws__ = [5,5,5]
+  cl_gws__ = [ey*ez + ex*ez + ex*ey,2,1]
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
   !! get boundaries from device (1,N-1)
   !
-  cl_size__ = 2*ey*ez + 2*ex*ez + 2*ex*ey
+  cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
   call Copyfrom_Halo_Buf_3D(N, M, L, V1h, BoundaryBuf)
