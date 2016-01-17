@@ -1,25 +1,127 @@
 \section{Conclusions}
 
-Fortran is a general-purpose programming language and as such it provides limited facilities for
-expressing concepts useful for stencil operations. For example, halo regions must be expressed in
-terms of the existing syntax of the language and there is no way to specify that the ``interior''
-of an array is in any way special from an ``outside'' region.  By not providing support for
-stencils in the language, the programmer must make specific choices regarding data-access patterns
-and the order of operations on the data.  These choices often hide the opportunity for
-optimizations by the compiler \cite{Dubey:2014:SSC:2686745.2686756}.  For example, if the compiler
-had knowledge of the semantic intent of halo regions, it could reorder operations so that border
-regions were computed \emph{before} interior regions, allowing the transfer of data in halo regions
-to overlap with computations on the interior.
+Fortran is a general-purpose programming language and is extremely important to the
+scientific and high performance computing (HPC) community.  While new code development is
+often in languages other than Fortran, such as C++, Fortran usage in terms of CPU hours on
+HPC platforms remains as high as ??? \cite{Yellick::language:breakdown}.  Fortran will be
+with us well into the future as the lifetime of important scientific applications is
+measured in decades and Fortran usage dominates in scientific communitities that are
+critical to understanding the future of life on our planet such as the climate community.
 
-Just as Coarray Fortran originally extended Fortran to include domain specific knowledge (parallel
-computation) replacing MPI library routines\cite{Numrich:1998:CFP:289918.289920}, LOPe seeks to extend Fortran by
-providing domain specific knowledge of stencil operations.
-Specifically, LOPe and CAFe together provide:
-(1) a local view of stencil operations on data that allows a complete separation of the implementation of a stencil
-algorithm with data-access patterns;
-(2) memory placement via allocation routines that allow the specification of allocation location;
-(3) task execution placement with double-bracket syntax specifying which subimage is to execute a particular operation; and
-(4) memory exchange via the \texttt{TRANSFER\_HALO} intrinsic procedure.
+However significant challenges arise as hardware adapts to the end of Moore's
+Law\cite{exascale:workshop:2011}.  The revolution occurring in the hardware architecture
+has completely altered the landscape for scientific computing as a code designed for
+distributed memory bulk synchronous model of parallelism may actually run slower on
+advanced hardware\cite{Dubey:2014:SSC:2686745.2686756}.
+
+Parallelism was added to Fortran with the addition of coarrays in the 2008
+standard\cite{fortran:2008} to enable the migration of codes as hardware evolves.
+Significant language features were left out of this early version of coarrays as
+identified by \emph{Mellor-Crummy et al}\cite{mellor-crummey:2009:caf2}.  Many of these features
+have been adopted in what is likely to be called the 2015 standard of the language\cite{fortran:2015},
+such as teams of program images and improved synchronization constructs like events.
+However, the Fortran coarray model fails to address heterogeneity in hardware as is already
+being seen in HPC computing platforms with the adoption of distributed nodes consisting of
+general purpose CPUs with attached accelerator devices like GPUs, for example, in the early
+RoadRunner Machine at Los Alamos\cite{RoadRunner} and new machines arriving such as Blue
+Waters\cite{blue:waters}.
+
+Current
+
+
+In this preliminary work we have examined ....
+In no way does this represent a thorough examination of these potential features.
+
+CAFe introduces the concept of subimages executing on a hosting image.  CAFe includes
+\item
+  Dynamic creation of subimages.
+\item
+  Dynamic memory allocation and placement on a subimage.
+\item
+  Explicit addressing of memory on subimages using standard coarray notation.  It follows
+  the Partitioned Global Address Space model (PGAS), although with subimages the address
+  space is hierahical in the sense that the memory partioning only allows memory exchange
+  between a subimage and its hosting image as initiated by the hosting image.
+\item
+  Task creation and execution on subimages using extended coarray syntax with double
+  square brackets \testtt{[[ ]]}.  Task mays be defined in terms of standard \emph{pure}
+  Fortran procedures and task execution continues without interuption until completion.
+  In addition a Fortran 2015 event may be notified upon completion of the task to allow
+  concurrent execution on the subimage and on the hosting image.
+\item
+  CAFe integrates Fortran 2015 features to allow relatively simple programs to be written
+  that employ all of the heterogenous components expected on exascale platforms.
+
+\subsection{Limitations}
+
+Possible criticism of this work includes the following:
+\item
+  The source-to-source transformations that have been developed to implement CAFe
+  are rudimentory and have not been optimized.  For example, memory transfers have
+  not been aggregated into larger messages to improve performance.  Memory transfer
+  is also blocking so that prefetching of data cannot be employed via techniques
+  envolving the reordering of statements (code motion) that effectively employed in
+  CAF compilers.
+\item
+  The Laplacian example is in reality a ``toy'' problem.  Real multiphysics codes
+  employ hundreds of more variables and would have entirely different performance
+  characteristics because of the increased pressure on cache and register usage.
+\item
+  Existing scientific codes often separate communication into separate modules from
+  the computational kernels.  This makes adoption of CAF itself slow (because these
+  MPI modules already work fine) and thus additional extensions like CAFe also
+  would be slow to adopt. However CAFe constructs can be used in an incremental
+  fashion making it easier to adopt
+\item
+  In reality CAF (and therefore CAFe) are relatively low-level parallel programming
+  languages that require the programmer to \emph{explicitly} control the placement
+  of memory, communication, and synchronization.  Perhaps higher level languages like
+  Chapel would be better to adopt as they could provide an easier programming model
+  to the programmer and possibly more avenues for compiler optimization.
+\item
+  Thorough examination of performance capabilities on real scientific applications
+  (or at least scientific ``mini-apps'') has not been attempted.
+\item
+  Programming models like that proposed by CAFe already exist in the form of a combination
+  of MPI and OpenMP (or OpenACC) programs.  The advantage of CAFe --- by being a purely
+  language construct --- is that it opens up the possibility of compiler optimizations
+  that would otherwise be impossible with a library approach intermixed with compiler directives.
+
+\subsection{Future Work}
+
+However, especially with the integration of task-based parallelism with synchronization
+events arriving in Fortran 2015, the possibilities are intriguing.  Tasks plus the
+dependencies represented by events suggest a correspondence with the Open Community
+Runtime (OCR) libraries.  In OCR, the entire program must be broken into a set of tasks
+represented by a directed acycic graph (DAG).  In OCR, tasks are available for executing
+when all of their input dependencies are satisfied, such occurs when computation of a new
+interation of data elements have been updated and other upstream tasks have completed.
+
+Tools to automatically convert existing codes to run under the OCR model faces challenges.  For
+example, the hundreds of MPI functions would have to be semantically understood by the tools,
+integrated with existing OpenACC directives (for example), a DAG generaged for the complete
+program, and then transformed into an OCR program.
+
+An intriguing \emph{possibility} exists for automatic conversion of CAFe codes to OCR exists:
+\item
+  CAF codes have well defined boundaries (called segment boundaries) indicating where new
+  OCR tasks must be created.
+\item
+  CAF has many fewer library routines (primarily collectives) that must be converted.
+\item
+  CAF has events which already define some of the dependencies necessary for the creation
+  of OCR tasks.
+\item
+  CAFe introduces the notion of task based parallelism (in addition to the existing
+  Fortran features like \texttt{do concurrent}.
+
+In the future we hope to examine \emph{if} the possibility exists for CAFe codes to be
+automatically converted to programs employing the Open Community Runtime.
+
+\begin{comment}
+These choices often hide the opportunity for
+optimizations by the compiler \cite{Dubey:2014:SSC:2686745.2686756}.
+\end{comment}
 
 %
 % This could be part of conclusions
