@@ -1,5 +1,19 @@
 \section{Introduction}
 
+\begin{comment}
+Fortran is essential for exascale programming. The explicit policy of non-overlapping arrays (enabling compilers to more easily vectorize and parallelize automatically), simple loop syntax, longstanding support for robust real and complex arithmetic, along with the vast quantity of encoded scientific knowledge mean Fortran will remain the primary development language for many domain scientists who write software. Even as clean-slate Fortran development efforts decline, the value of the legacy Fortran software base and its ongoing refactoring and extension will be essential for decades to come.
+
+Execution environments must undergo more substantial changes than programming languages and environments. Current runtime systems are very good at concurrent execution, but are not designed for lightweight threading (except GPUs) or locality-aware task mapping. Thread-scalable computing will require better, more transparent on-node thread parallel environments. Fortunately, we see much progress lately, underneath existing programming languages and environments.
+
+\emph{Adding Tasking is Critical}
+
+Although programming and execution environments are evolving smoothly toward exascale capabilities, we do have disruptive changes ahead. Most scalable parallel applications today have simple data and work decompositions: Each MPI rank owns a static portion of large data objects, e.g., a subdomain of a large distributed global domain, and each rank executes its code sequentially (potentially vectorizing), or with modest thread-parallel capabilities. This approach works on existing NUMA multicore systems by assigning multiple MPI ranks to a node and using OpenMP across a handful of cores, but performance using this approach is not sustainable as core counts continue to increase.
+
+Tasking, with work granularities sufficiently large to make effective use of one or a few cores, must be added to most applications in order to sustain performance improvement as concurrency demands increase. Specifically, tasking requires one or more levels of additional decomposition (at least logically) of data objects, e.g., create multiple patches or tiles from each MPI subdomain, and assign tasks to execute concurrently on these patches. Within a single shared memory node, tasks can in principle cooperate closely, executing dataflow patterns, sharing data and otherwise collaborating in lightweight
+
+\cite{HPCWire:Heroux}
+\end{comment}
+
 A goal of high-level programming languages should be to \emph{allow} a programmer to
 develop software for a specific hardware architecture, without actually \emph{exposing} hardware
 features.  In fact, allowing low-level hardware details to be controlled by the programmer is actually
@@ -69,11 +83,9 @@ are straightforward as each program is replicated $NP$ times with each program i
 allocating its own memory locally.  Special syntax is provided to indicate which arrays
 are visible between distributed memory processes and remote memory transfer is indicated
 with new array syntax using square brackets, for example,
-%\small
 \begin{verbatim}
    U(1) = U(1)[3]
 \end{verbatim}
-%\normalsize
 copies memory from the first element of \texttt{U} residing on image number 3 into
 the corresponding element of the \emph{local} array \texttt{U}.  The fundamental programming
 model is similar to that provided by message passing systems.
