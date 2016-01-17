@@ -1,11 +1,11 @@
 #define USE_MPI
 
-#define DUMP_OUTPUT
-#undef DO_HALO_EXCHANGE
+#undef DUMP_OUTPUT
+#define DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
 #undef DO_RESTRICT
 #undef DO_RELAX
-#define DO_GETBOUNDARY
+#undef DO_GETBOUNDARY
 
 PROGRAM PoissonMultigrid
 
@@ -15,7 +15,7 @@ Use Parallel
 
 USE ForOpenCL
 USE Timer_mod
-USE MultiGrid, ONLY: AddFourierMode_3D
+USE MultiGrid, ONLY: AddFourierMode_3D, Exchange_Halo_3D
 USE IO, ONLY: Textual_Output_3D
 IMPLICIT NONE
 REAL, PARAMETER :: w = (2.0/3.0)
@@ -34,7 +34,7 @@ INTEGER :: t, i, j, k, device
 INTEGER :: nsteps = 1
 
 REAL, ALLOCATABLE, TARGET, DIMENSION(:,:,:) :: V1h, V2h, V4h, V8h, Buf
-REAL, ALLOCATABLE, TARGET, DIMENSION(:)     :: BoundaryBuf
+REAL, ALLOCATABLE, TARGET, DIMENSION(:)     :: BoundaryBuf, RecvBuf
 
 TYPE(CLDevice) :: cl_device_
 TYPE(CLBuffer) :: cl_V1h_
@@ -58,7 +58,8 @@ TYPE(CPUTimer) :: timer
 REAL(KIND=c_double) :: cpu_time, gpu_time
 
 integer :: device_id = 1
-integer :: rank, size
+integer :: o               ! array offset
+integer :: num             ! number of elements
 
 #ifdef USE_MPI
   call Parallel_Start
@@ -94,7 +95,7 @@ integer :: rank, size
 device = get_subimage(device_id,cl_device_)
 
 !! May want information about the devices
-cl_status__ = query(cl_device_)
+!cl_status__ = query(cl_device_)
 
 !! No coarrays
 !
@@ -118,6 +119,7 @@ cl_GetBoundary_3D_ = createKernel(cl_device_,"GetBoundary_3D")
 ALLOCATE(V1h(-1:N+1,-1:M+1,-1:L+1))
 ALLOCATE(Buf(-1:N+1,-1:M+1,-1:L+1))
 ALLOCATE(BoundaryBuf(2*M*L + 2*N*L + 2*N*M))  ! memory to hold 6 boundary planes (+ little extra)
+ALLOCATE(    RecvBuf(2*M*L + 2*N*L + 2*N*M))  ! memory for boundary planes from neighbors
 ALLOCATE(V2h(-1:N/2+1,-1:M/2+1,-1:L/2+1))
 ALLOCATE(V4h(-1:N/4+1,-1:M/4+1,-1:L/4+1))
 ALLOCATE(V8h(-1:N/8+1,-1:M/8+1,-1:L/8+1))
@@ -203,7 +205,7 @@ call start(timer)
 
 
 print *, "Before BoundaryBuf"
-print *, BoundaryBuf
+!print *, BoundaryBuf
 
 #ifdef DO_GETBOUNDARY
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,0,N)
@@ -259,17 +261,87 @@ print *, cl_lws__
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 
-#ifdef DO_GETBOUNDARY
+!----#ifdef DO_GETBOUNDARY
+
+  V1h(0,1:M,1:L) = 1
+  V1h(N,1:M,1:L) = 2
+  V1h(1:N,0,1:L) = 3
+  V1h(1:N,M,1:L) = 4
+  V1h(1:N,1:M,0) = 5
+  V1h(1:N,1:M,L) = 6
+
+  print *,   V1h(N,1:M,1:L)
+  print *, "----------------------------"
+
+
+
   ! put boundaries to device (0,N)
+  o = 0
+
+  num = M*L
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(0,1:M,1:L),shape=[num])
+  o = o + num
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(N,1:M,1:L),shape=[num])
+  print *, BoundaryBuf(o+1:o+num)
+  print *, "----------------------------"
+  o = o + num
+
+  num = N*L
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:N,0,1:L),shape=[num])
+  o = o + num
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:N,M,1:L),shape=[num])
+  o = o + num
+
+  num = N*M
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:N,1:M,0),shape=[num])
+  o = o + num
+  BoundaryBuf(o+1:o+num) = RESHAPE(source=V1h(1:N,1:M,L),shape=[num])
+
+  print *, BoundaryBuf
+  print *, "----------------------------"
+
   ! run copy memory kernel on device
   ! cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   ! cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
+
   ! get boundaries from device (1,N-1)
-#endif
+
+  !Array(sx:ex,sy-1,sz:ez) = RESHAPE(source=yrecv(:),shape=(/mx,mz/))
+
+  V1h = 0
+
+  o = 0
+
+  num = M*L
+  V1h(0,1:M,1:L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[M,N])
+  o = o + num
+  V1h(N,1:M,1:L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[M,N])
+  o = o + num
+
+  num = N*L
+  V1h(1:N,0,1:L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[N,L])
+  o = o + num
+  V1h(1:N,M,1:L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[N,L])
+  o = o + num
+
+  num = N*M
+  V1h(1:N,1:M,0) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[N,M])
+  o = o + num
+  V1h(1:N,1:M,L) = RESHAPE(source=BoundaryBuf(o+1:o+num),shape=[N,M])
+
+  print *, V1h(0,1:M,1:L)
+  print *, V1h(N,1:M,1:L)
+  print *, V1h(1:N,0,1:L)
+  print *, V1h(1:N,M,1:L)
+  print *, V1h(1:N,1:M,0)
+  print *, V1h(1:N,1:M,0)
+
+!----#endif
 
 #ifdef DO_HALO_EXCHANGE
+print *, "EXCHANGING boundaries"
   ! exchange boundaries with neighbors (-1,N+1)
-  CALL Exchange_Halo_3D(N,M,L,V1h,BoundaryBuf)
+  CALL Exchange_Halo_3D(N,M,L,V1h,BoundaryBuf,RecvBuf)
 #endif
 END DO 
 
@@ -290,6 +362,8 @@ CALL Textual_Output_3D(N,M,L,V1h,"1h_mid")
 
 ! print *, "||| PRE V1h"	
 ! print *, V1h(:,:,:)
+
+#ifdef NO_NO_NO
 
 #ifdef DO_RESTRICT
 cl_status__ = setKernelArg(cl_Restrict_3D_,0,N)
@@ -351,7 +425,7 @@ DO t = 1, nsteps
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
-  CALL Exchange_Halo_3D(device,N/2,M/2,L/2,V2h)
+  CALL Exchange_Halo_3D(N/2,M/2,L/2,V2h,BoundaryBuf,RecvBuf)
 #endif
 END DO 
 
@@ -410,7 +484,7 @@ DO t = 1, nsteps
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
-  CALL Exchange_Halo_3D(device,N/4,M/4,L/4,V4h)
+  CALL Exchange_Halo_3D(N/4,M/4,L/4,V4h,BoundaryBuf,RecvBuf)
 #endif
 END DO 
 
@@ -458,10 +532,10 @@ cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 !WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
 print *, "After PROLONGATE"
-print *, V1h
+!print *, V1h
 
 print *, "After BoundaryBuf"
-print *, BoundaryBuf
+!print *, BoundaryBuf
 
 
 #undef DO_PROLONGATE
@@ -510,7 +584,7 @@ DO t = 1, nsteps
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
-  CALL Exchange_Halo_3D(device,N/4,M/4,L/4,V4h)
+  CALL Exchange_Halo_3D(N/4,M/4,L/4,V4h,BoundaryBuf,RecvBuf)
 #endif
 END DO 
 
@@ -564,7 +638,7 @@ DO t = 1, nsteps
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
-  CALL Exchange_Halo_3D(device,N/2,M/2,L/2,V2h)
+  CALL Exchange_Halo_3D(N/2,M/2,L/2,V2h,BoundaryBuf,RecvBuf)
 #endif
 END DO 
 
@@ -612,7 +686,7 @@ DO t = 1, nsteps
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 #ifdef DO_HALO_EXCHANGE
-  CALL Exchange_Halo_3D(device,N,M,L,V1h)
+  CALL Exchange_Halo_3D(N,M,L,V1h,BoundaryBuf,RecvBuf)
 #endif
 END DO 
 
@@ -624,6 +698,7 @@ CALL Textual_Output_3D(N,M,L,V1h,"1h_end")
 CLOSE(UNIT=fd)
 #endif
 
+#endif
 #ifdef USE_MPI
 call Parallel_End
 #endif
