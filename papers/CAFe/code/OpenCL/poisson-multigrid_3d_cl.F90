@@ -1,7 +1,7 @@
-#define USE_MPI
+#undef USE_MPI
 
 #undef DUMP_OUTPUT
-#define DO_HALO_EXCHANGE
+#undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
 #undef DO_RESTRICT
 #undef DO_RELAX
@@ -15,7 +15,7 @@ Use Parallel
 
 USE ForOpenCL
 USE Timer_mod
-USE MultiGrid, ONLY: AddFourierMode_3D, Exchange_Halo_3D
+USE MultiGrid, ONLY: AddFourierMode_3D, Exchange_Halo_3D, RelaxBoundary_3D
 USE MultiGrid, ONLY: Copyto_Halo_Buf_3D, Copyfrom_Halo_Buf_3D
 USE IO, ONLY: Textual_Output_3D
 IMPLICIT NONE
@@ -229,7 +229,7 @@ print *, cl_lws__
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
-cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1))
+cl_size__ = 2*(M-1)*(L-1) + 2*(N-1)*(L-1) + 2*(N-1)*(M-1)
 cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
 #endif
