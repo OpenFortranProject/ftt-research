@@ -339,83 +339,158 @@ Subroutine Restrict_3D(N, V1h, V2h)
 End Subroutine Restrict_3D
 #endif
 
-Subroutine Exchange_Halo_3D(nx, ny, nz, A, SendBuf, RecvBuf)
+Subroutine Exchange_Halo_3D(nx, ny, nz, Array, SendBuf, RecvBuf)
 !
 ! Exchange halo information between neighboring processes
-!   - this occurs on outer-boundary planes at indices (0,N) ...
+!   - first interior plane (i=   1) sent to far halo plane of  left neighbor (i=nx+1)
+!   -  last interior plane (i=nx-1) sent to far halo plane of right neighbor (i=   1)
 !
    Use Parallel
    Implicit None
-   Integer, intent(in ) :: nx, ny, nz
-   Real,    intent(in ) :: A(-1:nx+1,-1:ny+1,-1:nz+1)
-   Real,    intent(out) :: SendBuf(*), RecvBuf(*)
+   Integer, intent(in   ) :: nx, ny, nz
+   Real,    intent(inout) :: Array(-1:nx+1,-1:ny+1,-1:nz+1)
+   Real,    intent(  out) :: SendBuf(*), RecvBuf(*)
    !----- locals -----
-   Integer :: os, or  ! offsets for send and recv
+   Integer :: ex, ey, ez   ! ending indices of interior region (start is 1)
    Integer :: n, ierror
    Integer, Dimension(MPI_STATUS_SIZE) :: status
 
-   os = 0
-   or = 0
+   ex = nx - 1
+   ey = ny - 1
+   ez = nz - 1
 
    !... X-direction
    !---------------
-   n = nx * nz
-!   xsend(:) = RESHAPE(source=Array(ex,sy:ey,sz:ez),shape=(/n/))
+   n = ey * ez
+   Sendbuf(1:n) = RESHAPE(source=Array(ex,1:ey,1:ez),shape=[n])
 
-   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,  Right, 1, &
-                    & RecvBuf(or+1:n), n, MPI_REAL,   Left, 1, &
+   Call MPI_SENDRECV (SendBuf, n, MPI_REAL,  Right, 1, &
+                    & RecvBuf, n, MPI_REAL,   Left, 1, &
                     & MPI_COMM_CART, status, ierror)
-   os = os + n
-   or = or + n
+
+   Array(-1,1:ey,1:ez) = RESHAPE(source=RecvBuf(1:n),shape=[ey,ez])
 
    !... X+direction
    !---------------
-   n  = ny * nz
+   n  = ey * ez
+   Sendbuf(1:n) = RESHAPE(source=Array(1,1:ey,1:ez),shape=[n])
 
-   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,   Left, 2, &
-                    & RecvBuf(or+1:n), n, MPI_REAL,  Right, 2, &
+   Call MPI_SENDRECV (SendBuf, n, MPI_REAL,   Left, 2, &
+                    & RecvBuf, n, MPI_REAL,  Right, 2, &
                     & MPI_COMM_CART, status, ierror)
-   os = os + n
-   or = or + n
+
+   Array(nx+1,1:ey,1:ez) = RESHAPE(source=RecvBuf(1:n),shape=[ey,ez])
 
    !... Y-direction
    !---------------
-   n = nx * nz
+   n = ex * ez
+   Sendbuf(1:n) = RESHAPE(source=Array(1:ex,ey,1:ez),shape=[n])
 
-   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,    Top, 3, &
-                    & RecvBuf(or+1:n), n, MPI_REAL, Bottom, 3, &
+   Call MPI_SENDRECV (SendBuf, n, MPI_REAL,    Top, 3, &
+                    & RecvBuf, n, MPI_REAL, Bottom, 3, &
                     & MPI_COMM_CART, status, ierror)
-   os = os + n
-   or = or + n
+
+   Array(1:ex,-1,1:ez) = RESHAPE(source=RecvBuf(1:n),shape=[ex,ez])
 
    !... Y+direction
    !---------------
-   n = nx * nz
+   n = ex * ez
+   Sendbuf(1:n) = RESHAPE(source=Array(1:ex,1,1:ez),shape=[n])
 
-   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL, Bottom, 4, &
-                    & RecvBuf(or+1:n), n, MPI_REAL,    Top, 4, &
+   Call MPI_SENDRECV (SendBuf, n, MPI_REAL, Bottom, 4, &
+                    & RecvBuf, n, MPI_REAL,    Top, 4, &
                     & MPI_COMM_CART, status, ierror)
-   os = os + n
-   or = or + n
+
+   Array(1:ex,ny+1,1:ez) = RESHAPE(source=RecvBuf(1:n),shape=[ex,ez])
 
    !... Z-direction
    !---------------
-   n = nx * ny
+   n = ex * ey
+   Sendbuf(1:n) = RESHAPE(source=Array(1:ex,1:ey,ez),shape=[n])
 
-   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,   Back, 5, &
-                    & RecvBuf(or+1:n), n, MPI_REAL,  Front, 5, &
+   Call MPI_SENDRECV (SendBuf, n, MPI_REAL,   Back, 5, &
+                    & RecvBuf, n, MPI_REAL,  Front, 5, &
                     & MPI_COMM_CART, status, ierror)
-   os = os + n
-   or = or + n
+
+   Array(1:ex,1:ey,-1) = RESHAPE(source=RecvBuf(1:n),shape=[ex,ey])
 
    !... Z+direction
    !---------------
-   n = nx * ny
+   n = ex * ey
+   Sendbuf(1:n) = RESHAPE(source=Array(1:ex,1:ey,1),shape=[n])
 
-   Call MPI_SENDRECV (SendBuf(os+1:n), n, MPI_REAL,  Front, 6, &
-                    & RecvBuf(or+1:n), n, MPI_REAL,   Back, 6, &
+   Call MPI_SENDRECV (SendBuf, n, MPI_REAL,  Front, 6, &
+                    & RecvBuf, n, MPI_REAL,   Back, 6, &
                     & MPI_COMM_CART, status, ierror)
 
+   Array(1:ex,1:ey,nz+1) = RESHAPE(source=RecvBuf(1:n),shape=[ex,ey])
+
 End Subroutine Exchange_Halo_3D
+
+Subroutine Copyto_Halo_Buf_3D(N, M, L, Array, Buf)
+! put boundaries to device, indices (0,N) ...
+!
+  Implicit None
+  Integer, intent(in ) :: N, M, L
+  Real,    intent(in ) :: Array(-1:N+1,-1:M+1,-1:L+1)
+  Real,    intent(out) :: Buf(*)
+  !----- locals -----
+  Integer :: o, ex, ey, ez, nn
+
+  ex = N-1
+  ey = M-1
+  ez = L-1
+
+  o = 0
+  nn = ey*ez
+  Buf(o+1:o+nn) = RESHAPE(source=Array(0,1:ey,1:ez),shape=[nn])
+  o = o + nn
+  Buf(o+1:o+nn) = RESHAPE(source=Array(N,1:ey,1:ez),shape=[nn])
+  o = o + nn
+
+  nn = ex*ez
+  Buf(o+1:o+nn) = RESHAPE(source=Array(1:ex,0,1:ez),shape=[nn])
+  o = o + nn
+  Buf(o+1:o+nn) = RESHAPE(source=Array(1:ex,M,1:ez),shape=[nn])
+  o = o + nn
+
+  nn = ex*ey
+  Buf(o+1:o+nn) = RESHAPE(source=Array(1:ex,1:ey,0),shape=[nn])
+  o = o + nn
+  Buf(o+1:o+nn) = RESHAPE(source=Array(1:ex,1:ey,L),shape=[nn])
+
+End Subroutine Copyto_Halo_Buf_3D
+
+Subroutine Copyfrom_Halo_Buf_3D(N, M, L, Array, Buf)
+  Implicit None
+  Integer, intent(in ) :: N, M, L
+  Real,    intent(out) :: Array(-1:N+1,-1:M+1,-1:L+1)
+  Real,    intent(in ) :: Buf(*)
+  !----- locals -----
+  Integer :: o, ex, ey, ez, nn
+
+  ex = N-1
+  ey = M-1
+  ez = L-1
+
+  o = 0
+  nn = ey*ez
+  Array(1 ,1:ey,1:ez) = RESHAPE(source=Buf(o+1:o+nn),shape=[ey,ez])
+  o = o + nn
+  Array(ex,1:ey,1:ez) = RESHAPE(source=Buf(o+1:o+nn),shape=[ey,ez])
+  o = o + nn
+
+  nn = ex*ez
+  Array(1:ex, 1,1:ez) = RESHAPE(source=Buf(o+1:o+nn),shape=[ex,ez])
+  o = o + nn
+  Array(1:ex,ey,1:ez) = RESHAPE(source=Buf(o+1:o+nn),shape=[ex,ez])
+  o = o + nn
+
+  nn = ex*ey
+  Array(1:ex,1:ey, 1) = RESHAPE(source=Buf(o+1:o+nn),shape=[ex,ey])
+  o = o + nn
+  Array(1:ex,1:ey,ez) = RESHAPE(source=Buf(o+1:o+nn),shape=[ex,ey])
+
+End Subroutine Copyfrom_Halo_Buf_3D
 
 End Module MultiGrid
