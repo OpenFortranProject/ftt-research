@@ -10,7 +10,7 @@ Program PoissonMultigrid
 !
 !=============================================================================
 Use mpi_f08
-Use MultiGrid, only : AddFourierMode
+Use MultiGrid, only : AddFourierMode_3d
 Use IO,        only : Textual_Output
 Use MultiGrid, only : Restrict, Prolongate
 
@@ -47,9 +47,9 @@ print ("('[', i2, ']:', 1x, 'size:', i3)"), rank, np
 
 !
 V1h = 0.0
-Call AddFourierMode(N, np, rank, V1h,  1)
-Call AddFourierMode(N, np, rank, V1h,  6)
-Call AddFourierMode(N, np, rank, V1h, 16)
+Call AddFourierMode_3d(N, np, rank, V1h,  1)
+Call AddFourierMode_3d(N, np, rank, V1h,  6)
+Call AddFourierMode_3d(N, np, rank, V1h, 16)
 V1h = (1./3.)*V1h
 
 !... Relax solution on 1h mesh
