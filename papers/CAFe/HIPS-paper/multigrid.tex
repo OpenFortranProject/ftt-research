@@ -7,13 +7,14 @@ problem for simplicity.
 
 \subsection{Multigrid Algorithm}
 
-The multigrid algorithm uses a series of successively coarser grids to interate
-approximage solution obtained from the preceeding finer grid.  Higher frequency error modes are
-damped out as the solution processes up the grid hierarchy.  At the top of the
-hierarchy, an exact solution is obtained and then this solution is iterated and
-propogated down the grid hierarchy form coarser to finer grids.  After a few sweeps
-up and down the hierarchy the solution with have been obtained on the desired
-original grid.
+The multigrid algorithm uses a series of successively coarser grids to
+iteratively approximate the solution obtained from the preceeding
+finer grid.  Higher frequency error modes are damped out as the
+solution processes up the grid hierarchy.  At the top of the
+hierarchy, an exact solution is obtained and then this solution is
+iterated and propogated down the grid hierarchy form coarser to finer
+grids.  After a few sweeps up and down the hierarchy the solution with
+have been obtained on the desired original grid.
 
 \begin{figure}[!t]
 \centering
@@ -25,20 +26,20 @@ original grid.
 \label{fig_grids}
 \end{figure}
 
-Two levels of the grid hierarchy are shown in \ref{fig_grids} running on a processing computing on
+Two levels of the grid hierarchy are shown in \ref{fig_grids} running on a processor computing on
 an interior portion of the grid; additional images are computing on regions to the left and right of
 the region shown in the figure.  The finist grid (size N) is shown
 in the bottom of the figure with cell indices running from (-1:N+1).  Cells 0 and N are shared
-between image neighbors to the left and right (indicated by the light blue coloring and the verticle
-dashed lines.  These shared cells are computed redundantly on each program image.
+between image neighbors to the left and right (indicated by the light blue coloring and the vertical
+dashed lines).  These shared cells are computed redundantly on each program image.
 
 The red cells in the figure are computed concurrently on all subimages (one per image).
 This distribution of computation over the hierarchical domain of images and subimages
 requires communication of boundary regions between the various computational resources.
 The communication is shown by arrows in the grid level N of the figure.  Data in cells 1
 and 7 must be transferred from the subimage (upwardly pointing arrows) and the shared cell
-computations must be copied to the subimage (downwardly pointing arrows) The horizontal
-arrows representing data computed and subsequently transferred from the left and right
+computations must be copied to the subimage (downwardly pointing arrows). The horizontal
+arrows represent data computed and subsequently transferred from the left and right
 neighbors.
 
 \begin{figure}[!t]
@@ -63,22 +64,22 @@ grid is relaxed a few times and then passed on the grid level N/4 for further it
 \label{fig_prolongate}
 \end{figure}
 
-At the top of the gird hierachy there are sufficiently few cells that an exact solution can be
-obtained (perhaps by a non-interpretive method).  This solution is then propogated down the
+At the top of the grid hierarchy there are sufficiently few cells that an exact solution can be
+obtained (perhaps by a non-iterative method).  This solution is then propagated down the
 grid hierarchy as shown in Figure\ref{fig_prolongate}.
 
 \subsection{Implementation of the Relaxation Step}
 
-The multigrid algorithm has been implemented in Fortran using the CAFe syntax described in
-the previous section.  Much of the implementation is straighforward in terms of CAFe are
-is only described briefly.
-
-Data coarrays at each grid level are declared, allocated, and initialized on each program image.
-These coarrays are then copied to the subimages by the parent, hosting images.  Below we show
-the implementation of the relaxation loop on grid level N.  Each iteration step incorporates
-concurrent computation on an image and its hosted subimage.  In order to execute concurrently,
-we must declare a event variable to allow concurrent execution and then synchronization once
-\emph{both} computation ond the subimage \emph{and} the image have completed.
+The multigrid algorithm has been implemented in Fortran using the CAFe
+syntax described in the previous section. Data coarrays at each grid
+level are declared, allocated, and initialized on each program image.
+These coarrays are then copied to the subimages by the parent, hosting
+images.  Below we show the implementation of the relaxation loop on
+grid level N.  Each iteration step incorporates concurrent computation
+on an image and its hosted subimage.  In order to execute
+concurrently, we must declare a event variable to allow concurrent
+execution and then synchronization once \emph{both} computation ond
+the subimage \emph{and} the image have completed.
 
 The event variable is declared as,
 \small
