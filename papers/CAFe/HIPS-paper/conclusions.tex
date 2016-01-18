@@ -32,7 +32,8 @@ Current
 In this preliminary work we have examined ....
 In no way does this represent a thorough examination of these potential features.
 
-CAFe introduces the concept of subimages executing on a hosting image.  CAFe includes
+CAFe introduces the concept of subimages executing on a hosting image.  CAFe includes:
+\begin{itemize}
 \item
   Dynamic creation of subimages.
 \item
@@ -44,17 +45,19 @@ CAFe introduces the concept of subimages executing on a hosting image.  CAFe inc
   between a subimage and its hosting image as initiated by the hosting image.
 \item
   Task creation and execution on subimages using extended coarray syntax with double
-  square brackets \testtt{[[ ]]}.  Task mays be defined in terms of standard \emph{pure}
+  square brackets \texttt{[[ ]]}.  Task mays be defined in terms of standard \emph{pure}
   Fortran procedures and task execution continues without interuption until completion.
   In addition a Fortran 2015 event may be notified upon completion of the task to allow
   concurrent execution on the subimage and on the hosting image.
 \item
   CAFe integrates Fortran 2015 features to allow relatively simple programs to be written
   that employ all of the heterogenous components expected on exascale platforms.
+\end{itemize}
 
 \subsection{Limitations}
 
 Possible criticism of this work includes the following:
+\begin{itemize}
 \item
   The source-to-source transformations that have been developed to implement CAFe
   are rudimentory and have not been optimized.  For example, memory transfers have
@@ -86,6 +89,7 @@ Possible criticism of this work includes the following:
   of MPI and OpenMP (or OpenACC) programs.  The advantage of CAFe --- by being a purely
   language construct --- is that it opens up the possibility of compiler optimizations
   that would otherwise be impossible with a library approach intermixed with compiler directives.
+\end{itemize}
 
 \subsection{Future Work}
 
@@ -103,6 +107,7 @@ integrated with existing OpenACC directives (for example), a DAG generaged for t
 program, and then transformed into an OCR program.
 
 An intriguing \emph{possibility} exists for automatic conversion of CAFe codes to OCR exists:
+\begin{itemize}
 \item
   CAF codes have well defined boundaries (called segment boundaries) indicating where new
   OCR tasks must be created.
@@ -114,6 +119,7 @@ An intriguing \emph{possibility} exists for automatic conversion of CAFe codes t
 \item
   CAFe introduces the notion of task based parallelism (in addition to the existing
   Fortran features like \texttt{do concurrent}.
+\end{itemize}
 
 In the future we hope to examine \emph{if} the possibility exists for CAFe codes to be
 automatically converted to programs employing the Open Community Runtime.
