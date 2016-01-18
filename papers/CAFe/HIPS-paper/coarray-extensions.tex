@@ -169,7 +169,7 @@ end do
 %%\normalsize
 will execute all of the code within the \texttt{do concurrent} construct on \texttt{device}.
 Execution of a \texttt{do concurrent} loop on a subimage acts \emph{as if} the loop were
-extracted as a outlined function and the subsequent task executed on a subimage.  Thus
+extracted as an outlined function and the subsequent task executed on a subimage.  Thus
 there is an implicit barrier at the end of the loop that blocks the hosting image
 from continuing execution until \emph{all} of the iterates of the loop have finished.
 
