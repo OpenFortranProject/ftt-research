@@ -50,8 +50,8 @@ Unfortunately, achieving high performance using either of these two languages ca
 challenge and there are no guarantees that either language is suitable for future hardware
 generations.  
 
-Another option is to abandon the stricture of message passing within a procedural
-programming language altogether.  The Open Community Runtime (OCR)
+Another potential option is to abandon the stricture of message passing within a procedural
+programming language altogether.  For example, the Open Community Runtime (OCR)
 project\cite{OCR:wiki:url} provides an asynchronous task-based runtime designed for
 machines with high-core count\cite{Dokulil20151453}, such as can be expected in any
 exascale hardware design.  The project's goal is to create a framework and reference
@@ -59,19 +59,22 @@ implementation to help developers explore programming methods to improve the pow
 efficiency, programmability, and reliability of HPC applications while maintaining
 application performance.
 
+\begin{comment}
 OCR helps the application developer with the complex process of writing multi-core
 applications.  It does this by providing facilities for creating and executing a set of
 tasks.  The OCR runtime schedules the execution of these tasks based on events which
 embody dataflow and code flow dependencies; when all of the dependencies for a task are
 satisfied, the task can be run.
+\end{comment}
 
-However, it cannot be emphasized too strongly that like using the OpenCL programming
-environment, actually creating real scientific applications based on OCR is a high hurdle
-for the application developer.  A goal of this paper is to examine ways in
-which high-level syntax based on Fortran coarrays can be utilized by compiler-based tools
-to \emph{target} programming environments like OpenCL or OCR --- thus freeing the developer from
-the task of frequently porting the application to new complex environments.  The hope is
-that high-level syntax can hide the complexities of the underlying software and hardware.
+It cannot be emphasized too strongly that using the OpenCL programming language and
+libraries (or programming for the OCR environment) presents a high hurdle for the
+application developer creating real scientific applications.  A goal of this paper is to
+examine ways in which high-level syntax based on Fortran coarrays can be utilized by
+compiler-based tools to \emph{target} programming environments like OpenCL, thus
+freeing the developer from the task of frequently porting the application to new complex
+environments.  The hope is that high-level syntax can hide the complexities of the
+underlying hardware \emph{and software.}
 
 With the addition of coarrays in the 2008 standard, Fortran is now a \emph{parallel}
 language.  Originally called Coarray Fortran (CAF) by its
@@ -108,8 +111,10 @@ include the concept of subimages in order to nest coarray images, semantics for 
 array declarations, memory placement, remote memory transfer, and remote task execution
 and synchronization.  CAFe
 builds upon the existing standardized coarray features of Fortran.  We will introduce the
-proposed CAFe extensions, define their semantics, demonstrate their use in simple
-examples, and provide experimental results demonstrating their performance in a prototype implementation.
+proposed CAFe extensions, define their semantics, demonstrate their use in a simple
+example, and provide experimental results demonstrating the relative
+performance of computation and communication in a prototype implementation executing
+in a heterogeneous environment.
 CAFe is complementary to
 previous work extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
 
