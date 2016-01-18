@@ -13,7 +13,7 @@ finer grid.  Higher frequency error modes are damped out as the
 solution processes up the grid hierarchy.  At the top of the
 hierarchy, an exact solution is obtained and then this solution is
 iterated and propagated down the grid hierarchy form coarser to finer
-grids.  After a few sweeps up and down the hierarchy the solution with
+grids.  After a few sweeps up and down the hierarchy the solution will
 have been obtained on the desired original grid.
 
 \begin{figure}[!t]
@@ -26,7 +26,7 @@ have been obtained on the desired original grid.
 \label{fig_grids}
 \end{figure}
 
-Two levels of the grid hierarchy are shown in \ref{fig_grids} running on a processor computing on
+Two levels of the grid hierarchy are shown in Fig. \ref{fig_grids} running on a processor computing on
 an interior portion of the grid; additional images are computing on regions to the left and right of
 the region shown in the figure.  The finest grid (size N) is shown
 in the bottom of the figure with cell indices running from (-1:N+1).  Cells 0 and N are shared
@@ -54,7 +54,7 @@ The second grid level N/2 is also shown in Figure \ref{fig_grids}.  Data on this
 by simple interpolation from information on grid level N as shown in Figure \ref{fig_restric}.
 We call this interpolation a restriction and refer the reader to previous work on the multigrid
 technique for more information\cite{multigrid_methods}.  The approximate solution on the N/2
-grid is relaxed a few times and then passed on the grid level N/4 for further iteration.
+grid is relaxed a few times and then passed on to grid level N/4 for further iteration.
 
 \begin{figure}[!t]
 \centering
@@ -77,16 +77,16 @@ These coarrays are then copied to the subimages by the parent, hosting
 images.  Below we show the implementation of the relaxation loop on
 grid level N.  Each iteration step incorporates concurrent computation
 on an image and its hosted subimage.  In order to execute
-concurrently, we must declare a event variable to allow concurrent
-execution and then synchronization once \emph{both} computation and
+concurrently, we must declare an event variable to allow concurrent
+execution and then synchronization once computation on \emph{both} 
 the subimage \emph{and} the image have completed.
 
 The event variable is declared as,
-\small
+%%\small
 \begin{verbatim}
  type(event_type) :: evt
 \end{verbatim}
-\normalsize
+%%\normalsize
 After initialization, this event variable has its count variable set to 0 and is incremented
 each time the subimage task completes during an iteration of the code segment shown below:
 \small
@@ -133,7 +133,7 @@ executes on the subimage \texttt{dev} while the second call executes on the loca
 Most of the computation is accomplished by the subimage executing the \texttt{relax}
 procedure (not shown) operating over the interior corresponding to fine grid indices (1:N-1).
 Concurrently, \texttt{relax\_boundary} operates on the boundary indices 0 and N
-(note that memory for the boundary computation in located on local image as
+(note that memory for the boundary computation is located on local image as
 the coarray \texttt{V1h} is not coindexed using square bracket notation in statement 3.
 
 Once relaxation of the boundary has completed, the program image will wait for the event
