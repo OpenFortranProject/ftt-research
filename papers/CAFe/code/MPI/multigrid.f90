@@ -40,7 +40,8 @@ Subroutine AddFourierMode_1D(N, np, rank, V, k)
   integer :: i
 
   do i = -1, N+1
-    V(i) = V(i) + sin((rank*N+i)*k*PI/N/np)
+   V(i) = V(i) + sin((rank*N+i)*k*PI/N/np)
+!     V(i) = V(i) + (rank+1)
   end do
 
 End Subroutine AddFourierMode_1D
