@@ -2,17 +2,17 @@
 
 In this section a one-dimensional solution to Laplace's equation is described using CAFe
 syntax.  The solution uses multigrid techniques to improve the rate of convergence
-of iterative methods.  We decribe the implementation in terms of a one-dimensional
+of iterative methods.  We describe the implementation in terms of a one-dimensional
 problem for simplicity.
 
 \subsection{Multigrid Algorithm}
 
 The multigrid algorithm uses a series of successively coarser grids to
-iteratively approximate the solution obtained from the preceeding
+iteratively approximate the solution obtained from the preceding
 finer grid.  Higher frequency error modes are damped out as the
 solution processes up the grid hierarchy.  At the top of the
 hierarchy, an exact solution is obtained and then this solution is
-iterated and propogated down the grid hierarchy form coarser to finer
+iterated and propagated down the grid hierarchy form coarser to finer
 grids.  After a few sweeps up and down the hierarchy the solution with
 have been obtained on the desired original grid.
 
@@ -28,7 +28,7 @@ have been obtained on the desired original grid.
 
 Two levels of the grid hierarchy are shown in \ref{fig_grids} running on a processor computing on
 an interior portion of the grid; additional images are computing on regions to the left and right of
-the region shown in the figure.  The finist grid (size N) is shown
+the region shown in the figure.  The finest grid (size N) is shown
 in the bottom of the figure with cell indices running from (-1:N+1).  Cells 0 and N are shared
 between image neighbors to the left and right (indicated by the light blue coloring and the vertical
 dashed lines).  These shared cells are computed redundantly on each program image.
@@ -66,7 +66,7 @@ grid is relaxed a few times and then passed on the grid level N/4 for further it
 
 At the top of the grid hierarchy there are sufficiently few cells that an exact solution can be
 obtained (perhaps by a non-iterative method).  This solution is then propagated down the
-grid hierarchy as shown in Figure\ref{fig_prolongate}.
+grid hierarchy as shown in Figure \ref{fig_prolongate}.
 
 \subsection{Implementation of the Relaxation Step}
 
@@ -78,7 +78,7 @@ images.  Below we show the implementation of the relaxation loop on
 grid level N.  Each iteration step incorporates concurrent computation
 on an image and its hosted subimage.  In order to execute
 concurrently, we must declare a event variable to allow concurrent
-execution and then synchronization once \emph{both} computation ond
+execution and then synchronization once \emph{both} computation and
 the subimage \emph{and} the image have completed.
 
 The event variable is declared as,
@@ -88,7 +88,7 @@ The event variable is declared as,
 \end{verbatim}
 \normalsize
 After initialization, this event variable has its count variable set to 0 and is incremented
-each time the subimage task completes during an interation of the code segment shown below:
+each time the subimage task completes during an iteration of the code segment shown below:
 \small
 \begin{verbatim}
  do i = 1, nsteps                            1
@@ -130,7 +130,7 @@ concurrently with the \texttt{relax\_boundary} call at statement 3 --- the first
 executes on the subimage \texttt{dev} while the second call executes on the local image
 \texttt{this\_image()}.
 
-Most of the computation is accomplised by the subimage executing the \texttt{relax}
+Most of the computation is accomplished by the subimage executing the \texttt{relax}
 procedure (not shown) operating over the interior corresponding to fine grid indices (1:N-1).
 Concurrently, \texttt{relax\_boundary} operates on the boundary indices 0 and N
 (note that memory for the boundary computation in located on local image as

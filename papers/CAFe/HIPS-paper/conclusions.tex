@@ -5,7 +5,7 @@ scientific and high performance computing (HPC) community.  While new code devel
 often in languages other than Fortran (such as C++), surveys show that Fortran usage is
 still high\cite{prabhu2011survey}.  Fortran will be with us well into the future as the
 lifetime of important scientific applications is measured in decades and Fortran usage
-dominates in scientific communitities that are critical to understanding the future of
+dominates in scientific communities that are critical to understanding the future of
 life on our planet such as the climate community.
 
 However significant challenges arise as hardware adapts to the end of Moore's
@@ -42,12 +42,12 @@ CAFe includes:
 \item
   Explicit addressing of memory on subimages using standard coarray notation.  It follows
   the Partitioned Global Address Space (PGAS) model, although with subimages the address
-  space is hierahical in the sense that the memory partioning only allows memory exchange
+  space is hierarchical in the sense that the memory partitioning only allows memory exchange
   between a subimage and its hosting image as initiated by the hosting image.
 \item
   Task creation and execution on subimages using extended coarray syntax with double
   square brackets \texttt{[[ ]]}.  Task mays be defined in terms of standard \emph{pure}
-  Fortran procedures and task execution continues without interuption until completion.
+  Fortran procedures and task execution continues without interruption until completion.
   In addition, a Fortran 2015 event type may be notified upon completion of the task to allow
   concurrent execution on the subimage and on the hosting image.
 \item
@@ -63,10 +63,10 @@ In this paper we have defined CAFe and described its semantics and relationship 
 \begin{itemize}
 \item
   The source-to-source transformations that have been developed to implement CAFe
-  are rudimentory and have not been optimized.  For example, memory transfers have
+  are rudimentary and have not been optimized.  For example, memory transfers have
   not been aggregated into larger message blocks to improve performance.  Memory transfer
   is also blocking so that prefetching of data cannot be employed via techniques
-  envolving the reordering of statements (code motion) that are effectively employed in
+  involving the reordering of statements (code motion) that are effectively employed in
   CAF compilers.
 \item
   The Laplacian example is in reality a ``toy'' problem.  Real multiphysics codes
@@ -101,13 +101,13 @@ adoption of the task-based parallelism of CAFe and the synchronization
 event types in Fortran 2015 suggests intriguing possibilities.  Tasks plus the
 dependencies represented by events suggest a correspondence with the Open Community
 Runtime (OCR) libraries.  In OCR, the entire program must be broken into a set of tasks
-represented by a directed acycic graph (DAG).  In OCR, tasks are available for executing
+represented by a directed acyclic graph (DAG).  In OCR, tasks are available for executing
 when all of their input dependencies are satisfied, such as occurs when computation of a new
 iteration of data elements have been updated and other upstream tasks have been completed.
 
 Tools to automatically convert existing applications to run under the OCR model faces challenges.  For
 example, the hundreds of MPI functions would have to be semantically understood by the tools,
-integrated with existing OpenACC directives (for example), a DAG generaged for the complete
+integrated with existing OpenACC directives (for example), a DAG generated for the complete
 program, and then transformed into an OCR program.
 
 An intriguing \emph{possibility} exists for automatic conversion of CAFe codes to OCR exists:
