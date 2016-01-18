@@ -1,7 +1,8 @@
 \section{Coarray Fortran Extensions}
 
 Topics highlighted in this section are: 1. Distributed memory array allocation;
-2. Explicit memory placement; 3. Remote memory transfer; and 4. Remote execution.  This
+2. Explicit memory placement; 3. Remote memory transfer; and 4. Remote execution
+and synchronization.  This
 description is within the context of extensions to Fortran; as shorthand, these extensions
 are referred to as CAFe, for Coarray Fortran extensions.  CAFe is complementary to
 previous work extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
@@ -55,7 +56,7 @@ real, allocatable :: U(:,:)[:], V(:,:)[:]
 \end{verbatim}
 %%\normalsize
 declares that coarrays \texttt{U} and \texttt{V} are allocatable with a rank of two and a
-corank of 1.  In Fortran, square brackets \texttt{[ ]} are used to indicate operations
+corank of one.  In Fortran, square brackets \texttt{[ ]} are used to indicate operations
 (possibly expensive) on distributed memory where parentheses \texttt{( )} are used to
 select specific array elements; square brackets, on the other hand, denote the
 \emph{location} of the array or array elements selected.
@@ -73,11 +74,11 @@ It should be allocated conditionally because the requested subimage in a \texttt
 call may not be available.  In addition, not all coarrays need be allocated on each
 subimage.  For example, the following code segment allocates memory for coarrays
 \texttt{U} and \texttt{V} on all images, but only coarray \texttt{U} is allocated on
-the subimage specified by \texttt{device}:
+the subimage specified by the variable \texttt{device}:
 %%\small
 \begin{verbatim}
    allocate(U(M,N)[*], V(M,N)[*])
-   if (device \= this_image()) then
+   if (device /= this_image()) then
      allocate(U(M,N)[*])  [[device]]
    end if
 \end{verbatim}
@@ -96,7 +97,7 @@ expensive) is to occur, in this case possibly remote memory allocation.
 Deallocation of subimage memory is similar to allocation,
 %%\small
 \begin{verbatim}
-   if (device \= this_image()) then
+   if (device /= this_image()) then
      deallocate(U)  [[device]]
    end if
 \end{verbatim}
@@ -143,7 +144,7 @@ calls.  For example,
   call relax(U[device])  [[device]]
 \end{verbatim}
 %%\normalsize
-executes the subroutine relax, on the subimage device, using array \texttt{U} \emph{located}
+executes the subroutine relax, on the subimage \texttt{device}, using coarray \texttt{U} \emph{located}
 on the same subimage.  This follows the same pattern as introduced for remote coarray allocation,
 whereby the double square bracket notation indicates \emph{where} the function will execute.
 Functions to be executed on a subimage must be pure procedures (i.e., declared with the Fortran
@@ -183,8 +184,8 @@ is a constant over all loop iterations).
 
 The comparison with OpenMP also suggests that subimage execution may not be restricted to
 a single hardware execution unit, but may indeed be executed by a team of threads in a
-single (shared) memory address space.  This association with a team of threads
-will be exploited below when considering a team of images.
+single (shared) memory address space.  This association with a team of threads will be
+exploited below when considering a team of subimages.
 
 \begin{comment}
   (NOTE FOR CRAIG: need to read the standard to see if a block construct can be used in this
@@ -221,14 +222,14 @@ do not directly participate unless the parent (or host) of a subimage does.
 \subsubsection{Fortran 2015 Standard}
 
 The most important concept introduced by the 2015 standard is that of a team of images.
-However, subimages may not be included within a team of standard CAF images.  However, if one
+Subimages may not be included within a team of standard CAF images.  However, if one
 considers the comparison of the execution of a \texttt{do concurrent} block on a subimage
 with a team of OpenMP threads (as described above), the subimage could be considered as
 a team of one member that \emph{may} be executing its tasks on a team of shared memory threads.
-This allows allows the use of a \texttt{sync team} statement to synchronize with
+This allows the use of a \texttt{sync team} statement to synchronize with
 possibly executing threads.
 
-Thus we introduce another CAFe function, \texttt{GET\_SUBIMAGE\_TEAM()}, that returns a
+Thus we introduce another CAFe intrinsic function, \texttt{GET\_SUBIMAGE\_TEAM()}, that returns a
 variable representing a fully-formed (established) team consisting of only one team
 member, the current subimage.  If this function is called outside the context of a task
 executing on a subimage it will return only a team consisting of the current image,
@@ -259,7 +260,7 @@ subimages:
 %%\normalsize
 
 In this example, the syntax \texttt{[[dev1, WITH\_EVENT=evt]]} indicates that the called
-subroutine is to be run on \texttt{dev1} and that the event \texttt{evt} will receive
+subroutine is to be run on \texttt{dev1} and that the event variable \texttt{evt} will receive
 notification (an implicit posting) once the task has completed.  The \texttt{event wait}
 statement will cause execution on the hosting image to wait until \emph{both} tasks have
 completed.  One may even run multiple tasks on the \emph{same} device using events,
@@ -275,7 +276,7 @@ helps OCR to better scale on a wider range of parallel computers.
 
 Collective operations, however, could potentially be very useful and fit nicely within
 CAFe concepts.  For example, a team consisting of hosted subimages could be formed and
-then data broadcasted to team members and reduction operations such as \texttt{co\_add}
+then data be broadcasted to team members and reduction operations such as \texttt{co\_add}
 performed.  However since all team members of the current team must participate in
 collective operations \emph{and} since CAFe restricts subimages from being part of the
 same team with regular images, it makes it impossible for an image to participate with a
