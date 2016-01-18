@@ -57,7 +57,7 @@ INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
 INTEGER(KIND=c_size_t) :: cl_lws__(3) = [1,1,1] ![32,4,1]
 
-TYPE(CPUTimer) :: gpu_timer, cpu_timer, transfer_timer
+TYPE(CPUTimer) :: gpu_timer, cpu_timer, transfer_timer, mpi_timer
 REAL(KIND=c_double) :: cpu_time, gpu_time, transfer_time
 REAL(KIND=c_double) :: total_cpu_time, total_gpu_time, total_transfer_time
 
@@ -215,6 +215,7 @@ print *, "Measuring flops and effective bandwidth for GPU computation:"
 call init(gpu_timer)
 call init(cpu_timer)
 call init(transfer_timer)
+call init(mpi_timer)
 !! level 1h
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 DO t = 1, nsteps
@@ -241,12 +242,12 @@ DO t = 1, nsteps
   call stop(cpu_timer)
 
   cl_status__ = clFinish(cl_Relax_3D_%commands)
+call stop(gpu_timer)
 #endif
 
 #ifdef VERBOSE
   print *, "After RELAX V1h", V1h(:,1:2,:)
 #endif
-call stop(gpu_timer)
 
 ! gpu_time = elapsed_time(cl_Relax_3D_%timer)
 ! print *, " submit time    ==   ", real(gpu_time) 
@@ -328,7 +329,9 @@ call stop(transfer_timer)
   print *, "EXCHANGING boundaries"
 #endif
   ! exchange boundaries with neighbors (-1,N+1)
+  call start(mpi_timer)
   CALL Exchange_Halo_3D(N,M,L,V1h,BoundaryBuf,RecvBuf)
+  call stop(mpi_timer)
 
 ! transfer_time = elapsed_time(cl_Relax_3D_%transfer_timer)
 ! transfer_time = elapsed_time(transfer_timer)
