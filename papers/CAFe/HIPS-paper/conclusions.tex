@@ -8,9 +8,9 @@ lifetime of important scientific applications is measured in decades and Fortran
 dominates in scientific communities that are critical to understanding the future of
 life on our planet such as the climate community.
 
-However significant challenges arise as hardware adapts to the end of Moore's
+However, significant challenges arise as hardware adapts to the end of Moore's
 Law\cite{exascale:workshop:2011}.  The revolution occurring in hardware architecture
-has completely altered the landscape for scientific computing as a code designed for
+has completely altered the landscape for scientific computing as a code designed for the
 distributed memory bulk synchronous model of parallelism may actually run slower on
 advanced hardware\cite{Dubey:2014:SSC:2686745.2686756}.
 
@@ -105,10 +105,14 @@ represented by a directed acyclic graph (DAG).  In OCR, tasks are available for 
 when all of their input dependencies are satisfied, such as occurs when computation of a new
 iteration of data elements have been updated and other upstream tasks have been completed.
 
-Tools to automatically convert existing applications to run under the OCR model faces challenges.  For
-example, the hundreds of MPI functions would have to be semantically understood by the tools,
-integrated with existing OpenACC directives (for example), a DAG generated for the complete
-program, and then transformed into an OCR program.
+%%%
+%%% MJS: I cut the following out - conversion of MPI -> OCR is not in scope for us, and 
+%%% we don't want to argue one way or the other about that topic.  Stay focused on CAF/CAFe.
+%%%
+%Tools to automatically convert existing applications to run under the OCR model faces challenges.  For
+%example, the hundreds of MPI functions would have to be semantically understood by the tools,
+%integrated with existing OpenACC directives (for example), a DAG generated for the complete
+%program, and then transformed into an OCR program.
 
 An intriguing \emph{possibility} exists for automatic conversion of CAFe codes to OCR exists:
 \begin{itemize}
