@@ -49,8 +49,8 @@ transfer of memory, marshalling of kernel arguments, and synchronization.
 
 These transformations are accomplished using several rewrite stages using Stratego/XT
 strategies:
-(1) a symbol table is produced in the first pass to store information related to arrays
-including, array shape and allocation status;
+(1) a symbol table is produced in the first pass to store information related to arrays,
+including array shape and allocation status;
 (2) additional variables are declared that are used to maintain the OpenCL runtime state,
 including the OpenCL device, the OpenCL kernel, and OpenCL variables used to marshall
 kernel arguments; and

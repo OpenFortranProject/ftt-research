@@ -50,7 +50,7 @@ Unfortunately, achieving high performance using either of these two languages ca
 challenge and there are no guarantees that either language is suitable for future hardware
 generations.  
 
-Another potential option is to abandon the stricture of message passing within a procedural
+Another potential option is to abandon the structure of message passing within a procedural
 programming language altogether.  For example, the Open Community Runtime (OCR)
 project\cite{OCR:wiki:url} provides an asynchronous task-based runtime designed for
 machines with high-core count\cite{Dokulil20151453}, such as can be expected in any
@@ -98,7 +98,7 @@ the corresponding element of the \emph{local} array \texttt{U}.  The fundamental
 model is similar to that provided by message passing systems.
 
 Since each CAF process executes the same program, there are no good avenues for exploiting
-task-based parallelism.  Neither is there a adequate mechanism for dynamic coarray memory
+task-based parallelism.  Neither is there an adequate mechanism for dynamic coarray memory
 allocation, nor a mechanism for the remote execution of functions.  In CAF, like MPI, the
 programmer often combines distributed memory processes running the same program image with a
 shared memory threaded programming model using OpenMP (or OpenACC).  This model breaks down
