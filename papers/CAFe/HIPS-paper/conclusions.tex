@@ -20,19 +20,20 @@ Significant language features were left out of this early version of coarrays as
 identified by \emph{Mellor-Crummy et al}\cite{mellor-crummey:2009:caf2}.  Many of these features
 have been adopted in what is likely to be called the 2015 standard of the language\cite{fortran:2015},
 such as teams of program images and improved synchronization constructs like events.
+
+%%
+%% MJS - this stuff is so familiar these days, no need to cite specific machine examples
+%%
+%, for example, in the early
+%RoadRunner Machine at Los Alamos\cite{RoadRunner} and new machines arriving such as Blue
+%Waters\cite{blue:waters}.
+
 However, the Fortran coarray model fails to address heterogeneity in hardware as is already
 being seen in HPC computing platforms with the adoption of distributed nodes consisting of
-general purpose CPUs with attached accelerator devices like GPUs, for example, in the early
-RoadRunner Machine at Los Alamos\cite{RoadRunner} and new machines arriving such as Blue
-Waters\cite{blue:waters}.
+general purpose CPUs with attached accelerator devices like GPUs.  To address this shortcoming
+of the coarray model, CAFe introduces the concept of subimages executing on a hosting image.  
+CAFe includes:
 
-Current
-
-
-In this preliminary work we have examined ....
-In no way does this represent a thorough examination of these potential features.
-
-CAFe introduces the concept of subimages executing on a hosting image.  CAFe includes:
 \begin{itemize}
 \item
   Dynamic creation of subimages.
@@ -47,7 +48,7 @@ CAFe introduces the concept of subimages executing on a hosting image.  CAFe inc
   Task creation and execution on subimages using extended coarray syntax with double
   square brackets \texttt{[[ ]]}.  Task mays be defined in terms of standard \emph{pure}
   Fortran procedures and task execution continues without interuption until completion.
-  In addition a Fortran 2015 event may be notified upon completion of the task to allow
+  In addition, a Fortran 2015 event may be notified upon completion of the task to allow
   concurrent execution on the subimage and on the hosting image.
 \item
   CAFe integrates Fortran 2015 features to allow relatively simple programs to be written
@@ -56,7 +57,9 @@ CAFe introduces the concept of subimages executing on a hosting image.  CAFe inc
 
 \subsection{Limitations}
 
-Possible criticism of this work includes the following:
+In this paper we have defined CAFe and described its semantics and relation to the 2008 and
+2015 Fortran standards.  Possible criticism of this work includes the following:
+
 \begin{itemize}
 \item
   The source-to-source transformations that have been developed to implement CAFe
@@ -69,21 +72,21 @@ Possible criticism of this work includes the following:
   The Laplacian example is in reality a ``toy'' problem.  Real multiphysics codes
   employ hundreds of more variables and would have entirely different performance
   characteristics because of the increased pressure on cache and register usage.
-\item
-  Existing scientific codes often separate communication into separate modules from
-  the computational kernels.  This makes adoption of CAF itself slow (because these
-  MPI modules already work fine) and thus additional extensions like CAFe also
-  would be slow to adopt. However CAFe constructs can be used in an incremental
-  fashion making it easier to adopt
-\item
-  In reality CAF (and therefore CAFe) are relatively low-level parallel programming
-  languages that require the programmer to \emph{explicitly} control the placement
-  of memory, communication, and synchronization.  Perhaps higher level languages like
-  Chapel would be better to adopt as they could provide an easier programming model
-  to the programmer and possibly more avenues for compiler optimization.
+%\item
+%  Existing scientific codes often separate communication into separate modules from
+%  the computational kernels.  This makes adoption of CAF itself slow (because these
+%  MPI modules already work fine) and thus additional extensions like CAFe also
+%  would be slow to adopt. However CAFe constructs can be used in an incremental
+%  fashion making it easier to adopt
+%\item
+%  In reality CAF (and therefore CAFe) are relatively low-level parallel programming
+%  languages that require the programmer to \emph{explicitly} control the placement
+%  of memory, communication, and synchronization.  
 \item
   Thorough examination of performance capabilities on real scientific applications
-  (or at least scientific ``mini-apps'') has not been attempted.
+  (or at least scientific ``mini-apps'') has not been attempted.  Such a study of both
+  CAFe and CAF itself is necessary to demonstrate the coarray model as a viable alternative
+  for application codes with complexity above that of an idealized mini-app.
 \item
   Programming models like that proposed by CAFe already exist in the form of a combination
   of MPI and OpenMP (or OpenACC) programs.  The advantage of CAFe --- by being a purely
