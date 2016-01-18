@@ -91,7 +91,7 @@ the corresponding element of the \emph{local} array \texttt{U}.  The fundamental
 model is similar to that provided by message passing systems.
 
 Since each CAF process executes the same program, there are no good avenues for exploiting
-task-based parallelism.  Neither is there a mechanism for dynamic coarray memory
+task-based parallelism.  Neither is there a adequate mechanism for dynamic coarray memory
 allocation, nor a mechanism for the remote execution of functions.  In CAF, like MPI, the
 programmer often combines distributed memory processes running the same program image with a
 shared memory threaded programming model using OpenMP (or OpenACC).  This model breaks down
@@ -105,9 +105,10 @@ systems in a single application.
 In this paper we propose CAFe: \emph{Co-Array Fortran Extensions}.  These extensions to CAF introduce
 relatively minor additions to the existing coarray portion of the Fortran language.  They
 include the concept of subimages in order to nest coarray images, semantics for distributed
-array declarations, memory placement, remote memory transfer, and remote task execution.  CAFe
+array declarations, memory placement, remote memory transfer, and remote task execution
+and synchronization.  CAFe
 builds upon the existing standardized coarray features of Fortran.  We will introduce the
-CAFe extensions that are proposed to define their semantics, demonstrate their use in simple
+proposed CAFe extensions, define their semantics, demonstrate their use in simple
 examples, and provide experimental results demonstrating their performance in a prototype implementation.
 CAFe is complementary to
 previous work extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
