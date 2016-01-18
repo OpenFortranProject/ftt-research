@@ -160,7 +160,7 @@ concurrent construct and executed on a subimage.  For example, the code segment,
 %%\small
 \begin{verbatim}
 do concurrent(i=1:N-1)  [[device]]
- begin block
+ block
    real :: w = 0.67
    S(i) = (1-w)*T(i) + w*(T(i-1)+T(i+1)/2)
  end block
