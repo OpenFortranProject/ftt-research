@@ -2,14 +2,14 @@
 
 Fortran is a general-purpose programming language and is extremely important to the
 scientific and high performance computing (HPC) community.  While new code development is
-often in languages other than Fortran, such as C++, Fortran usage in terms of CPU hours on
-HPC platforms remains as high as ??? \cite{Yellick::language:breakdown}.  Fortran will be
-with us well into the future as the lifetime of important scientific applications is
-measured in decades and Fortran usage dominates in scientific communitities that are
-critical to understanding the future of life on our planet such as the climate community.
+often in languages other than Fortran (such as C++), surveys show that Fortran usage is
+still high\cite{prabhu2011survey}.  Fortran will be with us well into the future as the
+lifetime of important scientific applications is measured in decades and Fortran usage
+dominates in scientific communitities that are critical to understanding the future of
+life on our planet such as the climate community.
 
 However significant challenges arise as hardware adapts to the end of Moore's
-Law\cite{exascale:workshop:2011}.  The revolution occurring in the hardware architecture
+Law\cite{exascale:workshop:2011}.  The revolution occurring in hardware architecture
 has completely altered the landscape for scientific computing as a code designed for
 distributed memory bulk synchronous model of parallelism may actually run slower on
 advanced hardware\cite{Dubey:2014:SSC:2686745.2686756}.
@@ -41,14 +41,14 @@ CAFe includes:
   Dynamic memory allocation and placement on a subimage.
 \item
   Explicit addressing of memory on subimages using standard coarray notation.  It follows
-  the Partitioned Global Address Space model (PGAS), although with subimages the address
+  the Partitioned Global Address Space (PGAS) model, although with subimages the address
   space is hierahical in the sense that the memory partioning only allows memory exchange
   between a subimage and its hosting image as initiated by the hosting image.
 \item
   Task creation and execution on subimages using extended coarray syntax with double
   square brackets \texttt{[[ ]]}.  Task mays be defined in terms of standard \emph{pure}
   Fortran procedures and task execution continues without interuption until completion.
-  In addition, a Fortran 2015 event may be notified upon completion of the task to allow
+  In addition, a Fortran 2015 event type may be notified upon completion of the task to allow
   concurrent execution on the subimage and on the hosting image.
 \item
   CAFe integrates Fortran 2015 features to allow relatively simple programs to be written
@@ -57,20 +57,20 @@ CAFe includes:
 
 \subsection{Limitations}
 
-In this paper we have defined CAFe and described its semantics and relation to the 2008 and
+In this paper we have defined CAFe and described its semantics and relationship to the 2008 and
 2015 Fortran standards.  Possible criticism of this work includes the following:
 
 \begin{itemize}
 \item
   The source-to-source transformations that have been developed to implement CAFe
   are rudimentory and have not been optimized.  For example, memory transfers have
-  not been aggregated into larger messages to improve performance.  Memory transfer
+  not been aggregated into larger message blocks to improve performance.  Memory transfer
   is also blocking so that prefetching of data cannot be employed via techniques
-  envolving the reordering of statements (code motion) that effectively employed in
+  envolving the reordering of statements (code motion) that are effectively employed in
   CAF compilers.
 \item
   The Laplacian example is in reality a ``toy'' problem.  Real multiphysics codes
-  employ hundreds of more variables and would have entirely different performance
+  employ hundreds (or more) of variables and would have entirely different performance
   characteristics because of the increased pressure on cache and register usage.
 %\item
 %  Existing scientific codes often separate communication into separate modules from
@@ -96,15 +96,16 @@ In this paper we have defined CAFe and described its semantics and relation to t
 
 \subsection{Future Work}
 
-However, especially with the integration of task-based parallelism with synchronization
-events arriving in Fortran 2015, the possibilities are intriguing.  Tasks plus the
+In spite of the limitations discussed, 
+adoption of the task-based parallelism of CAFe and the synchronization
+event types in Fortran 2015 suggests intriguing possibilities.  Tasks plus the
 dependencies represented by events suggest a correspondence with the Open Community
 Runtime (OCR) libraries.  In OCR, the entire program must be broken into a set of tasks
 represented by a directed acycic graph (DAG).  In OCR, tasks are available for executing
-when all of their input dependencies are satisfied, such occurs when computation of a new
-interation of data elements have been updated and other upstream tasks have completed.
+when all of their input dependencies are satisfied, such as occurs when computation of a new
+iteration of data elements have been updated and other upstream tasks have been completed.
 
-Tools to automatically convert existing codes to run under the OCR model faces challenges.  For
+Tools to automatically convert existing applications to run under the OCR model faces challenges.  For
 example, the hundreds of MPI functions would have to be semantically understood by the tools,
 integrated with existing OpenACC directives (for example), a DAG generaged for the complete
 program, and then transformed into an OCR program.
@@ -117,34 +118,23 @@ An intriguing \emph{possibility} exists for automatic conversion of CAFe codes t
 \item
   CAF has many fewer library routines (primarily collectives) that must be converted.
 \item
-  CAF has events which already define some of the dependencies necessary for the creation
+  CAF has events that already define some of the dependencies necessary for the creation
   of OCR tasks.
 \item
   CAFe introduces the notion of task based parallelism (in addition to the existing
-  Fortran features like \texttt{do concurrent}.
+  Fortran constructs like \texttt{do concurrent}.
 \end{itemize}
 
 In the future we hope to examine \emph{if} the possibility exists for CAFe codes to be
-automatically converted to programs employing the Open Community Runtime.
+automatically converted to an entirely differently programming paradigm like
+the Open Community Runtime.
 
 \begin{comment}
 These choices often hide the opportunity for
 optimizations by the compiler \cite{Dubey:2014:SSC:2686745.2686756}.
 \end{comment}
 
-%
-% This could be part of conclusions
-%
-
-%%Note that the use of halo cells is the normal way that large and complex MPI and CAF programs are implemented.
-
-\subsubsection{Benefits.}
-LOPe proposes to formalize the common, halo software pattern in language syntax, thus providing the
-compiler with access to halo information in order to spread computation over more hardware
-resources, improve performance, and to reduce complexity for the programmer.  Furthermore, LOPe
-semantics provide important \emph{language restrictions} that remove the possibility of race conditions
-that occur when multiple threads have write access to overlapping data regions.
-
+\begin{comment}
 \subsubsection{Limitations.}
 LOPe only supports regular structured grids through Fortran multi-dimensional arrays and a
 corresponding multi-dimensional processor layout.  It does not allow the composability of stencils
@@ -155,10 +145,4 @@ intermediate results resulting from multiple intermediate update steps.  Adaptiv
 support AMR in LOPe through locally-structured grid methods based on the work of Berger and
 Oliger\cite{colella2007performance}.  In this instance, LOPe could be used to update the regular
 array regions in each rectangular patch.
-
-By implementing LOPe we have demonstrated that LOPe can be used to easily and succinctly code
-the stencil algorithms that are common to many areas of science, and furthermore, that LOPe is
-suitable for transformation to languages like OpenCL that support heterogeneous computing.  It
-remains to history to ascertain if LOPe is sufficiently general purpose to be included in a
-general-purpose programming language or if it is better suited to remain as a DSL and to be used as a
-special-purpose preprocessing tool.
+\end{comment}
