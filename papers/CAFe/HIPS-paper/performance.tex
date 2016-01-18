@@ -7,22 +7,21 @@ this paper.  The primary purpose of CAFe is to combine the parallel features of 
 --- executing a \emph{single} program --- with concurrent execution of separate tasks executing on
 potentially heterogeneous hardware.  However, the relative performance of computation on
 a cluster of GPUs compared with the necessary communication of halo information is
-of interest; especially considering complete exchance of halo data between multiple
+of interest, especially considering that a complete exchance of halo data involves communication
+between multiple
 coarray images \emph{and} between each individual host image and its subimage (an attached
 OpenCL device).
 
 %%However, preliminary work using the Stratego/XT rewrite system as described indicates that similar performance can be expected to that of previous work\cite{foropencl} (see also\cite{StencilCompilers}).
 
-This section shows and compares performance measurements for: 1. Memory bandwidth usage on
-GPU; 2. Computaional time on GPU; 3. Halo Communication time (total plus breakdown to and
-from device and MPI); 4. Total time scaling on ACISS; 5. Comparison with OpenACC
-(hopefully).
+This section shows and compares performance measurements for: 1. Computational time on the GPU
+of the interior domain;
+2. Computational time on the CPU of the shared boundary regions; and 3. Halo communication time.
 
-\subsection{Halo Transfer Performance}
+%%\subsection{Halo Transfer Performance}
 
 The current implementation does \emph{not} take advantage of optimization strategies such
-as prefetching of array tiles (including halos) into OpenCL local memory or of loop
-unrolling on the OpenCL device.
+as prefetching of array tiles (including halos) into OpenCL local memory.
 
 %%either does it take advantage of the potential of CAFe to overlap communication with computation (for example, computing on 
 
