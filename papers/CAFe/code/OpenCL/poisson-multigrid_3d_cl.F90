@@ -4,8 +4,8 @@
 #undef DO_HALO_EXCHANGE
 #undef DO_PROLONGATE
 #undef DO_RESTRICT
-#undef DO_RELAX
-#undef DO_GETBOUNDARY
+#define DO_RELAX
+#define DO_GETBOUNDARY
 #undef VERBOSE
 
 PROGRAM PoissonMultigrid
@@ -34,7 +34,7 @@ INTEGER :: npx, npy, npz      ! number of actual processors in x,y,z dimensions
 INTEGER ::  ex,  ey,  ez      ! ending indices of interior region (start is 1)
 
 INTEGER :: t, i, j, k, device
-INTEGER :: nsteps = 1
+INTEGER :: nsteps = 100
 
 REAL, ALLOCATABLE, TARGET, DIMENSION(:,:,:) :: V1h, V2h, V4h, V8h, Buf
 REAL, ALLOCATABLE, TARGET, DIMENSION(:)     :: BoundaryBuf, RecvBuf
@@ -57,13 +57,17 @@ INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
 INTEGER(KIND=c_size_t) :: cl_lws__(3) = [1,1,1] ![32,4,1]
 
-TYPE(CPUTimer) :: timer
-REAL(KIND=c_double) :: cpu_time, gpu_time
+TYPE(CPUTimer) :: gpu_timer, cpu_timer, transfer_timer
+REAL(KIND=c_double) :: cpu_time, gpu_time, transfer_time
+REAL(KIND=c_double) :: total_cpu_time, total_gpu_time, total_transfer_time
 
 integer :: device_id = 1
 integer :: o               ! array offset
 integer :: num             ! number of elements
 
+total_cpu_time = 0
+total_gpu_time = 0
+total_transfer_time = 0
 #ifdef USE_MPI
   call Parallel_Start
 
@@ -207,44 +211,56 @@ end if
 
 print *
 print *, "Measuring flops and effective bandwidth for GPU computation:"
-call init(timer)
-call start(timer)
 
+call init(gpu_timer)
+call init(cpu_timer)
+call init(transfer_timer)
 !! level 1h
-!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 DO t = 1, nsteps
 #ifdef DO_RELAX
+
+  call start(gpu_timer)
   cl_status__ = setKernelArg(cl_Relax_3D_,0,N)
   cl_status__ = setKernelArg(cl_Relax_3D_,1,M)
   cl_status__ = setKernelArg(cl_Relax_3D_,2,L)
   cl_status__ = setKernelArg(cl_Relax_3D_,3,clMemObject(cl_V1h_))
   cl_status__ = setKernelArg(cl_Relax_3D_,4,clMemObject(cl_Buf_))
   cl_gwo__ = [0,0,0]
-  cl_gws__ = [1,1,1]
-  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  !  cl_gws__ = focl_global_size(1,cl_lws__,cl_gws__,[1,1,1])
-  !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
-  !  cl_gws__ = focl_global_size(3,cl_lws__,cl_gws__,[((N+1-(-1))+1),((M+1-(-1))+1),((L+1-(-1))+1)])
   cl_gws__ = [N,M,L]
-print *, "RELAX gwx and lws"
-print *, cl_gws__
-print *, cl_lws__
+#ifdef VERBOSE
+  print *, "RELAX gwx and lws"
+  print *, cl_gws__
+  print *, cl_lws__
+#endif
   cl_status__ = run(cl_Relax_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
 
   ! relax shared boundaries
+  call start(cpu_timer)
   call RelaxBoundary_3D(N,M,L,V1h)
+  call stop(cpu_timer)
 
   cl_status__ = clFinish(cl_Relax_3D_%commands)
 #endif
 
 #ifdef VERBOSE
-print *, "After RELAX V1h", V1h(:,1:2,:)
+  print *, "After RELAX V1h", V1h(:,1:2,:)
 #endif
+call stop(gpu_timer)
 
-#undef DO_RELAX
+! gpu_time = elapsed_time(cl_Relax_3D_%timer)
+! print *, " submit time    ==   ", real(gpu_time) 
+! total_gpu_time = elapsed_time(timer) + total_gpu_time
+
+! PRINT THE RUNNING AVERAGE
+! print *, " elapsed cpu time    ==   ", elapsed_time(cpu_timer) / t
+! print *, " elapsed gpu time    ==   ", (elapsed_time(gpu_timer)-elapsed_time(cpu_timer)) / t
+
 
 #ifdef DO_GETBOUNDARY
+
+call start(transfer_timer)
+
   ex = N-1
   ey = M-1
   ez = L-1
@@ -275,14 +291,11 @@ print *, "After RELAX V1h", V1h(:,1:2,:)
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,3,clMemObject(cl_V1h_))
   cl_status__ = setKernelArg(cl_GetBoundary_3D_,4,clMemObject(cl_BoundaryBuf_))
   cl_gwo__ = [0,0,0]
-  cl_gws__ = [1,1,1]
-  cl_gws__ = [5,5,5]
   cl_gws__ = [ey*ez + ex*ez + ex*ey,2,1]
   cl_status__ = run(cl_GetBoundary_3D_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_GetBoundary_3D_%commands)
 
   !! get boundaries from device (1,N-1)
-  !
   cl_size__ = 4*(2*ey*ez + 2*ex*ez + 2*ex*ey)
   cl_status__ = readBuffer(cl_BoundaryBuf_,C_LOC(BoundaryBuf),cl_size__)
 
@@ -308,20 +321,34 @@ print *, "After RELAX V1h", V1h(:,1:2,:)
 #endif
 #endif
 
+call stop(transfer_timer)
+
 #ifdef DO_HALO_EXCHANGE
-print *, "EXCHANGING boundaries"
+#ifdef VERBOSE
+  print *, "EXCHANGING boundaries"
+#endif
   ! exchange boundaries with neighbors (-1,N+1)
   CALL Exchange_Halo_3D(N,M,L,V1h,BoundaryBuf,RecvBuf)
+
+! transfer_time = elapsed_time(cl_Relax_3D_%transfer_timer)
+! transfer_time = elapsed_time(transfer_timer)
 #endif
 END DO 
 
-call stop(timer)
+! print *, " total gpu time    ==   ", real(total_gpu_time), " msec"
+! print *, " average gpu time    ==   ", real(total_gpu_time)/nsteps, " msec (avg)"
 
-gpu_time = elapsed_time(cl_Relax_3D_%timer)
-print *, " submit time    ==   ", real(gpu_time)/nsteps
-gpu_time = elapsed_time(timer)
-print *, "   host time    ==   ", real(gpu_time)/nsteps, " msec (avg)"
+print *, " average cpu time      ==   ", elapsed_time(cpu_timer) / nsteps
+print *, " average gpu time      ==   ", (elapsed_time(gpu_timer)-elapsed_time(cpu_timer)) / nsteps
+print *, " average transfer time ==   ", elapsed_time(transfer_timer) / nsteps
 
+#undef DO_RELAX
+#undef DO_GETBOUNDARY
+#undef DO_HALO_EXCHANGE
+#undef USE_MPI
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #ifdef DUMP_OUTPUT
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
@@ -570,10 +597,10 @@ cl_status__ = clFinish(cl_Prolongate_3D_%commands)
 cl_size__ = 4*((N+1-(-1))+1)*((M+1-(-1))+1)*((L+1-(-1))+1)*1
 cl_status__ = readBuffer(cl_V1h_,C_LOC(V1h),cl_size__)
 !WRITE(UNIT=fd,FMT=*) t, maxval(V1h)
-print *, "After PROLONGATE"
+! print *, "After PROLONGATE"
 !print *, V1h
-
-print *, "After BoundaryBuf"
+        
+! print *, "After BoundaryBuf"
 !print *, BoundaryBuf
 
 
