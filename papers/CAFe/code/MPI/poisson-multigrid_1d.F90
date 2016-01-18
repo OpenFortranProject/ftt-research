@@ -21,8 +21,8 @@ Real, parameter :: w = (2.0/3.0)
 Integer, parameter :: N      =  64
 Integer, parameter :: fd     =  12
 
-Integer :: i
-Integer :: nsteps = 200
+Integer :: i,k
+Integer :: nsteps = 20
 
 Integer :: rank, np
 
@@ -49,17 +49,17 @@ Call AddFourierMode_1D(N, np, rank, V1h,  1)
 Call AddFourierMode_1D(N, np, rank, V1h,  6)
 Call AddFourierMode_1D(N, np, rank, V1h, 16)
 V1h = (1./3.)*V1h
+Call Textual_Output_1D(rank, np, N, V1h, "1h_0")
 
+!do k=1,8        ! Big loop
 !... Relax_1D solution on 1h mesh
 !    -------------------------
-Call Textual_Output_1D(rank, np, N, V1h, "1h_0")
 do i = 1, nsteps
   Call Relax_1D(N, V1h, Tmp)
   Call Exchange_Halo_1D(rank, N, V1h)
   write(fd, *) i, maxval(V1h)
 end do
 Call Textual_Output_1D(rank, np, N, V1h, "1h_mid")
-
 !... Relax_1D solution on 2h mesh
 !    -------------------------
 Call Restrict_1D(N, V1h, V2h)
@@ -96,7 +96,7 @@ Call Textual_Output_1D(rank, np, N/8, V8h, "8h_mid")
 !! IMPORTANT: this last step should be an exact solution on a smaller grid probably
 !
 !Set exact solution on coarsest grid.
-V8h = 0.0
+!V8h = 0.0
 do i = 1, nsteps
   Call Relax_1D(N/8, V8h, Tmp)
   Call Exchange_Halo_1D(rank, N/8, V8h)
@@ -129,14 +129,14 @@ do i = 1, nsteps
   write(fd, *) i, maxval(V1h)
 end do
 Call Textual_Output_1D(rank, np, N,   V1h, "1h_end")
-
+!end do !! Big loop
 close(fd)
 
 Call MPI_Finalize()
 
 CONTAINS
 
-Pure Subroutine Relax_1D(N, A, Tmp)
+Subroutine Relax_1D(N, A, Tmp)
 !
 ! Relax_1D on the interior and the two halo cells shared with the left and right neighbors
 !   - shared halo cells are computed twice and are not exchanged
@@ -148,15 +148,13 @@ Pure Subroutine Relax_1D(N, A, Tmp)
    Real,    intent(inout) :: Tmp(-1:N+1)
    Integer                :: i
 
-   ! compute over extended region including boundary cells
-   do i = 0, N
+   ! compute over extended region excluding the boundary cells
+
+   do i = 1, N-1
       Tmp(i) = (1.0 - w)*A(i) + 0.5*w*(A(i-1) + A(i+1))
    end do
-
-   ! Do this in exchange halo...
-   !    - probably should have rank information so that physical boundaries aren't changed
+ 
    !
-
    ! compute over just the interior
    do i = 1, N-1
       A(i) = (1.0 - w)*Tmp(i) + 0.5*w*(Tmp(i-1) + Tmp(i+1))
@@ -174,7 +172,6 @@ Subroutine Exchange_Halo_1D(rank, N, A)
    Real,    intent(inout) :: A(-1:N+1)
 
    Integer :: left, right, tag
-   Real    :: lbc, rbc   
    type(MPI_Status) :: status
    tag   = 1
    left  = rank - 1
@@ -183,32 +180,32 @@ Subroutine Exchange_Halo_1D(rank, N, A)
    if (left < 0) then
    left  = np-1
    else if (right > np-1) then
-   right = 0  
+   right = 0 
    end if
    
+  A(1) = (1.0 - w)*A(1) + 0.5*w*(A(0) + A(2))
+  A(N-1) = (1.0 - w)*A(N-1) + 0.5*w*(A(N-2) + A(N))
    !! MPI halo exchange for parallel version
    !
    Call MPI_Send(A(1)  ,  1, MPI_REAL, left , tag, MPI_COMM_WORLD)
    Call MPI_Send(A(N-1),  1, MPI_REAL, right, tag, MPI_COMM_WORLD)
-
-   Call MPI_Recv(rbc, 1, MPI_REAL, right, tag, MPI_COMM_WORLD, status)
-   Call MPI_Recv(lbc, 1, MPI_REAL, left , tag, MPI_COMM_WORLD, status)
+   Call MPI_Recv(A(-1) ,  1, MPI_REAL, left , tag, MPI_COMM_WORLD, status)
+   Call MPI_Recv(A(N+1),  1, MPI_REAL, right, tag, MPI_COMM_WORLD, status)
    
-   A( -1) = lbc
-   A(N+1) = rbc
 
    !! Relax on the last two points now that we have exchanged halo points.
-   A(0) = (1.0 - w)*A(0) + 0.5*w*(A(-1) + A(1))
-   A(N) = (1.0 - w)*A(N) + 0.5*w*(A(N-1) + A(N))
 
+   A(0) = (1.0 - w)*A(0) + 0.5*w*(A(-1) + A(1))
+   A(N) = (1.0 - w)*A(N) + 0.5*w*(A(N-1) + A(N+1))
 
    !! set physical boundary conditions (they have been recomputed)
    if (left  == np-1) then
-   A(0)  = 0.0
+   A(0) = 0.0
    end if
    if (right == 0   ) then
-   A(N)  = 0.0 
+   A(N) = 0.0 
    end if
+   
 End Subroutine Exchange_Halo_1D
 
 End Program PoissonMultigrid
