@@ -5,25 +5,51 @@ syntax and execution semantics of a CAFe application.  A thorough examination of
 performance gains (if any) using CAFe for parallelization of code is beyond the scope of
 this paper.  The primary purpose of CAFe is to combine the parallel features of Fortran coarrays
 --- executing a \emph{single} program --- with concurrent execution of separate tasks executing on
-potentially heterogeneous hardware.  However, the relative performance of computation on
-a cluster of GPUs compared with the necessary communication of halo information is
-of interest, especially considering that a complete exchance of halo data involves communication
-between multiple
-coarray images \emph{and} between each individual host image and its subimage (an attached
-OpenCL device).
+potentially heterogeneous hardware.
 
-%%However, preliminary work using the Stratego/XT rewrite system as described indicates that similar performance can be expected to that of previous work\cite{foropencl} (see also\cite{StencilCompilers}).
+\begin{comment}
+However, the relative performance of computation on a cluster of GPUs compared with the
+necessary communication of halo information is of interest, especially considering that a
+complete exchance of halo data involves communication between multiple coarray images
+\emph{and} between each individual host image and its subimage (an attached OpenCL
+device).
+\end{comment}
 
-This section shows and compares performance measurements for: 1. Computational time on the GPU
-of the interior domain;
-2. Computational time on the CPU of the shared boundary regions; and 3. Halo communication time.
+However the relative performance of computation on the interior of a three-dimensional
+grid, performed by the GPU, compared with the time required to compute on boundary planes by the
+CPU is of interest.  Table 1 shows average execution time for a relaxation step on the GPU
+(column 2) and on the CPU (column 3) in milliseconds, where $N$ (column 1) is the number of
+cells in one dimension of a 3D cube; time for the exchange of halo information
+between the GPU and the CPU for each iteration is also shown in column 4.
 
-%%\subsection{Halo Transfer Performance}
+\begin{table}[]
+\centering
+\caption{Size of cube and time in milliseconds}
+\label{table1}
+\begin{tabular}{rrrrr}
+$N$   &   GPU	 &  CPU         &   Comm    \\
+      &   	 &              &           \\
+16    &  0.02    &   0.01	&   0.07    \\
+32    &  0.02    &   0.03       &   0.10    \\
+64    &  0.04    &   0.12       &   0.27    \\
+128   &  0.42    &   0.47	&   0.81    \\
+256   &  4.59    &   1.97	&   2.99    \\
+512   & 43.08    &   12.51	&  16.49    \\
+\end{tabular}
+\end{table}
 
+Note that all three times in Table 1 are roughly equivalent for $N=128$.  Also note that
+the communication and the computational times on the CPU are roughly equivalent and scale
+the same with increasing $N$.  This is not surprising as both involve only the surface
+elements of the cube.  However, computational time on the GPU grows much faster, O($N^3$),
+as it is computing on the interior of the cube.
+
+\begin{comment}
 The current implementation does \emph{not} take advantage of optimization strategies such
-as prefetching of array tiles (including halos) into OpenCL local memory.
-
-%%either does it take advantage of the potential of CAFe to overlap communication with computation (for example, computing on 
+as prefetching of array tiles (including halos) into OpenCL local memory.  Neither does it
+take advantage of the potential of CAFe to overlap communication with computation (for
+example, computing on ...
+\end{comment}
 
 \begin{comment}
 Since many scientific codes are dominated by memory performance, including and especially
