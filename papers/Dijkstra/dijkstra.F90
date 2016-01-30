@@ -19,6 +19,9 @@ pure subroutine relax(nx,ny,nz, nfs, U, TT, Offset, Changed)
    integer :: i, j, k, l, is, js, ks
    real    :: t, t0, u0, dist
    
+   !! initially there are no changes
+   !
+   Changed = 0
 
    !! relax travel time at each node
    !
@@ -26,7 +29,7 @@ pure subroutine relax(nx,ny,nz, nfs, U, TT, Offset, Changed)
       do j = 1, ny
          do i = 1, nx
             u0 =  U(i,j,k)
-            t0 = TT(is,js,ks)
+            t0 = TT(i,j,k)
             ! check each node in forward star
             do l = 1, nfs
                is = i + Offset(1,l);  if (is < 1) goto 10;  if (is > nx) goto 10
@@ -37,6 +40,7 @@ pure subroutine relax(nx,ny,nz, nfs, U, TT, Offset, Changed)
 
                t = TT(is,js,ks) + 0.5*(u0 + U(is,js,ks))*dist
                if (t < t0) then       ! update travel time
+                              t0 = t
                        TT(i,j,k) = t
                   Changed(i,j,k) = 1
                end if
