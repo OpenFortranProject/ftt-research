@@ -1,12 +1,14 @@
 module dijkstra
   implicit none
 
+  real, parameter :: DIST_FACTOR = 1.0
+
 contains
 
 !-----------------------------------------------------------------------
-! Relax the vertex given by the indices (i0,j0,k0) using loops
+! Sweep over the grid while updating the travel time
 !-----------------------------------------------------------------------
-pure subroutine relax(nx,ny,nz, nfs, U, TT, Offset, Changed)
+subroutine sweep(nx,ny,nz, nfs, U, TT, Offset, Changed)
    implicit none
    integer, intent(in)    :: nx, ny, nz, nfs
    real,    intent(in)    ::  U(nx,ny,nz)
@@ -16,41 +18,42 @@ pure subroutine relax(nx,ny,nz, nfs, U, TT, Offset, Changed)
    
    !--- local variables ---
    !
-   integer :: i, j, k, l, is, js, ks
-   real    :: t, t0, u0, dist
+   integer :: i, j, k, l, is, js, ks, chg
+   real    :: t, t0, tt_min, u0, dist, delay
    
-   !! initially there are no changes
-   !
-   Changed = 0
-
-   !! relax travel time at each node
+   !! check travel time at each node
    !
    do k = 1, nz
       do j = 1, ny
          do i = 1, nx
+            chg = 0                  ! initially there are no changes
             u0 =  U(i,j,k)
             t0 = TT(i,j,k)
+            tt_min = t0
             ! check each node in forward star
             do l = 1, nfs
                is = i + Offset(1,l);  if (is < 1) goto 10;  if (is > nx) goto 10
                js = j + Offset(2,l);  if (js < 1) goto 10;  if (js > ny) goto 10
                ks = k + Offset(3,l);  if (ks < 1) goto 10;  if (ks > nz) goto 10
 
-               dist = 10*sqrt( real(is*is + js*js + ks*ks) )
+               dist = DIST_FACTOR*sqrt( real((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) )
+               delay = 0.5*(u0 + U(is,js,ks))*dist
 
-               t = TT(is,js,ks) + 0.5*(u0 + U(is,js,ks))*dist
+               t = TT(is,js,ks) + delay
                if (t < t0) then       ! update travel time
-                              t0 = t
-                       TT(i,j,k) = t
-                  Changed(i,j,k) = 1
+                  chg = 1
+                  t0 = t
+                  tt_min = t
                end if
 
 10             continue
             end do
+            Changed(i,j,k) = chg
+            TT(i,j,k) = tt_min
          end do
       end do
    end do
 
-end subroutine relax
+end subroutine sweep
 
 end module dijkstra
