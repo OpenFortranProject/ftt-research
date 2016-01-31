@@ -14,6 +14,9 @@ __kernel void calcDistance (int nx, int ny, int nz, int nfs, __global const floa
     return;
   if (i > nx || j > ny || k > nz)
     return;
+  const int sx = 1;
+  const int sy = sx * (nx + halo + rightHalo);
+  const int sz = sy * (ny + halo + rightHalo);
 
   // initialize variables
   int const DIST_FACTOR = 1;
@@ -21,6 +24,7 @@ __kernel void calcDistance (int nx, int ny, int nz, int nfs, __global const floa
   float dist, delay, t;
   int chg = 0;
   int u0, t0, tt_min;
+  int k0 = 
   u0 = U[i, j, k];
   t0 = TT[i, j, k];
   tt_min = t0;
