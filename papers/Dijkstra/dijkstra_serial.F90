@@ -1,23 +1,27 @@
 program dijkstra_main
   use MPI_f08
+  use forward_star
+  use dijkstra
   implicit none
 
   !! dimensions for Joseph's example (101,161,51)
   !
-  integer, parameter :: NX = 32
-  integer, parameter :: NY = 32
-  integer, parameter :: NZ = 32
+  integer, parameter :: NX =  8
+  integer, parameter :: NY =  8
+  integer, parameter :: NZ =  1
   integer, parameter :: NFS = 818
   real,    parameter :: INFINITY = huge(1.0)
+  real,    parameter :: VERY_BIG = huge(1.0)/10.0
+
 
   real,    allocatable ::       U(:,:,:)        ! slowness
   real,    allocatable ::      TT(:,:,:)        ! travel time
-  integer, allocatable :: Changed(:,:,:)        ! 1 if tt updated in cell, 0 otherwise
+  integer, allocatable :: Changed(:,:,:)        ! 1 if tt updated at vertex, 0 otherwise
   integer, allocatable ::  Offset(:,:)          ! offset in forward star
 
   !  -----------------------------------------
 
-  double precision :: time, time_relax = 0.0d0, time_min = 0.0d0
+  double precision :: time, time_sweep = 0.0d0, time_reduce = 0.0d0
   integer :: i, j, k
   logical :: done  = .FALSE.
   logical :: debug = .TRUE.
@@ -35,35 +39,47 @@ program dijkstra_main
   allocate(Changed(NX,NY,NZ))
   allocate( Offset(3,NFS)   )
 
-  U = 3.0
-  U(8:24,8:24,8:24) = 1.0  ! pick some "faster" regions
+  call read_forward_star(NFS, Offset)
+#ifdef NO_NO_NO
+  do i = 1, NFS
+     print '(i4, i4, i4)', Offset(1,i), Offset(2,i), Offset(3,i)
+  end do
+#endif
 
-  TT = INFINITY
+  U = 1.0
+!!!!  U(8:24,8:24,8:24) = 1.0  ! pick some "faster" regions
 
-  !! relax grid starting at (1,1,1)
+  TT = VERY_BIG
+
+  !! sweep grid starting at (1,1,1)
   !
-  i = 1;  j = 1;  k = 1;
-  U(i,j,k) = 0.0
+  i = NX;  j = NY;  k = NZ;
+  TT(i,j,k) = 0.0
 
+  i = 1
   do while (.NOT. done) 
 
      time = MPI_Wtime()
-     call relax(NX,NY,NZ, NFS, U, TT, Offset, Changed)
-     time_relax = time_relax + MPI_Wtime() - time
+     call sweep(NX,NY,NZ, NFS, U, TT, Offset, Changed)
+     time_sweep = time_sweep + MPI_Wtime() - time
 
      !! see if any travel times have changed
      !
      time = MPI_Wtime()
      if (sum(Changed) == 0) done = .TRUE.
-     time_min = time_min + MPI_Wtime() - time
+     time_reduce = time_reduce + MPI_Wtime() - time
+
+     print *, "# changed:", sum(Changed)
 
   end do
 
+#ifdef NO_NO_NO
+#endif
   if (debug) then
      print *
-     do i = 1, NX
+     do k = 1, NZ
         do j = 1, NY
-           do k = 1, NZ
+           do i = 1, NX
               print *, i, j, k, TT(i,j,k)
            end do
         end do
@@ -71,7 +87,7 @@ program dijkstra_main
   end if
 
   print *
-  print *, "Relaxation/min time for N=", NX*NY*NZ, real(time_relax), real(time_min)
+  print *, "Sweep/reduce time for N=", NX*NY*NZ, real(time_sweep), real(time_reduce)
 
   deallocate(U,TT,Changed,Offset)
 
@@ -81,6 +97,5 @@ CONTAINS
     integer, intent(in) :: ocl_id
     get_subimage = -1
   end function
-
 
 end program
