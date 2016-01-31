@@ -27,10 +27,10 @@ int main()
   char *str;
   file = fopen("c_error_time.dat", "w");
 
-  cl_platform_id* platforms;
-  cl_uint platformCount;
-  clGetPlatformIDs(0, NULL, &platformCount);
-  printf("Num of platforms = %u\n", platformCount);
+  /* cl_platform_id* platforms; */
+  /* cl_uint platformCount; */
+  /* clGetPlatformIDs(0, NULL, &platformCount); */
+  /* printf("Num of platforms = %u\n", platformCount); */
 
   printf("Fin\n");
   return 0;
