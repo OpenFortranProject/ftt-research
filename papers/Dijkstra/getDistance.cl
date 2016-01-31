@@ -3,7 +3,7 @@
  */
 
 __kernel void calcDistance (int nx, int ny, int nz, int nfs, __global const float * U, __global int * TT
-                            , __global int * Changed)
+                            , __global const int * Offset, __global int * Changed)
 {
   // Get x, y, z coordinates and check in correct boundary
   const int halo = 0, rightHalo = 0; // No halo at this point
@@ -24,26 +24,31 @@ __kernel void calcDistance (int nx, int ny, int nz, int nfs, __global const floa
   float dist, delay, t;
   int chg = 0;
   int u0, t0, tt_min;
-  int k0 = 
-  u0 = U[i, j, k];
-  t0 = TT[i, j, k];
+  int k0 = i + j * sy + k * sz;
+  int k0s;
+
+  // begin algorithm
+  u0 = U[k0];
+  t0 = TT[k0];
   tt_min = t0;
     
   // check each node in forward star
   for (l = 0; l < nfs; ++l) {
-    is = i + Offset(1,l); if (is < 1) break; if (is < nx) break;
-    js = j + Offset(1,l); if (js < 1) break; if (js < ny) break;
-    ks = k + Offset(1,l); if (ks < 1) break; if (ks < nz) break;
+    is = i + Offset[1,l]; if (is < 1) break; if (is < nx) break;
+    js = j + Offset[1,l]; if (js < 1) break; if (js < ny) break;
+    ks = k + Offset[1,l]; if (ks < 1) break; if (ks < nz) break;
     dist = DIST_FACTOR*sqrt((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k) + 0.0);
-    delay = 0.5*(u0 + U[is,js,ks]) * dist;
+    k0s = is + js * sy + ks * sz;
+    delay = 0.5*(u0 + U[k0s]) * dist;
         
-    t = TT[is,js,ks] + delay;
+    t = TT[k0s] + delay;
+    // if distance is smaller update
     if (t < t0) {
       chg = 1;
       t0 = t;
       tt_min = t;
     }
   }
-  Changed[i,j,k] = chg;
-  TT[i,j,k] = tt_min;
+  Changed[k0] = chg;
+  TT[k0] = tt_min;
 }
