@@ -1,0 +1,157 @@
+#
+# This makefile should work on either Linux or Mac OSX (Darwin).
+#
+
+#
+# Provide the location of the NVIDIA SDK
+#
+#             /usr/local/NVIDIA_GPU_Computing_SDK
+#
+HOME := /home12/rasmus
+SDKROOTDIR := /usr/local/packages/cuda/sdk-4.2
+
+OFP_DIR = $(HOME)/ofp-sdf
+FOR_OCL_DIR = $(HOME)/ofp-research/opencl/ForOpenCL
+
+#include $(OFP_DIR)/make.inc
+
+SYNTAX_DIR = $(OFP_DIR)/LOPe/syntax
+TRANS_DIR  = $(OFP_DIR)/fortran/trans
+PP_DIR     = $(OFP_DIR)/fortran/pp
+
+TBL     = $(SYNTAX_DIR)/LOPe.tbl
+TO_SIM  = $(TRANS_DIR)/ofp-simplify
+TO_FAST = $(TRANS_DIR)/ofp2fast
+TO_PP   = $(TRANS_DIR)/fast2pp
+PP      = $(PP_DIR)/Fortran.pp
+
+CLC = /System/Library/Frameworks/OpenCL.framework/Versions/Current/Libraries/openclc
+
+
+# debugging flag
+dbg := 0
+
+# fortran compiler flag
+intel_fortran := 1
+
+# detect OS
+OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+# 'linux' is output for Linux system, 'darwin' for OS X
+DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
+
+# detect architecture
+OSARCH= $(shell uname -m)
+
+INCDIR  ?= .
+
+ifeq ($(DARWIN),)
+   LIBDIR       := $(SDKROOTDIR)/shared/lib/
+   SHAREDDIR    := $(SDKROOTDIR)/shared/
+   SHAREDLIBDIR := $(SDKROOTDIR)/shared/lib/linux
+   OCLROOTDIR   := $(SDKROOTDIR)/OpenCL/
+   OCLCOMMONDIR := $(OCLROOTDIR)/common/
+   OCLLIBDIR    := $(OCLCOMMONDIR)/lib
+endif
+
+# Compilers
+ifeq ($(intel_fortran),1)
+   FC    := mpif90
+else
+   FC     := mpif90
+endif
+CC     := gcc
+LINK   := $(FC) -fPIC
+
+# Includes
+ifeq ($(DARWIN),)
+   INCLUDES += -I$(INCDIR) -I$(OCLCOMMONDIR)/inc -I$(SHAREDDIR)/inc
+else
+   INCLUDES += -I$(INCDIR)
+endif
+
+# Warning flags
+CWARN_FLAGS := -W -Wall
+
+# architecture flag for nvcc and gcc compilers build
+LIB_ARCH := $(OSARCH)
+
+ifeq ($(DARWIN),)
+   ARCH_FLAGS += -m64
+else
+   ARCH_FLAGS +=
+endif
+
+# Compiler-specific flags
+CFLAGS   := $(CWARN_FLAGS) $(ARCH_FLAGS)
+FCFLAGS  := $(ARCH_FLAGS)
+LINK     += $(ARCH_FLAGS)
+
+# Includes
+ifneq ($(DARWIN),)
+else
+endif
+
+# Common flags
+COMMONFLAGS += -DUNIX
+
+# Add Mac Flags
+ifneq ($(DARWIN),)
+   COMMONFLAGS += -DMAC
+endif
+
+# Debug/release configuration
+ifeq ($(dbg),1)
+   COMMONFLAGS += -g
+else
+   COMMONFLAGS += -O3
+   CFLAGS      += -fno-strict-aliasing
+endif
+
+# Libs
+ifneq ($(DARWIN),)
+   LIBS  := -framework OpenCL
+else
+   LIBS := -L${OCLLIBDIR} -L$(LIBDIR) -L$(SHAREDDIR)/lib/$(OSLOWER)
+   LIBS += -lOpenCL
+endif
+
+# Add common flags
+CFLAGS   += $(INCLUDES) $(COMMONFLAGS)
+FCFLAGS  += $(COMMONFLAGS) -I$(FOR_OCL_DIR)
+
+OBJS  = forward_star.o
+
+LIBS += $(OBJS)
+LIBS += -L $(FOR_OCL_DIR) -lforopencl
+
+%.o : %.c
+	$(CC) -c $< $(CFLAGS)
+
+%.o : %.f90
+	@echo 'Building for OS $(OSUPPER) file: $<'
+	$(FC) -c $(FCFLAGS) -o $@ $<
+
+%.o : %.F90
+	@echo 'Building for OS $(OSUPPER) file: $<'
+	$(FC) -c $(FCFLAGS) -o $@ $<
+
+
+APPS = dijkstra_cl
+
+
+all: $(OBJS) $(APPS)
+
+dijkstra_cl: dijkstra_cl.o $(OBJS)
+	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
+
+# dependencies
+#
+
+check:  dijkstra_cl
+	./dijkstra_cl
+
+clean:
+	rm -f $(OBJS)
+	rm -f *.mod *.o
+	rm -f $(APPS)
