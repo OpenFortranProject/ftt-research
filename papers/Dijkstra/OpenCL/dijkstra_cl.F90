@@ -40,6 +40,9 @@ INTEGER(KIND=c_size_t) :: cl_lws__(3) = [16,8,1]
 ocl_id = 1
 dev = get_subimage(ocl_id,cl_dev_)
 
+!! May want information about the devices
+cl_status__ = query(cl_dev_)
+
 cl_sweep_ = createKernel(cl_dev_,"sweep")
 
 ALLOCATE(U(NX,NY,NZ))
@@ -65,9 +68,9 @@ TT(i,j,k) = 0.0
 cl_size__ = 4*NX*NY*NZ
 cl_status__ = writeBuffer(cl_U_, C_LOC(U ),cl_size__)
 cl_status__ = writeBuffer(cl_TT_,C_LOC(TT),cl_size__)
-cl_status__ = writeBuffer(cl_Offset_,C_LOC(Offset),cl_size__)
-cl_size__ = 4*3*NFS
 cl_status__ = writeBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
+cl_size__ = 4*3*NFS
+cl_status__ = writeBuffer(cl_Offset_,C_LOC(Offset),cl_size__)
 
 cl_status__ = setKernelArg(cl_sweep_,0,NX)
 cl_status__ = setKernelArg(cl_sweep_,1,NY)
@@ -77,6 +80,11 @@ cl_status__ = setKernelArg(cl_sweep_,4,clMemObject(cl_U_))
 cl_status__ = setKernelArg(cl_sweep_,5,clMemObject(cl_TT_))
 cl_status__ = setKernelArg(cl_sweep_,6,clMemObject(cl_Offset_))
 cl_status__ = setKernelArg(cl_sweep_,7,clMemObject(cl_Changed_))
+
+#ifdef NOT_YET
+#endif
+!stop "NOT_FINISHED"
+
 
 DO WHILE(.NOT. done)
   time = MPI_Wtime()
@@ -96,10 +104,15 @@ DO WHILE(.NOT. done)
 
   PRINT *, "# changed:",sum(Changed)
 
+  ! done = .true.
+
 END DO 
 
+cl_size__ = 4*NX*NY*NZ
+cl_status__ = readBuffer(cl_TT_,C_LOC(TT),cl_size__)
+
 IF (debug) THEN
-  PRINT *, ""
+  PRINT *, ''
   DO i = 1, NX
      DO j = 1, NY
         DO k = 1, NZ
@@ -109,7 +122,7 @@ IF (debug) THEN
   END DO 
 END IF
 
-PRINT *, ""
+PRINT *, ''
 PRINT *, "Sweep/reduce time for N=", NX*NY*NZ, real(time_sweep), real(time_reduce)
 
 DEALLOCATE(U,TT,Changed,Offset)
