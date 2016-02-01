@@ -48,8 +48,53 @@ function get_subimage(device_id, cl_device_)
    integer(cl_int) :: status
 
    status = init_device(cl_device_, int(device_id,c_int))
-   get_subimage = device_id
+
+   !! Return the negative of the device id so that it can't conflict with THIS_IMAGE()
+   !
+   get_subimage = -device_id
 
 end function get_subimage
+
+function factor(gws, lws) result(rtn_gws)
+  integer(c_size_t), intent(in) :: gws, lws
+  integer(c_size_t)             :: rtn_gws
+  rtn_gws = gws / lws;
+  if (lws * rtn_gws .eq. gws) then
+     rtn_gws = gws
+  else if (lws * rtn_gws .GT. gws) then
+     rtn_gws = lws * rtn_gws
+  else
+     rtn_gws = lws * (rtn_gws + 1)
+  end if
+end function factor
+
+function focl_global_size(rank, lws, prev_gws, new_gws) result(rtn_gws)
+  integer,           intent(in) :: rank
+  integer(c_size_t), intent(in) :: lws(*), prev_gws(*)
+  integer,           intent(in) :: new_gws(*)
+  integer(c_size_t)             :: rtn_gws(3)
+  integer(c_size_t)             :: gws
+  integer                       :: i, dim
+
+  rtn_gws = [1,1,1]
+
+  dim = rank
+  if (dim > 3) dim = 3
+
+  !! Need to consider local work group size and nice even numbers
+  !
+  do i = 1, dim
+     if (prev_gws(i) > 1 .AND. new_gws(i) > 1) then
+        gws = min(prev_gws(i), new_gws(i))
+     else
+        gws = max(prev_gws(i), new_gws(i))
+     end if
+     if (gws .NE. 1) then
+        gws = factor(gws, lws(i))
+     end if
+     rtn_gws(i) = gws
+  end do
+
+end function focl_global_size
 
 end module ForOpenCL

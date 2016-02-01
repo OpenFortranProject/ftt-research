@@ -1,0 +1,74 @@
+\section{Programming Model}
+
+The LOPe programming model
+restricts the programmer to a local view of the index
+space of an array.  Within a LOPe function, only a single array
+element (called the local element) is mutable.  In addition, a small
+halo region surrounding the local element is visible to the
+programmer, but this region is immutable.  Restricting the programmer
+to a local index space serves to reduce complexity by separating all
+data- and task-decomposition concerns from the implementation of the
+element-level array calculations.
+
+%%This reduction in complexity reduces programming errors.  While developing the convolution example described later in the paper we made an indexing error in applying the 2D stencil loops in the standard serial Fortran test implementation.  This error required over 3 hours of programming time to repair.  First the error had to be isolated to the function implementing the convolution (it was first thought to be in the complicated tiff image output routine as the convolution code was ``thought'' to be too simple to wrong.  Then the index error has to be understood.  As will be seen, LOPe makes it more difficult to make these errors as Fortran array intrinsics can be used.  In some instance, the restricted semantics of LOPe allows the compiler to catch errors (e.g., some errors involving race conditions).
+
+LOPe is a domain specific language (DSL) implemented as a small extension to the Fortran 2008
+standard.  Fortran was chosen as the base language for LOPe because it provides a rich array-based
+syntax.  Although, in principle, the same techniques could be applied to languages such as C or C++.
+
+%%Readers who are unfamiliar with Fortran syntax may wish to consult Appendix A, for a brief description of Fortran notation.
+
+\subsection{Related work}
+
+LOPe builds upon prior work studying how to map Fortran to accelerator
+programming models like OpenCL.  In the ForOpenCL project~\cite{Sottile:2013:FTE:2441516.2441520}
+we exploited Fortran's pure and elemental functions to express
+data-parallel kernels of an OpenCL-based program.  In practice, array
+calculations for a given index $i,j$ will require read-only access to
+a local neighborhood of size $[M,N]$ around $i,j$.  LOPe extends this work by introducing
+a mechanism for representing these neighborhoods as array declaration
+type annotations.
+
+ForOpenCL was based on concepts explored in the ZPL programming language~\cite{chamberlain04zpl} in
+which the programmer can define regions and operators that are applied over the index sets
+corresponding to the sub-array regions.  This approach is quite powerful for
+compilation purposes since it provides a clean decoupling of the operators applied over an array
+from the decomposition of that array over a potentially complex distributed memory hierarchy.
+However, unlike the ZPL operations on entire sub-arrays, LOPe expresses operations based on
+a \emph{single} local array-element.
+
+%
+% For space reasons a ZPL example is not shown and text reworded accordingly
+%
+%%For example, the following ZPL code implements the same stencil as the LOPe code in Fig. 1:
+
+%%\begin{verbatim}
+%%ZPL jacobi example here.
+%%\end{verbatim}
+%%This approach as demonstrated by ZPL is quite powerful for compilation purposes since it provides a clean decoupling of the operators applied over an array from the decomposition of that array over a potentially complex distributed memory hierarchy.  
+
+\subsection{LOPe Syntax Extensions}
+
+There are only a few syntactic additions required for a LOPe program.
+These additions include syntax for describing halo regions and
+concurrent procedures.  In code examples that follow,
+language additions are highlighted by the usage of capitalization for
+keywords that are either new or that acquire new usage.
+
+\vspace{-.1in}
+
+\begin{figure}
+\begin{verbatim}
+   pure CONCURRENT subroutine Laplacian(U)}
+       real, HALO(:,:) :: U
+       U(0,0) =                 U(0,+1)              &
+                +  U(-1,0)  - 3*U(0, 0)  +  U(+1,0)  &
+                            +   U(0,-1)
+   end subroutine Laplacian
+\end{verbatim}
+\vspace{-.1in}
+\caption{A LOPe function implementing a Laplacian kernel in two dimensions.}
+\end{figure}
+
+\vspace{-.3in}
+

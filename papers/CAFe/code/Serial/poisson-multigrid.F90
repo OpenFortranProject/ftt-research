@@ -9,9 +9,9 @@ Program PoissonMultigrid
 !   Multigrid.
 !
 !=============================================================================
-Use MultiGrid, only : AddFourierMode
+Use MultiGrid, only : AddFourierMode_1D
 Use IO,        only : Textual_Output
-Use MultiGrid, only : Restrict, Prolongate
+Use MultiGrid, only : Restrict_1D, Prolongate_1D
 
 Implicit None
 
@@ -35,18 +35,16 @@ open(unit=fd, file="error_time.dat")
 !! Initialize
 !
 V1h = 0.0
-Call AddFourierMode(N, V1h,  1)
-Call AddFourierMode(N, V1h,  6)
-Call AddFourierMode(N, V1h, 16)
+Call AddFourierMode_1D(N, V1h,  1)
+Call AddFourierMode_1D(N, V1h,  6)
+Call AddFourierMode_1D(N, V1h, 16)
 V1h = (1./3.)*V1h
 
 !... Relax solution on 1h mesh
 !    -------------------------
 call Textual_Output(N, V1h, "1h_0")
 do t = 1, nsteps
-  do concurrent(i = 0:N)
-     call Relax_1D(N, V1h, Tmp)
-  end do
+  call Relax_1D(N, V1h, Tmp)
   call Exchange_Halo(N, V1h)
   write(fd, *) t, maxval(V1h)
 end do
@@ -54,12 +52,10 @@ call Textual_Output(N, V1h, "1h_mid")
 
 !... Relax solution on 2h mesh
 !    -------------------------
-Call Restrict(N, V1h, V2h)
+Call Restrict_1D(N, V1h, V2h)
 Call Textual_Output(N/2, V2h, "2h_0")
 do t = 1, nsteps
-  do concurrent(i = 0:N)
-     call Relax(N/2, V2h, Tmp)
-  end do
+  call Relax_1D(N/2, V2h, Tmp)
   Call Exchange_Halo(N/2, V2h)
   write(fd, *) t, maxval(V2h)
 end do
@@ -67,12 +63,10 @@ Call Textual_Output(N/2, V2h, "2h_mid")
 
 !... Relax solution on 4h mesh
 !    -------------------------
-Call Restrict(N/2, V2h, V4h)
+Call Restrict_1D(N/2, V2h, V4h)
 Call Textual_Output(N/4, V4h, "4h_0")
 do i = t, nsteps
-  do concurrent(i = 0:N)
-     call Relax(N/4, V4h, Tmp)
-  end do
+  call Relax_1D(N/4, V4h, Tmp)
   Call Exchange_Halo(N/4, V4h)
   write(fd, *) t, maxval(V4h)
 end do
@@ -80,38 +74,32 @@ Call Textual_Output(N/4, V4h, "4h_mid")
 
 !... Relax solution on 8h mesh
 !    -------------------------
-Call Restrict(N/4, V4h, V8h)
+Call Restrict_1D(N/4, V4h, V8h)
 Call Textual_Output(N/8, V8h, "8h_0")
 do t = 1, nsteps
   do concurrent(i = 0:N)
-     call Relax(N/8, V8h, Tmp)
+     call Relax_1D(N/8, V8h, Tmp)
   end do
   Call Exchange_Halo(N/8, V8h)
   write(fd, *) t, maxval(V8h)
 end do
 Call Textual_Output(N/8, V8h, "8h_mid")
 
-!! IMPORTANT: this last step should be an exact solution on a smaller grid probably
-!
-do t = 1, 5*nsteps
-  Call Relax(N/8, V8h, Tmp)
-  Call Exchange_Halo(N/8, V8h)
-  write(fd, *) t, maxval(V8h)
-end do
+!! Exact solution should be 0
+V8h = 0
+
 Call Textual_Output(N/8, V8h, "8h_end")
 
 !! IMPORTANT: probably should relax on the way back down the grids as well
 !
-Call Prolongate    (N/4, V4h, V8h)
+Call Prolongate_1D (N/4, V4h, V8h)
 Call Textual_Output(N/4, V4h, "4h_end")
 
-Call Prolongate    (N/2, V2h, V4h)
+Call Prolongate_1D (N/2, V2h, V4h)
 Call Textual_Output(N/2, V2h, "2h_end")
 
-Call Prolongate    (N,   V1h, V2h)
+Call Prolongate_1D (N,   V1h, V2h)
 Call Textual_Output(N,   V1h, "1h_end")
-
-Call Solve         (N,   V1h, 
 
 close(fd)
 
@@ -155,22 +143,22 @@ Pure Subroutine Relax_1D(N, A, Tmp)
    A(0) = 0.0
    A(N) = 0.0
 
-End Subroutine Relax
+End Subroutine Relax_1D
 
-Pure Subroutien Relax_3D(N, A, Tmp)
+Pure Subroutine Relax_3D(N, A, Tmp)
 
      Implicit None
-     Interger, intent(in   ) :: N
-     Real,     intent(inout) :: A  (-1:N+1,-1:N+1,-1:N+1)
-     Real,     intent(inout) :: Tmp(-1:N+1,-1:N+1,-1:N+1)
-     Integer                 :: i, j, k
+     Integer, intent(in   ) :: N
+     Real,    intent(inout) :: A  (-1:N+1,-1:N+1,-1:N+1)
+     Real,    intent(inout) :: Tmp(-1:N+1,-1:N+1,-1:N+1)
+     Integer                :: i, j, k
      
      ! compute over extended region including boundary cells
           
 
      !! set physical boundary conditions (they have been recomputed)
      
-     !! Need to synchroniz here as we may be running concurrently
+     !! Need to synchronize here as we may be running concurrently
      ! sync all
 
      ! compute over just the interior
@@ -178,16 +166,15 @@ Pure Subroutien Relax_3D(N, A, Tmp)
      do k = 1, N-1
        do j = 1, N-1
          do i = 1, N-1
-	   A(i,j,k) = (1.0 - w)*Tmp(i,j,k)                         &
-                      + 0.???*w*(Tmp(i-1,j,k) + Tmp(i+1,j,k)       &
-+ permutations
-
+	   A(i,j,k) =   (1.0 - w)*   Tmp(i,j,k)                                &
+                      + (1.0/6.0)*w*(Tmp(i-1,j  ,k  ) + Tmp(i+1,j  ,k  )       &
+                      +              Tmp(i  ,j-1,k  ) + Tmp(i  ,j+1,k  )       &
+                      +              Tmp(i  ,j  ,k-1) + Tmp(i  ,j+1,k+1))
          end do
        end do
     end do
      
-     
-End Subroutine Relax
+End Subroutine Relax_3D
 
 Subroutine Exchange_Halo(N, A)
 !

@@ -1,0 +1,155 @@
+\section{Conclusions}
+
+Fortran is a general-purpose programming language and is extremely important to the
+scientific and high performance computing (HPC) community.  While new code development is
+often in languages other than Fortran (such as C++), surveys show that Fortran usage is
+still high\cite{prabhu2011survey}.  Fortran will be with us well into the future as the
+lifetime of important scientific applications is measured in decades and Fortran usage
+dominates in scientific communities that are critical to understanding the future of
+life on our planet such as the climate community.
+
+However, significant challenges arise as hardware adapts to the end of Moore's
+Law\cite{ashby2010opportunities}.  The revolution occurring in hardware architecture
+has completely altered the landscape for scientific computing as a code designed for the
+distributed memory bulk synchronous model of parallelism may actually run slower on
+advanced hardware\cite{Dubey:2014:SSC:2686745.2686756}.
+
+Parallelism was added to Fortran with the addition of coarrays in the 2008
+standard\cite{Reid:2008:NFF:1408643.1408645} to enable the migration of codes as hardware evolves.
+Significant language features were left out of this early version of coarrays as
+identified by \emph{Mellor-Crummy et al.}\cite{mellor-crummey:2009:caf2}.  Many of these features
+have been adopted in what is likely to be called the 2015 standard of the language\cite{fortran:2015},
+such as teams of program images and improved synchronization constructs like events.
+
+%%
+%% MJS - this stuff is so familiar these days, no need to cite specific machine examples
+%%
+%, for example, in the early
+%RoadRunner Machine at Los Alamos\cite{RoadRunner} and new machines arriving such as Blue
+%Waters\cite{blue:waters}.
+
+However, the Fortran coarray model fails to address heterogeneity in hardware as is already
+being seen in HPC computing platforms with the adoption of distributed nodes consisting of
+general purpose CPUs with attached accelerator devices like GPUs.  To address this shortcoming
+of the coarray model, CAFe introduces the concept of subimages executing on a hosting image.  
+CAFe includes:
+
+\begin{itemize}
+\item
+  Dynamic creation of subimages.
+\item
+  Dynamic memory allocation and placement on a subimage.
+\item
+  Explicit addressing of memory on subimages using standard coarray notation.  It follows
+  the Partitioned Global Address Space (PGAS) model, although with subimages the address
+  space is hierarchical in the sense that the memory partitioning only allows memory exchange
+  between a subimage and its hosting image as initiated by the hosting image.
+\item
+  Task creation and execution on subimages using extended coarray syntax with double
+  square brackets \texttt{[[ ]]}.  Task mays be defined in terms of standard \emph{pure}
+  Fortran procedures and task execution continues without interruption until completion.
+  In addition, a Fortran 2015 event type may be notified upon completion of the task to allow
+  concurrent execution on the subimage and on the hosting image.
+\item
+  CAFe integrates Fortran 2015 features to allow relatively simple programs to be written
+  that employ all of the heterogenous components expected on exascale platforms.
+\end{itemize}
+
+\subsection{Limitations}
+
+In this paper we have defined CAFe and described its semantics and relationship to the 2008 and
+2015 Fortran standards.  Possible criticism of this work includes the following:
+
+\begin{itemize}
+\item
+  The source-to-source transformations that have been developed to implement CAFe
+  are rudimentary and have not been optimized.  For example, memory transfers have
+  not been aggregated into larger message blocks to improve performance.  Memory transfer
+  is also blocking so that prefetching of data cannot be employed via techniques
+  involving the reordering of statements (code motion) that are effectively employed in
+  CAF compilers.
+\item
+  The Laplacian example is in reality a ``toy'' problem.  Real multiphysics codes
+  employ hundreds (or more) of variables and would have entirely different performance
+  characteristics because of the increased pressure on cache and register usage.
+%\item
+%  Existing scientific codes often separate communication into separate modules from
+%  the computational kernels.  This makes adoption of CAF itself slow (because these
+%  MPI modules already work fine) and thus additional extensions like CAFe also
+%  would be slow to adopt. However CAFe constructs can be used in an incremental
+%  fashion making it easier to adopt
+%\item
+%  In reality CAF (and therefore CAFe) are relatively low-level parallel programming
+%  languages that require the programmer to \emph{explicitly} control the placement
+%  of memory, communication, and synchronization.  
+\item
+  Thorough examination of performance capabilities on real scientific applications
+  (or at least scientific ``mini-apps'') has not been attempted.  Such a study of both
+  CAFe and CAF itself is necessary to demonstrate the coarray model as a viable alternative
+  for application codes with complexity above that of an idealized mini-app.
+\item
+  Programming models like that proposed by CAFe already exist in the form of a combination
+  of MPI and OpenMP (or OpenACC) programs.  The advantage of CAFe --- by being a purely
+  language construct --- is that it opens up the possibility of compiler optimizations
+  that would otherwise be impossible with a library approach intermixed with compiler directives.
+\end{itemize}
+
+\subsection{Future Work}
+
+In spite of the limitations discussed, 
+adoption of the task-based parallelism of CAFe and the synchronization
+event types in Fortran 2015 suggests intriguing possibilities.  Tasks plus the
+dependencies represented by events suggest a correspondence with the Open Community
+Runtime (OCR) libraries.  In OCR, the entire program must be broken into a set of tasks
+represented by a directed acyclic graph (DAG).  In OCR, tasks are available for executing
+when all of their input dependencies are satisfied, such as occurs when computation of a new
+iteration of data elements have been updated and other upstream tasks have been completed.
+
+%%%
+%%% MJS: I cut the following out - conversion of MPI -> OCR is not in scope for us, and 
+%%% we don't want to argue one way or the other about that topic.  Stay focused on CAF/CAFe.
+%%%
+%Tools to automatically convert existing applications to run under the OCR model faces challenges.  For
+%example, the hundreds of MPI functions would have to be semantically understood by the tools,
+%integrated with existing OpenACC directives (for example), a DAG generated for the complete
+%program, and then transformed into an OCR program.
+
+An intriguing \emph{possibility} exists for automatic conversion of CAFe codes to OCR:
+\begin{itemize}
+\item
+  CAF codes have well defined boundaries (called segment boundaries) indicating where new
+  OCR tasks must be created.
+\item
+  CAF has many fewer library routines (primarily collectives) that must be converted.
+\item
+  CAF has events that already define some of the dependencies necessary for the creation
+  of OCR tasks.
+\item
+  CAFe introduces the notion of task based parallelism (in addition to the existing
+  Fortran constructs like \texttt{do concurrent}).
+\end{itemize}
+
+In the future we hope to examine \emph{if} the possibility exists for CAFe codes to be
+automatically converted to an entirely different programming paradigm like
+the Open Community Runtime.  Given the change in architectures being considered for
+future HPC platforms it is likely that similar, novel runtime models will be proposed,
+and we believe that CAFe provides a viable programming model for compiler-based mapping to
+these new systems.
+
+\begin{comment}
+These choices often hide the opportunity for
+optimizations by the compiler \cite{Dubey:2014:SSC:2686745.2686756}.
+\end{comment}
+
+\begin{comment}
+\subsubsection{Limitations.}
+LOPe only supports regular structured grids through Fortran multi-dimensional arrays and a
+corresponding multi-dimensional processor layout.  It does not allow the composability of stencils
+required by non-linear physics operators, nor does it provide automatic support for the storage of
+intermediate results resulting from multiple intermediate update steps.  Adaptive Mesh Refinement
+(AMR) Shift Calculus provides a generalized abstraction that addresses many of these concerns
+(see\cite{Dubey:2014:SSC:2686745.2686756} and references therein).  However, it may be possible to
+support AMR in LOPe through locally-structured grid methods based on the work of Berger and
+Oliger\cite{colella2007performance}.  In this instance, LOPe could be used to update the regular
+array regions in each rectangular patch.
+\end{comment}

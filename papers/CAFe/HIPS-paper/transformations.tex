@@ -1,0 +1,66 @@
+\section{CAFe Implementation}
+
+This section briefly describes how CAFe extensions to Fortran have been implemented as
+source-to-source transformations via rewrite rules (for expressing basic transformations)
+and rewriting strategies (for controlling the application of the rewrite rules).  A CAFe
+file is transformed to Fortran and OpenCL files through generative programming techniques
+using Stratego/XT tools\cite{Bravenboer200852} and is accomplished in three phases: (1)
+parsing to produce a CAFe Abstract Syntax Tree (AST) represented in the Annotated Term
+Format (ATerm\cite{DBLP:journals/spe/BrandJKO00}); (2) transformations of CAFe AST nodes
+to Fortran and C AST nodes; and finally (3) pretty-printing to the base Fortran and OpenCL
+languages.
+
+The foundation of CAFe is the syntax definition of the base language expressed in SDF
+(Syntax Definition Formalism) as part of the Open Fortran Project (OFP)\cite{OFP:git:url}.
+CAFe is defined in a separate SDF module that extends the Fortran 2008 language standard
+with only 11 context-free syntax rules.  Parsing is implemented in Stratego/XT by a
+scannerless generalized-LR parser and the conversion of transformed AST nodes to text is
+accomplished with simple pretty-printing rules.
+
+
+\subsection{Transformations for Concurrent Procedures}
+
+A key component of code generation for CAFe is the targeting of a Fortran pure procedure
+or a \texttt{do concurrent} construct for execution on a particular hardware architecture.
+The execution target can be one of several choices, including serial execution by the
+current program image, parallel execution by inlining with OpenMP compiler directives, or
+parallel execution by heterogeneous processing elements with a language like OpenCL.
+
+We have developed rewrite rules and strategies in Stratego/XT to rewrite Fortran AST
+nodes to C AST nodes (extended with necessary OpenCL keywords).  The C AST ATerms have mostly a
+one-to-one correspondence with Fortran terms: a pure Fortran procedure is transformed to an
+OpenCL kernel; Fortran formal parameters are transformed to C parameters (with a direct mapping of
+types); and local Fortran variable declarations are rewritten as C declarations.  Similarly,
+Fortran executable statements are rewritten as C statements.  The only
+minor complication is mapping the CAFe local, array index view to the global C index space.  This
+translation is facilitated by a Fortran symbol table that stores array shape and halo size
+information.  However, these transformation are not entirely completed and some of the
+OpenCL kernels used in the example section have been coded by hand.
+
+\subsection{Transformations at the Calling Site}
+
+Transformations of a CAFe procedure call site are more difficult, though technically
+straight forward.  The Fortran function call must be transformed to a call to run the
+OpenCL kernel (generated as described above).  This is facilitated by use of the ForOpenCL
+library which provides Fortran bindings to the OpenCL
+runtime\cite{Sottile:2013:FTE:2441516.2441520}.  However, this usage requires the
+declaration of extra variables, allocation of memory on the OpenCL device (subimage),
+transfer of memory, marshalling of kernel arguments, and synchronization.
+
+These transformations are accomplished using several rewrite stages using Stratego/XT
+strategies:
+(1) a symbol table is produced in the first pass to store information related to arrays,
+including array shape and allocation status;
+(2) additional variables are declared that are used to maintain the OpenCL runtime state,
+including the OpenCL device, the OpenCL kernel, and OpenCL variables used to marshall
+kernel arguments; and
+(3) all CAFe code related to subimage usage is desugared (lowered) to standard Fortran
+with calls to the ForOpenCL library as needed.
+The latter step includes the allocation of OpenCL device memory, transfer of memory to and
+from the OpenCL device, marshalling of kernel arguments, running of the OpenCL kernel, and
+synchronization.
+
+Though not yet available, similar rewrite strategies are planned for targeting programming
+models other than OpenCL including parallel execution with OpenMP and OpenACC directives.
+However, as CAFe is designed, simple serial execution --- with respect to subimage tasks
+--- is automatically provided by the regular CAF compiler.

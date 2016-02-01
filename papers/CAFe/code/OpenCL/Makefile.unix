@@ -7,7 +7,25 @@
 #
 #             /usr/local/NVIDIA_GPU_Computing_SDK
 #
+HOME := /home12/rasmus
 SDKROOTDIR := /usr/local/packages/cuda/sdk-4.2
+
+OFP_DIR = $(HOME)/ofp-sdf
+FOR_OCL_DIR = $(HOME)/ofp-research/opencl/ForOpenCL
+
+#include $(OFP_DIR)/make.inc
+
+SYNTAX_DIR = $(OFP_DIR)/LOPe/syntax
+TRANS_DIR  = $(OFP_DIR)/fortran/trans
+PP_DIR     = $(OFP_DIR)/fortran/pp
+
+TBL     = $(SYNTAX_DIR)/LOPe.tbl
+TO_SIM  = $(TRANS_DIR)/ofp-simplify
+TO_FAST = $(TRANS_DIR)/ofp2fast
+TO_PP   = $(TRANS_DIR)/fast2pp
+PP      = $(PP_DIR)/Fortran.pp
+
+CLC = /System/Library/Frameworks/OpenCL.framework/Versions/Current/Libraries/openclc
 
 
 # debugging flag
@@ -38,9 +56,9 @@ endif
 
 # Compilers
 ifeq ($(intel_fortran),1)
-   FC    := ifort
+   FC    := mpif90
 else
-   FC     := gfortran
+   FC     := mpif90
 endif
 CC     := gcc
 LINK   := $(FC) -fPIC
@@ -100,56 +118,44 @@ endif
 
 # Add common flags
 CFLAGS   += $(INCLUDES) $(COMMONFLAGS)
-FCFLAGS  += $(COMMONFLAGS)
+FCFLAGS  += $(COMMONFLAGS) -I$(FOR_OCL_DIR)
 
-LIB_OBJS = Timer.o OpenCLTypes.o CLBuffer.o CLKernel.o CLDevice.o \
-           opencl_utils.o opencl_test.o ForOpenCL.o
-
-OBJS += OpenCLInterfaces.o $(LIB_OBJS)
+OBJS  = io.o error.o parallel.o multigrid.o # jacobi.o vtk.o vtk_output.o
 
 LIBS += $(OBJS)
+LIBS += -L $(FOR_OCL_DIR) -lforopencl
 
-APPS = multigrid elementals 
+%.o : %.c
+	$(CC) -c $< $(CFLAGS)
 
-%.o: %.f90
+%.o : %.f90
 	@echo 'Building for OS $(OSUPPER) file: $<'
 	$(FC) -c $(FCFLAGS) -o $@ $<
 
-all: $(OBJS) libforopencl.a $(APPS)
+%.o : %.F90
+	@echo 'Building for OS $(OSUPPER) file: $<'
+	$(FC) -c $(FCFLAGS) -o $@ $<
 
-libforopencl.a: $(OBJS)
-	ar -r libforopencl.a $(LIB_OBJS)
-	ranlib libforopencl.a
 
-elementals: elementals.o $(OBJS)
+APPS = poisson-multigrid_3d_cl
+
+
+all: $(OBJS) $(APPS)
+
+poisson-multigrid_3d_cl: poisson-multigrid_3d_cl.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
-
-multigrid: multigrid.o $(OBJS)
-	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
-
-opencl_utils.o: opencl_utils.c
-	$(CC) -c $(CFLAGS) $<
-
-opencl_test.o: opencl_test.c
-	$(CC) -c $(CFLAGS) $<
-
-opencl_test: opencl_test.o # $(OBJS)
-	$(CC) -o $@ $<
-
 
 # dependencies
 #
 
-OpenCLInterfaces.o: Timer.o OpenCLTypes.o
+check:  poisson-multigrid_3d_cl
+	poisson-multigrid_3d_cl
 
-CLBuffer.o: OpenCLTypes.o OpenCLInterfaces.o
-
-elemental_add.o: elemental_add.f90 $(OBJS)
-
-multigrid.o: multigrid.f90 $(OBJS)
+check-parallel : poisson-multigrid_3d_cl
+	rm -f *.vti *.dat
+	mpirun -np 2 ./poisson-multigrid_3d_cl
 
 clean:
 	rm -f $(OBJS)
 	rm -f *.mod *.o
 	rm -f $(APPS)
-	rm -f libforopencl.a

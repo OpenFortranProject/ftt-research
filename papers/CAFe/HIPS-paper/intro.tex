@@ -1,0 +1,209 @@
+\section{Introduction}
+
+\begin{comment}
+Fortran is essential for exascale programming. The explicit policy of non-overlapping arrays (enabling compilers to more easily vectorize and parallelize automatically), simple loop syntax, longstanding support for robust real and complex arithmetic, along with the vast quantity of encoded scientific knowledge mean Fortran will remain the primary development language for many domain scientists who write software. Even as clean-slate Fortran development efforts decline, the value of the legacy Fortran software base and its ongoing refactoring and extension will be essential for decades to come.
+
+Execution environments must undergo more substantial changes than programming languages and environments. Current runtime systems are very good at concurrent execution, but are not designed for lightweight threading (except GPUs) or locality-aware task mapping. Thread-scalable computing will require better, more transparent on-node thread parallel environments. Fortunately, we see much progress lately, underneath existing programming languages and environments.
+
+\emph{Adding Tasking is Critical}
+
+Although programming and execution environments are evolving smoothly toward exascale capabilities, we do have disruptive changes ahead. Most scalable parallel applications today have simple data and work decompositions: Each MPI rank owns a static portion of large data objects, e.g., a subdomain of a large distributed global domain, and each rank executes its code sequentially (potentially vectorizing), or with modest thread-parallel capabilities. This approach works on existing NUMA multicore systems by assigning multiple MPI ranks to a node and using OpenMP across a handful of cores, but performance using this approach is not sustainable as core counts continue to increase.
+
+Tasking, with work granularities sufficiently large to make effective use of one or a few cores, must be added to most applications in order to sustain performance improvement as concurrency demands increase. Specifically, tasking requires one or more levels of additional decomposition (at least logically) of data objects, e.g., create multiple patches or tiles from each MPI subdomain, and assign tasks to execute concurrently on these patches. Within a single shared memory node, tasks can in principle cooperate closely, executing dataflow patterns, sharing data and otherwise collaborating in lightweight
+
+\cite{HPCWire:Heroux}
+\end{comment}
+
+A goal of high-level programming languages should be to \emph{allow} a programmer to
+develop software for a specific hardware architecture, without actually \emph{exposing} hardware
+features.  In fact, allowing low-level hardware details to be controlled by the programmer is actually
+a barrier to software performance portability: the explicit use of low-level hardware details 
+leads to code becoming excessively specialized to a given target system.  The path forward for high-level
+programming languages should be to allow a programmer to provide more semantic information
+about their \emph{intent}, thus allowing the compiler more freedom to choose how to instantiate this
+intent in a specific implementation in order to retarget applications to new architectures.
+
+Performance portability (or, even simply portability) has been a perpetual problem in computing,
+especially within the high performance computing community in which relatively new and immature
+emerging technologies are constantly being tried and tested.  As processor architectures hit limitations due
+to physical and manufacturing constraints, we are seeing a trend towards more diversity in
+processor designs than were experienced for the bulk of the 1990s and 2000s.  Portability, especially
+performance portability, is becoming more challenging as moving to a new CPU may entail more than simple
+tuning if the architecture is fundamentally different than previous ones.
+
+A number of options are available to an HPC programmer beyond just using a serial
+language with MPI or OpenMP.  New parallel languages have been under development for over a decade, 
+for example, Chapel and the PGAS languages including Coarray Fortran (CAF).  Options for 
+heterogeneous computing
+include usage of OpenACC, CUDA, CUDA Fortran, and OpenCL for programming attached
+accelerator devices.  Each of these choices provides the programmer with abstractions over parallel
+systems that expose different levels of detail about the specific systems to compile to, and as such,
+entail different degrees of effort to design for and realize performance portability.
+
+A reasonable solution given today's language limitations is to use MPI for distributed memory
+parallelism \emph{plus} OpenMP for on-chip parallelism.  This hybrid approach is taken by two
+successful, large-scale AMR multiphysics code frameworks, FLASH and Chombo; currently however,
+neither of these codes support hardware accelerators\cite{DBLP:journals/corr/DubeyS13}.
+%%This is the solution proposed by Cray and PGI \cite{BOF_SC10} (currently Chapel does not target GPUs\cite{Brad?}).
+Other choices for expressing on-chip parallelism are OpenCL~\cite{opencl11} and NVIDIA's CUDA.
+Unfortunately, achieving high performance using either of these two languages can be a daunting
+challenge and there are no guarantees that either language is suitable for future hardware
+generations.  
+
+Another potential option is to abandon the structure of message passing within a procedural
+programming language altogether.  For example, the Open Community Runtime (OCR)
+project\cite{OCR:wiki:url} provides an asynchronous task-based runtime designed for
+machines with high-core count\cite{Dokulil20151453}, such as can be expected in any
+exascale hardware design.  The project's goal is to create a framework and reference
+implementation to help developers explore programming methods to improve the power
+efficiency, programmability, and reliability of HPC applications while maintaining
+application performance.
+
+\begin{comment}
+OCR helps the application developer with the complex process of writing multi-core
+applications.  It does this by providing facilities for creating and executing a set of
+tasks.  The OCR runtime schedules the execution of these tasks based on events which
+embody dataflow and code flow dependencies; when all of the dependencies for a task are
+satisfied, the task can be run.
+\end{comment}
+
+It cannot be emphasized too strongly that using the OpenCL programming language and
+libraries (or programming for the OCR environment) presents a high hurdle for the
+application developer creating real scientific applications.  A goal of this paper is to
+examine ways in which high-level syntax based on Fortran coarrays can be utilized by
+compiler-based tools to \emph{target} programming environments like OpenCL, thus
+freeing the developer from the task of frequently porting the application to new complex
+environments.  The hope is that high-level syntax can hide the complexities of the
+underlying hardware \emph{and software} by delegating some optimization tasks to the
+compiler instead of the programmer.
+
+%% MJS: this seems like a natural place for a subsection break, but it looks ugly
+%%      in the IEEE two column style
+
+With the addition of coarrays in the 2008 standard, Fortran is now a \emph{parallel}
+language.  Originally called Coarray Fortran (CAF) by its
+authors\cite{Numrich:1998:CFP:289918.289920}, parallelism in Fortran is similar to MPI in
+that all cooperating CAF processes (called \emph{images}) execute a Single Program but with
+different (Multiple) Data (SPMD).  Key concepts in CAF are parallel execution, distributed
+memory allocation, and remote memory transfer.  Parallel execution and memory allocation
+are straightforward as each program is replicated $NP$ times with each program image
+allocating its own memory locally.  Special syntax is provided to indicate which arrays
+are visible between distributed memory processes and remote memory transfer is indicated
+with new array syntax using square brackets, for example,
+\begin{verbatim}
+   U(1) = U(1)[3]
+\end{verbatim}
+copies memory from the first element of \texttt{U} residing on image number 3 into
+the corresponding element of the \emph{local} array \texttt{U}.  The fundamental programming
+model is similar to that provided by message passing systems.
+
+Since each CAF process executes the same program, there are no good avenues for exploiting
+task-based parallelism.  Neither is there an adequate mechanism for dynamic coarray memory
+allocation, nor a mechanism for the remote execution of functions.  In CAF, like MPI, the
+programmer often combines distributed memory processes running the same program image with a
+shared memory threaded programming model using OpenMP (or OpenACC).  This model breaks down
+when dealing with architectures that are not isomorphic to the model for which MPI and
+relatives were designed -- a distributed collection of homogenous processing elements in
+which each processing element supports a small number of parallel threads of execution.  For
+example, an HPC system that makes use of traditional multicore CPUs as well as GPGPU accelerators
+breaks this model and, to effectively program it, currently requires a mixture of programming
+systems in a single application.
+
+In this paper we propose CAFe: \emph{Co-Array Fortran Extensions}.  These extensions to CAF introduce
+relatively minor additions to the existing coarray portion of the Fortran language.  They
+include the concept of subimages in order to nest coarray images, semantics for distributed
+array declarations, memory placement, remote memory transfer, and remote task execution
+and synchronization.  CAFe
+builds upon the existing standardized coarray features of Fortran.  We will introduce the
+proposed CAFe extensions, define their semantics, demonstrate their use in a simple
+example, and provide experimental results demonstrating the relative
+performance of computation and communication in a prototype implementation executing
+in a heterogeneous environment.
+CAFe is complementary to
+previous work extending coarray Fortran\cite{mellor-crummey:2009:caf2,jin:2011:caf2}.
+
+%Topics highlighted in this section are: 1. Distributed memory array allocation;
+%2. Explicit memory placement; 3. Remote memory transfer; and 4. Remote execution.  This
+%description is within the context of extensions to Fortran; as shorthand, these extensions
+%are referred to as CAFe, for Coarray Fortran extensions.  
+
+%%% MJS: stopped editing here 1/7/2016
+
+\begin{comment}
+Historically it has been hard to create parallel programs.  The
+responsibility (and difficulty) of creating \emph{correct} parallel
+programs can be viewed as being spread between the programmer and the
+compiler.  Ideally we would like to have parallel languages that make
+it easy for the programmer to express correct parallel programs --- and
+conversely it should be difficult to express incorrect parallel
+programs.  Unfortunately, many current languages and standards place
+all of the responsibility on the user.  The best example of this are
+programs written using MPI (Message Passing Interface), where the
+programmer expresses all parallelism in terms of calls to library
+routines and the serial C or Fortran compiler knows nothing about the
+parallel semantics of the combined language plus MPI library.
+
+Of course one would hope that over time code complexity goes down as
+better languages allow compilers to take on a greater share of the
+parallel complexity burden.  Multithreaded code written using OpenMP
+can be significantly simpler than the corresponding code in which the
+programmer explicitly manages a pool of threads themselves.  This is
+somewhat true for distributed memory parallelism using Unified
+Parallel C (UPC) and Coarray Fortran.  With these PGAS
+(Partitioned Global Address Space) extensions, C and
+Fortran compilers are now aware of parallelism and now generate
+message passing code that previously had been handled by the MPI
+library.  In some instances the compiler is able to perform
+optimizations that it is not able to do with a library-based scheme
+like MPI \cite{preissl:2011:SC}.
+
+%%% Would like to say something here about HPC as a language based solution to reducing code complexity
+
+However, in large part these languages are mostly syntactic sugar for
+message passing and do not provide a substantial decrease in code
+complexity when application performance is a
+goal\cite{hasert:2011:EuroMPI}.  While skilled programmers in the HPC
+community have become accustomed to the level of complexity of an MPI
+program, the problem for programmers is that hardware is changing in
+ways that increase the level of on-chip parallelism.  Indeed, the
+current generation of machines could be the last to provide
+homogeneous multi-core parallelism\cite{JORSjors.aw}.  For ultimate
+performance, programmers must envision coding for heterogeneous
+architectures with huge new levels of on-node parallelism, at the same
+time they account for off-node parallelism.
+Since languages have not evolved that allow the compiler to take up
+this increase, the complexity for a programmer has necessarily
+dramatically increased.  Unfortunately, considering the complexity of
+large multiphysics code frameworks, it could take several person years
+to retarget an application for \emph{each} new heterogeneous
+platform\cite{DBLP:journals/corr/DubeyS13}.
+
+
+In this paper we examine a language-based paradigm that allows the
+compiler to take on a larger portion of the code complexity burden.
+Anyone programming in OpenCL is aware that explicit loop
+structures over array elements in a serial program are removed and
+replaced by a kernel program that is run over all of the elements of
+the input arrays.  We propose \emph{Locally Orientated Programming
+extensions} (LOPe) to the Fortran and potentially C languages that
+formally adopt this programming model.  The LOPe programming model
+explicitly separates numerical complexity from parallel complexity ---
+leaving much of the staging and assembling of data to the compiler ---
+and is applicable to the solution of stencil-based algorithms that
+provide data access patterns that are regular and spatially local.
+
+\end{comment}
+
+% OpenACC directives and features:
+%\begin{verbatim}
+%● acc_copy(in|out)( ptr, bytes )
+%● acc_create( ptr, bytes )
+%● acc_delete( ptr, bytes )
+%● acc_is_present( ptr, bytes )
+%● acc_update_(device|local)( ptr, bytes )
+%● acc_deviceptr( ptr )
+%● acc_hostptr( devptr )
+%● acc_[un]map_data( devptr, hostptr, bytes )
+%● acc_memcpy_(to|from)_device
+%\end{verbatim}
+

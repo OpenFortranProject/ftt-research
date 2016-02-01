@@ -1,0 +1,295 @@
+\section{Coarray Fortran Extensions}
+
+Topics highlighted in this section are: 1. Distributed memory array allocation;
+2. Explicit memory placement; 3. Remote memory transfer; and 4. Remote execution
+and synchronization.  This
+description is within the context of extensions to Fortran; as shorthand, these extensions
+are referred to as CAFe, for Coarray Fortran extensions.
+Please note that throughout this paper, text appearing in all caps (such as
+\texttt{GET\_SUBIMAGE}) indicates new syntax or functionality extended by CAFe.
+
+
+
+\subsection{Subimages}
+
+We first introduce the important new concept of a \emph{CAFe subimage}.  Fortran images
+are a collection of distributed memory processes that all run the same program.  CAFe
+extends the concept of a Fortran image by allowing images to be hierarchical; by this we
+mean that an image \emph{may} host a subimage (or several subimages).  It is important to
+note that a subimage is not visible to Fortran images other than its hosting image.
+Subimages also execute differently than normal images and may even execute on different
+non-homogeneous hardware, e.g., an attached accelerator device.  Subimages are task based
+while images all execute a Single Program but with different (Multiple) Data (SPMD).  A
+task can be given to a subimage, but execution on the subimage terminates once the task is
+finished.  Memory on a subimage is permanent, however, and must be explicitly allocated
+and deallocated.
+
+A programmer requests a subimage by executing the new CAFe function,
+
+%%\small
+\begin{verbatim}
+   device = GET_SUBIMAGE(device_id)
+\end{verbatim}
+%%\normalsize
+
+\noindent where the integer argument represents an attached hardware device (or perhaps a separate
+process or a team of threads; it is the compilers responsibility to determine precisely
+what a subimage means in terms of the software and hardware environment under its
+control).  If the function fails (e.g., the requested device is unavailable) it returns
+the local image number of the process that is executing the current program, obtained by a
+call to the Fortran 2008 function \texttt{this\_image()}.  Returning the current image if
+the \texttt{GET\_SUBIMAGE} call fails, allows program execution to proceed correctly even if
+there are no attached devices.
+
+Once a variable representing a subimage has been obtained, it can be used within a program
+to allocate memory, transfer memory, and execute tasks.  This functionality is described below.
+
+
+\subsection{Distributed Memory Array Declaration}
+
+In Fortran, variables that are visible to other program images must be declared with the
+codimension attribute, for example,
+%%\small
+\begin{verbatim}
+real, allocatable :: U(:,:)[:], V(:,:)[:]
+\end{verbatim}
+%%\normalsize
+declares that coarrays \texttt{U} and \texttt{V} are allocatable with a rank of two and a
+corank of one.  In Fortran, square brackets \texttt{[ ]} are used to indicate operations
+(possibly expensive) on distributed memory where parentheses \texttt{( )} are used to
+select specific array elements; square brackets, on the other hand, denote the
+\emph{location} of the array or array elements selected.
+
+When declared thusly, coarrays must subsequently be allocated on all program images.  With
+CAFe, this declaration also allows memory to be allocated on a subimage, however memory
+allocation on a subimage is not required unless it is specifically used by some task
+executing that will be executed on the subimage.
+
+
+\subsection{Explicit Memory Placement}
+
+As discussed, CAFe allows coarray memory to be conditionally allocated on a subimage.
+It should be allocated conditionally because the requested subimage in a \texttt{GET\_SUBIMAGE}
+call may not be available.  In addition, not all coarrays need be allocated on each
+subimage.  For example, the following code segment allocates memory for coarrays
+\texttt{U} and \texttt{V} on all images, but only coarray \texttt{U} is allocated on
+the subimage specified by the variable \texttt{device}:
+%%\small
+\begin{verbatim}
+   allocate(U(M,N)[*], V(M,N)[*])
+   if (device /= this_image()) then
+     allocate(U(M,N)[*])  [[device]]
+   end if
+\end{verbatim}
+%%\normalsize
+where \texttt{M} and \texttt{N} are constant parameters.  The first allocate statement
+allocates coarrays \texttt{U} and \texttt{V} on all program images.  The \texttt{*} symbol
+in the allocation is required for the last corank dimension in CAF (in this case there is
+only one) to allow for the number of program images to be a runtime parameter, which can
+be ascertained with a \texttt{num\_images()} function call.  If \texttt{device} is
+available, its numeric value will be different from \texttt{this\_image()} and thus
+coarray \texttt{U} will also be allocated on the device.  Note that placement of the
+memory is specified by the use of double square bracket notation \texttt{[[ ]]}.  Like
+single square brackets, double square brackets indicate something special (and possibly
+expensive) is to occur, in this case possibly remote memory allocation.
+
+Deallocation of subimage memory is similar to allocation,
+%%\small
+\begin{verbatim}
+   if (device /= this_image()) then
+     deallocate(U)  [[device]]
+   end if
+\end{verbatim}
+%%\normalsize
+
+
+\subsection{Remote Memory Transfer}
+
+Once memory is allocated on the device, it can be initialized by copying memory from the
+hosting image to the device.  This is explicitly done with normal CAF syntax.  For example,
+%%\small
+\begin{verbatim}
+  U[device] = 3.14
+\end{verbatim}
+%%\normalsize
+assigns 3.14 to all of the array elements of \texttt{U} located on \texttt{device}.
+Specific array elements can also be transferred, 
+%%\small
+\begin{verbatim}
+  U(1,:) = U(1,:)[device]
+  U(M,:) = U(M,:)[device]
+\end{verbatim}
+%%\normalsize
+where the first and last columns of \texttt{U} are copied from the device to the hosting image.
+
+CAFe restricts memory transfer between a subimage and its hosting image only; transferring
+memory to a subimage hosted by another image is not allowed.  In addition, memory transfer
+can only be initiated by the hosting image.  Thus code executing on a subimage cannot use
+coarray notation to select memory on another subimage nor on its host.
+
+\subsection{Remote Execution}
+
+The final CAFe concept introduced is that of remote execution.  As discussed above,
+all CAF images (similar to MPI ranks) execute the same program.  The only way for
+an image to execute something different is to conditionally execute a block of code based
+on explicitly checking that an executing image's rank (\texttt{this\_image()}) meets some
+established criterion.  There currently exists no mechanism for one image to execute a
+block of code or a procedure on another image.
+
+However, CAFe allows images to execute tasks on hosted subimages using standard procedure
+calls.  For example,
+%%\small
+\begin{verbatim}
+  call relax(U[device])  [[device]]
+\end{verbatim}
+%%\normalsize
+executes the subroutine relax, on the subimage \texttt{device}, using coarray \texttt{U} \emph{located}
+on the same subimage.  This follows the same pattern as introduced for remote coarray allocation,
+whereby the double square bracket notation indicates \emph{where} the function will execute.
+Functions to be executed on a subimage must be pure procedures (i.e., declared with the Fortran
+keyword \texttt{pure}) and scalar formal parameters must be passed by value (i.e., declared with the
+\texttt{value} attribute).
+
+CAFe expands on CAF execution semantics by providing a task-based mechanism, where tasks
+are defined in terms of pure Fortran procedures.  Since the procedures must be declared
+as pure, they cannot perform any I/O or call any impure procedures; nor can they initiate
+any communication between the subimage and the hosting image.
+
+In addition, CAFe subimage tasks may also be defined by the body of a Fortran do
+concurrent construct and executed on a subimage.  For example, the code segment,
+%%\small
+\begin{verbatim}
+do concurrent(i=1:N-1)  [[device]]
+ block
+   real :: w = 0.67
+   S(i) = (1-w)*T(i) + w*(T(i-1)+T(i+1)/2)
+ end block
+end do
+\end{verbatim}
+%%\normalsize
+will execute all of the code within the \texttt{do concurrent} construct on \texttt{device}.
+Execution of a \texttt{do concurrent} loop on a subimage acts \emph{as if} the loop were
+extracted as an outlined function and the subsequent task executed on a subimage.  Thus
+there is an implicit barrier at the end of the loop that blocks the hosting image
+from continuing execution until \emph{all} of the iterates of the loop have finished.
+
+In Fortran, the execution semantics of a \texttt{do concurrent} loop is that loop
+iterates can be executed concurrently in any order.  Note the similarities between this
+example and the OpenMP pragma \texttt{!\$omp parallel do, private(w)}.  The use of the
+Fortran block construct to declare private variables allows a natural and clear way to
+distinguish between variables that are private to a ``thread'' (although in the example
+above, the ``private'' distinction for the variable \texttt{w} is unnecessary because it
+is a constant over all loop iterations).
+
+The comparison with OpenMP also suggests that subimage execution may not be restricted to
+a single hardware execution unit, but may indeed be executed by a team of threads in a
+single (shared) memory address space.  This association with a team of threads will be
+exploited below when considering a team of subimages.
+
+\begin{comment}
+  (NOTE FOR CRAIG: need to read the standard to see if a block construct can be used in this
+way. ALSO, there is a lot more work here to think about how do concurrent merges with
+OpenMP and OpenACC with regards to synchronization, barriers, teams, atomics, , critical
+sections, ...)
+\end{comment}
+
+
+\subsection{Integration with Standard Coarray Features}
+
+The new CAFe features introduced above work in concert with the existing 2008 Fortran
+coarray constructs and with the new parallel features to appear in the next Fortran
+standard\cite{TS:18508} (referred to here as Fortran 2015).  This section describes
+in more detail how the proposed extensions of CAFe interact with the parallel
+language features of Fortran 2015.
+
+\subsubsection{Fortran 2008 Standard}
+
+Perhaps the most important of the 2008 parallel constructs are those involving the
+control of image execution, including \texttt{sync all} and \texttt{sync images}
+statements.  A \texttt{sync all} statement implements a barrier synchronizing all CAF
+images while a \texttt{sync images} statement synchronizes a specified set of images.
+Neither of these synchronization primitives affect tasks potentially executing concurrently
+on a subimage.  Once subimage tasks begin execution they run to completion from the perspective
+of the hosting image.
+
+Other features of 2008 include the \texttt{critical} construct and the \texttt{lock} and
+\texttt{unlock} statements.  The \texttt{critical} construct limits the execution of a
+block of code to one image at a time, while lock variables provide a facility for atomic
+operations.  Both of these features are defined in terms of normal CAF images so subimages
+do not directly participate unless the parent (or host) of a subimage does.
+
+\subsubsection{Fortran 2015 Standard}
+
+The most important concept introduced by the 2015 standard is that of a team of images.
+Subimages may not be included within a team of standard CAF images.  However, if one
+considers the comparison of the execution of a \texttt{do concurrent} block on a subimage
+with a team of OpenMP threads (as described above), the subimage could be considered as
+a team of one member that \emph{may} be executing its tasks on a team of shared memory threads.
+This allows the use of a \texttt{sync team} statement to synchronize with
+possibly executing threads.
+
+Thus we introduce another CAFe intrinsic function, \texttt{GET\_SUBIMAGE\_TEAM()}, that returns a
+variable representing a fully-formed (established) team consisting of only one team
+member, the current subimage.  If this function is called outside the context of a task
+executing on a subimage it will return only a team consisting of the current image,
+\texttt{this\_image()}.  Synchronization across possible subimage threads is then possible
+using the statement
+%%\small
+\begin{verbatim}
+  sync team (GET_SUBIMAGE_TEAM())
+\end{verbatim}
+%%\normalsize
+This allows implementation of the technique of double buffering within a subimage task
+so that all of the \emph{potential} subimage threads will have completed operating on the
+temporary buffer before it is copied back to the primary array variable.
+
+Fortran 2015 also introduces the concept of events.  An event is a Fortran type that
+can be posted to by one image and waited for by another image.  CAFe relaxes the
+constraint that events must be coarrays so that events can be used locally within
+a single image to control concurrent execution of multiple subimage tasks.  For example,
+the following code segment shows how two tasks can be run concurrently on two separate
+subimages:
+%%\small
+\begin{verbatim}
+ type(event_type) :: evt
+ call update_ocn [[dev1, WITH_EVENT=evt]]
+ call update_atm [[dev2, WITH_EVENT=evt]]
+ event wait (evt, until_count=2)
+\end{verbatim}
+%%\normalsize
+
+In this example, the syntax \texttt{[[dev1, WITH\_EVENT=evt]]} indicates that the called
+subroutine is to be run on \texttt{dev1} and that the event variable \texttt{evt} will receive
+notification (an implicit posting) once the task has completed.  The \texttt{event wait}
+statement will cause execution on the hosting image to wait until \emph{both} tasks have
+completed.  One may even run multiple tasks on the \emph{same} device using events,
+however unless the subimage hardware allows concurrent execution of multiple tasks, only
+one task will be executed at a time.
+
+Fortran 2015 also provides new intrinsic procedures for atomic and collective operations.
+At this time we do not consider atomic operations for usage with the CAFe extensions.
+Atomic variables and associated synchronization constructs place too great of requirements
+on the executing software and hardware environment.  For example, the Open Community
+Runtime environment does not provide for atomic variables as the restriction
+helps OCR to better scale on a wider range of parallel computers.
+
+Collective operations, however, could potentially be very useful and fit nicely within
+CAFe concepts.  For example, a team consisting of hosted subimages could be formed and
+then data be broadcasted to team members and reduction operations such as \texttt{co\_add}
+performed.  However since all team members of the current team must participate in
+collective operations \emph{and} since CAFe restricts subimages from being part of the
+same team with regular images, it makes it impossible for an image to participate with a
+team of its hosted subimages in collective operations.  So for now, collectives are
+excluded from CAFe.
+
+\begin{comment}
+It is noted that these extensions to Fortran have been described in terms
+explicit language syntax modifying the base language.  CAFe could equivalently have
+been described in terms of compiler directives.  For example, subimage task execution could be
+written as
+\begin{verbatim}
+ call relax(U[device]) !$OFP [[device]]
+\end{verbatim}
+which would allow a standard CAF compiler to compile CAFe programs.  This gives
+the flavor of a domain specific language.
+\end{comment}
