@@ -6,7 +6,7 @@
 
 __kernel void sweep (int nx, int ny, int nz, int nfs
                            , __global const float * U
-                           , __global int * TT
+                           , __global float * TT
                            , __global const int * Offset
                            , __global int * Changed)
 {
@@ -46,14 +46,13 @@ __kernel void sweep (int nx, int ny, int nz, int nfs
 
   // check each node in forward star
   for (l = 0; l < nfs; ++l) {
-    is = i + Offset[1,l]; if (is < 0) break; if (is >= nx) continue;
-    js = j + Offset[1,l]; if (js < 0) break; if (js >= ny) continue;
-    ks = k + Offset[1,l]; if (ks < 0) break; if (ks >= nz) continue;
-    // TODO: use offset local variables
+    is = i + Offset[0+l*3]; if (is < 0) continue; if (is >= nx) continue;
+    js = j + Offset[1+l*3]; if (js < 0) continue; if (js >= ny) continue;
+    ks = k + Offset[2+l*3]; if (ks < 0) continue; if (ks >= nz) continue;
     dist = DIST_FACTOR*sqrt( (float) ((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) );
     k0s = is + js * sy + ks * sz;
     delay = 0.5*(u0 + U[k0s]) * dist;
-        
+
     t = TT[k0s] + delay;
     // if distance is smaller update
     if (t < t0) {
