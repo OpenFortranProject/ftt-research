@@ -1,9 +1,12 @@
 /**
- * C kernel of forward star implementation
+ * C kernel for sweep of forward star implementation
  */
 
-__kernel void calcDistance (int nx, int ny, int nz, int nfs, __global const float * U, __global int * TT
-                            , __global const int * Offset, __global int * Changed)
+__kernel void sweep (int nx, int ny, int nz, int nfs
+                           , __global const float * U
+                           , __global int * TT
+                           , __global const int * Offset
+                           , __global int * Changed)
 {
   // Get x, y, z coordinates and check in correct boundary
   const int halo = 0, rightHalo = 0; // No halo at this point
