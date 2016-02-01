@@ -1,30 +1,25 @@
 program dijkstra_main
   use MPI_f08
+  use forward_star
+  use dijkstra
   implicit none
 
   !! dimensions for Joseph's example (101,161,51)
   !
-  integer, parameter :: NX = 32
-  integer, parameter :: NY = 32
-  integer, parameter :: NZ = 32
+  integer, parameter :: NX =  8
+  integer, parameter :: NY =  8
+  integer, parameter :: NZ =  1
   integer, parameter :: NFS = 818
-  real,    parameter :: INFINITY = huge(1.0)
+  real,    parameter :: VERY_BIG = huge(1.0)/10.0
 
-#ifdef HAVE_COARRAYS
-  real,    allocatable ::       U(:,:,:)[:]     ! slowness
-  real,    allocatable ::      TT(:,:,:)[:]     ! travel time
-  integer, allocatable :: Changed(:,:,:)[:]     ! 1 if tt updated in cell, 0 otherwise
-  integer, allocatable ::  Offset(:,:)  [:]     ! offset in forward star
-#else
-  real,    allocatable ::       U(:,:,:)        ! slowness
-  real,    allocatable ::      TT(:,:,:)        ! travel time
-  integer, allocatable :: Changed(:,:,:)        ! 1 if tt updated in cell, 0 otherwise
-  integer, allocatable ::  Offset(:,:)          ! offset in forward star
-#endif
+  real,    allocatable, target, dimension(:,:,:), codimension[:] :: U       ! slowness
+  real,    allocatable, target, dimension(:,:,:), codimension[:] :: TT      ! travel time
+  integer, allocatable, target, dimension(:,:,:), codimension[:] :: Changed ! 1 if tt updated
+  integer, allocatable, target, dimension(:,:  ), codimension[:] :: Offset  ! offset in forward star
 
   !  -----------------------------------------
 
-  double precision :: time, time_relax = 0.0d0, time_min = 0.0d0
+  double precision :: time, time_sweep = 0.0d0, time_reduce = 0.0d0
   integer :: i, j, k
   logical :: done  = .FALSE.
   logical :: debug = .TRUE.
@@ -37,63 +32,51 @@ program dijkstra_main
 
   !! allocate space on this image
   !
-#ifdef HAVE_COARRAYS
   allocate(      U(NX,NY,NZ) [*])
   allocate(     TT(NX,NY,NZ) [*])
   allocate(Changed(NX,NY,NZ) [*])
   allocate( Offset(3,NFS)    [*])
-#else
-  allocate(      U(NX,NY,NZ))
-  allocate(     TT(NX,NY,NZ))
-  allocate(Changed(NX,NY,NZ))
-  allocate( Offset(3,NFS)   )
-#endif
 
-#ifdef HAVE_DEVICE
   if (dev /= THIS_IMAGE()) then
-     allocate(      V(NX,NY,NZ) [*])  [[dev]]
+     allocate(      U(NX,NY,NZ) [*])  [[dev]]
      allocate(     TT(NX,NY,NZ) [*])  [[dev]]
      allocate(Changed(NX,NY,NZ) [*])  [[dev]]
      allocate( Offset(3,NFS)    [*])  [[dev]]
   end if
-#endif
 
-  U  = 3.0
-  U(8:24,8:24,8:24) = 1.0  ! pick some "slower" regions
+  call read_forward_star(NFS, Offset)
 
-  TT = INFINITY
+  U  = 1.0
+!!!!  U(8:24,8:24,8:24) = 1.0  ! pick some "faster" regions
 
-  !! relax grid starting at (1,1,1)
+  TT = VERY_BIG
+
+  !! sweep grid starting at (1,1,1)
   !
   i = 1;  j = 1;  k = 1;
-  U(i,j,k) = 0.0
+  TT(i,j,k) = 0.0
 
   !! copy initial values to the device
   !
-#ifdef HAVE_COARRAYS
   U [dev] = U
   TT[dev] = TT
-  Offset[dev] = Offset
-#endif
+  Offset [dev] = Offset
+  Changed[dev] = Changed
 
   do while (.NOT. done) 
 
      time = MPI_Wtime()
-#ifdef HAVE_COARRAYS
-     call relax(NX,NY,NZ, NFS, U[dev], TT[dev], Offset[dev], Changed[dev])  [[dev]]
-#else
-     call relax(NX,NY,NZ, NFS, U     , TT     , Offset     , Changed     )
-#endif
-     time_relax = time_relax + MPI_Wtime() - time
+     call sweep(NX,NY,NZ, NFS, U[dev], TT[dev], Offset[dev], Changed[dev])  [[dev]]
+     time_sweep = time_sweep + MPI_Wtime() - time
 
      !! see if any travel times have changed
      !
      time = MPI_Wtime()
-#ifdef HAVE_COARRAYS
      Changed = Changed[dev]
-#endif
      if (sum(Changed) == 0) done = .TRUE.
-     time_min = time_min + MPI_Wtime() - time
+     time_reduce = time_reduce + MPI_Wtime() - time
+
+     print *, "# changed:", sum(Changed)
 
   end do
 
@@ -109,25 +92,15 @@ program dijkstra_main
   end if
 
   print *
-  print *, "Relaxation/min time for N=", NX*NY*NZ, real(time_relax), real(time_min)
+  print *, "Sweep/reduce time for N=", NX*NY*NZ, real(time_sweep), real(time_reduce)
 
   deallocate(U,TT,Changed,Offset)
 
-#if HAVE_DEVICE
   if (dev /= THIS_IMAGE()) then
-     deallocate(      V)  [[dev]]
+     deallocate(      U)  [[dev]]
      deallocate(     TT)  [[dev]]
      deallocate(Changed)  [[dev]]
      deallocate( Offset)  [[dev]]
   end if
-#endif
-
-CONTAINS
-
-  integer function get_subimage(ocl_id)
-    integer, intent(in) :: ocl_id
-    get_subimage = -1
-  end function
-
 
 end program
