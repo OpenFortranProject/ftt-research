@@ -13,7 +13,6 @@ program dijkstra_main
   real,    parameter :: INFINITY = huge(1.0)
   real,    parameter :: VERY_BIG = huge(1.0)/10.0
 
-
   real,    allocatable ::       U(:,:,:)        ! slowness
   real,    allocatable ::      TT(:,:,:)        ! travel time
   integer, allocatable :: Changed(:,:,:)        ! 1 if tt updated at vertex, 0 otherwise
@@ -73,8 +72,6 @@ program dijkstra_main
 
   end do
 
-#ifdef NO_NO_NO
-#endif
   if (debug) then
      print *
      do k = 1, NZ
