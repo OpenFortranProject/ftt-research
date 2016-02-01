@@ -46,9 +46,9 @@ __kernel void sweep (int nx, int ny, int nz, int nfs
 
   // check each node in forward star
   for (l = 0; l < nfs; ++l) {
-    is = i + Offset[1,l]; if (is < 0) break; if (is >= nx) break;
-    js = j + Offset[1,l]; if (js < 0) break; if (js >= ny) break;
-    ks = k + Offset[1,l]; if (ks < 0) break; if (ks >= nz) break;
+    is = i + Offset[1,l]; if (is < 0) break; if (is >= nx) continue;
+    js = j + Offset[1,l]; if (js < 0) break; if (js >= ny) continue;
+    ks = k + Offset[1,l]; if (ks < 0) break; if (ks >= nz) continue;
     // TODO: use offset local variables
     dist = DIST_FACTOR*sqrt( (float) ((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) );
     k0s = is + js * sy + ks * sz;
