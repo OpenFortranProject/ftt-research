@@ -2,6 +2,8 @@
  * C kernel for sweep of forward star implementation
  */
 
+// TODO: look up how to place in constant memory
+
 __kernel void sweep (int nx, int ny, int nz, int nfs
                            , __global const float * U
                            , __global int * TT
@@ -15,32 +17,40 @@ __kernel void sweep (int nx, int ny, int nz, int nfs
   const int k = get_global_id(2) + halo;
   if (i < halo || j < halo || k < halo)
     return;
-  if (i > nx || j > ny || k > nz)
+  if (i >= nx || j >= ny || k >= nz)
     return;
   const int sx = 1;
   const int sy = sx * (nx + halo + rightHalo);
   const int sz = sy * (ny + halo + rightHalo);
 
   // initialize variables
+  // TODO: after debugging change to 10.0
   int const DIST_FACTOR = 1;
   int l, is, js, ks;
   float dist, delay, t;
-  int chg = 0;
-  int u0, t0, tt_min;
-  int k0 = i + j * sy + k * sz;
+  float t0, tt_min;
   int k0s;
 
   // begin algorithm
-  u0 = U[k0];
+
+  int chg = 0;
+  const int k0 = i + j * sy + k * sz;
+  const float u0 = U[k0];
+
   t0 = TT[k0];
   tt_min = t0;
     
+  // TODO:
+  //   1. change Offset to one dimension and stride by 3
+  //   2. put Offsets in local variables so they can go into registers
+
   // check each node in forward star
   for (l = 0; l < nfs; ++l) {
-    is = i + Offset[1,l]; if (is < 1) break; if (is < nx) break;
-    js = j + Offset[1,l]; if (js < 1) break; if (js < ny) break;
-    ks = k + Offset[1,l]; if (ks < 1) break; if (ks < nz) break;
-    dist = DIST_FACTOR*sqrt((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k) + 0.0);
+    is = i + Offset[1,l]; if (is < 0) break; if (is >= nx) break;
+    js = j + Offset[1,l]; if (js < 0) break; if (js >= ny) break;
+    ks = k + Offset[1,l]; if (ks < 0) break; if (ks >= nz) break;
+    // TODO: use offset local variables
+    dist = DIST_FACTOR*sqrt( (float) ((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) );
     k0s = is + js * sy + ks * sz;
     delay = 0.5*(u0 + U[k0s]) * dist;
         
