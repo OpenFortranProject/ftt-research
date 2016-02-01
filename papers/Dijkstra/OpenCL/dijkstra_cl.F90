@@ -99,7 +99,7 @@ DO WHILE(.NOT. done)
 END DO 
 
 IF (debug) THEN
-  PRINT *, 
+  PRINT *, ""
   DO i = 1, NX
      DO j = 1, NY
         DO k = 1, NZ
@@ -109,7 +109,7 @@ IF (debug) THEN
   END DO 
 END IF
 
-PRINT *, 
+PRINT *, ""
 PRINT *, "Sweep/reduce time for N=", NX*NY*NZ, real(time_sweep), real(time_reduce)
 
 DEALLOCATE(U,TT,Changed,Offset)
