@@ -4,9 +4,10 @@ USE MPI_f08
 USE forward_star
 IMPLICIT NONE
 
-INTEGER, PARAMETER :: NX = 128
-INTEGER, PARAMETER :: NY = 128
-INTEGER, PARAMETER :: NZ = 32
+INTEGER :: NX = 256
+INTEGER :: NY = 256
+INTEGER :: NZ = 64
+INTEGER :: newNX, newNY, newNZ
 INTEGER, PARAMETER :: NFS = 818
 REAL, PARAMETER :: VERY_BIG = huge(1.0)/10.0
 
@@ -36,39 +37,60 @@ INTEGER(KIND=cl_int) :: cl_status__
 INTEGER(KIND=c_size_t) :: cl_size__
 INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
-INTEGER(KIND=c_size_t) :: cl_lws__(3) = [128,1,1]
-INTEGER :: stepsTaken = 0
-REAL    :: bandwidth  
+INTEGER(KIND=c_size_t) :: cl_lws__(3)
+INTEGER :: stepsTaken = 0, rightHalo
+REAL :: var, bandwidth  
 
 ocl_id = 1
 dev = get_subimage(ocl_id,cl_dev_)
 
 !! May want information about the devices
 cl_status__ = query(cl_dev_)
-
 cl_sweep_ = createKernel(cl_dev_,"sweep")
 
-ALLOCATE(U(NX,NY,NZ))
-ALLOCATE(TT(NX,NY,NZ))
-ALLOCATE(Changed(NX,NY,NZ))
-ALLOCATE(Offset(3,NFS))
+open(unit = 2, file = "velocity-241-241-51-nonConst.txt")
+read (2,*), NX, NY, NZ
+newNX = 256
+newNY = 256
+newNZ = NZ
+rightHalo = newNX - NX
+cl_lws__ = [128, 1, 1]
+print *, "   NX,    NY,    NZ", NX, NY, NZ
+print *, "newNX, newNY, newNZ", newNX, newNY, newNZ, "cl_lws__", cl_lws__
 
-cl_size__ = 4*NX*NY*NZ
+ALLOCATE(U(newNX,newNY,newNZ))
+ALLOCATE(TT(newNX,newNY,newNZ))
+ALLOCATE(Changed(newNX,newNY,newNZ))
+ALLOCATE(Offset(3,NFS))
+U = 0
+Changed = 0
+! Get array from file
+DO k = 1, NZ
+   DO j = 1, NY
+      DO i = 1, NX
+         read (2,*), var
+         U(i,j,k) = var
+      END DO
+   END DO
+END DO
+
+cl_size__ = 4*newNX*newNY*newNZ
 cl_U_  = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
 cl_TT_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
 cl_Changed_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
+print *, "cl_U, cl_TT, cl_Changed size = ", cl_size__
 cl_size__ = 4*3*NFS
 cl_Offset_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
+print *, "cl_Offset = ", cl_size__
 
 CALL read_forward_star(NFS,Offset)
 
-U = 1.0
 TT = VERY_BIG
 
 i = NX/2;  j = NY/2;  k = NZ/2
 TT(i,j,k) = 0.0
 
-cl_size__ = 4*NX*NY*NZ
+cl_size__ = 4*newNX*newNY*newNZ
 cl_status__ = writeBuffer(cl_U_, C_LOC(U ),cl_size__)
 cl_status__ = writeBuffer(cl_TT_,C_LOC(TT),cl_size__)
 cl_status__ = writeBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
@@ -83,17 +105,14 @@ cl_status__ = setKernelArg(cl_sweep_,4,clMemObject(cl_U_))
 cl_status__ = setKernelArg(cl_sweep_,5,clMemObject(cl_TT_))
 cl_status__ = setKernelArg(cl_sweep_,6,clMemObject(cl_Offset_))
 cl_status__ = setKernelArg(cl_sweep_,7,clMemObject(cl_Changed_))
-
-#ifdef NOT_YET
-#endif
-!stop "NOT_FINISHED"
-
+cl_status__ = setKernelArg(cl_sweep_,8,rightHalo)
+cl_status__ = setKernelArg(cl_sweep_,9,stepsTaken)
 
 DO WHILE(.NOT. done)
   time = MPI_Wtime()
 
   cl_gwo__ = [0,0,0]
-  cl_gws__ = [NX,NY,NZ]
+  cl_gws__ = [newNX,newNY,newNZ]
 
   cl_status__ = run(cl_sweep_,3,cl_gwo__,cl_gws__,cl_lws__)
   cl_status__ = clFinish(cl_sweep_%commands)
@@ -103,16 +122,16 @@ DO WHILE(.NOT. done)
   cl_size__ = 4*NX*NY*NZ
   cl_status__ = readBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
   IF (sum(Changed) == 0) done = .TRUE.
+  stepsTaken = stepsTaken + 1
+  cl_status__ = setKernelArg(cl_sweep_, 9,stepsTaken)
   time_reduce = time_reduce + MPI_Wtime() - time
 
-  stepsTaken = stepsTaken + 1
-  ! PRINT *, "# changed:", sum(Changed), "step", stepsTaken
-
+  PRINT *, "# changed:", sum(Changed), "step", stepsTaken
   ! done = .true.
 
 END DO 
 
-cl_size__ = 4*NX*NY*NZ
+cl_size__ = 4*newNX*newNY*newNZ
 cl_status__ = readBuffer(cl_TT_,C_LOC(TT),cl_size__)
 
 open(unit = 7, file = "output.txt")
