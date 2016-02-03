@@ -6,9 +6,9 @@ program dijkstra_main
 
   !! dimensions for Joseph's example (101,161,51)
   !
-  integer, parameter :: NX =  8
-  integer, parameter :: NY =  8
-  integer, parameter :: NZ =  1
+  integer, parameter :: NX =  241
+  integer, parameter :: NY =  241
+  integer, parameter :: NZ =  51
   integer, parameter :: NFS = 818
   real,    parameter :: INFINITY = huge(1.0)
   real,    parameter :: VERY_BIG = huge(1.0)/10.0
@@ -21,9 +21,9 @@ program dijkstra_main
   !  -----------------------------------------
 
   double precision :: time, time_sweep = 0.0d0, time_reduce = 0.0d0
-  integer :: i, j, k
+  integer :: i, j, k, nxf, nyf, nzf
   logical :: done  = .FALSE.
-  logical :: debug = .TRUE.
+  logical :: debug = .FALSE.
 
   integer :: dev                   ! CAFe subimage device
   integer :: ocl_id                ! OpenCL device id
@@ -38,6 +38,7 @@ program dijkstra_main
   allocate(Changed(NX,NY,NZ))
   allocate( Offset(3,NFS)   )
 
+  print *, ".........FS.............."
   call read_forward_star(NFS, Offset)
 #ifdef NO_NO_NO
   do i = 1, NFS
@@ -45,12 +46,32 @@ program dijkstra_main
   end do
 #endif
 
-  U = 1.0
-!!!!  U(8:24,8:24,8:24) = 1.0  ! pick some "faster" regions
+  !! read in velocity field
+  !
+  open(unit = 2, file = "velocity-241-241-51-nonConst.txt")
+  print *, ".........U..............."
+  read (2,*), nxf, nyf, nzf
+  print *, nxf, nyf, nzf
+  if (nxf .NE. NX  .OR. nyf .NE. NY  .OR.  nzf .NE. NZ) then
+     print *, "ERROR: Number of velocity components don't match", nxf, nyf, nzf
+     stop
+  end if
 
+  U = 0
+  ! Get array from file
+  do k = 1, NZ
+     do j = 1, NY
+        do i = 1, NX
+           read (2,*), U(i,j,k)
+        end do
+     end do
+  end do
+  close(2)
+
+  Changed = 0
   TT = VERY_BIG
 
-  !! sweep grid starting at (1,1,1)
+  !! sweep grid starting at (NX,NY,NZ) (worst case basically)
   !
   i = NX;  j = NY;  k = NZ;
   TT(i,j,k) = 0.0
