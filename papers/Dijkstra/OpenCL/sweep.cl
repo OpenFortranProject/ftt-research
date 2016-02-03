@@ -3,18 +3,36 @@
  */
 
 // TODO: look up how to place in constant memory
-
-__kernel void sweep (int nx, int ny, int nz, int nfs
-                           , __global const float * U
-                           , __global float * TT
-                           , __global const int * Offset
-                           , __global int * Changed)
+__kernel void sweep ( const int nx, const int ny
+		      , const int nz, const int nfs
+		      , __global const float * U
+		      , __global float * TT
+		      , __constant int * Offset
+		      , __global int * Changed
+		      , const int rightHalo
+		      , const int step)
 {
   // Get x, y, z coordinates and check in correct boundary
-  const int halo = 0, rightHalo = 0; // No halo at this point
-  const int i = get_global_id(0) + halo;
-  const int j = get_global_id(1) + halo;
-  const int k = get_global_id(2) + halo;
+  const int halo = 0; // No halo at this point
+  int i = get_global_id(0) + halo;
+  int j = get_global_id(1) + halo;
+  int k = get_global_id(2) + halo;
+  // decide Sweep
+  /* if (step % 6 == 1) */
+  /*   i = nx - i - 1; */
+  /* else if (step % 6 == 2) { */
+  /*   i = nx - i - 1; */
+  /*   k = nz - k - 1; */
+  /* } */
+  /* else if (step % 6 == 3) */
+  /*   j = ny - j - 1; */
+  /* else if (step % 6 == 4) { */
+  /*   i = nx - i - 1; */
+  /*   j = ny - j - 1; */
+  /* } */
+  /* else if (step % 6 == 5) */
+  /*   k = nz - k - 1; */
+
   if (i < halo || j < halo || k < halo)
     return;
   if (i >= nx || j >= ny || k >= nz)
@@ -32,7 +50,6 @@ __kernel void sweep (int nx, int ny, int nz, int nfs
   int k0s;
 
   // begin algorithm
-
   int chg = 0;
   const int k0 = i + j * sy + k * sz;
   const float u0 = U[k0];
