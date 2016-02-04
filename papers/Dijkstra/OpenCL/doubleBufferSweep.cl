@@ -11,7 +11,7 @@ __kernel void sweep ( const int nx, const int ny
 		      , __global int * Changed
 		      , const int rightHalo
 		      , const int step
-		      , __local float * TTbuf)
+		      , __global float * TTbuf)
 {
   // Get x, y, z coordinates and check in correct boundary
   const int halo = 0; // No halo at this point
