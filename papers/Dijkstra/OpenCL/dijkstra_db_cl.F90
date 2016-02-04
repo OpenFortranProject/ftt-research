@@ -65,7 +65,7 @@ print *, "newNX, newNY, newNZ", newNX, newNY, newNZ, "cl_lws__", cl_lws__
 ALLOCATE(U(newNX,newNY,newNZ))
 ALLOCATE(TT(newNX,newNY,newNZ,DB))
 ALLOCATE(Changed(newNX,newNY,newNZ))
-ALLOCATE(Offset(3,NFS))
+ALLOCATE(Offset(3,NFS), Dist(NFS))
 
 U(:,:,:) = 0
 Changed(:,:,:) = 0
@@ -89,7 +89,9 @@ cl_Changed_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
 print *, "cl_U, cl_TT, cl_Changed size = ", cl_size__
 cl_size__ = 4*3*NFS
 cl_Offset_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
-print *, "cl_Offset = ", cl_size__
+cl_size__ = 4*NFS
+cl_Dist_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
+print *, "cl_Offset = ", cl_size__*3, cl_size__
 
 CALL read_forward_star(NFS,Offset)
 
@@ -106,6 +108,8 @@ cl_status__ = writeBuffer(cl_U_, C_LOC(U ),cl_size__)
 cl_status__ = writeBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
 cl_size__ = 4*3*NFS
 cl_status__ = writeBuffer(cl_Offset_,C_LOC(Offset),cl_size__)
+cl_size__ = 4*NFS
+cl_status__ = writeBuffer(cl_Dist_,  C_LOC(Dist  ),cl_size__)
 
 cl_status__ = setKernelArg(cl_sweep_,0,nx)
 cl_status__ = setKernelArg(cl_sweep_,1,ny)
@@ -114,6 +118,7 @@ cl_status__ = setKernelArg(cl_sweep_,3,NFS)
 cl_status__ = setKernelArg(cl_sweep_,4,clMemObject(cl_U_))
 cl_status__ = setKernelArg(cl_sweep_,5,clMemObject(cl_TT_))
 cl_status__ = setKernelArg(cl_sweep_,6,clMemObject(cl_Offset_))
+!cl_status__ = setKernelArg(cl_sweep_,7,clMemObject(cl_Dist_))
 cl_status__ = setKernelArg(cl_sweep_,7,clMemObject(cl_Changed_))
 cl_status__ = setKernelArg(cl_sweep_,8,rightHalo)
 cl_status__ = setKernelArg(cl_sweep_,9,stepsTaken)
@@ -174,11 +179,12 @@ PRINT *, "Sweep/reduce time for N=", nx*ny*nz, real(time_sweep), real(time_reduc
 bandwidth = stepsTaken*4.0*nx*ny*nz*NFS*2.0 / (real(time_sweep) * 1000000000)
 PRINT *, "Steps Taken", stepsTaken, "Bandwidth", bandwidth
 
-DEALLOCATE(U,TT,Changed,Offset)
+DEALLOCATE(U,TT,Changed,Offset,Dist)
 
 cl_status__ = releaseMemObject(cl_U_)
 cl_status__ = releaseMemObject(cl_TT_)
 cl_status__ = releaseMemObject(cl_Changed_)
 cl_status__ = releaseMemObject(cl_Offset_)
+cl_status__ = releaseMemObject(cl_Dist_)
 
 END PROGRAM
