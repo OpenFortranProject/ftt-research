@@ -137,7 +137,7 @@ LIBS += -L $(FOR_OCL_DIR) -lforopencl
 	$(FC) -c $(FCFLAGS) -o $@ $<
 
 
-APPS = dijkstra_cl
+APPS = dijkstra_cl dijkstra_db_cl
 
 
 all: $(OBJS) $(APPS)
@@ -145,11 +145,17 @@ all: $(OBJS) $(APPS)
 dijkstra_cl: dijkstra_cl.o $(OBJS)
 	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
 
+dijkstra_db_cl: dijkstra_db_cl.o $(OBJS)
+	$(LINK) $(FCFLAGS) -o $@ $< $(LIBS)
+
 # dependencies
 #
 
 check:  dijkstra_cl
 	./dijkstra_cl
+
+check-db:  dijkstra_db_cl
+	./dijkstra_db_cl
 
 clean:
 	rm -f $(OBJS)
