@@ -18,7 +18,7 @@ REAL,    ALLOCATABLE, TARGET, DIMENSION(:,:,:,:) :: TT
 REAL,    ALLOCATABLE, TARGET, DIMENSION(:,:,:)   :: U
 INTEGER, ALLOCATABLE, TARGET, DIMENSION(:,:,:)   :: Changed
 INTEGER, ALLOCATABLE, TARGET, DIMENSION(:,:)     :: Offset
-INTEGER, ALLOCATABLE, TARGET, DIMENSION(:)       :: Dist
+REAL,    ALLOCATABLE, TARGET, DIMENSION(:)       :: Dist
 
 DOUBLE PRECISION :: time, time_diff, time_sweep = 0.0d0, time_reduce = 0.0d0
 INTEGER :: i, j, k
@@ -93,7 +93,8 @@ cl_size__ = 4*NFS
 cl_Dist_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
 print *, "cl_Offset = ", cl_size__*3, cl_size__
 
-CALL read_forward_star(NFS,Offset)
+CALL read_forward_star(NFS, Offset, Dist)
+print *, Dist
 
 TT = VERY_BIG
 
