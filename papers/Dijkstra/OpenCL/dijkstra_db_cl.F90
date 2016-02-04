@@ -52,7 +52,7 @@ dev = get_subimage(ocl_id,cl_dev_)
 
 !! May want information about the devices
 cl_status__ = query(cl_dev_)
-cl_sweep_ = createKernel(cl_dev_,"sweep")
+cl_sweep_ = createKernel(cl_dev_,"sweep_db")
 
 open(unit = 2, file = "velocity-241-241-51-nonConst.txt")
 read (2,*), nx, ny, nz
