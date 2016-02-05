@@ -2,15 +2,20 @@ module forward_star
 
 contains
 
-subroutine read_forward_star(nfs, off)
+subroutine read_forward_star(nfs, off, dist)
   integer, intent(in ) :: nfs
   integer, intent(out) :: off(3,nfs)
-  integer :: i
+  real,    intent(out) :: dist(nfs)
+  integer :: i, oi, oj, ok
 
   open(unit=1, file='arcList.txt')
 
   do i = 1, nfs
-     read(1, *) off(1,i), off(2,i), off(3,i)
+     read(1, *) oi, oj, ok
+     off(1,i) = oi
+     off(2,i) = oj
+     off(3,i) = ok
+     dist(i) = sqrt( REAL(oi*oi + oj*oj + ok*ok) );
   end do
 
   close(unit=1)

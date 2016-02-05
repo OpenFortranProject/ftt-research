@@ -18,11 +18,12 @@ REAL,    ALLOCATABLE, TARGET, DIMENSION(:,:,:,:) :: TT
 REAL,    ALLOCATABLE, TARGET, DIMENSION(:,:,:)   :: U
 INTEGER, ALLOCATABLE, TARGET, DIMENSION(:,:,:)   :: Changed
 INTEGER, ALLOCATABLE, TARGET, DIMENSION(:,:)     :: Offset
+REAL,    ALLOCATABLE, TARGET, DIMENSION(:)       :: Dist
 
 DOUBLE PRECISION :: time, time_diff, time_sweep = 0.0d0, time_reduce = 0.0d0
 INTEGER :: i, j, k
 LOGICAL :: done = .FALSE.
-LOGICAL :: debug = .FALSE.
+LOGICAL :: debug = .TRUE.
 
 INTEGER :: dev
 INTEGER :: ocl_id
@@ -32,11 +33,8 @@ TYPE(CLBuffer) :: cl_U_
 TYPE(CLBuffer) :: cl_TT_
 TYPE(CLBuffer) :: cl_Changed_
 TYPE(CLBuffer) :: cl_Offset_
+TYPE(CLBuffer) :: cl_Dist_
 TYPE(CLKernel) :: cl_sweep_
-
-#ifdef DOUBLE_BUFFER
-TYPE(CLBuffer) :: cl_TTBuf_
-#endif
 
 INTEGER :: focl_intvar__
 INTEGER(KIND=cl_int) :: cl_status__
@@ -67,7 +65,7 @@ print *, "newNX, newNY, newNZ", newNX, newNY, newNZ, "cl_lws__", cl_lws__
 ALLOCATE(U(newNX,newNY,newNZ))
 ALLOCATE(TT(newNX,newNY,newNZ,DB))
 ALLOCATE(Changed(newNX,newNY,newNZ))
-ALLOCATE(Offset(3,NFS))
+ALLOCATE(Offset(3,NFS), Dist(NFS))
 
 U(:,:,:) = 0
 Changed(:,:,:) = 0
@@ -91,18 +89,17 @@ cl_Changed_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
 print *, "cl_U, cl_TT, cl_Changed size = ", cl_size__
 cl_size__ = 4*3*NFS
 cl_Offset_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
-print *, "cl_Offset = ", cl_size__
+cl_size__ = 4*NFS
+cl_Dist_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
+print *, "cl_Offset = ", cl_size__*3, cl_size__
 
-#ifdef DOUBLE_BUFFER
-cl_size__ = 4*newNX*newNY*newNZ
-cl_TTBuf_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
-#endif
-
-CALL read_forward_star(NFS,Offset)
+CALL read_forward_star(NFS, Offset, Dist)
+print *, Dist
 
 TT = VERY_BIG
 
-i = nx;  j = ny;  k = nz
+i = nx/2;  j = ny/2;  k = nz/2
+i =  1;  j =  1;  k =  1
 TT(i,j,k,:) = 0.0
 
 cl_size__ = DB * 4*newNX*newNY*newNZ
@@ -112,11 +109,8 @@ cl_status__ = writeBuffer(cl_U_, C_LOC(U ),cl_size__)
 cl_status__ = writeBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
 cl_size__ = 4*3*NFS
 cl_status__ = writeBuffer(cl_Offset_,C_LOC(Offset),cl_size__)
-
-#ifdef DOUBLE_BUFFER
-cl_size__ = 4*newNX*newNY*newNZ
-cl_status__ = writeBuffer(cl_TTBuf_,C_LOC(TT),cl_size__)
-#endif
+cl_size__ = 4*NFS
+cl_status__ = writeBuffer(cl_Dist_,  C_LOC(Dist  ),cl_size__)
 
 cl_status__ = setKernelArg(cl_sweep_,0,nx)
 cl_status__ = setKernelArg(cl_sweep_,1,ny)
@@ -125,13 +119,10 @@ cl_status__ = setKernelArg(cl_sweep_,3,NFS)
 cl_status__ = setKernelArg(cl_sweep_,4,clMemObject(cl_U_))
 cl_status__ = setKernelArg(cl_sweep_,5,clMemObject(cl_TT_))
 cl_status__ = setKernelArg(cl_sweep_,6,clMemObject(cl_Offset_))
+!cl_status__ = setKernelArg(cl_sweep_,7,clMemObject(cl_Dist_))
 cl_status__ = setKernelArg(cl_sweep_,7,clMemObject(cl_Changed_))
 cl_status__ = setKernelArg(cl_sweep_,8,rightHalo)
 cl_status__ = setKernelArg(cl_sweep_,9,stepsTaken)
-
-#ifdef DOUBLE_BUFFER
-cl_status__ = setKernelArg(cl_sweep_,10,clMemObject(cl_TTBuf_))
-#endif
 
 change = 0
 stepsTaken = 0
@@ -168,26 +159,16 @@ DO WHILE(.not. done)
 END DO 
 
 cl_size__ = DB * 4*newNX*newNY*newNZ
-#ifdef DOUBLE_BUFFER
-if (mod(stepsTaken, 2) .eq. 0) then
-   cl_status__ = readBuffer(cl_TT_,C_LOC(TT),cl_size__)
-else
-   cl_status__ = readBuffer(cl_TTBuf_,C_LOC(TT),cl_size__)
-end if
-#else
 cl_status__ = readBuffer(cl_TT_,C_LOC(TT),cl_size__)
-#endif
 
 open(unit = 7, file = "output.txt")
 
 IF (debug) THEN
-  PRINT *, ''
-  DO k = 1, newNZ
-     DO j = 1, newNY
-        DO i = 1, newNX
-           ! PRINT *, i,j,k,TT(i,j,k,1)
-           write (7,*), i,j,k,TT(i,j,k,1)
-           ! write (7,*), TT(i,j,k,1)
+  write (7,*), nx, ny, nz
+  DO k = 1, nz
+     DO j = 1, ny
+        DO i = 1, nx
+           write (7,*), i,j,k, TT(i,j,k,1)
         END DO
      END DO
   END DO 
@@ -199,15 +180,12 @@ PRINT *, "Sweep/reduce time for N=", nx*ny*nz, real(time_sweep), real(time_reduc
 bandwidth = stepsTaken*4.0*nx*ny*nz*NFS*2.0 / (real(time_sweep) * 1000000000)
 PRINT *, "Steps Taken", stepsTaken, "Bandwidth", bandwidth
 
-DEALLOCATE(U,TT,Changed,Offset)
+DEALLOCATE(U,TT,Changed,Offset,Dist)
 
 cl_status__ = releaseMemObject(cl_U_)
 cl_status__ = releaseMemObject(cl_TT_)
 cl_status__ = releaseMemObject(cl_Changed_)
 cl_status__ = releaseMemObject(cl_Offset_)
-
-#ifdef DOUBLE_BUFFER
-cl_status__ = releaseMemObject(cl_TTBuf_)
-#endif
+cl_status__ = releaseMemObject(cl_Dist_)
 
 END PROGRAM
