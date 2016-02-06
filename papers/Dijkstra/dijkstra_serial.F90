@@ -1,3 +1,5 @@
+#undef PRECONDITION
+
 program dijkstra_main
   use MPI_f08
   use forward_star
@@ -21,9 +23,9 @@ program dijkstra_main
   !  -----------------------------------------
 
   double precision :: time, time0, time_sweep = 0.0d0, time_total = 0.0d0
-  integer :: i, j, k, num_changed
+  integer :: i, j, k, num_changed, start(3)
   logical :: done  = .FALSE.
-  logical :: debug = .FALSE.
+  logical :: debug = .TRUE.
 
   integer :: dev                   ! CAFe subimage device
   integer :: ocl_id                ! OpenCL device id
@@ -38,21 +40,27 @@ program dijkstra_main
   allocate(Changed(NX,NY,NZ))
   allocate( Offset(3,NFS)   )
 
+  print *, "---------------------------"
   call read_forward_star(NFS, Offset)
-print *, "---------------------------"
   call read_velocity_model(NX, NY, NZ, U)
-print *, "..........................."
 
   Changed = 0
   TT = VERY_BIG
 
   !! sweep grid starting at midpoint (NX/2,NY/2,1) (roughly)
   !
-  i = 1+NX/2;  j = 1+NY/2;  k = 1;
+  i = 1+NX/2;    j = 1+NY/2;    k = 1;
+  start(1) = i;  start(2) = j;  start(3) = k;
   TT(i,j,k) = 0.0
 
-  i = 1
+  !! make initial guess along straight paths
+  !
   time0 = MPI_Wtime()
+#ifdef PRECONDITION
+  call calc_linear_paths(NX, NY, NZ, NFS, U, start, TT)
+#endif
+
+  i = 1
   do while (.NOT. done) 
 
      time = MPI_Wtime()
