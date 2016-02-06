@@ -1,8 +1,6 @@
 module dijkstra
   implicit none
 
-  real, parameter :: DIST_FACTOR = 1.0
-
 contains
 
 !-----------------------------------------------------------------------
