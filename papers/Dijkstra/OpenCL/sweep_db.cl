@@ -72,8 +72,6 @@ __kernel void sweep_db ( const int nx, const int ny
 #endif
 
   // initialize variables
-  // TODO: after debugging change to 10.0
-  int const DIST_FACTOR = 1;
   int l, is, js, ks;
   float dist, delay, t;
   float t0, tt_min;
@@ -96,7 +94,7 @@ __kernel void sweep_db ( const int nx, const int ny
     is = i + Offset[0+l*3]; if (is < 0) continue; if (is >= nx) continue;
     js = j + Offset[1+l*3]; if (js < 0) continue; if (js >= ny) continue;
     ks = k + Offset[2+l*3]; if (ks < 0) continue; if (ks >= nz) continue;
-    dist = DIST_FACTOR*sqrt( (float) ((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) );
+    dist = 10.0*sqrt( (float) ((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) );
     k0s = is + js * sy + ks * sz;
     delay = 0.5*(u0 + U[k0s]) * dist;
 
