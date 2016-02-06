@@ -20,8 +20,8 @@ program dijkstra_main
 
   !  -----------------------------------------
 
-  double precision :: time, time_sweep = 0.0d0, time_reduce = 0.0d0
-  integer :: i, j, k, nxf, nyf, nzf
+  double precision :: time, time0, time_sweep = 0.0d0, time_total = 0.0d0
+  integer :: i, j, k, num_changed
   logical :: done  = .FALSE.
   logical :: debug = .FALSE.
 
@@ -38,74 +38,43 @@ program dijkstra_main
   allocate(Changed(NX,NY,NZ))
   allocate( Offset(3,NFS)   )
 
-  print *, ".........FS.............."
   call read_forward_star(NFS, Offset)
-#ifdef NO_NO_NO
-  do i = 1, NFS
-     print '(i4, i4, i4)', Offset(1,i), Offset(2,i), Offset(3,i)
-  end do
-#endif
-
-  !! read in velocity field
-  !
-  open(unit = 2, file = "velocity-241-241-51-nonConst.txt")
-  print *, ".........U..............."
-  read (2,*), nxf, nyf, nzf
-  print *, nxf, nyf, nzf
-  if (nxf .NE. NX  .OR. nyf .NE. NY  .OR.  nzf .NE. NZ) then
-     print *, "ERROR: Number of velocity components don't match", nxf, nyf, nzf
-     stop
-  end if
-
-  U = 0
-  ! Get array from file
-  do k = 1, NZ
-     do j = 1, NY
-        do i = 1, NX
-           read (2,*), U(i,j,k)
-        end do
-     end do
-  end do
-  close(2)
+print *, "---------------------------"
+  call read_velocity_model(NX, NY, NZ, U)
+print *, "..........................."
 
   Changed = 0
   TT = VERY_BIG
 
-  !! sweep grid starting at (NX,NY,NZ) (worst case basically)
+  !! sweep grid starting at midpoint (NX/2,NY/2,1) (roughly)
   !
-  i = NX;  j = NY;  k = NZ;
+  i = 1+NX/2;  j = 1+NY/2;  k = 1;
   TT(i,j,k) = 0.0
 
-  i = 1
+  time0 = MPI_Wtime()
   do while (.NOT. done) 
 
      time = MPI_Wtime()
      call sweep(NX,NY,NZ, NFS, U, TT, Offset, Changed)
-     time_sweep = time_sweep + MPI_Wtime() - time
+     time = MPI_Wtime() - time
+     time_sweep = time_sweep + time
 
      !! see if any travel times have changed
      !
-     time = MPI_Wtime()
-     if (sum(Changed) == 0) done = .TRUE.
-     time_reduce = time_reduce + MPI_Wtime() - time
-
-     print *, "# changed:", sum(Changed)
+     num_changed = sum(Changed)
+     if (num_changed == 0) done = .TRUE.
+     print *, "# changed:", num_changed, time
 
   end do
 
+  time_total = MPI_Wtime() - time0
+
   if (debug) then
-     print *
-     do k = 1, NZ
-        do j = 1, NY
-           do i = 1, NX
-              print *, i, j, k, TT(i,j,k)
-           end do
-        end do
-     end do
+     call write_results(NX, NY, NZ, TT)
   end if
 
   print *
-  print *, "Sweep/reduce time for N=", NX*NY*NZ, real(time_sweep), real(time_reduce)
+  print *, "Sweep/reduce time for N=", NX*NY*NZ, real(time_total), real(time_sweep)
 
   deallocate(U,TT,Changed,Offset)
 
