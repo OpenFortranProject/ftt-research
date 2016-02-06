@@ -18,7 +18,7 @@ subroutine sweep(nx,ny,nz, nfs, U, TT, Offset, Changed)
    
    !--- local variables ---
    !
-   integer :: i, j, k, l, is, js, ks, chg
+   integer :: i, j, k, l, oi, oj, ok, chg
    real    :: t, t0, tt_min, u0, dist, delay
    
    !! check travel time at each node
@@ -32,14 +32,14 @@ subroutine sweep(nx,ny,nz, nfs, U, TT, Offset, Changed)
             tt_min = t0
             ! check each node in forward star
             do l = 1, nfs
-               is = i + Offset(1,l);  if (is < 1) goto 10;  if (is > nx) goto 10
-               js = j + Offset(2,l);  if (js < 1) goto 10;  if (js > ny) goto 10
-               ks = k + Offset(3,l);  if (ks < 1) goto 10;  if (ks > nz) goto 10
+               oi = i + Offset(1,l);  if (oi < 1) goto 10;  if (oi > nx) goto 10
+               oj = j + Offset(2,l);  if (oj < 1) goto 10;  if (oj > ny) goto 10
+               ok = k + Offset(3,l);  if (ok < 1) goto 10;  if (ok > nz) goto 10
 
-               dist = DIST_FACTOR*sqrt( real((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) )
-               delay = 0.5*(u0 + U(is,js,ks))*dist
+               dist = DIST_FACTOR*sqrt( real((oi-i)*(oi-i) + (oj-j)*(oj-j) + (ok-k)*(ok-k)) )
+               delay = 0.5*(u0 + U(oi,oj,ok))*dist
 
-               t = TT(is,js,ks) + delay
+               t = TT(oi,oj,ok) + delay
                if (t < t0) then       ! update travel time
                   chg = 1
                   t0 = t
