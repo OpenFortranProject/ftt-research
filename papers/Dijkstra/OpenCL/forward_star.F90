@@ -115,7 +115,7 @@ subroutine write_results(nx, ny, nz, tt)
   do i = 1, nx
      do j = 1, ny
         do k = 1, nz
-           write (1,'(3i4,f8.3)'), i,j,k, tt(i,j,k)
+           write (1,'(3i4,f9.4)'), i,j,k, tt(i,j,k)
         end do
      end do
   end do
