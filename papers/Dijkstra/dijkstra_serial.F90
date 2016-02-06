@@ -51,6 +51,7 @@ print *, "..........................."
   i = 1+NX/2;  j = 1+NY/2;  k = 1;
   TT(i,j,k) = 0.0
 
+  i = 1
   time0 = MPI_Wtime()
   do while (.NOT. done) 
 
@@ -63,7 +64,7 @@ print *, "..........................."
      !
      num_changed = sum(Changed)
      if (num_changed == 0) done = .TRUE.
-     print *, "# changed:", num_changed, time
+     print *, i, "# changed:", num_changed, real(time)
 
   end do
 
