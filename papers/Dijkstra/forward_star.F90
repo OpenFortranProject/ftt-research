@@ -40,6 +40,26 @@ subroutine read_velocity_model(nx, ny, nz, U)
 
 end subroutine read_velocity_model
 
+subroutine read_velocity_model_padded(padNx,padNy,padNz, nx,ny,nz, U)
+  implicit none
+  integer, intent(in ) :: padNx, padNy, padNz, nx, ny, nz
+  real,    intent(out) :: U(padNx,padNy,padNz)
+  integer :: i, j, k, oi, oj, ok
+
+  open(unit=1, file='srModel_forTomographyPaper.txt')
+
+  do i = 1, nx
+     do j = 1, ny
+        do k = 1, nz
+           read(1, *) oi, oj, ok, U(i,j,k)
+        end do
+     end do
+  end do
+
+  close(unit=1)
+
+end subroutine read_velocity_model_padded
+
 subroutine calc_distance(nfs, off, dist)
   implicit none
   integer, intent(in ) :: nfs
@@ -104,6 +124,54 @@ subroutine calc_linear_paths(nx, ny, nz, nfs, U, start, tt)
 
 end subroutine calc_linear_paths
 
+subroutine calc_linear_paths_padded(padNx, padNy, padNz, nx, ny, nz, nfs, U, start, tt)
+  implicit none
+  integer, intent(in) :: padNx, padNy, padNz, nx, ny, nz, nfs, start(3)
+  real,    intent(in ) ::  U(padNx,padNy,padNz)
+  real,    intent(out) :: tt(padNx,padNy,padNz)
+
+  real    :: delay
+  integer :: i, j, k, si, sj, sk
+
+  si = start(1)
+  sj = start(2)
+  sk = start(3)
+
+  !! traverse x axis
+  !
+  do i = si-1, 1, -1
+     delay = 0.5 * (U(i+1,sj,sk) + U(i,sj,sk)) * DIST_SCALE;
+     tt(i,sj,sk) = tt(i+1,sj,sk) + delay
+  end do
+  do i = si+1, nx
+     delay = 0.5 * (U(i-1,sj,sk) + U(i,sj,sk)) * DIST_SCALE;
+     tt(i,sj,sk) = tt(i-1,sj,sk) + delay
+  end do
+
+  !! traverse y axis
+  !
+  do j = sj-1, 1, -1
+     delay = 0.5 * (U(si,j+1,sk) + U(si,j,sk)) * DIST_SCALE;
+     tt(si,j,sk) = tt(si,j+1,sk) + delay
+  end do
+  do j = sj+1, ny
+     delay = 0.5 * (U(si,j-1,sk) + U(si,j,sk)) * DIST_SCALE;
+     tt(si,j,sk) = tt(si,j-1,sk) + delay
+  end do
+
+  !! traverse x axis
+  !
+  do k = sk-1, 1, -1
+     delay = 0.5 * (U(si,sj,k+1) + U(si,sj,k)) * DIST_SCALE;
+     tt(si,sj,k) = tt(si,sj,k+1) + delay
+  end do
+  do k = sk+1, nz
+     delay = 0.5 * (U(si,sj,k-1) + U(si,sj,k)) * DIST_SCALE;
+     tt(si,sj,k) = tt(si,sj,k-1) + delay
+  end do
+
+end subroutine calc_linear_paths_padded
+
 subroutine write_results(nx, ny, nz, tt)
   implicit none
   integer, intent(in) :: nx, ny, nz
@@ -123,6 +191,26 @@ subroutine write_results(nx, ny, nz, tt)
   close(unit=1)
 
 end subroutine write_results
+
+subroutine write_results_padded(padNx,padNy,padNz, nx,ny,nz, tt)
+  implicit none
+  integer, intent(in) :: padNx, padNy, padNz, nx, ny, nz
+  real,    intent(in) :: tt(padNx,padNy,padNz)
+  integer :: i, j, k
+
+  open(unit=1, file='output.tt', action='write')
+
+  do i = 1, nx
+     do j = 1, ny
+        do k = 1, nz
+           write (1,'(3i4,f9.4)'), i,j,k, tt(i,j,k)
+        end do
+     end do
+  end do
+
+  close(unit=1)
+
+end subroutine write_results_padded
 
 end module forward_star
 
