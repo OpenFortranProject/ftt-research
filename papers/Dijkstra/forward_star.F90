@@ -52,8 +52,8 @@ subroutine calc_distance(nfs, off, dist)
 end subroutine calc_distance
 
 subroutine write_results(nx, ny, nz, tt)
-  integer, intent(in ) :: nx, ny, nz
-  real,    intent(out) :: tt(nx,ny,nz)
+  integer, intent(in) :: nx, ny, nz
+  real,    intent(in) :: tt(nx,ny,nz)
   integer :: i, j, k
 
   open(unit=1, file='output.tt')
