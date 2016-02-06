@@ -65,6 +65,7 @@ print *, "..........................."
      num_changed = sum(Changed)
      if (num_changed == 0) done = .TRUE.
      print *, i, "# changed:", num_changed, real(time)
+     i = i + 1
 
   end do
 
