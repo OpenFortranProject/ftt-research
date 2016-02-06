@@ -110,7 +110,7 @@ subroutine write_results(nx, ny, nz, tt)
   real,    intent(in) :: tt(nx,ny,nz)
   integer :: i, j, k
 
-  open(unit=1, file='output.tt')
+  open(unit=1, file='output.tt', action='write')
 
   do i = 1, nx
      do j = 1, ny
