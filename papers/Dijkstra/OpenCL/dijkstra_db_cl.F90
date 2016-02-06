@@ -6,9 +6,9 @@ IMPLICIT NONE
 
 !! WARNING: current must also change (NX,NY,NZ) in sweep.cl
 !
-INTEGER :: nx = 256
-INTEGER :: ny = 256
-INTEGER :: nz = 64
+INTEGER :: nx = 241
+INTEGER :: ny = 241
+INTEGER :: nz = 51
 INTEGER :: DB = 2
 INTEGER :: newNX, newNY, newNZ
 INTEGER, PARAMETER :: NFS = 818
@@ -52,9 +52,6 @@ dev = get_subimage(ocl_id,cl_dev_)
 cl_status__ = query(cl_dev_)
 cl_sweep_ = createKernel(cl_dev_,"sweep_db")
 
-open(unit = 2, file = "velocity-241-241-51-nonConst.txt")
-read (2,*), nx, ny, nz
-
 newNX = 256
 newNY = 256
 newNZ = 64
@@ -67,19 +64,6 @@ ALLOCATE(TT(newNX,newNY,newNZ,DB))
 ALLOCATE(Changed(newNX,newNY,newNZ))
 ALLOCATE(Offset(3,NFS), Dist(NFS))
 
-U(:,:,:) = 0
-Changed(:,:,:) = 0
-
-! Get array from file
-DO k = 1, nz
-   DO j = 1, ny
-      DO i = 1, nx
-         read (2,*), U(i,j,k)
-      END DO
-   END DO
-END DO
-close(2)
-
 cl_size__ = DB * 4*newNX*newNY*newNZ
 cl_TT_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
 
@@ -88,18 +72,20 @@ cl_U_  = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
 cl_Changed_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
 print *, "cl_U, cl_TT, cl_Changed size = ", cl_size__
 cl_size__ = 4*3*NFS
-cl_Offset_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
+cl_Offset_ = createBuffer(cl_dev_,CL_MEM_READ_ONLY,cl_size__,C_NULL_PTR)
 cl_size__ = 4*NFS
-cl_Dist_ = createBuffer(cl_dev_,CL_MEM_READ_WRITE,cl_size__,C_NULL_PTR)
+cl_Dist_ = createBuffer(cl_dev_,CL_MEM_READ_ONLY,cl_size__,C_NULL_PTR)
 print *, "cl_Offset = ", cl_size__*3, cl_size__
 
-CALL read_forward_star(NFS, Offset, Dist)
-print *, Dist
+call read_forward_star(NFS, Offset, Dist)
+call read_velocity_model(nx, ny, nz, U)
+
+Changed(:,:,:) = 0
+U = 1.0
 
 TT = VERY_BIG
 
-i = nx/2;  j = ny/2;  k = nz/2
-i =  1;  j =  1;  k =  1
+i = 121;  j = 121;  k = 1
 TT(i,j,k,:) = 0.0
 
 cl_size__ = DB * 4*newNX*newNY*newNZ
@@ -143,12 +129,15 @@ DO WHILE(.not. done)
   time_diff = time_sweep - time_diff
 
   time = MPI_Wtime()
-  cl_size__ = 4*nx*ny*nz
+  cl_size__ = 4*newNX*newNY*newNZ
   cl_status__ = readBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
   IF (sum(Changed) .le. 0) done = .TRUE.
   cl_status__ = setKernelArg(cl_sweep_, 9,stepsTaken)
   stepsTaken = stepsTaken + 1
   time_reduce = time_reduce + MPI_Wtime() - time
+
+  cl_size__ = 4*nx*ny*nz
+  cl_status__ = readBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
 
   PRINT *, "# changed:", sum(Changed), "step", stepsTaken, time_diff
   if (done .eq. .TRUE. .and. change .lt. 3) then
@@ -163,16 +152,16 @@ cl_status__ = readBuffer(cl_TT_,C_LOC(TT),cl_size__)
 
 open(unit = 7, file = "output.txt")
 
-IF (debug) THEN
+if (debug) then
   write (7,*), nx, ny, nz
-  DO k = 1, nz
-     DO j = 1, ny
-        DO i = 1, nx
-           write (7,*), i,j,k, TT(i,j,k,1)
-        END DO
-     END DO
-  END DO 
-END IF
+  do i = 1, nx
+     do j = 1, ny
+        do k = 1, nz
+           write (7,'(3i4,f8.3)'), i,j,k, TT(i,j,k,1)
+        end do
+     end do
+  end do
+end if
 close(7)
 
 PRINT *, ''
