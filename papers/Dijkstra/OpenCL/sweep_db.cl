@@ -5,10 +5,6 @@
 #define DOUBLE_BUFFER
 #undef  SWEEP
 
-#define NX  256
-#define NY  256
-#define NZ   64
-
 // TODO: look up how to place in constant memory
 __kernel void sweep_db ( const int nx, const int ny
 		      , const int nz, const int nfs
@@ -16,14 +12,18 @@ __kernel void sweep_db ( const int nx, const int ny
 		      , __global float * TT
 		      , __constant int * Offset
 		      , __global int * Changed
-		      , const int rightHalo
 		      , const int step)
 {
   // double buffering offsets
   int ttOff, out_ttOff;
 
+  const int xSize = get_global_size(0);
+  const int ySize = get_global_size(1);
+  const int zSize = get_global_size(2);
+
   // Get x, y, z coordinates and check in correct boundary
   const int halo = 0; // No halo at this point
+
   int i = get_global_id(0) + halo;
   int j = get_global_id(1) + halo;
   int k = get_global_id(2) + halo;
@@ -55,8 +55,8 @@ __kernel void sweep_db ( const int nx, const int ny
     return;
 
   const int sx = 1;
-  const int sy = sx * (nx + halo + rightHalo);
-  const int sz = sy * (ny + halo + rightHalo);
+  const int sy = sx * xSize;
+  const int sz = sy * ySize;
 
   ttOff = 0;
   out_ttOff = 0;
@@ -64,9 +64,9 @@ __kernel void sweep_db ( const int nx, const int ny
 #ifdef DOUBLE_BUFFER
   if (step % 2 == 0) {
     ttOff = 0;
-    out_ttOff = NX * NY * NZ;
+    out_ttOff = xSize * ySize * zSize;
   } else {
-    ttOff = NX * NY * NZ;
+    ttOff = xSize * ySize * zSize;
     out_ttOff = 0;
   }
 #endif
