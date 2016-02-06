@@ -42,7 +42,7 @@ INTEGER(KIND=c_size_t) :: cl_size__
 INTEGER(KIND=c_size_t) :: cl_gwo__(3)
 INTEGER(KIND=c_size_t) :: cl_gws__(3)
 INTEGER(KIND=c_size_t) :: cl_lws__(3)
-INTEGER :: stepsTaken, rightHalo, change
+INTEGER :: stepsTaken, rightHalo, change, startPt(3)
 REAL :: bandwidth  
 
 ocl_id = 1
@@ -77,16 +77,19 @@ cl_size__ = 4*NFS
 cl_Dist_ = createBuffer(cl_dev_,CL_MEM_READ_ONLY,cl_size__,C_NULL_PTR)
 print *, "cl_Offset = ", cl_size__*3, cl_size__
 
-call read_forward_star(NFS, Offset, Dist)
-call read_velocity_model(nx, ny, nz, U)
+call read_forward_star(NFS, Offset)
+call read_velocity_model_padded(newNX,newNY,newNZ, nx,ny,nz, U)
 
 Changed(:,:,:) = 0
-U = 1.0
-
 TT = VERY_BIG
 
-i = 121;  j = 121;  k = 1
+i = nx/2 + 1;  j = ny/2 + 1;  k = 1
 TT(i,j,k,:) = 0.0
+
+#ifdef INIT_AXES
+startPt(1) = i;  startPt(2) = j;  startPt(3) = k;
+call calc_linear_paths_padded(newNX, newNY, newNZ, nx, ny, nz, NFS, U, startPt, TT)
+#endif
 
 cl_size__ = DB * 4*newNX*newNY*newNZ
 cl_status__ = writeBuffer(cl_TT_,C_LOC(TT),cl_size__)
@@ -105,15 +108,12 @@ cl_status__ = setKernelArg(cl_sweep_,3,NFS)
 cl_status__ = setKernelArg(cl_sweep_,4,clMemObject(cl_U_))
 cl_status__ = setKernelArg(cl_sweep_,5,clMemObject(cl_TT_))
 cl_status__ = setKernelArg(cl_sweep_,6,clMemObject(cl_Offset_))
-!cl_status__ = setKernelArg(cl_sweep_,7,clMemObject(cl_Dist_))
 cl_status__ = setKernelArg(cl_sweep_,7,clMemObject(cl_Changed_))
-cl_status__ = setKernelArg(cl_sweep_,8,rightHalo)
-cl_status__ = setKernelArg(cl_sweep_,9,stepsTaken)
+cl_status__ = setKernelArg(cl_sweep_,8,stepsTaken)
 
 change = 0
 stepsTaken = 0
 
-! DO WHILE(stepsTaken .lt. 6)
 DO WHILE(.not. done)
 
   time = MPI_Wtime()
@@ -132,14 +132,11 @@ DO WHILE(.not. done)
   cl_size__ = 4*newNX*newNY*newNZ
   cl_status__ = readBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
   IF (sum(Changed) .le. 0) done = .TRUE.
-  cl_status__ = setKernelArg(cl_sweep_, 9,stepsTaken)
+  cl_status__ = setKernelArg(cl_sweep_, 8, stepsTaken)
   stepsTaken = stepsTaken + 1
   time_reduce = time_reduce + MPI_Wtime() - time
 
-  cl_size__ = 4*nx*ny*nz
-  cl_status__ = readBuffer(cl_Changed_,C_LOC(Changed),cl_size__)
-
-  PRINT *, "# changed:", sum(Changed), "step", stepsTaken, time_diff
+  print *, "# changed:", sum(Changed), "step", stepsTaken, real(time_diff)
   if (done .eq. .TRUE. .and. change .lt. 3) then
      done = .FALSE.
      change = change + 1
@@ -150,19 +147,15 @@ END DO
 cl_size__ = DB * 4*newNX*newNY*newNZ
 cl_status__ = readBuffer(cl_TT_,C_LOC(TT),cl_size__)
 
-open(unit = 7, file = "output.txt")
+print *, "------------------"
+print *, U(121,121,1:10)
+print *, "------------------"
+print *, TT(121,121,1:10,1)
+print *, "------------------"
 
 if (debug) then
-  write (7,*), nx, ny, nz
-  do i = 1, nx
-     do j = 1, ny
-        do k = 1, nz
-           write (7,'(3i4,f8.3)'), i,j,k, TT(i,j,k,1)
-        end do
-     end do
-  end do
-end if
-close(7)
+  call write_results_padded(newNX,newNY,newNZ, nx,ny,nz, TT)
+end if  
 
 PRINT *, ''
 PRINT *, "Sweep/reduce time for N=", nx*ny*nz, real(time_sweep), real(time_reduce)
