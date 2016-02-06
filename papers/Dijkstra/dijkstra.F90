@@ -9,6 +9,7 @@ contains
 ! Sweep over the grid while updating the travel time
 !-----------------------------------------------------------------------
 subroutine sweep(nx,ny,nz, nfs, U, TT, Offset, Changed)
+   use forward_star, only : DIST_SCALE
    implicit none
    integer, intent(in)    :: nx, ny, nz, nfs
    real,    intent(in)    ::  U(nx,ny,nz)
@@ -36,7 +37,7 @@ subroutine sweep(nx,ny,nz, nfs, U, TT, Offset, Changed)
                oj = j + Offset(2,l);  if (oj < 1) goto 10;  if (oj > ny) goto 10
                ok = k + Offset(3,l);  if (ok < 1) goto 10;  if (ok > nz) goto 10
 
-               dist = DIST_FACTOR*sqrt( real((oi-i)*(oi-i) + (oj-j)*(oj-j) + (ok-k)*(ok-k)) )
+               dist = DIST_SCALE*sqrt( real((oi-i)*(oi-i) + (oj-j)*(oj-j) + (ok-k)*(ok-k)) )
                delay = 0.5*(u0 + U(oi,oj,ok))*dist
 
                t = TT(oi,oj,ok) + delay
