@@ -18,16 +18,16 @@ program dijkstra_main
   integer :: padNX, padNY, padNZ                     ! padded sizes
   integer :: nStart                                  ! number of starting points
 
-  real,    allocatable, target, dimension(:,:,:,:), codimension[:] :: TT      ! travel time
-  real,    allocatable, target, dimension(:,:,:  ), codimension[:] :: U       ! slowness
-  integer, allocatable, target, dimension(:,:,:  ), codimension[:] :: Changed ! 1 if tt updated
-  integer, allocatable, target, dimension(:,:    ), codimension[:] :: Offset  ! offset forward star
+  real,    allocatable, target, dimension(:,:,:,:,:), codimension[:] :: TT      ! travel time
+  real,    allocatable, target, dimension(:,:,:    ), codimension[:] :: U       ! slowness
+  integer, allocatable, target, dimension(:,:,:    ), codimension[:] :: Changed ! 1 if tt updated
+  integer, allocatable, target, dimension(:,:      ), codimension[:] :: Offset  ! offset forward star
 
   !  -----------------------------------------
 
-  double precision :: time, time_diff, time_sweep = 0.0d0, time_reduce = 0.0d0
+  double precision :: time, time_diff, time_sweep = 0.0d0, time_total = 0.0d0
   integer :: i, j, k, istart
-  logical :: done  = .FALSE.
+  logical :: done(NDEV)
   logical :: debug = .FALSE.
 
   integer :: start(3,MAX_ST)       ! starting points
@@ -46,16 +46,16 @@ program dijkstra_main
   padNY = 256
   padNZ =  64
 
-  allocate(     TT(padNX,padNY,padNZ,NB) [*])
-  allocate(      U(padNX,padNY,padNZ)    [*])
-  allocate(Changed(padNX,padNY,padNZ)    [*])
-  allocate( Offset(3,NFS)                [*])
+  allocate(     TT(padNX,padNY,padNZ,NB,NDEV) [*])
+  allocate(      U(padNX,padNY,padNZ)         [*])
+  allocate(Changed(padNX,padNY,padNZ)         [*])
+  allocate( Offset(3,NFS)                     [*])
 
   do id = 1, NDEV
-     allocate(      U(padNX,padNY,padNZ) [*])  [[dev(id)]]
-     allocate(     TT(padNX,padNY,padNZ) [*])  [[dev(id)]]
-     allocate(Changed(padNX,padNY,padNZ) [*])  [[dev(id)]]
-     allocate( Offset(3,NFS)             [*])  [[dev(id)]]
+     allocate(     TT(padNX,padNY,padNZ,NB,1) [*])  [[dev(id)]]
+     allocate(      U(padNX,padNY,padNZ)      [*])  [[dev(id)]]
+     allocate(Changed(padNX,padNY,padNZ)      [*])  [[dev(id)]]
+     allocate( Offset(3,NFS)                  [*])  [[dev(id)]]
   end do
 
   call read_forward_star(NFS, Offset)
@@ -66,13 +66,15 @@ program dijkstra_main
   !
   do id = 1, NDEV
      U [id] = U
-     TT[id] = TT
      Offset [id] = Offset
   end do
 
   !! Loop over starting points
   !
-  do istart = 1, nStart, ndev
+  time = MPI_Wtime()
+  do istart = 1, nStart, NDEV
+
+     done(:) = .FALSE.
 
      do id = 1, NDEV
         !! sweep grid from starting point
@@ -80,27 +82,31 @@ program dijkstra_main
         i = start(1,istart+id-1)
         j = start(2,istart+id-1)
         k = start(3,istart+id-1)
-        TT(:,:,:) = VERY_BIG
-        TT(i,j,k) = 0.0
-        TT[id] = TT
+        TT(:,:,:,id) = VERY_BIG
+        TT(i,j,k,id) = 0.0
+        TT(:,:,:,1)[id] = TT(:,:,:,id)
 
+        nSweeps(id) = 0
         do while (.NOT. done) 
 
-           time = MPI_Wtime()
-           call sweep(NX,NY,NZ, NFS, U[dev], TT[dev], Offset[dev], Changed[dev])  [[id]]
+           call sweep(NX,NY,NZ, NFS, U[dev], TT[dev], Offset[dev], Changed[dev])  [[id, WITH_EVENT=evt(id)]]
 
            !! see if any travel times have changed
            !
-           time = MPI_Wtime()
            Changed = Changed[id]
-           if (sum(Changed) == 0) done = .TRUE.
-           time_reduce = time_reduce + MPI_Wtime() - time
+           if (sum(Changed) == 0) done[id] = .TRUE.
+           nSweeps(id) = nSweeps(id) + 1
 
-           print *, "# changed:", sum(Changed)
+           print *, id, "# changed:", sum(Changed)
 
         end do
+     end do
+  end do
 
-     end do ! end 
+  time_total = MPI_Wtime() - time
+
+  print *
+  print *, "Sweep time for N=", NX*NY*NZ, real(time_total)
 
   if (debug) then
      print *
@@ -113,16 +119,13 @@ program dijkstra_main
      end do
   end if
 
-  print *
-  print *, "Sweep/reduce time for N=", NX*NY*NZ, real(time_sweep), real(time_reduce)
-
   deallocate(U,TT,Changed,Offset)
 
-  if (dev /= THIS_IMAGE()) then
-     deallocate(      U)  [[dev]]
-     deallocate(     TT)  [[dev]]
-     deallocate(Changed)  [[dev]]
-     deallocate( Offset)  [[dev]]
-  end if
+  do id = 1, NDEV
+     deallocate(      U)  [[dev(id)]]
+     deallocate(     TT)  [[dev(id)]]
+     deallocate(Changed)  [[dev(id)]]
+     deallocate( Offset)  [[dev(id)]]
+  end do
 
 end program
