@@ -2,8 +2,9 @@
  * C kernel for sweep of forward star implementation
  */
 
-#define DOUBLE_BUFFER
-#undef  SWEEP
+#undef UPDATE_FORWARD_STAR_TT
+#undef DOUBLE_BUFFER
+#define  SWEEP
 
 // TODO: look up how to place in constant memory
 __kernel void sweep_db ( const int nx, const int ny
@@ -97,6 +98,14 @@ __kernel void sweep_db ( const int nx, const int ny
     dist = 10.0*sqrt( (float) ((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) );
     k0s = is + js * sy + ks * sz;
     delay = 0.5*(u0 + U[k0s]) * dist;
+
+#ifdef  UPDATE_FORWARD_STAR_TT
+    t = t0 + delay;
+    if (t < TT[k0s]) {
+       chg = 1;
+       TT[k0s] = t;
+    }
+#endif
 
     t = TT[k0s + ttOff] + delay;
     // if distance is smaller update
