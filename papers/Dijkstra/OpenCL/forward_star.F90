@@ -4,6 +4,23 @@ module forward_star
 
 contains
 
+subroutine read_starting_points(grid_name, npts, start)
+  implicit none
+  character(len=3), intent(in) :: grid_name
+  integer, intent(in ) :: npts
+  integer, intent(out) :: start(3,npts)
+  integer :: i
+
+  open(unit=1, file='starting-points-' // grid_name // '.txt')
+
+  do i = 1, npts
+     read(1, *) start(1,i), start(2,i), start(3,i)
+  end do
+
+  close(unit=1)
+
+end subroutine read_starting_points
+
 subroutine read_forward_star(nfs, off)
   implicit none
   integer, intent(in ) :: nfs
@@ -20,13 +37,14 @@ subroutine read_forward_star(nfs, off)
 
 end subroutine read_forward_star
 
-subroutine read_velocity_model(nx, ny, nz, U)
+subroutine read_velocity_model(grid_name, nx, ny, nz, U)
   implicit none
+  character(len=3), intent(in) :: grid_name
   integer, intent(in ) :: nx, ny, nz
   real,    intent(out) :: U(nx,ny,nz)
   integer :: i, j, k, oi, oj, ok
 
-  open(unit=1, file='srModel_forTomographyPaper.txt')
+  open(unit=1, file='velocity-' // grid_name // '.txt')
 
   do i = 1, nx
      do j = 1, ny
@@ -40,13 +58,14 @@ subroutine read_velocity_model(nx, ny, nz, U)
 
 end subroutine read_velocity_model
 
-subroutine read_velocity_model_padded(padNx,padNy,padNz, nx,ny,nz, U)
+subroutine read_velocity_model_padded(grid_name, padNx,padNy,padNz, nx,ny,nz, U)
   implicit none
+  character(len=3), intent(in) :: grid_name
   integer, intent(in ) :: padNx, padNy, padNz, nx, ny, nz
   real,    intent(out) :: U(padNx,padNy,padNz)
   integer :: i, j, k, oi, oj, ok
 
-  open(unit=1, file='srModel_forTomographyPaper.txt')
+  open(unit=1, file='velocity-' // grid_name // '.txt')
 
   do i = 1, nx
      do j = 1, ny
