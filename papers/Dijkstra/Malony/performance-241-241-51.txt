@@ -1,3 +1,5 @@
+NOTE: The velocities in velocity-241.txt are from Joseph; the other files are from Al.
+
 sweep velocity-241.txt 818-FS.txt start-12.txt 10.0
 Velocity model file: velocity-241.txt
 Forward star offset file: 818-FS.txt
