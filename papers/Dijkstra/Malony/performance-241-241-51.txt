@@ -1,0 +1,136 @@
+sweep velocity-241.txt 818-FS.txt start-12.txt 10.0
+Velocity model file: velocity-241.txt
+Forward star offset file: 818-FS.txt
+Starting points file: start-12.txt
+Delta: 10.000000
+Velocity model dimensions: 241 241 51
+Velocity data read
+Forward star size: 818
+Forward star offsets read
+radius: 7, fsindex[0]: 6
+radius: 7, fsindex[1]: 26
+radius: 7, fsindex[2]: 98
+radius: 7, fsindex[3]: 146
+radius: 7, fsindex[4]: 314
+radius: 7, fsindex[5]: 506
+radius: 7, fsindex[6]: 770
+radius: 7, fsindex[7]: 818
+starting point 0: 27 199 34
+starting point 1: 13 171 19
+starting point 2: 84 131 22
+starting point 3: 183 55 8
+starting point 4: 121 50 4
+starting point 5: 83 19 0
+starting point 6: 105 72 31
+starting point 7: 82 111 40
+starting point 8: 112 208 28
+starting point 9: 185 64 50
+starting point 10: 213 233 3
+starting point 11: 17 88 14
+Starting points read
+pre-process sweep (forward X)
+pre-proces sweep (reverse X)
+pre-process sweep (forward Y)
+pre-proces sweep (reverse Y)
+pre-process sweep (forward Z)
+pre-proces sweep (reverse Z)
+sweep 1 begin (forward X)
+>>> start 6: changed == 64568496
+>>> start 4: changed == 54716026
+>>> start 2: changed == 61090532
+>>> start 7: changed == 67573954
+>>> start 5: changed == 44867819
+>>> start 3: changed == 70016372
+>>> start 8: changed == 94583844
+>>> start 0: changed == 58705873
+>>> start 9: changed == 101937910
+>>> start 1: changed == 44037283
+>>> start 11: changed == 32906502
+>>> start 10: changed == 131113942
+sweep 1 finished (forward X): anychange = 826118553
+sweep 2 begin (reverse X)
+>>> start 11: changed == 2773320
+>>> start 9: changed == 26889739
+>>> start 10: changed == 49967586
+>>> start 0: changed == 9561377
+>>> start 5: changed == 10613093
+>>> start 1: changed == 3791229
+>>> start 6: changed == 15393729
+>>> start 2: changed == 15468734
+>>> start 7: changed == 15385500
+>>> start 4: changed == 13924296
+>>> start 3: changed == 20601624
+>>> start 8: changed == 29010785
+sweep 2 finished (reverse X): anychange = 213381012
+sweep 3 begin (forward Y)
+>>> start 1: changed == 315778
+>>> start 0: changed == 608740
+>>> start 10: changed == 724509
+>>> start 11: changed == 69950
+>>> start 4: changed == 33346
+>>> start 7: changed == 174777
+>>> start 6: changed == 53609
+>>> start 3: changed == 34935
+>>> start 2: changed == 191310
+>>> start 8: changed == 586325
+>>> start 9: changed == 69024
+>>> start 5: changed == 8793
+sweep 3 finished (forward Y): anychange = 2871096
+sweep 4 begin (reverse Y)
+>>> start 11: changed == 93644
+>>> start 0: changed == 1035643
+>>> start 10: changed == 1448928
+>>> start 5: changed == 7845
+>>> start 7: changed == 237845
+>>> start 1: changed == 563421
+>>> start 9: changed == 81134
+>>> start 2: changed == 330547
+>>> start 4: changed == 40421
+>>> start 6: changed == 66167
+>>> start 3: changed == 40591
+>>> start 8: changed == 1138166
+sweep 4 finished (reverse Y): anychange = 5084352
+sweep 5 begin (forward Z)
+>>> start 5: changed == 0
+>>> start 11: changed == 7
+>>> start 10: changed == 0
+>>> start 7: changed == 725
+>>> start 9: changed == 2055
+>>> start 0: changed == 558
+>>> start 1: changed == 43
+>>> start 4: changed == 0
+>>> start 2: changed == 157
+>>> start 3: changed == 0
+>>> start 6: changed == 417
+>>> start 8: changed == 216
+sweep 5 finished (forward Z): anychange = 4178
+sweep 6 begin (reverse Z)
+>>> start 5: changed == 0
+>>> start 10: changed == 0
+>>> start 1: changed == 78
+>>> start 9: changed == 3851
+>>> start 11: changed == 1
+>>> start 6: changed == 540
+>>> start 2: changed == 118
+>>> start 0: changed == 722
+>>> start 4: changed == 0
+>>> start 3: changed == 0
+>>> start 7: changed == 919
+>>> start 8: changed == 257
+sweep 6 finished (reverse Z): anychange = 6486
+sweep 7 begin (forward X)
+>>> start 5: changed == 0
+>>> start 0: changed == 0
+>>> start 1: changed == 0
+>>> start 11: changed == 0
+>>> start 9: changed == 0
+>>> start 10: changed == 0
+>>> start 6: changed == 0
+>>> start 4: changed == 0
+>>> start 2: changed == 0
+>>> start 3: changed == 0
+>>> start 7: changed == 0
+>>> start 8: changed == 0
+sweep 7 finished (forward X): anychange = 0
+begin time: 1454955888.68003
+end time: 1454956067.538523
