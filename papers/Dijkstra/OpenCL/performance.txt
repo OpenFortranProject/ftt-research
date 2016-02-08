@@ -11,3 +11,30 @@
   200         200         200   1082.419    1054.970   .805   1310          lws=[224 ,1,1]
 
   300         300         300   5190.376    5089.841  2.60    1957          lws=[160,1,1]
+
+
+                                                                            lws=[128,1,1]
+  241         241          51   23.2231     22.5552    .279     81          alt sweep
+  241         241          51   23.4875     22.8089    .278     82          no alt sweep
+  241         241          51   24.3157     23.6614    .300     79          update fs, no alt
+
+  241         241          51   23.5074     22.7912    .278     82          arcList.txt
+  241         241          51   23.4867     22.8085             82          818-FS.txt
+
+  241         241          51   25.9958     25.3412             79          do fs twice
+  241         241          51   25.9899     25.3096             79          + local barrier fence
+  241         241          51   25.9707     25.3167             79          + global barrier fence
+
+  241         241          51   14.3471     14.0028             41          + update fs
+  241         241          51   14.3020     13.9580             41          up fs + local barrier fence
+  241         241          51   24.3177     23.6638             79          once + up fs + global barrier fence
+  241         241          51   19.3724     18.9387             52          thrice + up f
+
+ 
+  241         241          51   18.8666     18.42458    
+
+  241         241          51   14.04344    13.70748            40          twice + fs + global barrier fence
+  241         241          51   14.3378     13.99412            41          twice + fs + global barrier fence
+
+  241         241          51   14.0319     13.69583            40          twice + 2*fs + global barrier fence
+  241         241          51   13.3640     13.03651            39          twice + 2*fs + global barrier fence (commit this version)
