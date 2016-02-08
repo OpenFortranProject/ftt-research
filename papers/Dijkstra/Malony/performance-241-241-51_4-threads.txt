@@ -1,0 +1,350 @@
+export OMP_NUM_THREADS=4
+----------------------------------------------------------
+
+sweep-parallel velocity-241.txt 818-FS.txt 220 220 0 10.0
+Velocity model file: velocity-241.txt
+Forward star offset file: 818-FS.txt
+Starting point: (220,220,0)
+Delta: 10.000000
+Velocity model dimensions: 241 241 51
+Velocity data read
+Forward star size: 818
+Forward star offsets read
+radius: 7, fsindex[0]: 6
+radius: 7, fsindex[1]: 26
+radius: 7, fsindex[2]: 98
+radius: 7, fsindex[3]: 146
+radius: 7, fsindex[4]: 314
+radius: 7, fsindex[5]: 506
+radius: 7, fsindex[6]: 770
+radius: 7, fsindex[7]: 818
+sweep 1 begin (forward X)
+sweepXYZ: thread 0
+sweepXYZ: 4 threads
+sweepXYZ: thread 1
+sweepXYZ: thread 2
+sweepXYZ: thread 3
+sweepXYZ: change = 15972507
+sweep 1 finished (forward X): anychange = 15972507
+sweep 2 begin (reverse X)
+sweepXrYZ: thread 0
+sweepXrYZ: thread 2
+sweepXrYZ: thread 3
+sweepXrYZ: thread 1
+sweepXrYZ: 4 threads
+sweepXrYZ: change = 38626014
+sweep 2 finished (reverse X): anychange = 38626014
+sweep 3 begin (forward Y)
+sweepYXZ: thread 0
+sweepYXZ: thread 3
+sweepYXZ: 4 threads
+sweepYXZ: thread 2
+sweepYXZ: thread 1
+sweepYXZ: change = 105930356
+sweep 3 finished (forward Y): anychange = 105930356
+sweep 4 begin (reverse Y)
+sweepYrXZ: thread 0
+sweepYrXZ: thread 1
+sweepYrXZ: thread 2
+sweepYrXZ: 4 threads
+sweepYrXZ: thread 3
+sweepYrXZ: change = 59801121
+sweep 4 finished (reverse Y): anychange = 59801121
+sweep 5 begin (forward Z)
+sweepZXY: thread 0
+sweepZXY: thread 1
+sweepZXY: thread 3
+sweepZXY: 4 threads
+sweepZXY: thread 2
+sweepZXY: change = 60802442
+sweep 5 finished (forward Z): anychange = 60802442
+sweep 6 begin (reverse Z)
+sweepZrXY: thread 0
+sweepZrXY: thread 2
+sweepZrXY: thread 3
+sweepZrXY: thread 1
+sweepZrXY: 4 threads
+sweepZrXY: change = 33264712
+sweep 6 finished (reverse Z): anychange = 33264712
+sweep 7 begin (forward X)
+sweepXYZ: thread 0
+sweepXYZ: thread 1
+sweepXYZ: thread 3
+sweepXYZ: 4 threads
+sweepXYZ: thread 2
+sweepXYZ: change = 10017749
+sweep 7 finished (forward X): anychange = 10017749
+sweep 8 begin (reverse X)
+sweepXrYZ: thread 0
+sweepXrYZ: thread 2
+sweepXrYZ: 4 threads
+sweepXrYZ: thread 3
+sweepXrYZ: thread 1
+sweepXrYZ: change = 6428370
+sweep 8 finished (reverse X): anychange = 6428370
+sweep 9 begin (forward Y)
+sweepYXZ: thread 0
+sweepYXZ: thread 1
+sweepYXZ: thread 2
+sweepYXZ: 4 threads
+sweepYXZ: thread 3
+sweepYXZ: change = 2399638
+sweep 9 finished (forward Y): anychange = 2399638
+sweep 10 begin (reverse Y)
+sweepYrXZ: thread 0
+sweepYrXZ: thread 3
+sweepYrXZ: thread 2
+sweepYrXZ: 4 threads
+sweepYrXZ: thread 1
+sweepYrXZ: change = 4139547
+sweep 10 finished (reverse Y): anychange = 4139547
+sweep 11 begin (forward Z)
+sweepZXY: thread 0
+sweepZXY: thread 2
+sweepZXY: 4 threads
+sweepZXY: thread 1
+sweepZXY: thread 3
+sweepZXY: change = 1703803
+sweep 11 finished (forward Z): anychange = 1703803
+sweep 12 begin (reverse Z)
+sweepZrXY: thread 0
+sweepZrXY: thread 1
+sweepZrXY: thread 3
+sweepZrXY: 4 threads
+sweepZrXY: thread 2
+sweepZrXY: change = 2990204
+sweep 12 finished (reverse Z): anychange = 2990204
+sweep 13 begin (forward X)
+sweepXYZ: thread 0
+sweepXYZ: thread 1
+sweepXYZ: thread 3
+sweepXYZ: 4 threads
+sweepXYZ: thread 2
+sweepXYZ: change = 624844
+sweep 13 finished (forward X): anychange = 624844
+sweep 14 begin (reverse X)
+sweepXrYZ: thread 0
+sweepXrYZ: thread 2
+sweepXrYZ: 4 threads
+sweepXrYZ: thread 3
+sweepXrYZ: thread 1
+sweepXrYZ: change = 889136
+sweep 14 finished (reverse X): anychange = 889136
+sweep 15 begin (forward Y)
+sweepYXZ: thread 0
+sweepYXZ: thread 3
+sweepYXZ: thread 2
+sweepYXZ: 4 threads
+sweepYXZ: thread 1
+sweepYXZ: change = 303879
+sweep 15 finished (forward Y): anychange = 303879
+sweep 16 begin (reverse Y)
+sweepYrXZ: thread 0
+sweepYrXZ: thread 1
+sweepYrXZ: thread 2
+sweepYrXZ: 4 threads
+sweepYrXZ: thread 3
+sweepYrXZ: change = 534031
+sweep 16 finished (reverse Y): anychange = 534031
+sweep 17 begin (forward Z)
+sweepZXY: thread 0
+sweepZXY: thread 2
+sweepZXY: 4 threads
+sweepZXY: thread 1
+sweepZXY: thread 3
+sweepZXY: change = 177660
+sweep 17 finished (forward Z): anychange = 177660
+sweep 18 begin (reverse Z)
+sweepZrXY: thread 0
+sweepZrXY: thread 3
+sweepZrXY: thread 1
+sweepZrXY: 4 threads
+sweepZrXY: thread 2
+sweepZrXY: change = 443363
+sweep 18 finished (reverse Z): anychange = 443363
+sweep 19 begin (forward X)
+sweepXYZ: thread 0
+sweepXYZ: thread 1
+sweepXYZ: thread 3
+sweepXYZ: 4 threads
+sweepXYZ: thread 2
+sweepXYZ: change = 60371
+sweep 19 finished (forward X): anychange = 60371
+sweep 20 begin (reverse X)
+sweepXrYZ: thread 0
+sweepXrYZ: thread 3
+sweepXrYZ: thread 2
+sweepXrYZ: 4 threads
+sweepXrYZ: thread 1
+sweepXrYZ: change = 144130
+sweep 20 finished (reverse X): anychange = 144130
+sweep 21 begin (forward Y)
+sweepYXZ: thread 0
+sweepYXZ: thread 1
+sweepYXZ: thread 3
+sweepYXZ: 4 threads
+sweepYXZ: thread 2
+sweepYXZ: change = 47350
+sweep 21 finished (forward Y): anychange = 47350
+sweep 22 begin (reverse Y)
+sweepYrXZ: thread 0
+sweepYrXZ: thread 2
+sweepYrXZ: 4 threads
+sweepYrXZ: thread 3
+sweepYrXZ: thread 1
+sweepYrXZ: change = 98794
+sweep 22 finished (reverse Y): anychange = 98794
+sweep 23 begin (forward Z)
+sweepZXY: thread 0
+sweepZXY: thread 3
+sweepZXY: thread 1
+sweepZXY: 4 threads
+sweepZXY: thread 2
+sweepZXY: change = 37414
+sweep 23 finished (forward Z): anychange = 37414
+sweep 24 begin (reverse Z)
+sweepZrXY: thread 0
+sweepZrXY: thread 1
+sweepZrXY: thread 3
+sweepZrXY: 4 threads
+sweepZrXY: thread 2
+sweepZrXY: change = 103751
+sweep 24 finished (reverse Z): anychange = 103751
+sweep 25 begin (forward X)
+sweepXYZ: thread 0
+sweepXYZ: thread 1
+sweepXYZ: thread 2
+sweepXYZ: thread 3
+sweepXYZ: 4 threads
+sweepXYZ: change = 9840
+sweep 25 finished (forward X): anychange = 9840
+sweep 26 begin (reverse X)
+sweepXrYZ: thread 0
+sweepXrYZ: thread 1
+sweepXrYZ: thread 2
+sweepXrYZ: 4 threads
+sweepXrYZ: thread 3
+sweepXrYZ: change = 31018
+sweep 26 finished (reverse X): anychange = 31018
+sweep 27 begin (forward Y)
+sweepYXZ: thread 0
+sweepYXZ: thread 3
+sweepYXZ: 4 threads
+sweepYXZ: thread 2
+sweepYXZ: thread 1
+sweepYXZ: change = 9536
+sweep 27 finished (forward Y): anychange = 9536
+sweep 28 begin (reverse Y)
+sweepYrXZ: thread 0
+sweepYrXZ: thread 1
+sweepYrXZ: thread 2
+sweepYrXZ: 4 threads
+sweepYrXZ: thread 3
+sweepYrXZ: change = 19206
+sweep 28 finished (reverse Y): anychange = 19206
+sweep 29 begin (forward Z)
+sweepZXY: thread 0
+sweepZXY: thread 3
+sweepZXY: thread 2
+sweepZXY: 4 threads
+sweepZXY: thread 1
+sweepZXY: change = 8648
+sweep 29 finished (forward Z): anychange = 8648
+sweep 30 begin (reverse Z)
+sweepZrXY: thread 0
+sweepZrXY: thread 3
+sweepZrXY: thread 2
+sweepZrXY: 4 threads
+sweepZrXY: thread 1
+sweepZrXY: change = 20599
+sweep 30 finished (reverse Z): anychange = 20599
+sweep 31 begin (forward X)
+sweepXYZ: thread 0
+sweepXYZ: thread 1
+sweepXYZ: thread 3
+sweepXYZ: 4 threads
+sweepXYZ: thread 2
+sweepXYZ: change = 1016
+sweep 31 finished (forward X): anychange = 1016
+sweep 32 begin (reverse X)
+sweepXrYZ: thread 0
+sweepXrYZ: thread 1
+sweepXrYZ: thread 2
+sweepXrYZ: 4 threads
+sweepXrYZ: thread 3
+sweepXrYZ: change = 2785
+sweep 32 finished (reverse X): anychange = 2785
+sweep 33 begin (forward Y)
+sweepYXZ: thread 0
+sweepYXZ: thread 1
+sweepYXZ: thread 2
+sweepYXZ: 4 threads
+sweepYXZ: thread 3
+sweepYXZ: change = 1676
+sweep 33 finished (forward Y): anychange = 1676
+sweep 34 begin (reverse Y)
+sweepYrXZ: thread 0
+sweepYrXZ: thread 3
+sweepYrXZ: thread 2
+sweepYrXZ: 4 threads
+sweepYrXZ: thread 1
+sweepYrXZ: change = 3003
+sweep 34 finished (reverse Y): anychange = 3003
+sweep 35 begin (forward Z)
+sweepZXY: thread 0
+sweepZXY: thread 1
+sweepZXY: thread 2
+sweepZXY: 4 threads
+sweepZXY: thread 3
+sweepZXY: change = 1083
+sweep 35 finished (forward Z): anychange = 1083
+sweep 36 begin (reverse Z)
+sweepZrXY: thread 0
+sweepZrXY: thread 2
+sweepZrXY: thread 3
+sweepZrXY: thread 1
+sweepZrXY: 4 threads
+sweepZrXY: change = 969
+sweep 36 finished (reverse Z): anychange = 969
+sweep 37 begin (forward X)
+sweepXYZ: thread 0
+sweepXYZ: thread 3
+sweepXYZ: thread 2
+sweepXYZ: 4 threads
+sweepXYZ: thread 1
+sweepXYZ: change = 143
+sweep 37 finished (forward X): anychange = 143
+sweep 38 begin (reverse X)
+sweepXrYZ: thread 0
+sweepXrYZ: thread 1
+sweepXrYZ: thread 2
+sweepXrYZ: 4 threads
+sweepXrYZ: thread 3
+sweepXrYZ: change = 657
+sweep 38 finished (reverse X): anychange = 657
+sweep 39 begin (forward Y)
+sweepYXZ: thread 0
+sweepYXZ: thread 1
+sweepYXZ: thread 2
+sweepYXZ: thread 3
+sweepYXZ: 4 threads
+sweepYXZ: change = 123
+sweep 39 finished (forward Y): anychange = 123
+sweep 40 begin (reverse Y)
+sweepYrXZ: thread 0
+sweepYrXZ: thread 2
+sweepYrXZ: 4 threads
+sweepYrXZ: thread 1
+sweepYrXZ: thread 3
+sweepYrXZ: change = 425
+sweep 40 finished (reverse Y): anychange = 425
+sweep 41 begin (forward Z)
+sweepZXY: thread 0
+sweepZXY: thread 1
+sweepZXY: thread 3
+sweepZXY: 4 threads
+sweepZXY: thread 2
+sweepZXY: change = 0
+sweep 41 finished (forward Z): anychange = 0
+begin time: 1454960566.445468
+end time: 1454960781.933858
