@@ -4,21 +4,21 @@ USE MPI_f08
 USE forward_star
 IMPLICIT NONE
 
-character(len=3), parameter :: grid_name = '200'
+character(len=3), parameter :: grid_name = '241'
 
 !! WARNING: current must also change (NX,NY,NZ) in sweep.cl (maybe)
 !
-INTEGER :: nx = 200
-INTEGER :: ny = 200
-INTEGER :: nz = 200
-INTEGER :: newNX = 224
-INTEGER :: newNY = 224
-INTEGER :: newNZ = 224
+INTEGER :: nx = 241
+INTEGER :: ny = 241
+INTEGER :: nz = 51
+INTEGER :: newNX = 256
+INTEGER :: newNY = 256
+INTEGER :: newNZ = 64
 
-INTEGER, PARAMETER :: LWSX  = 224
+INTEGER, PARAMETER :: LWSX  = 128
 
 INTEGER, PARAMETER :: DB   = 1
-INTEGER, PARAMETER :: NPTS = 12
+INTEGER, PARAMETER :: NPTS = 1
 INTEGER, PARAMETER :: NFS  = 818
 
 REAL, PARAMETER :: VERY_BIG = huge(1.0)/10.0
@@ -31,8 +31,8 @@ REAL,    ALLOCATABLE, TARGET, DIMENSION(:)       :: Dist
 
 DOUBLE PRECISION :: time, time0, time_diff, time_sweep = 0.0d0, time_total = 0.0d0
 INTEGER :: i, j, k
-LOGICAL :: done = .FALSE.
-LOGICAL :: debug = .TRUE.
+LOGICAL :: done  = .FALSE.
+LOGICAL :: debug = .FALSE.
 
 INTEGER :: dev
 INTEGER :: ocl_id
@@ -154,7 +154,7 @@ do pt = 1, NPTS
      cl_status__ = setKernelArg(cl_sweep_, 8, stepsTaken)
      stepsTaken = stepsTaken + 1
 
-!!!     print *, "# changed:", sum(Changed), "step", stepsTaken, real(time_diff)
+     print *, "# changed:", sum(Changed), "step", stepsTaken, real(time_diff)
      if (done .eq. .TRUE. .and. change .lt. 1) then
         done = .FALSE.
         change = change + 1
