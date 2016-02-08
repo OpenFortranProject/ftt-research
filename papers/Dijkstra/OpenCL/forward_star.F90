@@ -25,9 +25,15 @@ subroutine read_forward_star(nfs, off)
   implicit none
   integer, intent(in ) :: nfs
   integer, intent(out) :: off(3,nfs)
-  integer :: i
+  integer :: i, npts
 
-  open(unit=1, file='arcList.txt')
+! open(unit=1, file='arcList.txt')
+  open(unit=1, file='818-FS.txt')
+
+  read(1, *) npts
+  if (npts /= nfs) then
+     stop "read_forward_star: # points don't match"
+  end if
 
   do i = 1, nfs
      read(1, *) off(1,i), off(2,i), off(3,i)
