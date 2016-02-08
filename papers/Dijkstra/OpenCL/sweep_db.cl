@@ -2,9 +2,11 @@
  * C kernel for sweep of forward star implementation
  */
 
-#undef UPDATE_FORWARD_STAR_TT
-#undef DOUBLE_BUFFER
-#define  SWEEP
+#define UPDATE_FORWARD_STAR_TT
+#undef  DOUBLE_BUFFER
+#define SWEEP
+#define DO_TWICE
+#undef  DO_THRICE
 
 // TODO: look up how to place in constant memory
 __kernel void sweep_db ( const int nx, const int ny
@@ -80,22 +82,23 @@ __kernel void sweep_db ( const int nx, const int ny
 
   // begin algorithm
   int chg = 0;
+  int chg_star = 0;
   const int k0 = i + j * sy + k * sz;
   const float u0 = U[k0];
 
   t0 = TT[k0 + ttOff];
   tt_min = t0;
     
-  // TODO:
-  //   1. change Offset to one dimension and stride by 3
-  //   2. put Offsets in local variables so they can go into registers
-
   // check each node in forward star
   for (l = 0; l < nfs; ++l) {
+    int oi, oj, ok;
     is = i + Offset[0+l*3]; if (is < 0) continue; if (is >= nx) continue;
     js = j + Offset[1+l*3]; if (js < 0) continue; if (js >= ny) continue;
     ks = k + Offset[2+l*3]; if (ks < 0) continue; if (ks >= nz) continue;
-    dist = 10.0*sqrt( (float) ((is-i)*(is-i) + (js-j)*(js-j) + (ks-k)*(ks-k)) );
+    oi = is - i;
+    oj = js - j;
+    ok = ks - k;
+    dist = 10.0*sqrt( (float) (oi*oi + oj*oj + ok*ok) );
     k0s = is + js * sy + ks * sz;
     delay = 0.5*(u0 + U[k0s]) * dist;
 
@@ -103,6 +106,7 @@ __kernel void sweep_db ( const int nx, const int ny
     t = t0 + delay;
     if (t < TT[k0s]) {
        chg = 1;
+       chg_star = 1;
        TT[k0s] = t;
     }
 #endif
@@ -117,4 +121,91 @@ __kernel void sweep_db ( const int nx, const int ny
   }
   Changed[k0] = chg;
   TT[k0 + out_ttOff] = tt_min;
+
+#ifdef  DO_TWICE
+
+  if (chg == 0) return;
+
+  //mem_fence();
+  //barrier(CLK_LOCAL_MEM_FENCE);
+  barrier(CLK_GLOBAL_MEM_FENCE);
+
+  chg_star = 0;
+  t0 = TT[k0 + ttOff];
+  tt_min = t0;
+    
+  // check each node in forward star
+  for (l = 0; l < nfs; ++l) {
+    int oi, oj, ok;
+    is = i + Offset[0+l*3]; if (is < 0) continue; if (is >= nx) continue;
+    js = j + Offset[1+l*3]; if (js < 0) continue; if (js >= ny) continue;
+    ks = k + Offset[2+l*3]; if (ks < 0) continue; if (ks >= nz) continue;
+    oi = is - i;
+    oj = js - j;
+    ok = ks - k;
+    dist = 10.0*sqrt( (float) (oi*oi + oj*oj + ok*ok) );
+    k0s = is + js * sy + ks * sz;
+    delay = 0.5*(u0 + U[k0s]) * dist;
+
+#ifdef  UPDATE_FORWARD_STAR_TT
+    t = t0 + delay;
+    if (t < TT[k0s]) {
+       chg_star = 1;
+       TT[k0s] = t;
+    }
+#endif
+
+    t = TT[k0s + ttOff] + delay;
+    // if distance is smaller update
+    if (t < t0) {
+      chg = 1;
+      t0 = t;
+      tt_min = t;
+    }
+  }
+  TT[k0 + out_ttOff] = tt_min;
+#endif
+
+#ifdef  DO_THRICE
+
+  if (chg == 0) return;
+
+  barrier(CLK_GLOBAL_MEM_FENCE);
+
+  chg_star = 0;
+  t0 = TT[k0 + ttOff];
+  tt_min = t0;
+    
+  // check each node in forward star
+  for (l = 0; l < nfs; ++l) {
+    int oi, oj, ok;
+    is = i + Offset[0+l*3]; if (is < 0) continue; if (is >= nx) continue;
+    js = j + Offset[1+l*3]; if (js < 0) continue; if (js >= ny) continue;
+    ks = k + Offset[2+l*3]; if (ks < 0) continue; if (ks >= nz) continue;
+    oi = is - i;
+    oj = js - j;
+    ok = ks - k;
+    dist = 10.0*sqrt( (float) (oi*oi + oj*oj + ok*ok) );
+    k0s = is + js * sy + ks * sz;
+    delay = 0.5*(u0 + U[k0s]) * dist;
+
+#ifdef  UPDATE_FORWARD_STAR_TT
+    t = t0 + delay;
+    if (t < TT[k0s]) {
+       chg_star = 1;
+       TT[k0s] = t;
+    }
+#endif
+
+    t = TT[k0s + ttOff] + delay;
+    // if distance is smaller update
+    if (t < t0) {
+      chg = 1;
+      t0 = t;
+      tt_min = t;
+    }
+  }
+  TT[k0 + out_ttOff] = tt_min;
+#endif
+
 }
