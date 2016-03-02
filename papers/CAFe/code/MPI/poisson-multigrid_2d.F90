@@ -148,7 +148,7 @@ Pure Subroutine Relax_2D(N, A, Tmp, rho, r_var)
    Real,    intent(inout) :: Tmp(-1:N+1,-1:N+1)
    Real,    intent(in)    :: rho(-1:N+1,-1:N+1)
    Real,    intent(in)    :: r_var(-1:N+1)
-   Real,                  :: dz,dr
+   Real,                  :: dz,dr,pi
    Integer                :: i,j
 
    ! compute over extended region including boundary cells
@@ -158,7 +158,7 @@ Pure Subroutine Relax_2D(N, A, Tmp, rho, r_var)
                                      +  0.5*(2.0*r_var(j)+dr)*dz/(r_var(j)*(dr*dr+dz*dz)+(m*dz*dr)**2)*A(i+1,j) &
                                      +  r_var(j)*dr**2          /(r_var(j)*(dr*dr+dz*dz)+(m*dz*dr)**2)*A(i,j+1) &
                                      +  r_var(j)*dr**2          /(r_var(j)*(dr*dr+dz*dz)+(m*dz*dr)**2)*A(i,j-1) &
-                                     +  r_var(j)   rho(i,j) )
+                                   +  r_var(j)*(dr*dz)**2*4.0*pi/(r_var(j)*(dr*dr+dz*dz)+(m*dz*dr)**2)*rho(i,j) )
      end do
    end do
 
@@ -172,7 +172,7 @@ Pure Subroutine Relax_2D(N, A, Tmp, rho, r_var)
                                   +  0.5*(2.0*r_var(j)+dr)*dz/(r_var(j)*(dr*dr+dz*dz)+(m*dz*dr)**2)*Tmp(i+1,j) &
                                   +  r_var(j)*dr**2          /(r_var(j)*(dr*dr+dz*dz)+(m*dz*dr)**2)*Tmp(i,j+1) &
                                   +  r_var(j)*dr**2          /(r_var(j)*(dr*dr+dz*dz)+(m*dz*dr)**2)*Tmp(i,j-1) &
-                                  +  r_var(j)   rho(i,j) )
+                                  +  r_var(j)*(dr*dz)**2*4.0*pi/(r_var(j)*(dr*dr+dz*dz)+(m*dz*dr)**2)*rho(i,j) )
    end do
 
 
