@@ -282,14 +282,37 @@ same team with regular images, it makes it impossible for an image to participat
 team of its hosted subimages in collective operations.  So for now, collectives are
 excluded from CAFe.
 
-\begin{comment}
-It is noted that these extensions to Fortran have been described in terms
+
+\subsubsection{Alternative Syntax}
+
+It is noted that these extensions to Fortran have been described in terms of
 explicit language syntax modifying the base language.  CAFe could equivalently have
 been described in terms of compiler directives.  For example, subimage task execution could be
 written as
 \begin{verbatim}
- call relax(U[device]) !$OFP [[device]]
+   call relax(U[dev1]) !$OFP [[dev1]]
 \end{verbatim}
-which would allow a standard CAF compiler to compile CAFe programs.  This gives
-the flavor of a domain specific language.
-\end{comment}
+which would allow a standard CAF compiler to compile CAFe programs.  This syntax usage
+would make the CAFe constructs described here an embedded Domain Specific Language.  In a
+future version of the implementation of CAFe, we intend to also support compiler directives
+in this form.
+
+Alternative syntax for remote execution may be preferable to the double square bracket notation.
+While the syntax \texttt{[[ ]]} makes it clear that the programmer intends \emph{remote} execution
+to take place, perhaps syntax closer to standard Fortran is better, especially if
+standardization of CAFe were to occur.  For example, memory placement could be requested by a
+slight modification of the allocation statement
+\begin{verbatim}
+   allocate(U(M,N)[*], DEVICE=dev1)
+\end{verbatim}
+and similarly remote execution via a subroutine call could be replaced by
+\begin{verbatim}
+   call relax(U[dev1]), DEVICE=dev1
+\end{verbatim}
+However, while the alternative syntax for memory allocation appears very natural, using 
+the syntax \texttt{,DEVICE=dev1} to denote remote execution is problematic when applied to
+Fortran function calls.  For example, the double square bracket notation in
+\begin{verbatim}
+   y = sqrt( sin(x)[[dev1]] * 2 )
+\end{verbatim}
+cannot be replaced with \texttt{,DEVICE=dev1}.  
