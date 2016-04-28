@@ -1,0 +1,106 @@
+program dijkstra_main
+  use MPI_f08
+  use forward_star
+  use dijkstra
+  implicit none
+
+  !! dimensions for Joseph's example (101,161,51)
+  !
+  integer, parameter :: NX =  8
+  integer, parameter :: NY =  8
+  integer, parameter :: NZ =  1
+  integer, parameter :: NFS = 818
+  real,    parameter :: VERY_BIG = huge(1.0)/10.0
+
+  real,    allocatable, dimension(:,:,:), codimension[:] :: U       ! slowness
+  real,    allocatable, dimension(:,:,:), codimension[:] :: TT      ! travel time
+  integer, allocatable, dimension(:,:,:), codimension[:] :: Changed ! 1 if tt updated
+  integer, allocatable, dimension(:,:,:), codimension[:] :: Offset  ! offset in forward star
+
+  !  -----------------------------------------
+
+  double precision :: time, time_sweep = 0.0d0, time_reduce = 0.0d0
+  integer :: i, j, k
+  logical :: done  = .FALSE.
+  logical :: debug = .TRUE.
+
+  integer :: dev                   ! CAFe subimage device
+  integer :: ocl_id                ! OpenCL device id
+  
+  ocl_id = 1
+  dev = get_subimage(ocl_id)
+
+  !! allocate space on this image
+  !
+  allocate(      U(NX,NY,NZ) [*])
+  allocate(     TT(NX,NY,NZ) [*])
+  allocate(Changed(NX,NY,NZ) [*])
+  allocate( Offset(3,NFS)    [*])
+
+  if (dev /= THIS_IMAGE()) then
+     allocate(      U(NX,NY,NZ) [*])  [[dev]]
+     allocate(     TT(NX,NY,NZ) [*])  [[dev]]
+     allocate(Changed(NX,NY,NZ) [*])  [[dev]]
+     allocate( Offset(3,NFS)    [*])  [[dev]]
+  end if
+
+  call read_forward_star(NFS, Offset)
+
+  U  = 1.0
+!!!!  U(8:24,8:24,8:24) = 1.0  ! pick some "faster" regions
+
+  TT = VERY_BIG
+
+  !! sweep grid starting at (1,1,1)
+  !
+  i = 1;  j = 1;  k = 1;
+  TT(i,j,k) = 0.0
+
+  !! copy initial values to the device
+  !
+  U [dev] = U
+  TT[dev] = TT
+  Offset [dev] = Offset
+  Changed[dev] = Changed
+
+  do while (.NOT. done) 
+
+     time = MPI_Wtime()
+     call sweep(NX,NY,NZ, NFS, U[dev], TT[dev], Offset[dev], Changed[dev])  [[dev]]
+     time_sweep = time_sweep + MPI_Wtime() - time
+
+     !! see if any travel times have changed
+     !
+     time = MPI_Wtime()
+     Changed = Changed[dev]
+     if (sum(Changed) == 0) done = .TRUE.
+     time_reduce = time_reduce + MPI_Wtime() - time
+
+     print *, "# changed:", sum(Changed)
+
+  end do
+
+  if (debug) then
+     print *
+     do i = 1, NX
+        do j = 1, NY
+           do k = 1, NZ
+              print *, i, j, k, TT(i,j,k)
+           end do
+        end do
+     end do
+  end if
+
+  print *
+  print *, "Sweep/reduce time for N=", NX*NY*NZ, real(time_sweep), real(time_reduce)
+
+  deallocate(U,TT,Changed,Offset)
+
+  if (dev /= THIS_IMAGE()) then
+     deallocate(      U)  [[dev]]
+     deallocate(     TT)  [[dev]]
+     deallocate(Changed)  [[dev]]
+     deallocate( Offset)  [[dev]]
+  end if
+
+end program
