@@ -95,7 +95,6 @@ __kernel void sweep_db ( const int nx, const int ny
     Changed[k0] = chg;
     TT[k0 + out_ttOff] = tt_min;
 
-    // why does this make it faster?
     barrier(CLK_GLOBAL_MEM_FENCE);
   }
 
