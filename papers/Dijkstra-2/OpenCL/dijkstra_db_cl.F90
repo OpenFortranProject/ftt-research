@@ -136,10 +136,10 @@ do pt = 1, NPTS
   cl_size__ = DB * 4*newNX*newNY*newNZ
   cl_status__ = writeBuffer(cl_TT_,C_LOC(TT),cl_size__)
 
-  cl_status__ = setKernelArg(cl_sweep_,8,2)               ! axis
-  cl_status__ = setKernelArg(cl_sweep_,9,i)               ! x starting pt
-  cl_status__ = setKernelArg(cl_sweep_,10,j)              ! y starting pt
-  cl_status__ = setKernelArg(cl_sweep_,11,k)              ! z starting pt
+  cl_status__ = setKernelArg(cl_sweep_, 8,2)              ! axis (0,1,2)
+  cl_status__ = setKernelArg(cl_sweep_, 9,i-1)            ! x starting pt
+  cl_status__ = setKernelArg(cl_sweep_,10,j-1)            ! y starting pt
+  cl_status__ = setKernelArg(cl_sweep_,11,k-1)            ! z starting pt
   cl_status__ = setKernelArg(cl_sweep_,12,stepsTaken)
 
   done = .FALSE.
