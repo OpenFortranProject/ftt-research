@@ -19,9 +19,9 @@ __kernel void sweep_axes ( const int nx, const int ny
 		         , const int steps)
 
 {
-  int i, j, k;
+  int i, j, k, idx;
   int l, is, js, ks, k0s;
-  int xSize, ySize, zSize;
+  int xSize, ySize, axisSize;
   int chg, chg_star;
   float dist, delay, t;
   float t0, tt_min;
@@ -29,23 +29,31 @@ __kernel void sweep_axes ( const int nx, const int ny
   // double buffering offsets
   int ttOff, out_ttOff;
 
-  xSize = get_global_size(0);
-  ySize = get_global_size(1);
-  zSize = get_global_size(2);
-
-  i = get_global_id(0);
-  j = get_global_id(1);
-  k; // two-dimensional parallel decomposition */
-
   // make sure that the thread id is within the bounds of the array
-  if (axis == 0) {
+  //
+  if (axis == 0) {                       // sweep in x
+     j = get_global_id(0);
+     k = get_global_id(1);
      if (j >= ny || k >= nz)  return;
+//     xSize = get_global_size(0);
+//     ySize = get_global_size(1);
+     axisSize = nx;
   }
-  else if (axis == 1) {
+  else if (axis == 1) {                  // sweep in y
+     i = get_global_id(0);
+     k = get_global_id(1);
      if (i >= nx || k >= nz)  return;
+//     xSize = get_global_size(0);
+//     ySize = get_global_size(1);
+     axisSize = ny;
   }
-  else if (axis == 2) {
+  else if (axis == 2) {                  // sweep in z
+     i = get_global_id(0);
+     j = get_global_id(1);
      if (i >= nx || j >= ny)  return;
+     xSize = get_global_size(0);
+     ySize = get_global_size(1);
+     axisSize = nz;
   }
 
   const int sx = 1;
@@ -59,7 +67,20 @@ __kernel void sweep_axes ( const int nx, const int ny
   chg = 0;
   chg_star = 0;
 
-  for (k = 0; k < nz; k++) {
+  for (idx = 0; idx < axisSize; idx++) {
+    if (axis == 0) {
+      i = idx;
+      if (idx <= iStart) i = iStart - idx;   // sweep backwards from starting point
+    }
+    else if (axis == 1) {
+      j = idx;
+      if (idx <= jStart) j = jStart - idx;   // sweep backwards from starting point
+    }
+    else if (axis == 2) {
+      k = idx;
+      if (idx <= kStart) k = kStart - idx;   // sweep backwards from starting point
+    }
+
     const k0 = i + j*sy + k*sz;
     float u0 = U[k0];
 
