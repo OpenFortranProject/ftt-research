@@ -123,7 +123,10 @@ __kernel void sweep_axes ( const int nx, const int ny
     Changed[k0] = chg;
     TT[k0] = tt_min;
 
-    barrier(CLK_GLOBAL_MEM_FENCE);
+/** barrier doesn't seem to be needed
+ *
+ *    barrier(CLK_GLOBAL_MEM_FENCE);
+ */
   }
 
 #ifdef  DO_TWICE
