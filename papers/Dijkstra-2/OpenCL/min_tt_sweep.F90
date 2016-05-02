@@ -97,7 +97,7 @@ cl_Offset_ = createBuffer(cl_dev_,CL_MEM_READ_ONLY,cl_size__,C_NULL_PTR)
 cl_size__ = 4*NFS
 cl_Dist_ = createBuffer(cl_dev_,CL_MEM_READ_ONLY,cl_size__,C_NULL_PTR)
 if (rank == 0) then
-   print *, rank, ": cl_U, cl_TT, cl_Changed size = ", cl_size__
+   print *, rank, ": cl_U, cl_TT, cl_Changed size =    ", cl_size__
    print *, rank, ": cl_Offset = ", cl_size__*3, cl_size__
 end if
 
@@ -168,21 +168,19 @@ do pt = 1, npts
      cl_gws__    = [newNX,newNY]
      cl_status__ = setKernelArg(cl_sweep_,13, 2)                ! z axis
      cl_status__ = run(cl_sweep_,2,cl_gwo__,cl_gws__,cl_lws__)
-     cl_status__ = clFinish(cl_sweep_%commands)
 
      if (stepsTaken < 4) then
         cl_gws__    = [newNX,newNZ]
         cl_status__ = setKernelArg(cl_sweep_,13, 1)                ! y axis
         cl_status__ = run(cl_sweep_,2,cl_gwo__,cl_gws__,cl_lws__)
-        cl_status__ = clFinish(cl_sweep_%commands)
      end if
 
      if (stepsTaken < 2) then
         cl_gws__    = [newNX,newNY]
         cl_status__ = setKernelArg(cl_sweep_,13, 0)                ! x axis
         cl_status__ = run(cl_sweep_,2,cl_gwo__,cl_gws__,cl_lws__)
-        cl_status__ = clFinish(cl_sweep_%commands)
      end if
+     cl_status__ = clFinish(cl_sweep_%commands)
 
      time_diff = time_sweep
      time_sweep = time_sweep + MPI_Wtime() - time
