@@ -3,6 +3,7 @@
  */
 
 #define UPDATE_FORWARD_STAR_TT
+#undef SWEEP
 #undef DO_TWICE
 
 // TODO: look up how to place in constant memory
@@ -12,22 +13,20 @@ __kernel void sweep_axes ( const int nx, const int ny
 		         , __global float * TT
 		         , __constant int * Offset
 		         , __global int * Changed
-                         , const int axis
+                         , const int xSize
+                         , const int ySize
                          , const int iStart
                          , const int jStart
 		         , const int kStart
-		         , const int steps)
-
+                         , const int axis
+                         , const int step)
 {
   int i, j, k, idx;
   int l, is, js, ks, k0s;
-  int xSize, ySize, axisSize;
+  int axisSize;
   int chg, chg_star;
   float dist, delay, t;
   float t0, tt_min;
-
-  // double buffering offsets
-  int ttOff, out_ttOff;
 
   // make sure that the thread id is within the bounds of the array
   //
@@ -35,33 +34,37 @@ __kernel void sweep_axes ( const int nx, const int ny
      j = get_global_id(0);
      k = get_global_id(1);
      if (j >= ny || k >= nz)  return;
-//     xSize = get_global_size(0);
-//     ySize = get_global_size(1);
      axisSize = nx;
   }
   else if (axis == 1) {                  // sweep in y
      i = get_global_id(0);
      k = get_global_id(1);
      if (i >= nx || k >= nz)  return;
-//     xSize = get_global_size(0);
-//     ySize = get_global_size(1);
      axisSize = ny;
   }
   else if (axis == 2) {                  // sweep in z
      i = get_global_id(0);
      j = get_global_id(1);
      if (i >= nx || j >= ny)  return;
-     xSize = get_global_size(0);
-     ySize = get_global_size(1);
      axisSize = nz;
+
+#ifdef SWEEP
+     if (step % 4 == 1) {
+        i = nx - i - 1;
+     }
+     else if (step % 4 == 2) {
+        j = ny - j - 1;
+     }
+     else if (step % 4 == 3) {
+        i = nx - i - 1;
+        j = ny - j - 1;
+     }
+#endif
   }
 
   const int sx = 1;
   const int sy = sx * xSize;
   const int sz = sy * ySize;
-
-  ttOff = 0;
-  out_ttOff = 0;
 
   // begin algorithm
   chg = 0;
@@ -84,7 +87,7 @@ __kernel void sweep_axes ( const int nx, const int ny
     const k0 = i + j*sy + k*sz;
     float u0 = U[k0];
 
-    t0 = TT[k0 + ttOff];
+    t0 = TT[k0];
     tt_min = t0;
     
     // check each node in forward star
@@ -109,7 +112,7 @@ __kernel void sweep_axes ( const int nx, const int ny
       }
 #endif
 
-      t = TT[k0s + ttOff] + delay;
+      t = TT[k0s] + delay;
       // if distance is smaller update
       if (t < t0) {
         chg = 1;
@@ -118,7 +121,7 @@ __kernel void sweep_axes ( const int nx, const int ny
       }
     }
     Changed[k0] = chg;
-    TT[k0 + out_ttOff] = tt_min;
+    TT[k0] = tt_min;
 
     barrier(CLK_GLOBAL_MEM_FENCE);
   }
@@ -131,7 +134,7 @@ __kernel void sweep_axes ( const int nx, const int ny
   //barrier(CLK_LOCAL_MEM_FENCE);
 
   chg_star = 0;
-  t0 = TT[k0 + ttOff];
+  t0 = TT[k0];
   tt_min = t0;
     
   // check each node in forward star
@@ -155,7 +158,7 @@ __kernel void sweep_axes ( const int nx, const int ny
     }
 #endif
 
-    t = TT[k0s + ttOff] + delay;
+    t = TT[k0s] + delay;
     // if distance is smaller update
     if (t < t0) {
       chg = 1;
@@ -163,7 +166,7 @@ __kernel void sweep_axes ( const int nx, const int ny
       tt_min = t;
     }
   }
-  TT[k0 + out_ttOff] = tt_min;
+  TT[k0] = tt_min;
 
 #endif /* DO_TWICE */
 
